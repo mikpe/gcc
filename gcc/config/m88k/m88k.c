@@ -722,8 +722,8 @@ block_move_no_loop (dest, dest_mem, src, src_mem, size, align)
 
 static void
 block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
-     rtx dest, dest_mem;
-     rtx src, src_mem;
+     rtx dest ATTRIBUTE_UNUSED, dest_mem;
+     rtx src ATTRIBUTE_UNUSED, src_mem;
      int size;
      int align;
      int offset;
@@ -1808,8 +1808,10 @@ m88k_expand_prologue ()
 
   m88k_layout_frame ();
 
+#if 0
   if (warn_stack_larger_than && m88k_stack_size > stack_larger_than_size)
     warning ("stack usage is %d bytes", m88k_stack_size);
+#endif
 
   if (m88k_stack_size)
     {
