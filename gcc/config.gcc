@@ -212,8 +212,7 @@ target_gtfiles=
 
 # Obsolete configurations.
 case $machine in
-   m88k-*-*			\
- | mn10200-*-*			\
+   mn10200-*-*			\
  | romp-*-*			\
  | alpha*-*-interix*		\
  | alpha*-*-linux*libc1*	\
@@ -402,9 +401,19 @@ case $machine in
 	esac
 	;;
 *-*-openbsd*)
-	tm_file=${cpu_type}/openbsd.h
+	case $machine in
+	*-*-openbsd2* | *-*-openbsd3.[012])
+		openbsd_libspec="openbsd-libc_r.h"
+		;;
+	*)
+		openbsd_libspec="openbsd-libpthread.h"
+		;;
+	esac
+	tm_file="${openbsd_libspec} ${cpu_type}/openbsd.h"
 	tmake_file="t-libc-ok t-openbsd t-libgcc-pic"
 	xm_defines=POSIX
+	# for gcc in tree, we use our own fragment
+	xmake_file=x-openbsd
 	if test x$enable_threads = xyes; then
 		thread_file='posix'
 		tmake_file="${tmake_file} t-openbsd-thread"
@@ -1760,8 +1769,14 @@ m88k-*-aout*)
 	tm_file=m88k/m88k-aout.h
 	;;
 m88k-*-openbsd*)
-	tmake_file="${tmake_file} m88k/t-luna-gas"
-	tm_file="m88k/aout-dbx.h aoutos.h m88k/m88k.h openbsd.h ${tm_file}"
+	tm_file="openbsd-libpthread.h dbxelf.h elfos.h m88k/openbsd1.h m88k/m88k.h openbsd.h m88k/openbsdelf.h"
+#	tm_file="${tm_file} exec-stack.h"
+	tmake_file="t-libc-ok t-openbsd"
+	if test x$enable_threads = xyes; then
+		tmake_file="${tmake_file} t-openbsd-thread"
+	fi
+	tmake_file="${tmake_file} m88k/t-openbsd"
+	gas=yes gnu_ld=yes
 	;;
 m88k-*-sysv4*)
 	xm_defines=POSIX
