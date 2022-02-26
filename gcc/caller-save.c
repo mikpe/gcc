@@ -36,6 +36,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm_p.h"
 #include "addresses.h"
 
+#ifndef CALLER_SAVE_INSN_CODE
+#define CALLER_SAVE_INSN_CODE(CODE)	(CODE)
+#endif
+
 #ifndef MAX_MOVE_MAX
 #define MAX_MOVE_MAX MOVE_MAX
 #endif
@@ -776,7 +780,8 @@ insert_save (struct insn_chain *chain, int before_p, int regno,
 
 /* Emit a new caller-save insn and set the code.  */
 static struct insn_chain *
-insert_one_insn (struct insn_chain *chain, int before_p, int code, rtx pat)
+insert_one_insn (struct insn_chain *chain, int before_p,
+                 int code ATTRIBUTE_UNUSED, rtx pat)
 {
   rtx insn = chain->insn;
   struct insn_chain *new;
@@ -857,6 +862,6 @@ insert_one_insn (struct insn_chain *chain, int before_p, int code, rtx pat)
   new->block = chain->block;
   new->is_caller_save_insn = 1;
 
-  INSN_CODE (new->insn) = code;
+  INSN_CODE (new->insn) = CALLER_SAVE_INSN_CODE (code);
   return new;
 }

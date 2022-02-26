@@ -3377,6 +3377,7 @@ get_address_cost (bool symbol_present, bool var_present,
   HOST_WIDE_INT s_offset;
   unsigned HOST_WIDE_INT mask;
   unsigned bits;
+  int start_offset = (STRICT_ALIGNMENT ? GET_MODE_SIZE (Pmode) : 1);
 
   if (!initialized)
     {
@@ -3391,7 +3392,7 @@ get_address_cost (bool symbol_present, bool var_present,
       reg1 = gen_raw_REG (Pmode, LAST_VIRTUAL_REGISTER + 1);
 
       addr = gen_rtx_fmt_ee (PLUS, Pmode, reg1, NULL_RTX);
-      for (i = 1; i <= 1 << 20; i <<= 1)
+      for (i = start_offset; i <= 1 << 20; i <<= 1)
 	{
 	  XEXP (addr, 1) = gen_int_mode (i, Pmode);
 	  if (!memory_address_p (Pmode, addr))
@@ -3400,7 +3401,7 @@ get_address_cost (bool symbol_present, bool var_present,
       max_offset = i >> 1;
       off = max_offset;
 
-      for (i = 1; i <= 1 << 20; i <<= 1)
+      for (i = start_offset; i <= 1 << 20; i <<= 1)
 	{
 	  XEXP (addr, 1) = gen_int_mode (-i, Pmode);
 	  if (!memory_address_p (Pmode, addr))
@@ -3541,7 +3542,8 @@ get_address_cost (bool symbol_present, bool var_present,
 
   cost = 0;
   offset_p = (s_offset != 0
-	      && min_offset <= s_offset && s_offset <= max_offset);
+	      && min_offset <= s_offset && s_offset <= max_offset
+	      && (s_offset <= -start_offset || s_offset >= start_offset));
   ratio_p = (ratio != 1
 	     && multiplier_allowed_in_address_p (ratio));
 

@@ -438,9 +438,6 @@ static void delete_output_reload (rtx, int, int);
 static void delete_address_reloads (rtx, rtx);
 static void delete_address_reloads_1 (rtx, rtx, rtx);
 static rtx inc_for_reload (rtx, rtx, rtx, int);
-#ifdef AUTO_INC_DEC
-static void add_auto_inc_notes (rtx, rtx);
-#endif
 static void copy_eh_notes (rtx, rtx);
 static int reloads_conflict (int, int);
 static rtx gen_reload (rtx, rtx, int, enum reload_type);
@@ -652,6 +649,10 @@ reload (rtx first, int global)
   rtx insn;
   struct elim_table *ep;
   basic_block bb;
+
+#ifdef ENABLE_CHECKING
+  verify_auto_inc_notes_p (first);
+#endif
 
   /* Make sure even insns with volatile mem refs are recognizable.  */
   init_recog ();
@@ -8296,34 +8297,6 @@ inc_for_reload (rtx reloadreg, rtx in, rtx value, int inc_amount)
   return store;
 }
 
-#ifdef AUTO_INC_DEC
-static void
-add_auto_inc_notes (rtx insn, rtx x)
-{
-  enum rtx_code code = GET_CODE (x);
-  const char *fmt;
-  int i, j;
-
-  if (code == MEM && auto_inc_p (XEXP (x, 0)))
-    {
-      REG_NOTES (insn)
-	= gen_rtx_EXPR_LIST (REG_INC, XEXP (XEXP (x, 0), 0), REG_NOTES (insn));
-      return;
-    }
-
-  /* Scan all the operand sub-expressions.  */
-  fmt = GET_RTX_FORMAT (code);
-  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
-    {
-      if (fmt[i] == 'e')
-	add_auto_inc_notes (insn, XEXP (x, i));
-      else if (fmt[i] == 'E')
-	for (j = XVECLEN (x, i) - 1; j >= 0; j--)
-	  add_auto_inc_notes (insn, XVECEXP (x, i, j));
-    }
-}
-#endif
-
 /* Copy EH notes from an insn to its reloads.  */
 static void
 copy_eh_notes (rtx insn, rtx x)

@@ -1,4 +1,5 @@
 #include "version.h"
+#include "../ccs_version.h"
 
 /* This is the trailing component of the string reported as the
    version number by all components of the compiler.  For an official
@@ -8,7 +9,23 @@
    in parentheses.  You may also wish to include a number indicating
    the revision of your modified compiler.  */
 
-#define VERSUFFIX ""
+#ifndef CCS_BRANCH0_VN
+#define CCS_BRANCH0_VN 0
+#endif
+
+#ifndef CCS_STEP0_VN
+#define CCS_STEP0_VN   0
+#endif
+
+#define LIT(S)	#S
+#define STR(N)	LIT(N)
+
+#define VERSUFFIX " (IMG-" STR (CCS_MAJOR_VN)   "." \
+                           STR (CCS_MINOR_VN)   "." \
+                           STR (CCS_RELEASE_VN) "." \
+                           STR (CCS_BUILD_VN)       \
+                           STR (CCS_BRANCH0_VN)     \
+                           STR (CCS_STEP0_VN)   ")"
 
 /* This is the location of the online document giving instructions for
    reporting bugs.  If you distribute a modified version of GCC,
@@ -17,7 +34,7 @@
    forward us bugs reported to you, if you determine that they are
    not bugs in your modifications.)  */
 
-const char bug_report_url[] = "<URL:http://gcc.gnu.org/bugs.html>";
+const char bug_report_url[] = "toolkit@metagence.com";
 
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, and DEVPHASE are defined by the Makefile.  */

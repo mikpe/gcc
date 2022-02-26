@@ -207,7 +207,7 @@ STATIC EH_FRAME_SECTION_CONST char __EH_FRAME_BEGIN__[]
      = { };
 #endif /* USE_EH_FRAME_REGISTRY */
 
-#ifdef JCR_SECTION_NAME
+#if TARGET_USE_JCR_SECTION && defined(JCR_SECTION_NAME)
 /* Stick a label at the beginning of the java class registration info
    so we can register them properly.  */
 STATIC void *__JCR_LIST__[]
@@ -242,6 +242,20 @@ void *__dso_handle = 0;
 extern void __cxa_finalize (void *) TARGET_ATTRIBUTE_WEAK;
 
 /* Run all the global destructors on exit from the program.  */
+
+#ifndef DO_GLOBAL_DTORS_AUX_BODY
+#define DO_GLOBAL_DTORS_AUX_BODY			\
+do {							\
+  static func_ptr *p = __DTOR_LIST__ + 1;		\
+  func_ptr f;						\
+							\
+  while ((f = *p))					\
+    {							\
+      p++;						\
+      f ();						\
+    }							\
+} while (0)
+#endif
  
 /* Some systems place the number of pointers in the first word of the
    table.  On SVR4 however, that word is -1.  In all cases, the table is
@@ -263,10 +277,6 @@ extern void __cxa_finalize (void *) TARGET_ATTRIBUTE_WEAK;
 static void __attribute__((used))
 __do_global_dtors_aux (void)
 {
-#ifndef FINI_ARRAY_SECTION_ASM_OP
-  static func_ptr *p = __DTOR_LIST__ + 1;
-  func_ptr f;
-#endif /* !defined(FINI_ARRAY_SECTION_ASM_OP)  */
   static _Bool completed;
 
   if (__builtin_expect (completed, 0))
@@ -281,11 +291,7 @@ __do_global_dtors_aux (void)
   /* If we are using .fini_array then destructors will be run via that
      mechanism.  */
 #else /* !defined (FINI_ARRAY_SECTION_ASM_OP) */
-  while ((f = *p))
-    {
-      p++;
-      f ();
-    }
+  DO_GLOBAL_DTORS_AUX_BODY;
 #endif /* !defined(FINI_ARRAY_SECTION_ASM_OP) */
 
 #ifdef USE_EH_FRAME_REGISTRY
@@ -312,7 +318,7 @@ static func_ptr __do_global_dtors_aux_fini_array_entry[]
   = { __do_global_dtors_aux };
 #endif /* !defined(FINI_SECTION_ASM_OP) */
 
-#if defined(USE_EH_FRAME_REGISTRY) || defined(JCR_SECTION_NAME)
+#if defined(USE_EH_FRAME_REGISTRY) || (TARGET_USE_JCR_SECTION && defined(JCR_SECTION_NAME))
 /* Stick a call to __register_frame_info into the .init section.  For some
    reason calls with no arguments work more reliably in .init, so stick the
    call in another function.  */
@@ -333,7 +339,7 @@ frame_dummy (void)
     __register_frame_info (__EH_FRAME_BEGIN__, &object);
 #endif /* CRT_GET_RFIB_DATA */
 #endif /* USE_EH_FRAME_REGISTRY */
-#ifdef JCR_SECTION_NAME
+#if TARGET_USE_JCR_SEVTION && defined(JCR_SECTION_NAME)
   if (__JCR_LIST__[0])
     {
       void (*register_classes) (void *) = _Jv_RegisterClasses;
@@ -397,6 +403,15 @@ __do_global_ctors_aux (void)	/* prologue goes in .init section */
 
 extern void __do_global_dtors (void);
 
+#ifndef DO_GLOBAL_DTORS_BODY
+#define DO_GLOBAL_DTORS_BODY						\
+do {									\
+  func_ptr *p, f;							\
+  for (p = __DTOR_LIST__ + 1; (f = *p); p++)				\
+    f ();								\
+} while (0)
+#endif
+
 /* This case is used by the Irix 6 port, which supports named sections but
    not an SVR4-style .fini section.  __do_global_dtors can be non-static
    in this case because we protect it with -hidden_symbol.  */
@@ -404,9 +419,7 @@ extern void __do_global_dtors (void);
 void
 __do_global_dtors (void)
 {
-  func_ptr *p, f;
-  for (p = __DTOR_LIST__ + 1; (f = *p); p++)
-    f ();
+  DO_GLOBAL_DTORS_BODY;
 
 #ifdef USE_EH_FRAME_REGISTRY
   if (__deregister_frame_info)
@@ -414,7 +427,7 @@ __do_global_dtors (void)
 #endif
 }
 
-#if defined(USE_EH_FRAME_REGISTRY) || defined(JCR_SECTION_NAME)
+#if defined(USE_EH_FRAME_REGISTRY) || (TARGET_USE_JCR_SECTION && defined(JCR_SECTION_NAME))
 /* A helper function for __do_global_ctors, which is in crtend.o.  Here
    in crtbegin.o, we can reference a couple of symbols not visible there.
    Plus, since we're before libgcc.a, we have no problems referencing
@@ -427,7 +440,7 @@ __do_global_ctors_1(void)
   if (__register_frame_info)
     __register_frame_info (__EH_FRAME_BEGIN__, &object);
 #endif
-#ifdef JCR_SECTION_NAME
+#if TARGET_USE_JCR_SECTION && defined (JCR_SECTION_NAME)
   if (__JCR_LIST__[0])
     {
       void (*register_classes) (void *) = _Jv_RegisterClasses;
@@ -498,7 +511,7 @@ STATIC EH_FRAME_SECTION_CONST int32 __FRAME_END__[]
      = { 0 };
 #endif /* EH_FRAME_SECTION_NAME */
 
-#ifdef JCR_SECTION_NAME
+#if TARGET_USE_JCR_SECTION && defined(JCR_SECTION_NAME)
 /* Null terminate the .jcr section array.  */
 STATIC void *__JCR_END__[1] 
    __attribute__ ((unused, section(JCR_SECTION_NAME),
@@ -513,12 +526,20 @@ STATIC void *__JCR_END__[1]
 #elif defined(INIT_SECTION_ASM_OP)
 
 #ifdef OBJECT_FORMAT_ELF
+
+#ifndef DO_GLOBAL_CTORS_AUX_BODY
+#define DO_GLOBAL_CTORS_AUX_BODY					\
+do {									\
+  func_ptr *p;								\
+  for (p = __CTOR_END__ - 1; *p != (func_ptr) -1; p--)			\
+    (*p)();								\
+} while (0)
+#endif
+
 static void __attribute__((used))
 __do_global_ctors_aux (void)
 {
-  func_ptr *p;
-  for (p = __CTOR_END__ - 1; *p != (func_ptr) -1; p--)
-    (*p) ();
+  DO_GLOBAL_CTORS_AUX_BODY;
 }
 
 /* Stick a call to __do_global_ctors_aux into the .init section.  */
@@ -561,6 +582,16 @@ asm (TEXT_SECTION_ASM_OP);
 
 #elif defined(HAS_INIT_SECTION) /* ! INIT_SECTION_ASM_OP */
 
+#ifndef DO_GLOBAL_CTORS_BODY
+#define DO_GLOBAL_CTORS_BODY						\
+do {									\
+  func_ptr *p;								\
+									\
+  for (p = __CTOR_END__ - 1; *p != (func_ptr) -1; p--)			\
+    (*p) ();								\
+} while (0)
+#endif
+
 extern void __do_global_ctors (void);
 
 /* This case is used by the Irix 6 port, which supports named sections but
@@ -573,8 +604,7 @@ __do_global_ctors (void)
 #if defined(USE_EH_FRAME_REGISTRY) || defined(JCR_SECTION_NAME)
   __do_global_ctors_1();
 #endif
-  for (p = __CTOR_END__ - 1; *p != (func_ptr) -1; p--)
-    (*p) ();
+  DO_GLOBAL_CTORS_BODY;
 }
 
 #else /* ! INIT_SECTION_ASM_OP && ! HAS_INIT_SECTION */

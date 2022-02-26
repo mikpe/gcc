@@ -4582,7 +4582,6 @@ from the machine description file `md'.  */\n\n");
   printf ("#include \"coretypes.h\"\n");
   printf ("#include \"tm.h\"\n");
   printf ("#include \"rtl.h\"\n");
-  printf ("#include \"tm_p.h\"\n");
   printf ("#include \"insn-config.h\"\n");
   printf ("#include \"recog.h\"\n");
   printf ("#include \"regs.h\"\n");
@@ -4592,6 +4591,7 @@ from the machine description file `md'.  */\n\n");
   printf ("#include \"toplev.h\"\n");
   printf ("#include \"flags.h\"\n");
   printf ("#include \"function.h\"\n");
+  printf ("#include \"tm_p.h\"\n");
   printf ("\n");
   printf ("#define operands recog_data.operand\n\n");
 

@@ -1042,6 +1042,11 @@ noop_move_p (rtx insn)
      a special insn which should not be considered a no-op.  */
   if (find_reg_note (insn, REG_RETVAL, NULL_RTX))
     return 0;
+  
+  /* Extract the code of a cond_exec as a conditional noop is no
+     more useful than a noop itself */
+  if (GET_CODE (pat) == COND_EXEC)
+    pat = COND_EXEC_CODE (pat);
 
   if (GET_CODE (pat) == SET && set_noop_p (pat))
     return 1;
@@ -2830,6 +2835,74 @@ auto_inc_p (rtx x)
       break;
     }
   return 0;
+}
+
+/* If X has autoincrement side effects then add required REG_INC notes.  */
+void
+add_auto_inc_notes (rtx insn, rtx x)
+{
+  enum rtx_code code = GET_CODE (x);
+  const char *fmt;
+  int i, j;
+
+  if (code == MEM && auto_inc_p (XEXP (x, 0)))
+    {
+      REG_NOTES (insn)
+        = gen_rtx_EXPR_LIST (REG_INC, XEXP (XEXP (x, 0), 0), REG_NOTES (insn));
+      return;
+    }
+
+  /* Scan all the operand sub-expressions.  */
+  fmt = GET_RTX_FORMAT (code);
+  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'e')
+        add_auto_inc_notes (insn, XEXP (x, i));
+      else if (fmt[i] == 'E')
+        for (j = XVECLEN (x, i) - 1; j >= 0; j--)
+          add_auto_inc_notes (insn, XVECEXP (x, i, j));
+    }
+}
+
+/* Verify if INSN has required REG_INC notes.  */
+
+void
+verify_auto_inc_notes_for_insn_p (rtx insn, rtx x)
+{
+  enum rtx_code code = GET_CODE (x);
+  const char *fmt;
+  int i, j;
+
+  if (code == MEM && auto_inc_p (XEXP (x, 0)))
+    {
+      if (find_reg_note (insn, REG_INC, XEXP (XEXP (x, 0), 0)) == NULL_RTX)
+	fatal_insn ("Insn missing REG_INC note:", insn);
+    }
+
+  /* Scan all the operand sub-expressions.  */
+  fmt = GET_RTX_FORMAT (code);
+  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'e')
+        verify_auto_inc_notes_for_insn_p (insn, XEXP (x, i));
+      else if (fmt[i] == 'E')
+        for (j = XVECLEN (x, i) - 1; j >= 0; j--)
+          verify_auto_inc_notes_for_insn_p (insn, XVECEXP (x, i, j));
+    }
+
+  return;
+}
+
+/* Verify that all insns in the sequence starting at FIRST
+   have required REG_INC notes.  */
+void
+verify_auto_inc_notes_p (rtx first)
+{
+  rtx insn;
+
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    if (INSN_P (insn))
+      verify_auto_inc_notes_for_insn_p (insn, PATTERN (insn));
 }
 
 /* Return nonzero if IN contains a piece of rtl that has the address LOC.  */

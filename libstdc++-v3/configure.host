@@ -97,6 +97,9 @@ case "${host_cpu}" in
   m680[246]0)
     try_cpu=m68k
     ;;
+  metag*)
+    try_cpu=metag
+    ;;
   powerpc* | rs6000)
     try_cpu=powerpc
     ;;
@@ -231,6 +234,9 @@ case "${host_os}" in
     atomicity_dir=os/irix
     atomic_word_dir=os/irix
     ;;
+  metag*)
+    os_include_dir="os/generic"
+    ;;
   mingw32*)
     os_include_dir="os/mingw32"
     ;;
@@ -296,6 +302,9 @@ case "${host}" in
           abi_baseline_pair=${try_cpu}-linux-gnu
         fi
     esac
+    ;;
+  metag*)
+    atomicity_dir="cpu/generic"
     ;;
   mips*-*-*)
     case "${host_os}" in

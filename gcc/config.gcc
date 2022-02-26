@@ -291,6 +291,9 @@ m680[012]0-*-*)
 m68k-*-*)
 	extra_headers=math-68881.h
 	;;
+metag*-*-*)
+	cpu_type=metag
+	;;
 mips*-*-*)
 	cpu_type=mips
 	need_64bit_hwint=yes
@@ -331,6 +334,74 @@ tic4x-*-*)
         cpu_type=c4x
         ;;
 esac
+
+case ${cpu_type} in
+metag)
+	tm_defines="${tm_defines} METAG_EXEC_PREFIX=\\\"\$(exec_prefix)/\\\""
+
+        # Set the default core if with_cpu is not defined
+        if test x${with_cpu} = x
+        then
+          if test x${cpu_type} = xmetag
+          then
+            with_cpu=2.1
+          else
+            with_cpu=1.2
+          fi
+        fi
+
+        # Set the default tune if with_tune is not defined
+        if test x${with_tune} = x
+        then
+          if test x${cpu_type} = xmetag
+          then
+            with_tune=2.1
+          fi
+        fi
+
+        # Set the default fpu if with_fpu is not defined
+        if test x${with_fpu} = x
+        then
+          if test x${cpu_type} = xmetag
+          then
+            with_fpu=none
+          fi
+        fi
+
+	case x${with_cpu} in
+	x2.1)
+	   tm_defines="${tm_defines} METAC_DEFAULT=\\\"2.1\\\" METAC_DEFAULT_AS=\\\"METAC_2_1\\\""
+	   ;;
+	x1.2)
+	   tm_defines="${tm_defines} METAC_DEFAULT=\\\"1.2\\\" METAC_DEFAULT_AS=\\\"METAC_1_2\\\""
+	   ;;
+	x1.1)
+	   tm_defines="${tm_defines} METAC_DEFAULT=\\\"1.1\\\" METAC_DEFAULT_AS=\\\"METAC_1_1\\\""
+	   ;;
+	x1.0)
+	   tm_defines="${tm_defines} METAC_DEFAULT=\\\"1.0\\\" METAC_DEFAULT_AS=\\\"METAC_1_0\\\""
+	   ;;
+	x0.1)
+	   tm_defines="${tm_defines} METAC_DEFAULT=\\\"0.1\\\" METAC_DEFAULT_AS=\\\"METAC_0_1\\\""
+	   ;;
+	x*)
+	   echo "--with-cpu=\"${with_cpu}\" not recognised",
+	   exit 1;
+	   ;;
+	esac
+
+        case x${enable_meta_default} in
+        xyes)
+           # Nothing
+           ;;
+        x*)
+           # When not explicitly META, enable MiniM
+           tm_defines="${tm_defines} MINIM_DEFAULT"
+           ;;
+        esac
+	;;
+esac
+
 
 tm_file=${cpu_type}/${cpu_type}.h
 if test -f ${srcdir}/config/${cpu_type}/${cpu_type}-protos.h
@@ -479,6 +550,15 @@ case ${target} in
       ;;
   esac
   # Assume that glibc or uClibc are being used and so __cxa_atexit is provided.
+  default_use_cxa_atexit=yes
+  ;;
+metag*-linux-uclibc*)
+  gas=yes
+  gnu_ld=yes
+  case ${enable_threads} in
+    "" | yes | posix) thread_file='posix' ;;
+  esac
+  # uClibc provides __cxa_atexit
   default_use_cxa_atexit=yes
   ;;
 *-*-gnu*)
@@ -1517,6 +1597,31 @@ mcore-*-pe*)
 	tm_file="svr3.h dbxcoff.h ${tm_file} mcore/mcore-pe.h"
 	tmake_file=mcore/t-mcore-pe
 	use_fixproto=yes
+	;;
+metag*-linux-uclibc*)
+	tm_file="dbxelf.h elfos.h metag/metag.h metag/metag-linux.h linux.h metag/linux.h metag/elf.h metag/linux-elf.h"
+	tmake_file="metag/t-metag-slibgcc-elf-ver metag/t-metag metag/t-metag-linux metag/t-linux"
+	target_cpu_default=""
+	tm_defines="${tm_defines} METAG_BFD"
+	extra_gcc_objs="driver-metag.o"
+	out_file=metag/metag.c
+	use_fixproto=no
+	use_collect2=no
+        extra_objs="metag-linux.o"
+	extra_options="${extra_options} metag/metag-linux.opt"
+	extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
+
+        case x${enable_link_global} in
+        xyes)
+           tm_defines="${tm_defines} METAG_LINK_GLOBAL"
+           ;;
+        esac
+
+        case x${with_cpu} in
+        x2.1)
+           tmake_file="${tmake_file} metag/t-linux-2.1"
+           ;;
+        esac
 	;;
 mips-sgi-irix[56]*)
 	tm_file="elfos.h ${tm_file} mips/iris.h"
@@ -2755,6 +2860,46 @@ case "${target}" in
 			exit 1
 			;;
 		esac
+		;;
+
+	metag*)
+		supported_defaults="cpu tune fpu"
+		case "$with_cpu" in
+		"" | 1.0 | 1.1 | 1.2 | 2.1 | 0.1)
+			# OK
+			;;
+		*)
+			echo "Unknown CPU used in --with-cpu=$with_cpu, known values:"	1>&2
+			echo "1.0 1.1 1.2 2.1 0.1" 1>&2
+			exit 1
+			;;
+		esac
+
+		case "$with_tune" in
+		"" | 1.0 | 1.1 | 1.2 | 2.1 | 0.1)
+			# OK
+			;;
+		*)
+			echo "Unknown CPU used in --with-tune=$with_tune, known values:"	1>&2
+			echo "1.0 1.1 1.2 2.1 0.1" 1>&2
+			exit 1
+			;;
+		esac
+
+		case "$with_fpu" in
+		none | S | D)
+			# OK
+			;;
+		yes)
+			with_fpu=D
+			;;
+		*)
+			echo "Unknown FPU precision used in --with-fpu=$with_fpu, known values:"	1>&2
+			echo "S D" 1>&2
+			exit 1
+			;;
+		esac
+
 		;;
 
 	hppa*-*-* | parisc*-*-*)

@@ -106,20 +106,20 @@ union_defs (struct df *df, struct df_ref *use, struct web_entry *def_entry,
 {
   rtx insn = DF_REF_INSN (use);
   struct df_link *link = DF_REF_CHAIN (use);
-  struct df_ref *use_link;
-  struct df_ref *def_link;
+  struct df_ref *USE_link;
+  struct df_ref *DEF_link;
   rtx set;
 
   if (insn)
     {
-      use_link = DF_INSN_USES (df, insn);
-      def_link = DF_INSN_DEFS (df, insn);
+      USE_link = DF_INSN_USES (df, insn);
+      DEF_link = DF_INSN_DEFS (df, insn);
       set = single_set (insn);
     }
   else
     {
-      use_link = NULL;
-      def_link = NULL;
+      USE_link = NULL;
+      DEF_link = NULL;
       set = NULL;
     }
 
@@ -128,14 +128,35 @@ union_defs (struct df *df, struct df_ref *use, struct web_entry *def_entry,
      invalid instructions, so union all uses of the same operand for each
      insn.  */
 
-  while (use_link)
-    {
-      if (use != use_link
-	  && DF_REF_REAL_REG (use) == DF_REF_REAL_REG (use_link))
- 	(*fun) (use_entry + DF_REF_ID (use),
+  /* First handle any uses that are match_dup's of this use ...  */
+  {
+    struct df_ref *use_link = USE_link;
+
+    while (use_link)
+      {
+        if (use != use_link
+	    && DF_REF_REAL_REG (use) == DF_REF_REAL_REG (use_link))
+ 	  (*fun) (use_entry + DF_REF_ID (use),
  		use_entry + DF_REF_ID (use_link));
-      use_link = use_link->next_ref;
-    }
+
+        use_link = use_link->next_ref;
+      }
+  }
+
+  /* then handle any defs that are match_dup's of this use ... */
+  {
+    struct df_ref *def_link = DEF_link;
+
+    while (def_link)
+      {
+        if (use != def_link
+            && DF_REF_REAL_REG (use) == DF_REF_REAL_REG (def_link))
+           (*fun) (use_entry + DF_REF_ID (use),
+                def_entry + DF_REF_ID (def_link));
+
+        def_link = def_link->next_ref;
+      }
+  }
 
   /* Recognize trivial noop moves and attempt to keep them as noop.
      While most of noop moves should be removed, we still keep some
@@ -145,6 +166,8 @@ union_defs (struct df *df, struct df_ref *use, struct web_entry *def_entry,
       && SET_SRC (set) == DF_REF_REG (use)
       && SET_SRC (set) == SET_DEST (set))
     {
+      struct df_ref *def_link = DEF_link;
+
       while (def_link)
 	{
 	  if (DF_REF_REAL_REG (use) == DF_REF_REAL_REG (def_link))
@@ -153,6 +176,7 @@ union_defs (struct df *df, struct df_ref *use, struct web_entry *def_entry,
 	  def_link = def_link->next_ref;
 	}
     }
+
   while (link)
     {
       (*fun) (use_entry + DF_REF_ID (use),
@@ -236,6 +260,7 @@ replace_ref (struct df_ref *ref, rtx reg)
   if (dump_file)
     fprintf (dump_file, "Updating insn %i (%i->%i)\n",
 	     INSN_UID (DF_REF_INSN (ref)), REGNO (oldreg), REGNO (reg)); 
+
   *loc = reg;
 }
 
@@ -273,6 +298,7 @@ web_main (void)
   for (i = 0; i < DF_USES_SIZE (df); i++)
     replace_ref (DF_USES_GET (df, i), 
 		 entry_register (use_entry + i, DF_USES_GET (df, i), used));
+
   for (i = 0; i < DF_DEFS_SIZE (df); i++)
     replace_ref (DF_DEFS_GET (df, i), 
 		 entry_register (def_entry + i, DF_DEFS_GET (df, i), used));

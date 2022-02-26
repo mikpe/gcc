@@ -1,6 +1,7 @@
 /* Generate code to initialize optabs from machine description.
    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010
+   Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -414,7 +415,8 @@ from the machine description file `md'.  */\n\n");
   printf ("#include \"recog.h\"\n");
   printf ("#include \"expr.h\"\n");
   printf ("#include \"optabs.h\"\n");
-  printf ("#include \"reload.h\"\n\n");
+  printf ("#include \"reload.h\"\n");
+  printf ("#include \"toplev.h\"\n\n");
 
   printf ("void\ninit_all_optabs (void)\n{\n");
 

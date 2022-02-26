@@ -829,6 +829,7 @@ store_unaligned_arguments_into_pseudos (struct arg_data *args, int num_actuals)
       {
 	int bytes = int_size_in_bytes (TREE_TYPE (args[i].tree_value));
 	int endian_correction = 0;
+        rtx value;
 
 	if (args[i].partial)
 	  {
@@ -858,10 +859,22 @@ store_unaligned_arguments_into_pseudos (struct arg_data *args, int num_actuals)
 	    )
 	  endian_correction = BITS_PER_WORD - bytes * BITS_PER_UNIT;
 
+
+	value = args[i].value;
+
+#if METAG_PARTIAL_ARGS
+        if (args[i].partial)
+          {
+            HOST_WIDE_INT excess = (bytes + (UNITS_PER_WORD - 1)) & ~(UNITS_PER_WORD - 1);
+
+            value = adjust_address (value, GET_MODE (value), excess - args[i].partial);
+	  }
+#endif
+
 	for (j = 0; j < args[i].n_aligned_regs; j++)
 	  {
 	    rtx reg = gen_reg_rtx (word_mode);
-	    rtx word = operand_subword_force (args[i].value, j, BLKmode);
+	    rtx word = operand_subword_force (value, j, BLKmode);
 	    int bitsize = MIN (bytes * BITS_PER_UNIT, BITS_PER_WORD);
 
 	    args[i].aligned_regs[j] = reg;

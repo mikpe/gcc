@@ -56,6 +56,11 @@
 #define PRE_GCC3_DWARF_FRAME_REGISTERS DWARF_FRAME_REGISTERS
 #endif
 
+/* Table to map Dwarf registers to unwind column.  */
+#ifdef DWARF_REG_TO_UNWIND_COLUMN_TABLE
+DWARF_REG_TO_UNWIND_COLUMN_TABLE;
+#endif 
+
 #ifndef DWARF_REG_TO_UNWIND_COLUMN
 #define DWARF_REG_TO_UNWIND_COLUMN(REGNO) (REGNO)
 #endif
@@ -153,23 +158,22 @@ _Unwind_IsExtendedContext (struct _Unwind_Context *context)
 
 /* Get the value of register INDEX as saved in CONTEXT.  */
 
-inline _Unwind_Word
-_Unwind_GetGR (struct _Unwind_Context *context, int index)
+static inline _Unwind_Word
+_Unwind_ByColumn_GetGR (struct _Unwind_Context *context, int column)
 {
   int size;
   void *ptr;
 
 #ifdef DWARF_ZERO_REG
-  if (index == DWARF_ZERO_REG)
+  if (column == DWARF_REG_TO_UNWIND_COLUMN (DWARF_ZERO_REG))
     return 0;
 #endif
 
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  gcc_assert (index < (int) sizeof(dwarf_reg_size_table));
-  size = dwarf_reg_size_table[index];
-  ptr = context->reg[index];
+  gcc_assert (0 <= column && column < (int) sizeof(dwarf_reg_size_table));
+  size = dwarf_reg_size_table[column];
+  ptr = context->reg[column];
 
-  if (_Unwind_IsExtendedContext (context) && context->by_value[index])
+  if (_Unwind_IsExtendedContext (context) && context->by_value[column])
     return (_Unwind_Word) (_Unwind_Internal_Ptr) ptr;
 
   /* This will segfault if the register hasn't been saved.  */
@@ -180,6 +184,15 @@ _Unwind_GetGR (struct _Unwind_Context *context, int index)
       gcc_assert (size == sizeof(_Unwind_Word));
       return * (_Unwind_Word *) ptr;
     }
+}
+
+/* Get the value of register INDEX as saved in CONTEXT.  */
+
+inline _Unwind_Word
+_Unwind_GetGR (struct _Unwind_Context *context, int index)
+{
+  gcc_assert (0 <= index && index < FIRST_PSEUDO_REGISTER + 1);
+  return _Unwind_ByColumn_GetGR (context, DWARF_REG_TO_UNWIND_COLUMN (index));
 }
 
 static inline void *
@@ -198,23 +211,22 @@ _Unwind_GetCFA (struct _Unwind_Context *context)
 
 /* Overwrite the saved value for register INDEX in CONTEXT with VAL.  */
 
-inline void
-_Unwind_SetGR (struct _Unwind_Context *context, int index, _Unwind_Word val)
+static inline void
+_Unwind_ByColumn_SetGR (struct _Unwind_Context *context, int column, _Unwind_Word val)
 {
   int size;
   void *ptr;
 
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  gcc_assert (index < (int) sizeof(dwarf_reg_size_table));
-  size = dwarf_reg_size_table[index];
+  gcc_assert (0 <= column && column < (int) sizeof(dwarf_reg_size_table));
+  size = dwarf_reg_size_table[column];
 
-  if (_Unwind_IsExtendedContext (context) && context->by_value[index])
+  if (_Unwind_IsExtendedContext (context) && context->by_value[column])
     {
-      context->reg[index] = (void *) (_Unwind_Internal_Ptr) val;
+      context->reg[column] = (void *) (_Unwind_Internal_Ptr) val;
       return;
     }
 
-  ptr = context->reg[index];
+  ptr = context->reg[column];
 
   if (size == sizeof(_Unwind_Ptr))
     * (_Unwind_Ptr *) ptr = val;
@@ -225,15 +237,44 @@ _Unwind_SetGR (struct _Unwind_Context *context, int index, _Unwind_Word val)
     }
 }
 
+/* Overwrite the saved value for register INDEX in CONTEXT with VAL.  */
+
+inline void
+_Unwind_SetGR (struct _Unwind_Context *context, int index, _Unwind_Word val)
+{
+  gcc_assert (0 <= index && index < FIRST_PSEUDO_REGISTER + 1);
+  return _Unwind_ByColumn_SetGR (context, DWARF_REG_TO_UNWIND_COLUMN (index), val);
+}
+
+/* Get the pointer to a register COLUMN as saved in CONTEXT.  */
+
+static inline void *
+_Unwind_ByColumn_GetGRPtr (struct _Unwind_Context *context, int column)
+{
+  gcc_assert (0 <= column && column < DWARF_FRAME_REGISTERS + 1);
+  if (_Unwind_IsExtendedContext (context) && context->by_value[column])
+    return &context->reg[column];
+  return context->reg[column];
+}
+
 /* Get the pointer to a register INDEX as saved in CONTEXT.  */
 
 static inline void *
 _Unwind_GetGRPtr (struct _Unwind_Context *context, int index)
 {
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  if (_Unwind_IsExtendedContext (context) && context->by_value[index])
-    return &context->reg[index];
-  return context->reg[index];
+  gcc_assert (0 <= index && index <  FIRST_PSEUDO_REGISTER + 1);
+  return _Unwind_ByColumn_GetGRPtr (context, DWARF_REG_TO_UNWIND_COLUMN (index));
+}
+
+/* Set the pointer to a register COLUMN as saved in CONTEXT.  */
+
+static inline void
+_Unwind_ByColumn_SetGRPtr (struct _Unwind_Context *context, int column, void *p)
+{
+  gcc_assert (0 <= column && column < DWARF_FRAME_REGISTERS + 1);
+  if (_Unwind_IsExtendedContext (context))
+    context->by_value[column] = 0;
+  context->reg[column] = p;
 }
 
 /* Set the pointer to a register INDEX as saved in CONTEXT.  */
@@ -241,24 +282,41 @@ _Unwind_GetGRPtr (struct _Unwind_Context *context, int index)
 static inline void
 _Unwind_SetGRPtr (struct _Unwind_Context *context, int index, void *p)
 {
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  if (_Unwind_IsExtendedContext (context))
-    context->by_value[index] = 0;
-  context->reg[index] = p;
+  gcc_assert (0 <= index && index < FIRST_PSEUDO_REGISTER + 1);
+  _Unwind_ByColumn_SetGRPtr (context, DWARF_REG_TO_UNWIND_COLUMN (index), p);
 }
 
+/* Overwrite the saved value for register COLUMN in CONTEXT with VAL.  */
+
+static inline void
+_Unwind_ByColumn_SetGRValue (struct _Unwind_Context *context, int column,
+			     _Unwind_Word val)
+{
+  gcc_assert (0 <= column && column < (int) sizeof(dwarf_reg_size_table));
+  gcc_assert (dwarf_reg_size_table[column] == sizeof (_Unwind_Ptr));
+
+  context->by_value[column] = 1;
+  context->reg[column] = (void *) (_Unwind_Internal_Ptr) val;
+}
 /* Overwrite the saved value for register INDEX in CONTEXT with VAL.  */
 
 static inline void
 _Unwind_SetGRValue (struct _Unwind_Context *context, int index,
 		    _Unwind_Word val)
 {
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  gcc_assert (index < (int) sizeof(dwarf_reg_size_table));
-  gcc_assert (dwarf_reg_size_table[index] == sizeof (_Unwind_Ptr));
+  gcc_assert (0 <= index && index < FIRST_PSEUDO_REGISTER + 1);
+  _Unwind_ByColumn_SetGRValue (context, DWARF_REG_TO_UNWIND_COLUMN (index), val);
+}
 
-  context->by_value[index] = 1;
-  context->reg[index] = (void *) (_Unwind_Internal_Ptr) val;
+/* Return nonzero if register COLUMN is stored by value rather than
+   by reference.  */
+
+static inline int
+_Unwind_ByColumn_GRByValue (struct _Unwind_Context *context, int column)
+{
+
+  gcc_assert (0 <= column && column < DWARF_FRAME_REGISTERS + 1);
+  return context->by_value[column];
 }
 
 /* Return nonzero if register INDEX is stored by value rather than
@@ -267,8 +325,8 @@ _Unwind_SetGRValue (struct _Unwind_Context *context, int index,
 static inline int
 _Unwind_GRByValue (struct _Unwind_Context *context, int index)
 {
-  index = DWARF_REG_TO_UNWIND_COLUMN (index);
-  return context->by_value[index];
+  gcc_assert (0 <= index && index < FIRST_PSEUDO_REGISTER + 1);
+  return _Unwind_ByColumn_GRByValue (context, DWARF_REG_TO_UNWIND_COLUMN (index));
 }
 
 /* Retrieve the return address for CONTEXT.  */
@@ -1225,8 +1283,12 @@ static inline void
 _Unwind_SetSpColumn (struct _Unwind_Context *context, void *cfa,
 		     _Unwind_SpTmp *tmp_sp)
 {
-  int size = dwarf_reg_size_table[__builtin_dwarf_sp_column ()];
-  
+  int column = DWARF_REG_TO_UNWIND_COLUMN (__builtin_dwarf_sp_column ());
+  int size;
+
+  gcc_assert (0 <= column && column < (int)sizeof (dwarf_reg_size_table));
+
+  size = dwarf_reg_size_table[column];
   if (size == sizeof(_Unwind_Ptr))
     tmp_sp->ptr = (_Unwind_Ptr) cfa;
   else
@@ -1234,7 +1296,8 @@ _Unwind_SetSpColumn (struct _Unwind_Context *context, void *cfa,
       gcc_assert (size == sizeof(_Unwind_Word));
       tmp_sp->word = (_Unwind_Ptr) cfa;
     }
-  _Unwind_SetGRPtr (context, __builtin_dwarf_sp_column (), tmp_sp);
+
+  _Unwind_ByColumn_SetGRPtr (context, column, tmp_sp);
 }
 
 static void
@@ -1299,19 +1362,19 @@ uw_update_context_1 (struct _Unwind_Context *context, _Unwind_FrameState *fs)
 	break;
 
       case REG_SAVED_OFFSET:
-	_Unwind_SetGRPtr (context, i,
+	_Unwind_ByColumn_SetGRPtr (context, i,
 			  (void *) (cfa + fs->regs.reg[i].loc.offset));
 	break;
 
       case REG_SAVED_REG:
 	if (_Unwind_GRByValue (&orig_context, fs->regs.reg[i].loc.reg))
-	  _Unwind_SetGRValue (context, i,
-			      _Unwind_GetGR (&orig_context,
-					     fs->regs.reg[i].loc.reg));
+	  _Unwind_ByColumn_SetGRValue (context, i,
+				       _Unwind_GetGR (&orig_context,
+						      fs->regs.reg[i].loc.reg));
 	else
-	  _Unwind_SetGRPtr (context, i,
-			    _Unwind_GetGRPtr (&orig_context,
-					      fs->regs.reg[i].loc.reg));
+	  _Unwind_ByColumn_SetGRPtr (context, i,
+				     _Unwind_GetGRPtr (&orig_context,
+				 		       fs->regs.reg[i].loc.reg));
 	break;
 
       case REG_SAVED_EXP:
@@ -1323,14 +1386,14 @@ uw_update_context_1 (struct _Unwind_Context *context, _Unwind_FrameState *fs)
 	  exp = read_uleb128 (exp, &len);
 	  val = execute_stack_op (exp, exp + len, &orig_context,
 				  (_Unwind_Ptr) cfa);
-	  _Unwind_SetGRPtr (context, i, (void *) val);
+	  _Unwind_ByColumn_SetGRPtr (context, i, (void *) val);
 	}
 	break;
 
       case REG_SAVED_VAL_OFFSET:
-	_Unwind_SetGRValue (context, i,
-			    (_Unwind_Internal_Ptr)
-			    (cfa + fs->regs.reg[i].loc.offset));
+	_Unwind_ByColumn_SetGRValue (context, i,
+				     (_Unwind_Internal_Ptr)
+				     (cfa + fs->regs.reg[i].loc.offset));
 	break;
 
       case REG_SAVED_VAL_EXP:
@@ -1342,7 +1405,7 @@ uw_update_context_1 (struct _Unwind_Context *context, _Unwind_FrameState *fs)
 	  exp = read_uleb128 (exp, &len);
 	  val = execute_stack_op (exp, exp + len, &orig_context,
 				  (_Unwind_Ptr) cfa);
-	  _Unwind_SetGRValue (context, i, val);
+	  _Unwind_ByColumn_SetGRValue (context, i, val);
 	}
 	break;
       }

@@ -58,6 +58,22 @@ along with GCC; see the file COPYING3.  If not see
 				   declarations for e.g. AIX 4.x.  */
 #endif
 
+
+/* Hooks to allow target specific control over the start/end of each
+   function or variable definition */
+#ifndef ASSEMBLE_START_FUNCTION
+#define ASSEMBLE_START_FUNCTION(DECL,FNNAME)
+#endif
+#ifndef ASSEMBLE_END_FUNCTION
+#define ASSEMBLE_END_FUNCTION(DECL,FNNAME)
+#endif
+#ifndef ASSEMBLE_START_VARIABLE
+#define ASSEMBLE_START_VARIABLE(DECL)
+#endif
+#ifndef ASSEMBLE_END_VARIABLE
+#define ASSEMBLE_END_VARIABLE(DECL)
+#endif
+
 /* The (assembler) name of the first globally-visible object output.  */
 extern GTY(()) const char *first_global_object_name;
 extern GTY(()) const char *weak_global_object_name;
@@ -649,7 +665,7 @@ default_no_function_rodata_section (tree decl ATTRIBUTE_UNUSED)
 
 /* Return the section to use for string merging.  */
 
-static section *
+section *
 mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
 			  unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED,
 			  unsigned int flags ATTRIBUTE_UNUSED)
@@ -1416,6 +1432,9 @@ assemble_start_function (tree decl, const char *fnname)
 
   in_cold_section_p = first_function_block_is_cold;
 
+  /* Prepare to emit a function */
+  ASSEMBLE_START_FUNCTION (decl, fnname);
+
   /* Switch to the correct text section for the start of the function.  */
 
   switch_to_section (function_section (decl));
@@ -1508,6 +1527,9 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
       ASM_OUTPUT_LABEL (asm_out_file, cfun->hot_section_end_label);
       switch_to_section (save_text_section);
     }
+
+  /* Clean up after outputting a function */
+  ASSEMBLE_END_FUNCTION (decl, fnname);
 }
 
 /* Assemble code to leave SIZE bytes of zeros.  */
@@ -1826,6 +1848,9 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   if (sect && (sect->common.flags & SECTION_CODE) != 0)
     DECL_IN_TEXT_SECTION (decl) = 1;
 
+  /* Prepare to output a variable */
+  ASSEMBLE_START_VARIABLE (decl);
+
   /* If the decl is part of an object_block, make sure that the decl
      has been positioned within its block, but do not write out its
      definition yet.  output_object_blocks will do that later.  */
@@ -1843,6 +1868,9 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
 	ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (DECL_ALIGN_UNIT (decl)));
       assemble_variable_contents (decl, name, dont_output_data);
     }
+
+  /* Clean up after outputting a variable */
+  ASSEMBLE_END_VARIABLE (decl);
 }
 
 /* Return 1 if type TYPE contains any pointers.  */
@@ -5872,10 +5900,9 @@ default_binds_local_p_1 (tree exp, int shlib)
   else if (DECL_WEAK (exp))
     local_p = false;
   /* If PIC, then assume that any global name can be overridden by
-     symbols resolved from other modules, unless we are compiling with
-     -fwhole-program, which assumes that names are local.  */
+     symbols resolved from other modules.  */
   else if (shlib)
-    local_p = flag_whole_program;
+    local_p = false;
   /* Uninitialized COMMON variable may be unified with symbols
      resolved from other modules.  */
   else if (DECL_COMMON (exp)

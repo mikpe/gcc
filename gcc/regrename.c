@@ -182,6 +182,11 @@ merge_overlapping_regs (basic_block b, HARD_REG_SET *pset,
     }
 }
 
+#if !defined(HARD_REGNO_RENAME_OK_FOR_INSN) && defined(HARD_REGNO_RENAME_OK)
+#define HARD_REGNO_RENAME_OK_FOR_INSN(INSN, FROM, TOO)	\
+  HARD_REGNO_RENAME_OK (FROM, TOO)
+#endif
+
 /* Perform register renaming on the current function.  */
 
 static void
@@ -303,8 +308,8 @@ regrename_optimize (void)
 		    || (current_function_is_leaf
 			&& !LEAF_REGISTERS[new_reg + i])
 #endif
-#ifdef HARD_REGNO_RENAME_OK
-		    || ! HARD_REGNO_RENAME_OK (reg + i, new_reg + i)
+#ifdef HARD_REGNO_RENAME_OK_FOR_INSN
+		    || ! HARD_REGNO_RENAME_OK_FOR_INSN (this->insn, reg + i, new_reg + i)
 #endif
 		    )
 		  break;
@@ -1546,13 +1551,13 @@ replace_oldest_value_addr (rtx *loc, enum reg_class cl,
     case PRE_INC:
     case PRE_DEC:
     case PRE_MODIFY:
-      return false;
+      return changed;
 
     case MEM:
-      return replace_oldest_value_mem (x, insn, vd);
+      return changed | replace_oldest_value_mem (x, insn, vd);
 
     case REG:
-      return replace_oldest_value_reg (loc, cl, insn, vd);
+      return changed | replace_oldest_value_reg (loc, cl, insn, vd);
 
     default:
       break;
@@ -1674,14 +1679,18 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	  if (REG_P (SET_DEST (set)))
 	    {
 	      new = find_oldest_value_reg (REGNO_REG_CLASS (regno), src, vd);
-	      if (new && validate_change (insn, &SET_SRC (set), new, 0))
+	      if (new)
 		{
-		  if (dump_file)
-		    fprintf (dump_file,
-			     "insn %u: replaced reg %u with %u\n",
-			     INSN_UID (insn), regno, REGNO (new));
-		  changed = true;
-		  goto did_replacement;
+		  if (validate_change (insn, &SET_SRC (set), new, 0))
+		    {
+		      if (dump_file)
+			fprintf (dump_file,
+				 "insn %u: replaced reg %u with %u\n",
+				 INSN_UID (insn), regno, REGNO (new));
+		      changed = true;
+		      goto did_replacement;
+		    }
+		  extract_insn (insn);
 		}
 	    }
 
@@ -1704,12 +1713,15 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 		      changed = true;
 		      goto did_replacement;
 		    }
+		  extract_insn (insn);
 		}
 	    }
 	}
       no_move_special_case:
 
       any_replacements = false;
+
+      gcc_assert (n_ops == recog_data.n_operands);
 
       /* For each input operand, replace a hard register with the
 	 eldest live copy that's in an appropriate register class.  */

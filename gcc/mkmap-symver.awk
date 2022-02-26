@@ -21,8 +21,13 @@
 BEGIN {
   state = "nm";
   sawsymbol = 0;
+  showprefix = "_";
   if (leading_underscore)
+  {
+    if (no_show_underscore)
+      showprefix = "";
     prefix = "_";
+  }
   else
     prefix = "";
 }
@@ -81,7 +86,7 @@ $1 == "}" {
 }
 
 {
-  sym = prefix $1;
+  sym = $1;
   if (thislib != "%exclude")
     ver[sym] = thislib;
   else
@@ -108,7 +113,7 @@ function output(lib) {
 
   empty=1
   for (sym in ver)
-    if ((ver[sym] == lib) && (sym in def))
+    if (((ver[sym]) == lib) && ((prefix sym) in def))
       {
 	if (empty)
 	  {
@@ -116,7 +121,7 @@ function output(lib) {
 	    printf("  global:\n");
 	    empty = 0;
 	  }
-	printf("\t%s;\n", sym);
+	printf("\t%s;\n", showprefix sym);
       }
 
   if (empty)

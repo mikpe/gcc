@@ -3652,9 +3652,23 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
 
       /* USED is now the # of bytes we need not copy to the stack
 	 because registers will take care of them.  */
-
       if (partial != 0)
-	xinner = adjust_address (xinner, BLKmode, used);
+        {
+#ifdef METAG_PARTIAL_ARGS
+          if (GET_CODE (size) == CONST_INT)
+	    {
+	      HOST_WIDE_INT onstack = INTVAL (size) - partial;
+
+              onstack = (onstack + (STACK_BOUNDARY_BYTES - 1)) & ~(STACK_BOUNDARY_BYTES - 1);
+
+	      size = GEN_INT (onstack + partial);
+            }
+          else
+	    gcc_unreachable ();
+#else
+	  xinner = adjust_address (xinner, BLKmode, used);
+#endif
+        }
 
       /* If the partial register-part of the arg counts in its stack size,
 	 skip the part of stack space corresponding to the registers.
@@ -3765,6 +3779,8 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
       int offset = partial % (PARM_BOUNDARY / BITS_PER_UNIT);
       int args_offset = INTVAL (args_so_far);
       int skip;
+      int begin_on_stack;
+      int end_on_stack;
 
       /* Push padding now if padding above and stack grows down,
 	 or if padding below and stack grows up.
@@ -3784,11 +3800,19 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
       not_stack = (partial - offset) / UNITS_PER_WORD;
       offset /= UNITS_PER_WORD;
 
+#ifdef METAG_PARTIAL_ARGS
+      begin_on_stack = 0;
+      end_on_stack = size - not_stack;
+#else
+      begin_on_stack = not_stack;
+      end_on_stack = size;
+#endif
+
       /* If the partial register-part of the arg counts in its stack size,
 	 skip the part of stack space corresponding to the registers.
 	 Otherwise, start copying to the beginning of the stack space,
 	 by setting SKIP to 0.  */
-      skip = (reg_parm_stack_space == 0) ? 0 : not_stack;
+      skip = (reg_parm_stack_space == 0) ? 0 : begin_on_stack;
 
       if (CONSTANT_P (x) && ! LEGITIMATE_CONSTANT_P (x))
 	x = validize_mem (force_const_mem (mode, x));
@@ -3803,15 +3827,15 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
       /* We can do it by words, because any scalar bigger than a word
 	 has a size a multiple of a word.  */
 #ifndef PUSH_ARGS_REVERSED
-      for (i = not_stack; i < size; i++)
+      for (i = begin_on_stack; i < end_on_stack; i++)
 #else
-      for (i = size - 1; i >= not_stack; i--)
+      for (i = end_on_stack - 1; i >= begin_on_stack; i--)
 #endif
-	if (i >= not_stack + offset)
+	if (i >= begin_on_stack + offset)
 	  emit_push_insn (operand_subword_force (x, i, mode),
 			  word_mode, NULL_TREE, NULL_RTX, align, 0, NULL_RTX,
 			  0, args_addr,
-			  GEN_INT (args_offset + ((i - not_stack + skip)
+			  GEN_INT (args_offset + ((i - begin_on_stack + skip)
 						  * UNITS_PER_WORD)),
 			  reg_parm_stack_space, alignment_pad);
     }
@@ -3867,8 +3891,32 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
 	emit_group_load (reg, x, type, -1);
       else
 	{
+	  xinner = x;
+
+#ifdef METAG_PARTIAL_ARGS
+	  if (mode != BLKmode)
+	    size = GEN_INT (GET_MODE_SIZE (mode) - partial);
+
+	  gcc_assert (size && GET_CODE (size) == CONST_INT);
+
+	  if (GET_CODE (xinner) == CONCAT)
+	    {
+	      xinner = XEXP (xinner, 1);
+	      mode   = GET_MODE (xinner);
+
+	      gcc_assert (INTVAL (size) == GET_MODE_SIZE (mode));
+	    }
+	  else if (GET_CODE (xinner) == MEM)
+	    {
+	      gcc_assert ((INTVAL (size) & (STACK_BOUNDARY_BYTES - 1)) == 0);
+	      xinner = adjust_address (xinner, mode, INTVAL (size) );
+	    }
+	  else
+	    gcc_unreachable ();
+#endif
+
 	  gcc_assert (partial % UNITS_PER_WORD == 0);
-	  move_block_to_reg (REGNO (reg), x, partial / UNITS_PER_WORD, mode);
+	  move_block_to_reg (REGNO (reg), xinner, partial / UNITS_PER_WORD, mode);
 	}
     }
 
@@ -4779,7 +4827,14 @@ count_type_elements (tree type, bool allow_flexarr)
 
     case UNION_TYPE:
     case QUAL_UNION_TYPE:
-      return -1;
+      {
+	/* Ho hum.  How in the world do we guess here?  Clearly it isn't
+	   right to count the fields.  Guess based on the number of words.  */
+        HOST_WIDE_INT n = int_size_in_bytes (type);
+	if (n < 0)
+	  return -1;
+	return n / UNITS_PER_WORD;
+      }
 
     case COMPLEX_TYPE:
       return 2;

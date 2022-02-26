@@ -1,0 +1,37 @@
+/* Definitions of target machine for GNU compiler, for META
+   Copyright (C) 2007, 2008 Imagination Technologies Ltd
+
+This file is part of GCC.
+
+GCC is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 3, or (at your option) any later
+version.
+
+GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with GCC; see the file COPYING3.  If not see
+<http://www.gnu.org/licenses/>.  */
+
+
+/* CC_NOOV mode should be used with SImode integer equalities.
+   CC_Z    mode should be used if only the Z zero flag is set correctly
+   CC_N    mode should be used if only the N sign flag is set correctly
+   CC_O    mode should be used if only the O overflow flag is set correctly
+   CC_C    mode should be used if only the C carry flag is set correctly
+   CC      mode should be used otherwise.  */
+
+CC_MODE (CC_NOOV);
+CC_MODE (CC_Z);
+CC_MODE (CC_N);
+CC_MODE (CC_O);
+CC_MODE (CC_C);
+CC_MODE (CC_FP);
+CC_MODE (CC_FP_Q);
+
+VECTOR_MODE (INT, SI, 2);
+VECTOR_MODE (FLOAT, SF, 2);

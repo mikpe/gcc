@@ -65,6 +65,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifdef HAVE_doloop_end
 
+#ifndef DECREMENT_AND_BRANCH_REG
+#define DECREMENT_AND_BRANCH_REG(MODE) gen_reg_rtx (MODE)
+#endif
+
 /* Return the loop termination condition for PATTERN or zero
    if it is not a decrement and branch jump insn.  */
 
@@ -358,6 +362,10 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
   if (increment_count)
     count = simplify_gen_binary (PLUS, mode, count, const1_rtx);
 
+  /* CONST_INT's must be correctly sign-extended for mode. */
+  if (CONST_INT_P (count))
+    count = gen_int_mode (INTVAL (count), mode);
+
   /* Insert initialization of the count register into the loop header.  */
   start_sequence ();
   tmp = force_operand (count, counter_reg);
@@ -544,7 +552,7 @@ doloop_optimize (struct loop *loop)
      to modify the loop since there is some aspect the back-end does
      not like.  */
   start_label = block_label (desc->in_edge->dest);
-  doloop_reg = gen_reg_rtx (mode);
+  doloop_reg = DECREMENT_AND_BRANCH_REG (mode);
   doloop_seq = gen_doloop_end (doloop_reg, iterations, iterations_max,
 			       GEN_INT (level), start_label);
 
@@ -612,6 +620,18 @@ doloop_optimize (struct loop *loop)
   return true;
 }
 
+#ifndef DOLOOP_OPTIMIZE_INIT
+#define DOLOOP_OPTIMIZE_INIT()
+#endif
+
+#ifndef DOLOOP_OPTIMIZE_LOOP
+#define DOLOOP_OPTIMIZE_LOOP(LOOP)    doloop_optimize (LOOP)
+#endif
+
+#ifndef DOLOOP_OPTIMIZE_FINI
+#define DOLOOP_OPTIMIZE_FINI()
+#endif
+
 /* This is the main entry point.  Process all LOOPS using doloop_optimize.  */
 
 void
@@ -620,14 +640,18 @@ doloop_optimize_loops (struct loops *loops)
   unsigned i;
   struct loop *loop;
 
+  DOLOOP_OPTIMIZE_INIT ();
+
   for (i = 1; i < loops->num; i++)
     {
       loop = loops->parray[i];
       if (!loop)
 	continue;
 
-      doloop_optimize (loop);
+      DOLOOP_OPTIMIZE_LOOP (loop);
     }
+
+  DOLOOP_OPTIMIZE_FINI ();
 
   iv_analysis_done ();
 

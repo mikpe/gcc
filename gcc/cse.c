@@ -4881,6 +4881,17 @@ cse_insn (rtx insn, rtx libcall_insn)
 	}
     }
 
+#ifdef AUTO_INC_DEC
+  /* Invalidate all AUTO inc registers. */
+  {
+    rtx link;
+
+    for (link = REG_NOTES (insn); link; link = XEXP (link, 1))
+      if (REG_NOTE_KIND (link) == REG_INC)
+        invalidate (XEXP (link, 0), VOIDmode);
+  }
+#endif
+
   if (GET_CODE (x) == SET)
     {
       sets = alloca (sizeof (struct set));

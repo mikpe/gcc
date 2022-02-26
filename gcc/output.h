@@ -490,7 +490,7 @@ struct unnamed_section GTY(()) {
   /* The callback used to switch to the section, and the data that
      should be passed to the callback.  */
   unnamed_section_callback GTY ((skip)) callback;
-  const void *GTY ((skip)) data;
+  const char *GTY (()) data;
 
   /* The next entry in the chain of unnamed sections.  */
   section *next;
@@ -557,6 +557,9 @@ extern section *get_named_section (tree, const char *, int);
 extern void place_block_symbol (rtx);
 extern rtx get_section_anchor (struct object_block *, HOST_WIDE_INT,
 			       enum tls_model);
+extern section *mergeable_string_section (tree,
+					  unsigned HOST_WIDE_INT,
+				          unsigned int);
 extern section *mergeable_constant_section (enum machine_mode,
 					    unsigned HOST_WIDE_INT,
 					    unsigned int);

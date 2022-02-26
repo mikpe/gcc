@@ -80,6 +80,10 @@ static int stable_and_no_regs_but_for_p (rtx, rtx, rtx);
 static int regclass_compatible_p (int, int);
 static int replacement_quality (rtx);
 static int fixup_match_2 (rtx, rtx, rtx, rtx);
+#ifdef AUTO_INC_DEC
+static void update_auto_inc_notes (rtx);
+static void remove_auto_inc_notes (rtx);
+#endif
 
 /* Return nonzero if registers with CLASS1 and CLASS2 can be merged without
    causing too much register allocation problems.  */
@@ -1042,6 +1046,52 @@ fixup_match_2 (rtx insn, rtx dst, rtx src, rtx offset)
 
   return 0;
 }
+
+#ifdef AUTO_INC_DEC
+/* Remove all REG_INC notes from INSN.  */
+
+static void
+remove_auto_inc_notes (rtx insn)
+{
+  rtx prev = NULL_RTX;
+  rtx link;
+
+  gcc_assert (insn);
+
+  link = REG_NOTES (insn);
+  while (link)
+    {
+      rtx next = XEXP (link, 1);
+
+      if (REG_NOTE_KIND (link) == REG_INC)
+        {
+          if (link == REG_NOTES (insn))
+            REG_NOTES (insn) = next;
+          else
+            XEXP (prev, 1) = next;
+        }
+
+      prev = link;
+      link = next;
+    }
+}
+
+/* Updates REG_INC notes for all insns in the sequence starting at FIRST.  */
+
+static void
+update_auto_inc_notes (rtx first)
+{
+  rtx insn;
+      
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    if (INSN_P (insn))
+      {
+        remove_auto_inc_notes (insn);
+
+        add_auto_inc_notes (insn, PATTERN (insn));
+      }
+}
+#endif
 
 /* Main entry for the register move optimization.
    F is the first instruction.
@@ -2491,6 +2541,11 @@ static unsigned int
 rest_of_handle_regmove (void)
 {
   regmove_optimize (get_insns (), max_reg_num ());
+#ifdef AUTO_INC_DEC
+  /* The regmove optimization may invalidate existing REG_INC notes
+     so update the REG_INC note afterwards.  */
+  update_auto_inc_notes (get_insns ());
+#endif  
   cleanup_cfg (CLEANUP_EXPENSIVE | CLEANUP_UPDATE_LIFE);
   return 0;
 }

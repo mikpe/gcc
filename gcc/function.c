@@ -2245,7 +2245,11 @@ assign_parm_find_entry_rtl (struct assign_parm_data_all *all,
 	  gcc_assert (!all->extra_pretend_bytes && !all->pretend_args_size);
 
 	  pretend_bytes = partial;
+#ifdef METAG_PARTIAL_ARGS
+	  all->pretend_args_size = pretend_bytes;
+#else
 	  all->pretend_args_size = CEIL_ROUND (pretend_bytes, STACK_BYTES);
+#endif
 
 	  /* We want to align relative to the actual stack pointer, so
 	     don't include this in the stack size until later.  */
@@ -2259,8 +2263,13 @@ assign_parm_find_entry_rtl (struct assign_parm_data_all *all,
 
   /* Adjust offsets to include the pretend args.  */
   pretend_bytes = all->extra_pretend_bytes - pretend_bytes;
-  data->locate.slot_offset.constant += pretend_bytes;
-  data->locate.offset.constant += pretend_bytes;
+#ifdef METAG_PARTIAL_ARGS
+  if (data->partial != 0)
+#endif
+    {
+      data->locate.slot_offset.constant += pretend_bytes;
+      data->locate.offset.constant += pretend_bytes;
+    }
 
   data->entry_parm = entry_parm;
 }
@@ -2369,8 +2378,10 @@ assign_parm_adjust_entry_rtl (struct assign_parm_data_one *data)
       else
 	{
 	  gcc_assert (data->partial % UNITS_PER_WORD == 0);
+#ifndef METAG_PARTIAL_ARGS
 	  move_block_from_reg (REGNO (entry_parm), validize_mem (stack_parm),
 			       data->partial / UNITS_PER_WORD);
+#endif
 	}
 
       entry_parm = stack_parm;
@@ -3062,8 +3073,10 @@ assign_parms (tree fndecl)
 
   /* We have aligned all the args, so add space for the pretend args.  */
   current_function_pretend_args_size = all.pretend_args_size;
+#ifndef METAG_PARTIAL_ARGS
   all.stack_args_size.constant += all.extra_pretend_bytes;
   current_function_args_size = all.stack_args_size.constant;
+#endif
 
   /* Adjust function incoming argument size for alignment and
      minimum length.  */

@@ -1,0 +1,135 @@
+; Copyright (C) 2007, 2008 Imagination Technologies Ltd
+
+; This file is part of GCC.
+
+; GCC is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 3, or (at your option) any later
+; version.
+
+; GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+; WARRANTY; without even the implied warranty of MERCHANTABILITY or
+; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+; for more details.
+
+; You should have received a copy of the GNU General Public License
+; along with GCC; see the file COPYING3.  If not see
+; <http://www.gnu.org/licenses/>.
+
+
+; Conditional execution can be checked for using TARGET_COND_EXEC_OPTIMIZE
+; This allows the optimize flag to be checked as well as the COND_EXEC
+; flag
+
+mcond-exec
+Target Mask(COND_EXEC)
+Enable conditional instructions.
+
+mbr-txrpt
+Target Var(flag_branch_on_count_reg) VarExists
+Enable use of low overhead loop instructions
+Default: Enabled
+
+mhwloop
+Target Var(flag_branch_on_count_reg) VarExists
+Enable use of low overhead loop instructions
+Default: Enabled
+
+mcharset=
+Target RejectNegative Joined Var(metag_charset_string) Init("")
+Specify the character set used by strcmp
+
+mextreg=
+Target RejectNegative Joined Var(metag_extreg_string) Init("")
+Specify the allowed extended registers in each unit (D0D1A0A1)
+Default: 0000
+
+mmetac=
+Target RejectNegative Joined Var(metag_cpu_string) Init("")
+Select Meta Core (0.1,1.0,1.1,1.2,2.1)
+
+mtune=
+Target RejectNegative Joined Var(metag_tune_string)
+Schedule for Meta Core  (0.1,1.0,1.1,1.2,2.1)
+
+mmtx
+Target RejectNegative Mask(MTX) UnDocumented
+Target the MTX core family
+
+mminim
+Target Mask(MINIM)
+Optimise toward the core 16 bit MiniM instruction set and apply jump compression
+
+mminim-optimise
+Target Mask(MINIM_OPTIMISE)
+Apply MiniM optimisations.
+
+mhard-float
+Target JoinedOrMissing Mask(FPU) Negative(msoft-float) RejectNegative
+Enable generation of FPU instructions
+=D Double precision support (default)
+=S Single precision support
+Implies -mregs-float=16
+
+mflush-to-zero
+Target Mask(FLUSH_TO_ZERO)
+Disable instructions flushing to zero
+
+msoft-float
+Target InverseMask(FPU) Negative(mhard-float)
+Disable generation of FPU instructions (default)
+
+msimd-float
+Target Mask(FPU_SIMD)
+Enable SIMD FPU instructions (dual single precision operations)
+Only permitted with -mhard-float[=D]
+
+maccumfp
+Target Mask(FPU_ACCUM) 
+Enable generation of FPU accumulator instructions
+Meta GCC does not use the FPU accumulator regardless of this option
+
+mregs-float=
+Target RejectNegative Joined Var(metag_fpureg_string) Init("")
+Specify the allowed floating point registers
+Default: 0
+
+mdsp
+Target Mask(DSP)
+Enable SIMD instructions (Requires DSP hardware thread).
+Implies -mextreg=8844
+
+mwidth=
+Target RejectNegative Joined Var(metag_width_string) Init("")
+Specify maximum width of a single memory access (32|64)
+
+mjump-table-branch=
+Target RejectNegative Joined Var(metag_jump_table_string) Init("auto") UnDocumented
+Specify the default branch size for jump tables in MiniM code
+Only permitted with -mminim
+
+mtbictxsave
+Target Mask(ECH)
+Enable extended context saving
+Allows DSP resources to be preserved in pre-emptive environments
+
+mcpu-config=
+Target RejectNegative Joined Var(metag_config_file) Init("")
+Specify a configuration file for setting default options
+
+mextensions=
+Target RejectNegative Joined Var(metag_extensions_string) Init("")
+Specify the permitted extensions to the core instruction set
+
+mhwtrace
+Target Mask(HWTRACE)
+Enable H/W instrumented tracing.
+
+mhwtrace-retpc
+Target Mask(HWTRACE_RETPC)
+Enable H/W instrumented tracing, including return addresses
+
+mhwtrace-leaf
+Target Mask(HWTRACE_LEAF)
+Enable H/W instrumented tracing, for all functions
+

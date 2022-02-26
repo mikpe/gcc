@@ -75,6 +75,8 @@
 #undef strerror
 #undef strlen
 
+#undef index
+
 _GLIBCXX_BEGIN_NAMESPACE(std)
 
   using ::memcpy;
