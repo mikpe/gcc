@@ -480,7 +480,8 @@ enum reg_class {
 
 extern enum reg_class regno_reg_class[];
 #define REGNO_REG_CLASS(REGNO) (regno_reg_class[(REGNO)])
-#define INDEX_REG_CLASS GENERAL_REGS
+#define MODE_INDEX_REG_CLASS(MODE) \
+  (MODE_OK_FOR_INDEX_P (MODE) ? GENERAL_REGS : NO_REGS)
 #define BASE_REG_CLASS ADDR_REGS
 
 #define PREFERRED_RELOAD_CLASS(X,CLASS) \
@@ -614,6 +615,10 @@ __transfer_from_trampoline ()					\
 #define HAVE_POST_INCREMENT 1
 #define HAVE_PRE_DECREMENT 1
 
+/* Return true if addresses of mode MODE can have an index register.  */
+#define MODE_OK_FOR_INDEX_P(MODE) \
+  (!TARGET_COLDFIRE_FPU || GET_MODE_CLASS (MODE) != MODE_FLOAT)
+
 /* Macros to check register numbers against specific register classes.  */
 
 /* True for data registers, D0 through D7.  */
@@ -628,9 +633,10 @@ __transfer_from_trampoline ()					\
 /* True for floating point registers, FP0 through FP7.  */
 #define FP_REGNO_P(REGNO)	IN_RANGE (REGNO, 16, 23)
 
-#define REGNO_OK_FOR_INDEX_P(REGNO)			\
-  (INT_REGNO_P (REGNO)					\
-   || INT_REGNO_P (reg_renumber[REGNO]))
+#define REGNO_MODE_OK_FOR_INDEX_P(REGNO, MODE)		\
+  (MODE_OK_FOR_INDEX_P (MODE)				\
+   && (INT_REGNO_P (REGNO)				\
+       || INT_REGNO_P (reg_renumber[REGNO])))
 
 #define REGNO_OK_FOR_BASE_P(REGNO)			\
   (ADDRESS_REGNO_P (REGNO)				\
@@ -696,8 +702,8 @@ __transfer_from_trampoline ()					\
 #define REG_OK_FOR_BASE_P(X) \
   m68k_legitimate_base_reg_p (X, REG_STRICT_P)
 
-#define REG_OK_FOR_INDEX_P(X) \
-  m68k_legitimate_index_reg_p (X, REG_STRICT_P)
+#define REG_MODE_OK_FOR_INDEX_P(X, MODE)	\
+  m68k_legitimate_index_reg_p (MODE, X, REG_STRICT_P)
 
 
 /* This address is OK as it stands.  */

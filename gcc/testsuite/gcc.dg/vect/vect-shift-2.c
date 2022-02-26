@@ -5,6 +5,7 @@
    correct value is generated.  */
 
 #ifdef TRACE
+#include <stdio.h>
 #endif
 
 #include <stdarg.h>

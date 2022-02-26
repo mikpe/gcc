@@ -347,6 +347,8 @@ namespace __cxxabiv1
 #define PERSONALITY_FUNCTION	__gxx_personality_v0
 #endif
 
+#pragma GCC visibility push(default)
+
 extern "C" _Unwind_Reason_Code
 #ifdef __ARM_EABI_UNWINDER__
 PERSONALITY_FUNCTION (_Unwind_State state,
@@ -384,6 +386,8 @@ PERSONALITY_FUNCTION (int version,
   switch (state & _US_ACTION_MASK)
     {
     case _US_VIRTUAL_UNWIND_FRAME:
+      if (state & _US_FORCE_UNWIND)
+	CONTINUE_UNWINDING;
       actions = _UA_SEARCH_PHASE;
       break;
 
@@ -717,6 +721,8 @@ PERSONALITY_FUNCTION (int version,
 #endif
   return _URC_INSTALL_CONTEXT;
 }
+
+#pragma GCC visibility pop
 
 /* The ARM EABI implementation of __cxa_call_unexpected is in a
    different file so that the personality routine (PR) can be used

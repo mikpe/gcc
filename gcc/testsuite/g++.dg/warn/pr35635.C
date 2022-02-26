@@ -1,6 +1,6 @@
 /* PR 35635 */
 /* { dg-do compile } */
-/* { dg-options "-Wconversion -Wsign-conversion" } */
+/* { dg-options "-Wconversion -Wsign-conversion -fsigned-bitfields" } */
 
 struct unsigned_bit {
   unsigned int x:1;

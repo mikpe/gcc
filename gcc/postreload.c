@@ -46,6 +46,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "timevar.h"
 #include "tree-pass.h"
+#include "addresses.h"
 #include "df.h"
 #include "dbgcnt.h"
 
@@ -1122,6 +1123,7 @@ reload_combine_recognize_pattern (rtx insn)
       && reg_state[regno].use_index < RELOAD_COMBINE_MAX_USES
       && last_label_ruid < reg_state[regno].use_ruid)
     {
+      enum reg_class index_regs = index_reg_class (VOIDmode);
       rtx base = XEXP (src, 1);
       rtx prev = prev_nonnote_nondebug_insn (insn);
       rtx prev_set = prev ? single_set (prev) : NULL_RTX;
@@ -1134,8 +1136,8 @@ reload_combine_recognize_pattern (rtx insn)
 	 register+register that we want to use to substitute uses of REG
 	 (typically in MEMs) with.  First check REG and BASE for being
 	 index registers; we can use them even if they are not dead.  */
-      if (TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS], regno)
-	  || TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS],
+      if (TEST_HARD_REG_BIT (reg_class_contents[index_regs], regno)
+	  || TEST_HARD_REG_BIT (reg_class_contents[index_regs],
 				REGNO (base)))
 	{
 	  index_reg = reg;
@@ -1149,7 +1151,7 @@ reload_combine_recognize_pattern (rtx insn)
 	     two registers.  */
 	  for (i = first_index_reg; i <= last_index_reg; i++)
 	    {
-	      if (TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS], i)
+	      if (TEST_HARD_REG_BIT (reg_class_contents[index_regs], i)
 		  && reg_state[i].use_index == RELOAD_COMBINE_MAX_USES
 		  && reg_state[i].store_ruid <= reg_state[regno].use_ruid
 		  && (call_used_regs[i] || df_regs_ever_live_p (i))
@@ -1237,15 +1239,17 @@ reload_combine (void)
   unsigned int r;
   int min_labelno, n_labels;
   HARD_REG_SET ever_live_at_start, *label_live;
+  enum reg_class index_regs;
 
   /* To avoid wasting too much time later searching for an index register,
      determine the minimum and maximum index register numbers.  */
-  if (INDEX_REG_CLASS == NO_REGS)
+  index_regs = index_reg_class (VOIDmode);
+  if (index_regs == NO_REGS)
     last_index_reg = -1;
   else if (first_index_reg == -1 && last_index_reg == 0)
     {
       for (r = 0; r < FIRST_PSEUDO_REGISTER; r++)
-	if (TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS], r))
+	if (TEST_HARD_REG_BIT (reg_class_contents[index_regs], r))
 	  {
 	    if (first_index_reg == -1)
 	      first_index_reg = r;

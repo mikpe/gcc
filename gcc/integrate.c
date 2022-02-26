@@ -55,6 +55,7 @@ along with GCC; see the file COPYING3.  If not see
 typedef struct GTY(()) initial_value_pair {
   rtx hard_reg;
   rtx pseudo;
+  bool initialized;
 } initial_value_pair;
 typedef struct GTY(()) initial_value_struct {
   int num_entries;
@@ -238,6 +239,7 @@ get_hard_reg_initial_val (enum machine_mode mode, unsigned int regno)
 {
   struct initial_value_struct *ivs;
   rtx rv;
+  int entry;
 
   rv = has_hard_reg_initial_val (mode, regno);
   if (rv)
@@ -253,17 +255,19 @@ get_hard_reg_initial_val (enum machine_mode mode, unsigned int regno)
       crtl->hard_reg_initial_vals = ivs;
     }
 
-  if (ivs->num_entries >= ivs->max_entries)
+  entry = ivs->num_entries++;
+  if (entry >= ivs->max_entries)
     {
       ivs->max_entries += 5;
       ivs->entries = GGC_RESIZEVEC (initial_value_pair, ivs->entries,
 				    ivs->max_entries);
     }
 
-  ivs->entries[ivs->num_entries].hard_reg = gen_rtx_REG (mode, regno);
-  ivs->entries[ivs->num_entries].pseudo = gen_reg_rtx (mode);
+  ivs->entries[entry].hard_reg = gen_rtx_REG (mode, regno);
+  ivs->entries[entry].pseudo = gen_reg_rtx (mode);
+  ivs->entries[entry].initialized = false;
 
-  return ivs->entries[ivs->num_entries++].pseudo;
+  return ivs->entries[entry].pseudo;
 }
 
 /* See if get_hard_reg_initial_val has been used to create a pseudo
@@ -298,7 +302,16 @@ emit_initial_value_sets (void)
 
   start_sequence ();
   for (i = 0; i < ivs->num_entries; i++)
-    emit_move_insn (ivs->entries[i].pseudo, ivs->entries[i].hard_reg);
+    {
+      if (ivs->entries[i].initialized)
+	continue;
+      ivs->entries[i].initialized = true;
+      emit_move_insn (ivs->entries[i].pseudo, ivs->entries[i].hard_reg);
+#ifdef HAVE_use_initial_val
+      if (HAVE_use_initial_val)
+	emit_insn (gen_use_initial_val (ivs->entries[i].pseudo));
+#endif
+    }
   seq = get_insns ();
   end_sequence ();
 

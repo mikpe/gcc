@@ -333,7 +333,7 @@ java/jcf-io.o: java/jcf-io.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
 java/jcf-path.o: java/jcf-path.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
   java/jcf.h
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	  -DLIBGCJ_ZIP_FILE='"$(datadir)/java/libgcj-$(version).jar"' \
+	  -DLIBGCJ_ZIP_FILE='"$(jardir)/java/libgcj-$(version).jar"' \
 	  -DDEFAULT_TARGET_VERSION=\"$(version)\" \
 	  $(srcdir)/java/jcf-path.c $(OUTPUT_OPTION)
 

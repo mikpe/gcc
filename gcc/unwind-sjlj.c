@@ -292,10 +292,11 @@ uw_advance_context (struct _Unwind_Context *context, _Unwind_FrameState *fs)
   uw_update_context (context, fs);
 }
 
-static inline void
+static inline _Unwind_Reason_Code
 uw_init_context (struct _Unwind_Context *context)
 {
   context->fc = _Unwind_SjLj_GetContext ();
+  return _URC_NO_REASON;
 }
 
 static void __attribute__((noreturn))

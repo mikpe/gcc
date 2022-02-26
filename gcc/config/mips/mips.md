@@ -63,6 +63,7 @@
   sb1a
   sr71000
   xlr
+  xlp
 ])
 
 (define_c_enum "unspec" [
@@ -113,6 +114,10 @@
   UNSPEC_RDHWR
   UNSPEC_SYNCI
   UNSPEC_SYNC
+  UNSPEC_COMPARE_AND_SWAP_ACQ
+  UNSPEC_COMPARE_AND_SWAP_REL
+  UNSPEC_SWAP_ACQ
+  UNSPEC_SWAP_REL
 
   ;; Cache manipulation.
   UNSPEC_MIPS_CACHE
@@ -133,6 +138,7 @@
 
 (define_constants
   [(TLS_GET_TP_REGNUM		3)
+   (MIPS16_T_REGNUM		24)
    (RETURN_ADDR_REGNUM		31)
    (CPRESTORE_SLOT_REGNUM	76)
    (GOT_VERSION_REGNUM		79)
@@ -267,6 +273,12 @@
 ;; frsqrt       floating point reciprocal square root
 ;; frsqrt1      floating point reciprocal square root step1
 ;; frsqrt2      floating point reciprocal square root step2
+;; dspmac       DSP MAC instructions not saturating the accumulator
+;; dspmacsat    DSP MAC instructions that saturate the accumulator
+;; accext       DSP accumulator extract instructions
+;; accmod       DSP accumulator modify instructions
+;; dspalu       DSP ALU instructions not saturating the result
+;; dspalusat    DSP ALU instructions that saturate the result
 ;; multi	multiword sequence (or user asm statements)
 ;; nop		no operation
 ;; ghost	an instruction that produces no real code
@@ -275,7 +287,8 @@
    prefetch,prefetchx,condmove,mtc,mfc,mthilo,mfhilo,const,arith,logical,
    shift,slt,signext,clz,pop,trap,imul,imul3,imul3nc,imadd,idiv,idiv3,move,
    fmove,fadd,fmul,fmadd,fdiv,frdiv,frdiv1,frdiv2,fabs,fneg,fcmp,fcvt,fsqrt,
-   frsqrt,frsqrt1,frsqrt2,multi,nop,ghost"
+   frsqrt,frsqrt1,frsqrt2,dspmac,dspmacsat,accext,accmod,dspalu,dspalusat,
+   multi,nop,ghost"
   (cond [(eq_attr "jal" "!unset") (const_string "call")
 	 (eq_attr "got" "load") (const_string "load")
 
@@ -343,13 +356,15 @@
 ;;       if (RELEASE_BARRIER == YES) sync
 ;;    1: OLDVAL = *MEM
 ;;       if ((OLDVAL & INCLUSIVE_MASK) != REQUIRED_OLDVAL) goto 2
+;;         CMP  = 0 [delay slot]
 ;;       $TMP1 = OLDVAL & EXCLUSIVE_MASK
 ;;       $TMP2 = INSN1 (OLDVAL, INSN1_OP2)
 ;;       $TMP3 = INSN2 ($TMP2, INCLUSIVE_MASK)
 ;;       $AT |= $TMP1 | $TMP3
 ;;       if (!commit (*MEM = $AT)) goto 1.
 ;;         if (INSN1 != MOVE && INSN1 != LI) NEWVAL = $TMP3 [delay slot]
-;;       sync
+;;       CMP  = 1
+;;       if (ACQUIRE_BARRIER == YES) sync
 ;;    2:
 ;;
 ;; where "$" values are temporaries and where the other values are
@@ -358,6 +373,7 @@
 ;; specified, the following values are used instead:
 ;;
 ;;    - OLDVAL: $AT
+;;    - CMP: NONE
 ;;    - NEWVAL: $AT
 ;;    - INCLUSIVE_MASK: -1
 ;;    - REQUIRED_OLDVAL: OLDVAL & INCLUSIVE_MASK
@@ -369,17 +385,25 @@
 ;; but the gen* programs don't yet support that.
 (define_attr "sync_mem" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_oldval" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_cmp" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_newval" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_inclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_exclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_required_oldval" "none,0,1,2,3,4,5" (const_string "none"))
 (define_attr "sync_insn1_op2" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_insn1" "move,li,addu,addiu,subu,and,andi,or,ori,xor,xori"
+(define_attr "sync_insn1" "move,li,addu,addiu,subu,and,andi,or,ori,xor,xori,neg"
   (const_string "move"))
 (define_attr "sync_insn2" "nop,and,xor,not"
   (const_string "nop"))
 (define_attr "sync_release_barrier" "yes,no"
   (const_string "yes"))
+(define_attr "sync_acquire_barrier" "yes,no"
+  (const_string "yes"))
+
+;; Atribute used by mips_output_atomic/mips_process_atomic.
+;; Note that they also use most of the sync loop attributes.
+(define_attr "sync_atomic_insn" "none,ldadd,swap"
+  (const_string "none"))
 
 ;; Length of instruction in bytes.
 (define_attr "length" ""
@@ -479,7 +503,9 @@
 	  (eq_attr "move_type" "load,fpload")
 	  (symbol_ref "mips_load_store_insns (operands[1], insn) * 4")
 	  (eq_attr "move_type" "store,fpstore")
-	  (symbol_ref "mips_load_store_insns (operands[0], insn) * 4")
+	  (cond [(eq (symbol_ref "TARGET_FIX_24K") (const_int 0))
+	         (symbol_ref "mips_load_store_insns (operands[0], insn) * 4")]
+	         (symbol_ref "mips_load_store_insns (operands[0], insn) * 4 + 4"))
 
 	  ;; In the worst case, a call macro will take 8 instructions:
 	  ;;
@@ -913,6 +939,7 @@
 (include "sb1.md")
 (include "sr71k.md")
 (include "xlr.md")
+(include "xlp.md")
 (include "generic.md")
 
 ;;
@@ -2130,7 +2157,7 @@
 		   (mult:ANYF (match_operand:ANYF 1 "register_operand" "f")
 			      (match_operand:ANYF 2 "register_operand" "f"))
 		   (match_operand:ANYF 3 "register_operand" "f"))))]
-  "ISA_HAS_NMADD4_NMSUB4 (<MODE>mode)
+  "ISA_HAS_NMADD4_NMSUB4
    && TARGET_FUSED_MADD
    && HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2144,7 +2171,7 @@
 		   (mult:ANYF (match_operand:ANYF 1 "register_operand" "f")
 			      (match_operand:ANYF 2 "register_operand" "f"))
 		   (match_operand:ANYF 3 "register_operand" "0"))))]
-  "ISA_HAS_NMADD3_NMSUB3 (<MODE>mode)
+  "ISA_HAS_NMADD3_NMSUB3
    && TARGET_FUSED_MADD
    && HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2158,7 +2185,7 @@
 	 (mult:ANYF (neg:ANYF (match_operand:ANYF 1 "register_operand" "f"))
 		    (match_operand:ANYF 2 "register_operand" "f"))
 	 (match_operand:ANYF 3 "register_operand" "f")))]
-  "ISA_HAS_NMADD4_NMSUB4 (<MODE>mode)
+  "ISA_HAS_NMADD4_NMSUB4
    && TARGET_FUSED_MADD
    && !HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2172,7 +2199,7 @@
 	 (mult:ANYF (neg:ANYF (match_operand:ANYF 1 "register_operand" "f"))
 		    (match_operand:ANYF 2 "register_operand" "f"))
 	 (match_operand:ANYF 3 "register_operand" "0")))]
-  "ISA_HAS_NMADD3_NMSUB3 (<MODE>mode)
+  "ISA_HAS_NMADD3_NMSUB3
    && TARGET_FUSED_MADD
    && !HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2186,7 +2213,7 @@
 		   (mult:ANYF (match_operand:ANYF 2 "register_operand" "f")
 			      (match_operand:ANYF 3 "register_operand" "f"))
 		   (match_operand:ANYF 1 "register_operand" "f"))))]
-  "ISA_HAS_NMADD4_NMSUB4 (<MODE>mode)
+  "ISA_HAS_NMADD4_NMSUB4
    && TARGET_FUSED_MADD
    && HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2200,7 +2227,7 @@
 		   (mult:ANYF (match_operand:ANYF 2 "register_operand" "f")
 			      (match_operand:ANYF 3 "register_operand" "f"))
 		   (match_operand:ANYF 1 "register_operand" "0"))))]
-  "ISA_HAS_NMADD3_NMSUB3 (<MODE>mode)
+  "ISA_HAS_NMADD3_NMSUB3
    && TARGET_FUSED_MADD
    && HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2214,7 +2241,7 @@
 	 (match_operand:ANYF 1 "register_operand" "f")
 	 (mult:ANYF (match_operand:ANYF 2 "register_operand" "f")
 		    (match_operand:ANYF 3 "register_operand" "f"))))]
-  "ISA_HAS_NMADD4_NMSUB4 (<MODE>mode)
+  "ISA_HAS_NMADD4_NMSUB4
    && TARGET_FUSED_MADD
    && !HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -2228,7 +2255,7 @@
 	 (match_operand:ANYF 1 "register_operand" "f")
 	 (mult:ANYF (match_operand:ANYF 2 "register_operand" "f")
 		    (match_operand:ANYF 3 "register_operand" "0"))))]
-  "ISA_HAS_NMADD3_NMSUB3 (<MODE>mode)
+  "ISA_HAS_NMADD3_NMSUB3
    && TARGET_FUSED_MADD
    && !HONOR_SIGNED_ZEROS (<MODE>mode)
    && !HONOR_NANS (<MODE>mode)"
@@ -3747,6 +3774,19 @@
 {
   operands[3] = mips_unspec_address (operands[2], SYMBOL_64_HIGH);
   operands[4] = mips_unspec_address (operands[2], SYMBOL_64_LOW);
+})
+
+;; Peephole to enable finding duplicates in delay slot filling.
+(define_peephole2
+  [(set (match_operand:SI 0 "register_operand")
+        (zero_extend:SI (match_operand:HI 1 "register_operand")))]
+  "!TARGET_MIPS16"
+  [(set (match_dup 0)
+	(and:SI (match_dup 2)
+                (const_int 65535)))
+  ]
+{
+  operands[2] = gen_rtx_REG (SImode, REGNO (operands[1]));
 })
 
 ;; On most targets, the expansion of (lo_sum (high X) X) for a 64-bit
@@ -5573,14 +5613,9 @@
   [(set (pc)
 	(match_operand 0 "register_operand"))
    (use (label_ref (match_operand 1 "")))]
-  ""
+  "!TARGET_MIPS16_SHORT_JUMP_TABLES"
 {
-  if (TARGET_MIPS16_SHORT_JUMP_TABLES)
-    operands[0] = expand_binop (Pmode, add_optab,
-				convert_to_mode (Pmode, operands[0], false),
-				gen_rtx_LABEL_REF (Pmode, operands[1]),
-				0, 0, OPTAB_WIDEN);
-  else if (TARGET_GPWORD)
+  if (TARGET_GPWORD)
     operands[0] = expand_binop (Pmode, add_optab, operands[0],
 				pic_offset_table_rtx, 0, 0, OPTAB_WIDEN);
   else if (TARGET_RTP_PIC)
@@ -5608,6 +5643,91 @@
   "%*j\t%0%/"
   [(set_attr "type" "jump")
    (set_attr "mode" "none")])
+
+;; For MIPS16, we don't know whether a given jump table will use short or
+;; word-sized offsets until late in compilation, when we are able to determine
+;; the sizes of the insns which comprise the containing function.  This
+;; necessitates the use of the casesi rather than the tablejump pattern, since
+;; the latter tries to calculate the index of the offset to jump through early
+;; in compilation, i.e. at expand time, when nothing is known about the
+;; eventual function layout.
+
+(define_expand "casesi"
+  [(match_operand:SI 0 "register_operand" "")	; index to jump on
+   (match_operand:SI 1 "const_int_operand" "")	; lower bound
+   (match_operand:SI 2 "const_int_operand" "")	; total range
+   (match_operand:SI 3 "" "")			; table label
+   (match_operand:SI 4 "" "")]			; out of range label
+  "TARGET_MIPS16_SHORT_JUMP_TABLES"
+{
+  if (operands[1] != const0_rtx)
+    {
+      rtx reg = gen_reg_rtx (SImode);
+      rtx offset = gen_int_mode (-INTVAL (operands[1]), SImode);
+      
+      if (!arith_operand (offset, SImode))
+        offset = force_reg (SImode, offset);
+      
+      emit_insn (gen_addsi3 (reg, operands[0], offset));
+      operands[0] = reg;
+    }
+
+  if (!arith_operand (operands[0], SImode))
+    operands[0] = force_reg (SImode, operands[0]);
+
+  operands[2] = GEN_INT (INTVAL (operands[2]) + 1);
+
+  emit_jump_insn (gen_casesi_internal_mips16 (operands[0], operands[2],
+					      operands[3], operands[4]));
+
+  DONE;
+})
+
+(define_insn "casesi_internal_mips16"
+  [(set (pc)
+     (if_then_else
+       (leu (match_operand:SI 0 "register_operand" "d")
+	    (match_operand:SI 1 "arith_operand" "dI"))
+       (mem:SI (plus:SI (mult:SI (match_dup 0) (const_int 4))
+			(label_ref (match_operand 2 "" ""))))
+       (label_ref (match_operand 3 "" ""))))
+   (clobber (match_scratch:SI 4 "=&d"))
+   (clobber (match_scratch:SI 5 "=d"))
+   (clobber (reg:SI MIPS16_T_REGNUM))
+   (use (label_ref (match_dup 2)))]
+  "TARGET_MIPS16_SHORT_JUMP_TABLES"
+{
+  rtx diff_vec = PATTERN (next_real_insn (operands[2]));
+
+  gcc_assert (GET_CODE (diff_vec) == ADDR_DIFF_VEC);
+  
+  output_asm_insn ("sltu\t%0, %1", operands);
+  output_asm_insn ("bteqz\t%3", operands);
+  output_asm_insn ("la\t%4, %2", operands);
+  
+  switch (GET_MODE (diff_vec))
+    {
+    case HImode:
+      output_asm_insn ("sll\t%5, %0, 1", operands);
+      output_asm_insn ("addu\t%5, %4, %5", operands);
+      output_asm_insn ("lh\t%5, 0(%5)", operands);
+      break;
+    
+    case SImode:
+      output_asm_insn ("sll\t%5, %0, 2", operands);
+      output_asm_insn ("addu\t%5, %4, %5", operands);
+      output_asm_insn ("lw\t%5, 0(%5)", operands);
+      break;
+
+    default:
+      gcc_unreachable ();
+    }
+  
+  output_asm_insn ("addu\t%4, %4, %5", operands);
+  
+  return "j\t%4";
+}
+  [(set_attr "length" "32")])
 
 ;; For TARGET_USE_GOT, we save the gp in the jmp_buf as well.
 ;; While it is possible to either pull it off the stack (in the
@@ -5716,10 +5836,30 @@
   [(set_attr "type"	"jump")
    (set_attr "mode"	"none")])
 
+(define_expand "simple_return"
+  [(simple_return)]
+  "!mips_can_use_return_insn ()"
+  { mips_expand_before_return (); })
+
+(define_insn "*simple_return"
+  [(simple_return)]
+  "!mips_can_use_return_insn ()"
+  "%*j\t$31%/"
+  [(set_attr "type"	"jump")
+   (set_attr "mode"	"none")])
+
 ;; Normal return.
 
 (define_insn "return_internal"
   [(return)
+   (use (match_operand 0 "pmode_register_operand" ""))]
+  ""
+  "%*j\t%0%/"
+  [(set_attr "type"	"jump")
+   (set_attr "mode"	"none")])
+
+(define_insn "simple_return_internal"
+  [(simple_return)
    (use (match_operand 0 "pmode_register_operand" ""))]
   ""
   "%*j\t%0%/"
@@ -6484,3 +6624,57 @@
 (define_c_enum "unspec" [
   UNSPEC_ADDRESS_FIRST
 ])
+
+(define_peephole2
+  [(set (match_operand:SI 0 "register_operand")
+	(zero_extend:SI (match_operand:QI 1)))
+   (set (match_operand:SI 2 "register_operand")
+	(plus:SI (match_dup 0)
+		 (match_operand:SI 3 "const_int_operand")))
+   (set (match_operand:SI 4 "register_operand")
+	(zero_extend:SI (match_operand:QI 5)))
+   (set (match_operand:SI 6 "register_operand")
+	(leu:SI (match_dup 4)
+		(match_operand:SI 7 "const_int_operand")))]
+  "REGNO (operands[5]) == REGNO (operands[2]) && INTVAL (operands[3]) < 0
+   && INTVAL (operands[7]) > 0
+   && (INTVAL (operands[7]) + -INTVAL (operands[3])) <= 256
+   && (/* op4 killed by last insn.  */
+       rtx_equal_p (operands[4], operands[6])
+	  /* op4 dead after use in last insn.  */
+       || peep2_reg_dead_p (4, operands[4]))"
+  [(set (match_dup 0)
+	(zero_extend:SI (match_dup 1)))
+   (set (match_dup 2)
+	(plus:SI (match_dup 0) (match_dup 3)))
+   (set (match_dup 6)
+	(leu:SI (match_dup 2)
+		(match_dup 7)))]
+)
+
+(define_peephole2
+  [(set (match_operand:SI 0 "register_operand")
+	(zero_extend:SI (match_operand:HI 1)))
+   (set (match_operand:SI 2 "register_operand")
+	(plus:SI (match_dup 0)
+		 (match_operand:SI 3 "const_int_operand")))
+   (set (match_operand:SI 4 "register_operand")
+	(and:SI (match_dup 2) (const_int 65535)))
+   (set (match_operand:SI 5 "register_operand")
+	(leu:SI (match_dup 4)
+		(match_operand:SI 6 "const_int_operand")))]
+  "INTVAL (operands[3]) < 0
+   && INTVAL (operands[6]) > 0
+   && (INTVAL (operands[6]) + -INTVAL (operands[3])) <= 65536
+   && (/* op4 killed by last insn.  */
+       rtx_equal_p (operands[4], operands[5])
+	  /* op4 dead after use in last insn.  */
+       || peep2_reg_dead_p (4, operands[4]))"
+  [(set (match_dup 0)
+	(zero_extend:SI (match_dup 1)))
+   (set (match_dup 2)
+	(plus:SI (match_dup 0) (match_dup 3)))
+   (set (match_dup 5)
+	(leu:SI (match_dup 2)
+		(match_dup 6)))]
+)

@@ -478,6 +478,7 @@ sink_code_in_bb (basic_block bb)
 	  last = false;
 	  continue;
 	}
+
       if (dump_file)
 	{
 	  fprintf (dump_file, "Sinking ");

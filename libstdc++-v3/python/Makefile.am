@@ -24,7 +24,7 @@
 include $(top_srcdir)/fragment.am
 
 ## Where to install the module code.
-pythondir = $(datadir)/gcc-$(gcc_version)/python
+pythondir = $(tooldir)/share/gcc-$(gcc_version)/python
 
 all-local: gdb.py
 
@@ -37,6 +37,7 @@ gdb.py: hook.in Makefile
 	sed -e 's,@pythondir@,$(pythondir),' \
 	    -e 's,@toolexeclibdir@,$(toolexeclibdir),' < $(srcdir)/hook.in > $@
 
+if GLIBCXX_HOSTED
 install-data-local: gdb.py
 	@$(mkdir_p) $(DESTDIR)$(toolexeclibdir)
 ## We want to install gdb.py as SOMETHING-gdb.py.  SOMETHING is the
@@ -58,3 +59,4 @@ install-data-local: gdb.py
 	cd $$here; \
 	echo " $(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py"; \
 	$(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py
+endif

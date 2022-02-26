@@ -746,7 +746,6 @@ default_no_function_rodata_section (tree decl ATTRIBUTE_UNUSED)
 }
 
 /* Return the section to use for string merging.  */
-
 static section *
 mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
 			  unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED,
@@ -988,11 +987,14 @@ align_variable (tree decl, bool dont_output_data)
     {
 #ifdef DATA_ALIGNMENT
       unsigned int data_align = DATA_ALIGNMENT (TREE_TYPE (decl), align);
+#else
+      unsigned int data_align = align;
+#endif
+      data_align = alignment_for_aligned_arrays (TREE_TYPE (decl), data_align);
       /* Don't increase alignment too much for TLS variables - TLS space
 	 is too precious.  */
       if (! DECL_THREAD_LOCAL_P (decl) || data_align <= BITS_PER_WORD)
 	align = data_align;
-#endif
 #ifdef CONSTANT_ALIGNMENT
       if (DECL_INITIAL (decl) != 0 && DECL_INITIAL (decl) != error_mark_node)
 	{

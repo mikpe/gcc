@@ -3181,6 +3181,7 @@ df_uses_record (struct df_collection_rec *collection_rec,
       }
 
     case RETURN:
+    case SIMPLE_RETURN:
       break;
 
     case ASM_OPERANDS:
@@ -3323,6 +3324,7 @@ df_get_call_refs (struct df_collection_rec * collection_rec,
   unsigned int i;
   df_ref def;
   bitmap_head defs_generated;
+  HARD_REG_SET fn_reg_set_usage;
 
   bitmap_initialize (&defs_generated, &df_bitmap_obstack);
 
@@ -3374,9 +3376,14 @@ df_get_call_refs (struct df_collection_rec * collection_rec,
 			   NULL, bb, insn_info, DF_REF_REG_DEF, flags);
 	}
 
+  get_call_reg_set_usage (insn_info->insn, &fn_reg_set_usage,
+			  regs_invalidated_by_call);
   is_sibling_call = SIBLING_CALL_P (insn_info->insn);
   EXECUTE_IF_SET_IN_BITMAP (regs_invalidated_by_call_regset, 0, ui, bi)
     {
+      if (!TEST_HARD_REG_BIT (fn_reg_set_usage, ui))
+	 continue;
+
       if (!global_regs[ui]
 	  && (!bitmap_bit_p (&defs_generated, ui))
 	  && (!is_sibling_call

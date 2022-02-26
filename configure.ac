@@ -628,7 +628,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib target-libgloss target-rda ${libgcj}"
     ;;
   *-*-vxworks*)
-    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libiberty target-libstdc++-v3 ${libgcj}"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libiberty ${libgcj}"
     ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.
@@ -687,6 +687,10 @@ case "${target}" in
     case ${with_newlib} in
       no) noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     esac
+    libgloss_dir=arm
+    ;;
+  arm*-*-nucleuseabi)
+    noconfigdirs="$noconfigdirs ${libgcj}"
     libgloss_dir=arm
     ;;
   arm*-*-symbianelf*)
@@ -771,6 +775,15 @@ case "${target}" in
   h8500-*-*)
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libgloss ${libgcj}"
     ;;
+  hexagon-*-elf*) 
+    noconfigdirs="$noconfigdirs ${libgcj} gdb" 
+    if test x$with_dinkumware = xyes ; then 
+      skipdirs="$skipdirs target-libiberty target-libgcc target-libstdc++-v3" 
+    fi 
+    ;; 
+  hexagon-*-linux*) 
+    noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss target-libiberty gdb" 
+    ;; 
   hppa1.1-*-osf* | hppa1.1-*-bsd* )
     ;;
   hppa*64*-*-linux* | parisc*64*-*-linux*)

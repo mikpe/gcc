@@ -755,6 +755,7 @@ SET_MAKE
 REPORT_BUGS_TEXI
 REPORT_BUGS_TO
 PKGVERSION
+EGLIBC_CONFIGS
 CONFIGURE_SPECS
 CROSS_SYSTEM_HEADER_DIR
 TARGET_SYSTEM_ROOT_DEFINE
@@ -798,6 +799,7 @@ target_subdir
 host_subdir
 build_subdir
 build_libsubdir
+licensedir
 target_noncanonical
 target_os
 target_vendor
@@ -853,6 +855,9 @@ ac_subst_files='option_includes
 language_hooks'
 ac_user_opts='
 enable_option_checking
+with_csl_license_version
+with_license
+with_csl_license_feature
 with_build_libsubdir
 with_local_prefix
 with_gxx_include_dir
@@ -882,6 +887,7 @@ enable_shared
 with_build_sysroot
 with_sysroot
 with_specs
+with_eglibc_configs
 with_pkgversion
 with_bugurl
 enable_languages
@@ -911,6 +917,7 @@ with_system_zlib
 enable_maintainer_mode
 enable_version_specific_runtime_libs
 with_slibdir
+enable_poison_system_directories
 enable_plugin
 enable_libquadmath_support
 '
@@ -1622,6 +1629,8 @@ Optional Features:
   --enable-version-specific-runtime-libs
                           specify that runtime libraries should be
                           installed in a compiler-specific directory
+  --enable-poison-system-directories
+                          warn for use of native system header directories
   --enable-plugin         enable plugin support
   --disable-libquadmath-support
                           disable libquadmath support for Fortran
@@ -1629,6 +1638,11 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-csl-license-version=VERSION
+                          Use VERSION to communicate with the license manager
+  --with-license          the path to the installed license component
+  --with-csl-license-feature=FEATURE
+                          Use FEATURE to communicate with the license manager
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
   --with-local-prefix=DIR specifies directory to put local include
   --with-gxx-include-dir=DIR
@@ -1647,6 +1661,8 @@ Optional Packages:
                           use sysroot as the system root during the build
   --with-sysroot=DIR Search for usr/lib, usr/include, et al, within DIR.
   --with-specs=SPECS      add SPECS to driver command-line processing
+  --with-eglibc-configs=CONFIGS
+                          build multilibs for these EGLIBC configurations
   --with-pkgversion=PKG   Use PKG in the version string in place of "GCC"
   --with-bugurl=URL       Direct users to URL to report a bug
   --with-multilib-list    Select multilibs (SH only)
@@ -3158,6 +3174,67 @@ esac
 
 
 
+
+
+# Check whether --with-csl-license-version was given.
+if test "${with_csl_license_version+set}" = set; then :
+  withval=$with_csl_license_version; case "$withval" in
+      (yes) as_fn_error "license version not specified" "$LINENO" 5 ;;
+      (no)  CSL_LICENSE_VERSION="" ;;
+      (*)   CSL_LICENSE_VERSION="$withval" ;;
+     esac
+else
+  CSL_LICENSE_VERSION=""
+
+fi
+
+  if test x"$CSL_LICENSE_VERSION" != x; then
+
+cat >>confdefs.h <<_ACEOF
+#define CSL_LICENSE_VERSION "$CSL_LICENSE_VERSION"
+_ACEOF
+
+  fi
+
+
+
+# Check whether --with-license was given.
+if test "${with_license+set}" = set; then :
+  withval=$with_license; case "$withval" in
+     (yes) as_fn_error "license not specified" "$LINENO" 5 ;;
+     (no)  with_license= ;;
+     (*) ;;
+  esac
+else
+  with_license=
+fi
+
+  licensedir=$with_license
+
+
+
+
+# Check whether --with-csl-license-feature was given.
+if test "${with_csl_license_feature+set}" = set; then :
+  withval=$with_csl_license_feature; case "$withval" in
+      (yes) as_fn_error "license feature not specified" "$LINENO" 5 ;;
+      (no)  CSL_LICENSE_FEATURE="" ;;
+      (*)   CSL_LICENSE_FEATURE="$withval" ;;
+     esac
+else
+  CSL_LICENSE_FEATURE=""
+
+fi
+
+  if test x"$CSL_LICENSE_FEATURE" != x; then
+
+cat >>confdefs.h <<_ACEOF
+#define CSL_LICENSE_FEATURE "$CSL_LICENSE_FEATURE"
+_ACEOF
+
+  fi
+
+
 # Determine the target- and build-specific subdirectories
 
 # post-stage1 host modules use a different CC_FOR_BUILD so, in order to
@@ -3405,7 +3482,7 @@ fi
 if test "${with_demangler_in_ld+set}" = set; then :
   withval=$with_demangler_in_ld; demangler_in_ld="$with_demangler_in_ld"
 else
-  demangler_in_ld=no
+  demangler_in_ld=yes
 fi
 
 
@@ -6958,6 +7035,10 @@ if test "${enable_fixed_point+set}" = set; then :
 else
 
   case $target in
+    arm*)
+      enable_fixed_point=yes
+      ;;
+
     mips*-*-*)
       case $host in
 	mips*-sgi-irix*)
@@ -7114,6 +7195,17 @@ if test "${with_specs+set}" = set; then :
   withval=$with_specs; CONFIGURE_SPECS=$withval
 else
   CONFIGURE_SPECS=
+
+fi
+
+
+
+
+# Check whether --with-eglibc-configs was given.
+if test "${with_eglibc_configs+set}" = set; then :
+  withval=$with_eglibc_configs; EGLIBC_CONFIGS=$withval
+else
+  EGLIBC_CONFIGS=
 
 fi
 
@@ -12427,6 +12519,10 @@ cegcc*)
   lt_cv_file_magic_cmd='$OBJDUMP -f'
   ;;
 
+nucleuseabi*)
+  lt_cv_deplibs_check_method=pass_all
+  ;;
+
 darwin* | rhapsody*)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -12528,6 +12624,10 @@ rdos*)
   ;;
 
 solaris*)
+  lt_cv_deplibs_check_method=pass_all
+  ;;
+
+symbian*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
@@ -16905,6 +17005,21 @@ newsos6)
   shlibpath_overrides_runpath=yes
   ;;
 
+nucleus*)
+  case $host_vendor in
+    samsung)
+      version_type=linux
+      library_names_spec='${libname}${release}${shared_ext}$versuffix $libname${shared_ext}'
+      soname_spec='$libname${shared_ext}$major'
+      shlibpath_var=LD_LIBRARY_PATH
+      hardcode_into_libs=yes
+      ;;
+    *)
+      dynamic_linker=no
+      ;;
+  esac
+  ;;
+
 *nto* | *qnx*)
   version_type=qnx
   need_lib_prefix=no
@@ -16990,6 +17105,14 @@ sunos4*)
     need_lib_prefix=no
   fi
   need_version=yes
+  ;;
+
+symbian*)
+  version_type=windows
+  shrext_cmds=".dll"
+  need_version=no
+  need_lib_prefix=no
+  library_names_spec='${libname}.dll'
   ;;
 
 sysv4 | sysv4.3*)
@@ -17505,7 +17628,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 17508 "configure"
+#line 17631 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17611,7 +17734,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 17614 "configure"
+#line 17737 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19453,6 +19576,10 @@ $as_echo_n "checking for $compiler option to produce PIC... " >&6; }
       # Interix 3.x gcc -fpic/-fPIC options generate broken code.
       # Instead, we relocate shared libraries at runtime.
       ;;
+    symbian*)
+      # symbian does not have PIC, the loader relocates non-pic shared objects
+      lt_prog_compiler_pic_CXX=
+      ;;
     sysv4*MP*)
       if test -d /usr/nec; then
 	lt_prog_compiler_pic_CXX=-Kconform_pic
@@ -20564,6 +20691,21 @@ newsos6)
   shlibpath_overrides_runpath=yes
   ;;
 
+nucleus*)
+  case $host_vendor in
+    samsung)
+      version_type=linux
+      library_names_spec='${libname}${release}${shared_ext}$versuffix $libname${shared_ext}'
+      soname_spec='$libname${shared_ext}$major'
+      shlibpath_var=LD_LIBRARY_PATH
+      hardcode_into_libs=yes
+      ;;
+    *)
+      dynamic_linker=no
+      ;;
+  esac
+  ;;
+
 *nto* | *qnx*)
   version_type=qnx
   need_lib_prefix=no
@@ -20649,6 +20791,14 @@ sunos4*)
     need_lib_prefix=no
   fi
   need_version=yes
+  ;;
+
+symbian*)
+  version_type=windows
+  shrext_cmds=".dll"
+  need_version=no
+  need_lib_prefix=no
+  library_names_spec='${libname}.dll'
   ;;
 
 sysv4 | sysv4.3*)
@@ -22507,6 +22657,29 @@ x:      .long   25
         call    #gettlsoff(x)'
 	tls_first_major=2
 	tls_first_minor=14
+	;;
+      hexagon-*-*)
+	conftest_s='
+	.section ".tdata", "awT", @progbits
+	.extern foo
+	.type foo, @tls_object
+	.section ".tbss", "awT", @nobits
+	.globl bar
+	.type bar, @tls_object
+bar: .skip 4
+	.text
+	r1 = #LO(foo@GDGOT)
+	r2 = #HI(foo@IEGOT)
+	r2 = #LO(foo@IE)
+	r2 = #HI(foo@DTPREL)
+	r2 = #HI(foo@TPREL)
+	r1 = #LO(bar@GDGOT)
+	r2 = #HI(bar@IEGOT)
+	r2 = #LO(bar@IE)
+	r2 = #HI(bar@DTPREL)
+	r2 = #HI(bar@TPREL)'
+	tls_first_major=2
+	tls_first_minor=20
 	;;
   hppa*-*-linux*)
     conftest_s='
@@ -24968,7 +25141,8 @@ esac
 # ??? Once 2.11 is released, probably need to add first known working
 # version to the per-target configury.
 case "$cpu_type" in
-  alpha | arm | avr | bfin | cris | i386 | m32c | m68k | microblaze | mips \
+  alpha | arm | avr | bfin | cris | hexagon | i386 \
+  | m32c | m68k | microblaze | mips \
   | pa | rs6000 | score | sparc | spu | xstormy16 | xtensa)
     insn="nop"
     ;;
@@ -25743,6 +25917,9 @@ else
   gcc_cv_libc_provides_ssp=no
     case "$target" in
        *-*-linux* | *-*-kfreebsd*-gnu | *-*-knetbsd*-gnu)
+      if test "x$enable_libssp" = "xno"; then
+	gcc_cv_libc_provides_ssp=yes
+      fi
       # glibc 2.4 and later provides __stack_chk_fail and
       # either __stack_chk_guard, or TLS access to stack guard canary.
       if test -f $target_header_dir/features.h \
@@ -26123,6 +26300,19 @@ fi
 fi
 
 
+
+# Check whether --enable-poison-system-directories was given.
+if test "${enable_poison_system_directories+set}" = set; then :
+  enableval=$enable_poison_system_directories;
+else
+  enable_poison_system_directories=no
+fi
+
+if test "x${enable_poison_system_directories}" = "xyes"; then
+
+$as_echo "#define ENABLE_POISON_SYSTEM_DIRECTORIES 1" >>confdefs.h
+
+fi
 
 # Substitute configuration variables
 

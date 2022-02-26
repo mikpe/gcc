@@ -186,13 +186,6 @@ extern "C" void __cxa_bad_typeid () __attribute__((__noreturn__));
 
 // @@@ These are not directly specified by the IA-64 C++ ABI.
 
-// Handles re-checking the exception specification if unexpectedHandler
-// throws, and if bad_exception needs to be thrown.  Called from the
-// compiler.
-extern "C" void __cxa_call_unexpected (void *) __attribute__((__noreturn__));
-extern "C" void __cxa_call_terminate (_Unwind_Exception*) throw ()
-  __attribute__((__noreturn__));
-
 #ifdef __ARM_EABI_UNWINDER__
 // Arm EABI specified routines.
 typedef enum {
@@ -200,12 +193,23 @@ typedef enum {
   ctm_succeeded = 1,
   ctm_succeeded_with_ptr_to_base = 2
 } __cxa_type_match_result;
-extern "C" __cxa_type_match_result __cxa_type_match(_Unwind_Exception*,
-						    const std::type_info*,
-						    bool, void**);
+extern "C" __cxa_type_match_result
+__cxa_type_match (_Unwind_Exception*, const std::type_info*, bool, void**);
 extern "C" bool __cxa_begin_cleanup (_Unwind_Exception*);
 extern "C" void __cxa_end_cleanup (void);
+#define __gnu_cxa_call_arg _Unwind_Control_Block*
+#else
+#define __gnu_cxa_call_arg void*
 #endif
+
+// Handles re-checking the exception specification if unexpectedHandler
+// throws, and if bad_exception needs to be thrown.  Called from the
+// compiler.
+#define __cxa_call_arg
+extern "C" void
+__cxa_call_unexpected (__gnu_cxa_call_arg) __attribute__((noreturn));
+extern "C" void
+__cxa_call_terminate (__gnu_cxa_call_arg) throw () __attribute__((noreturn));
 
 // Invokes given handler, dying appropriately if the user handler was
 // so inconsiderate as to return.
@@ -217,6 +221,29 @@ extern void __unexpected(std::unexpected_handler)
 // The current installed user handlers.
 extern std::terminate_handler __terminate_handler;
 extern std::unexpected_handler __unexpected_handler;
+
+#ifdef __symbian__
+extern "C" void __init_terminate_handler(void);
+extern "C" void __init_unexpected_handler(void);
+#endif
+
+static inline std::terminate_handler __get_terminate_handler(void)
+{
+#ifdef __symbian__
+  if (!__terminate_handler)
+    __init_terminate_handler();
+#endif
+  return __terminate_handler;
+}
+
+static inline std::unexpected_handler __get_unexpected_handler(void)
+{
+#ifdef __symbian__
+  if (!__unexpected_handler)
+    __init_unexpected_handler();
+#endif
+  return __unexpected_handler;
+}
 
 // These are explicitly GNU C++ specific.
 

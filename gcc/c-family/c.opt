@@ -929,6 +929,10 @@ fpretty-templates
 C++ ObjC++ Var(flag_pretty_templates) Init(1)
 -fno-pretty-templates Do not pretty-print template specializations as the template signature followed by the arguments
 
+fremove-local-statics
+C C++ Var(flag_remove_local_statics) Optimization
+Convert function-local static variables to automatic variables when it is safe to do so
+
 freplace-objc-classes
 ObjC ObjC++ Var(flag_replace_objc_classes)
 Used in Fix-and-Continue mode to indicate that object files may be swapped in at runtime

@@ -6071,6 +6071,11 @@ cse_process_notes_1 (rtx x, rtx object, bool *changed)
       validate_change (object, &XEXP (x, i),
 		       cse_process_notes (XEXP (x, i), object, changed), 0);
 
+  /* Rebuild a PLUS expression in canonical form if the first operand
+     ends up as a constant.  */
+  if (code == PLUS && GET_CODE (XEXP (x, 0)) == CONST_INT)
+    return plus_constant (XEXP(x, 1), INTVAL (XEXP (x, 0)));
+
   return x;
 }
 

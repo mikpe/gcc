@@ -45,6 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "value-prof.h"
 #include "pointer-set.h"
 #include "tree-inline.h"
+#include "target.h"
 
 /* This file contains functions for building the Control Flow Graph (CFG)
    for a function tree.  */
@@ -7344,6 +7345,9 @@ execute_warn_function_return (void)
   gimple last;
   edge e;
   edge_iterator ei;
+
+  if (!targetm.warn_func_result())
+    return 0;
 
   /* If we have a path to EXIT, then we do return.  */
   if (TREE_THIS_VOLATILE (cfun->decl)

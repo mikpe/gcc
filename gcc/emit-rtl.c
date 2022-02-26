@@ -102,6 +102,7 @@ rtx const_true_rtx;
 REAL_VALUE_TYPE dconst0;
 REAL_VALUE_TYPE dconst1;
 REAL_VALUE_TYPE dconst2;
+REAL_VALUE_TYPE dconst10;
 REAL_VALUE_TYPE dconstm1;
 REAL_VALUE_TYPE dconsthalf;
 
@@ -546,6 +547,13 @@ immed_double_const (HOST_WIDE_INT i0, HOST_WIDE_INT i1, enum machine_mode mode)
 
       if (GET_MODE_BITSIZE (mode) <= HOST_BITS_PER_WIDE_INT)
 	return gen_int_mode (i0, mode);
+
+      /* For modes larger than 2 * HOST_BITS_PER_WIDE_INT, the integer may
+	 still be representable if it fits in one word. For other cases,
+	 assert fail below.  */
+      if (GET_MODE_BITSIZE (mode) > 2 * HOST_BITS_PER_WIDE_INT
+	  && ((i1 == 0 && i0 >= 0) || (i1 == ~0 && i0 < 0)))
+	return GEN_INT (i0);
 
       gcc_assert (GET_MODE_BITSIZE (mode) == 2 * HOST_BITS_PER_WIDE_INT);
     }
@@ -1461,7 +1469,7 @@ get_mem_align_offset (rtx mem, unsigned int align)
      if (!MEM_EXPR (mem) || !MEM_OFFSET (mem)
 	 || !CONST_INT_P (MEM_OFFSET (mem))
 	 || (MAX (MEM_ALIGN (mem),
-	          get_object_alignment (MEM_EXPR (mem), align))
+	          MAX (align, get_object_alignment (MEM_EXPR (mem))))
 	     < align))
        return -1;
      else
@@ -1680,6 +1688,11 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	  && !TREE_THIS_VOLATILE (base))
 	MEM_READONLY_P (ref) = 1;
 
+      /* Mark static const strings readonly as well.  */
+      if (base && TREE_CODE (base) == STRING_CST && TREE_READONLY (base)
+	  && TREE_STATIC (base))
+	MEM_READONLY_P (ref) = 1;
+
       /* If this expression uses it's parent's alias set, mark it such
 	 that we won't change it.  */
       if (component_uses_parent_alias_set (t))
@@ -1801,9 +1814,9 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	  apply_bitpos = bitpos;
 	}
 
-      if (!align_computed && !INDIRECT_REF_P (t))
+      if (!align_computed)
 	{
-	  unsigned int obj_align = get_object_alignment (t, BIGGEST_ALIGNMENT);
+	  unsigned int obj_align = get_object_alignment (t);
 	  align = MAX (align, obj_align);
 	}
     }
@@ -2447,6 +2460,8 @@ verify_rtx_sharing (rtx orig, rtx insn)
     case CODE_LABEL:
     case PC:
     case CC0:
+    case RETURN:
+    case SIMPLE_RETURN:
     case SCRATCH:
       return;
       /* SCRATCH must be shared because they represent distinct values.  */
@@ -2547,6 +2562,8 @@ verify_rtl_sharing (void)
 	    for (i = 0; i < XVECLEN (sequence, 0); i++)
 	      {
 		q = XVECEXP (sequence, 0, i);
+		if (LABEL_P (q) || DELETED_NOTE_P (q))
+		  continue;
 		gcc_assert (INSN_P (q));
 		reset_used_flags (PATTERN (q));
 		reset_used_flags (REG_NOTES (q));
@@ -3251,13 +3268,16 @@ prev_label (rtx insn)
   return insn;
 }
 
-/* Return the last label to mark the same position as LABEL.  Return null
-   if LABEL itself is null.  */
+/* Return the last label to mark the same position as LABEL.  Return LABEL
+   itself if it is null or any return rtx.  */
 
 rtx
 skip_consecutive_labels (rtx label)
 {
   rtx insn;
+
+  if (label && ANY_RETURN_P (label))
+    return label;
 
   for (insn = label; insn != 0 && !INSN_P (insn); insn = NEXT_INSN (insn))
     if (LABEL_P (insn))
@@ -5148,7 +5168,7 @@ classify_insn (rtx x)
     return CODE_LABEL;
   if (GET_CODE (x) == CALL)
     return CALL_INSN;
-  if (GET_CODE (x) == RETURN)
+  if (GET_CODE (x) == RETURN || GET_CODE (x) == SIMPLE_RETURN)
     return JUMP_INSN;
   if (GET_CODE (x) == SET)
     {
@@ -5655,8 +5675,10 @@ init_emit_regs (void)
   init_reg_modes_target ();
 
   /* Assign register numbers to the globally defined register rtx.  */
-  pc_rtx = gen_rtx_PC (VOIDmode);
-  cc0_rtx = gen_rtx_CC0 (VOIDmode);
+  pc_rtx = gen_rtx_fmt_ (PC, VOIDmode);
+  ret_rtx = gen_rtx_fmt_ (RETURN, VOIDmode);
+  simple_return_rtx = gen_rtx_fmt_ (SIMPLE_RETURN, VOIDmode);
+  cc0_rtx = gen_rtx_fmt_ (CC0, VOIDmode);
   stack_pointer_rtx = gen_raw_REG (Pmode, STACK_POINTER_REGNUM);
   frame_pointer_rtx = gen_raw_REG (Pmode, FRAME_POINTER_REGNUM);
   hard_frame_pointer_rtx = gen_raw_REG (Pmode, HARD_FRAME_POINTER_REGNUM);
@@ -5769,6 +5791,7 @@ init_emit_once (void)
   REAL_VALUE_FROM_INT (dconst0,   0,  0, double_mode);
   REAL_VALUE_FROM_INT (dconst1,   1,  0, double_mode);
   REAL_VALUE_FROM_INT (dconst2,   2,  0, double_mode);
+  REAL_VALUE_FROM_INT (dconst10, 10,  0, double_mode);
 
   dconstm1 = dconst1;
   dconstm1.sign = 1;

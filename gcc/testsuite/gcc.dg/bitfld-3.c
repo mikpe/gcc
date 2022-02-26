@@ -1,6 +1,6 @@
 /* Test for bitfield alignment in structs and unions.  */
 /* { dg-do run { target pcc_bitfield_type_matters } }  */
-/* { dg-options "-O2" }  */
+/* { dg-options "-O2 -fsigned-bitfields" } */
 
 extern void abort (void);
 extern void exit (int);

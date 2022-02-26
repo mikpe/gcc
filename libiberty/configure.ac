@@ -203,6 +203,7 @@ if [[ "${shared}" = "yes" ]]; then
     *-*-cygwin*)	;;
     alpha*-*-linux*)	PICFLAG=-fPIC ;;
     arm*-*-*)		PICFLAG=-fPIC ;;
+    hexagon*-*-*)	PICFLAG=-fPIC ;;
     hppa*-*-*)		PICFLAG=-fPIC ;;
     i370-*-*)		PICFLAG=-fPIC ;;
     ia64-*-*)		PICFLAG=-fpic ;;
@@ -682,6 +683,13 @@ case "${host}" in
      *)				pexecute=pex-unix   ;;
 esac
 AC_SUBST(pexecute)
+
+# On MinGW, add support for Cygwin paths.
+case "${host}" in
+     *-*-mingw*)
+	AC_LIBOBJ([cygpath])
+	;;
+esac
 
 libiberty_AC_FUNC_STRNCMP
 

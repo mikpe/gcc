@@ -843,11 +843,10 @@ try_redirect_by_replacing_jump (edge e, basic_block target, bool in_cfglayout)
       if (dump_file)
 	fprintf (dump_file, "Redirecting jump %i from %i to %i.\n",
 		 INSN_UID (insn), e->dest->index, target->index);
-      if (!redirect_jump (insn, block_label (target), 0))
-	{
-	  gcc_assert (target == EXIT_BLOCK_PTR);
-	  return NULL;
-	}
+      if (target == EXIT_BLOCK_PTR)
+	return NULL;
+      if (! redirect_jump (insn, block_label (target), 0))
+	gcc_unreachable ();
     }
 
   /* Cannot do anything for target exit block.  */
@@ -1027,11 +1026,10 @@ patch_jump_insn (rtx insn, rtx old_label, basic_block new_bb)
 	  /* If the substitution doesn't succeed, die.  This can happen
 	     if the back end emitted unrecognizable instructions or if
 	     target is exit block on some arches.  */
-	  if (!redirect_jump (insn, block_label (new_bb), 0))
-	    {
-	      gcc_assert (new_bb == EXIT_BLOCK_PTR);
-	      return false;
-	    }
+	  if (new_bb == EXIT_BLOCK_PTR)
+	    return false;
+	  if (! redirect_jump (insn, block_label (new_bb), 0))
+	    gcc_unreachable ();
 	}
     }
   return true;
@@ -1114,10 +1112,13 @@ rtl_redirect_edge_and_branch (edge e, basic_block target)
 }
 
 /* Like force_nonfallthru below, but additionally performs redirection
-   Used by redirect_edge_and_branch_force.  */
+   Used by redirect_edge_and_branch_force.  JUMP_LABEL is used only
+   when redirecting to the EXIT_BLOCK, it is either a return or a
+   simple_return rtx indicating which kind of returnjump to create.
+   It should be NULL otherwise.  */
 
-static basic_block
-force_nonfallthru_and_redirect (edge e, basic_block target)
+basic_block
+force_nonfallthru_and_redirect (edge e, basic_block target, rtx jump_label)
 {
   basic_block jump_block, new_bb = NULL, src = e->src;
   rtx note;
@@ -1249,11 +1250,25 @@ force_nonfallthru_and_redirect (edge e, basic_block target)
   e->flags &= ~EDGE_FALLTHRU;
   if (target == EXIT_BLOCK_PTR)
     {
+      if (jump_label == ret_rtx)
+	{
 #ifdef HAVE_return
-	emit_jump_insn_after_setloc (gen_return (), BB_END (jump_block), loc);
+	  emit_jump_insn_after_setloc (gen_return (), BB_END (jump_block),
+				       loc);
 #else
-	gcc_unreachable ();
+	  gcc_unreachable ();
 #endif
+	}
+      else
+	{
+	  gcc_assert (jump_label == simple_return_rtx);
+#ifdef HAVE_simple_return
+	  emit_jump_insn_after_setloc (gen_simple_return (),
+				       BB_END (jump_block), loc);
+#else
+	  gcc_unreachable ();
+#endif
+	}
     }
   else
     {
@@ -1280,7 +1295,7 @@ force_nonfallthru_and_redirect (edge e, basic_block target)
 basic_block
 force_nonfallthru (edge e)
 {
-  return force_nonfallthru_and_redirect (e, e->dest);
+  return force_nonfallthru_and_redirect (e, e->dest, NULL_RTX);
 }
 
 /* Redirect edge even at the expense of creating new jump insn or
@@ -1297,7 +1312,7 @@ rtl_redirect_edge_and_branch_force (edge e, basic_block target)
   /* In case the edge redirection failed, try to force it to be non-fallthru
      and redirect newly created simplejump.  */
   df_set_bb_dirty (e->src);
-  return force_nonfallthru_and_redirect (e, target);
+  return force_nonfallthru_and_redirect (e, target, NULL_RTX);
 }
 
 /* The given edge should potentially be a fallthru edge.  If that is in

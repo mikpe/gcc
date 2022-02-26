@@ -378,6 +378,8 @@ GCC_FOR_TARGET = $(STAGE_CC_WRAPPER) ./xgcc -B./ -B$(build_tooldir)/bin/ -isyste
 # It also specifies -isystem ./include to find, e.g., stddef.h.
 GCC_CFLAGS=$(CFLAGS_FOR_TARGET) $(INTERNAL_CFLAGS) $(T_CFLAGS) $(LOOSE_WARN) $(C_LOOSE_WARN) -Wold-style-definition $($@-warn) -isystem ./include $(TCFLAGS)
 
+EGLIBC_CONFIGS = @EGLIBC_CONFIGS@
+
 # ---------------------------------------------------
 # Programs which produce files for the target machine
 # ---------------------------------------------------
@@ -604,6 +606,23 @@ objext = .o
 exeext = @host_exeext@
 build_exeext = @build_exeext@
 
+licensedir = @licensedir@
+ifneq ($(licensedir),) 
+# Header files for licensing.
+CSL_LICENSEINC = -I $(licensedir)/include
+# Libraries for licensing.
+CSL_LICENSELIB = -L$(licensedir)/lib -lcsllicense
+# The licensing program.  If the program does not exist, assume that
+# it is not needed.
+CSL_LICENSE_PROG = cs-license$(exeext)
+$(CSL_LICENSE_PROG):
+	if [ -f "$(licensedir)/libexec/cs-license$(exeext)" ] ; then \
+	  $(LN_S) $(licensedir)/libexec/cs-license$(exeext) . ;  \
+        else \
+	  touch $@; \
+	fi
+endif
+
 # Directory in which to put man pages.
 mandir = @mandir@
 man1dir = $(mandir)/man1
@@ -751,7 +770,7 @@ COMPILERS = cc1$(exeext) @all_compilers@
 
 # List of things which should already be built whenever we try to use xgcc
 # to compile anything (without linking).
-GCC_PASSES=xgcc$(exeext) cc1$(exeext) specs $(EXTRA_PASSES)
+GCC_PASSES=xgcc$(exeext) cc1$(exeext) specs $(EXTRA_PASSES) $(CSL_LICENSE_PROG)
 
 # Directory to link to, when using the target `maketest'.
 DIR = ../gcc
@@ -1036,7 +1055,7 @@ BUILD_LIBDEPS= $(BUILD_LIBIBERTY)
 # How to link with both our special library facilities
 # and the system's installed libraries.
 LIBS = @LIBS@ $(CPPLIB) $(LIBINTL) $(LIBICONV) $(LIBIBERTY) $(LIBDECNUMBER) \
-	$(HOST_LIBS)
+	$(CSL_LICENSELIB) $(HOST_LIBS)
 BACKENDLIBS = $(CLOOGLIBS) $(PPLLIBS) $(GMPLIBS) $(PLUGINLIBS) $(HOST_LIBS) \
 	$(ZLIB)
 # Any system libraries needed just for GNAT.
@@ -1069,7 +1088,8 @@ BUILD_ERRORS = build/errors.o
 INCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 	   -I$(srcdir)/../include @INCINTL@ \
 	   $(CPPINC) $(GMPINC) $(DECNUMINC) \
-	   $(PPLINC) $(CLOOGINC)
+	   $(PPLINC) $(CLOOGINC) \
+	   $(CSL_LICENSEINC)
 
 .c.o:
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $< $(OUTPUT_OPTION)
@@ -1226,6 +1246,7 @@ OBJS-common = \
 	dse.o \
 	dwarf2asm.o \
 	dwarf2out.o \
+	ee.o \
 	ebitmap.o \
 	emit-rtl.o \
 	et-forest.o \
@@ -1263,6 +1284,7 @@ OBJS-common = \
 	gtype-desc.o \
 	haifa-sched.o \
 	hooks.o \
+	hw-doloop.o \
 	hwint.o \
 	ifcvt.o \
 	implicit-zee.o \
@@ -1387,6 +1409,7 @@ OBJS-common = \
 	tree-profile.o \
 	tree-scalar-evolution.o \
 	tree-sra.o \
+	tree-if-switch-conversion.o \
 	tree-switch-conversion.o \
 	tree-ssa-address.o \
 	tree-ssa-alias.o \
@@ -1407,6 +1430,7 @@ OBJS-common = \
 	tree-ssa-loop-manip.o \
 	tree-ssa-loop-niter.o \
 	tree-ssa-loop-prefetch.o \
+	tree-ssa-loop-promote.o \
 	tree-ssa-loop-unswitch.o \
 	tree-ssa-loop.o \
 	tree-ssa-math-opts.o \
@@ -1416,6 +1440,7 @@ OBJS-common = \
 	tree-ssa-pre.o \
 	tree-ssa-propagate.o \
 	tree-ssa-reassoc.o \
+	tree-ssa-remove-local-statics.o \
 	tree-ssa-sccvn.o \
 	tree-ssa-sink.o \
 	tree-ssa-structalias.o \
@@ -1860,11 +1885,16 @@ cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS)
 LIB2ADD = $(LIB2FUNCS_EXTRA)
 LIB2ADD_ST = $(LIB2FUNCS_STATIC_EXTRA)
 
-# All source files for libgcc are either in the source directory (in
-# which case they will start with $(srcdir)), or generated into the build
-# directory (in which case they will be relative paths).
-srcdirify = $(patsubst $(srcdir)%,$$(gcc_srcdir)%,$(filter $(srcdir)%,$(1))) \
-            $(patsubst %,$$(gcc_objdir)/%,$(filter-out $(srcdir)%,$(1)))
+# All source files for libgcc are either generated in the libgcc build
+# directory which will be substituted for $$(libgcc_objdir), in the
+# source directory (in which case they will start with $(srcdir)), or
+# generated into the build directory (in which case they will be
+# relative paths).
+srcdirify = $(patsubst $$(libgcc_objdir)/%,%, \
+		$(filter $$(libgcc_objdir)%,$(1))) \
+	    $(patsubst $(srcdir)%,$$(gcc_srcdir)%,$(filter $(srcdir)%,$(1))) \
+	    $(patsubst %,$$(gcc_objdir)/%, \
+		$(filter-out $(srcdir)% $$(libgcc_objdir)%,$(1)))
 
 # The distinction between these two variables is no longer relevant,
 # so we combine them.  Sort removes duplicates.
@@ -1941,10 +1971,11 @@ s-mlib: $(srcdir)/genmultilib Makefile
 	    "$(MULTILIB_EXTRA_OPTS)" \
 	    "$(MULTILIB_EXCLUSIONS)" \
 	    "$(MULTILIB_OSDIRNAMES)" \
+	    "$(MULTILIB_ALIASES)" \
 	    "@enable_multilib@" \
 	    > tmp-mlib.h; \
 	else \
-	  $(SHELL) $(srcdir)/genmultilib '' '' '' '' '' '' '' no \
+	  $(SHELL) $(srcdir)/genmultilib '' '' '' '' '' '' '' '' no \
 	    > tmp-mlib.h; \
 	fi
 	$(SHELL) $(srcdir)/../move-if-change tmp-mlib.h multilib.h
@@ -2179,7 +2210,7 @@ attribs.o : attribs.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) \
 
 incpath.o: incpath.c incpath.h $(CONFIG_H) $(SYSTEM_H) $(CPPLIB_H) \
 		intl.h prefix.h coretypes.h $(TM_H) cppdefault.h $(TARGET_H) \
-		$(MACHMODE_H)
+		$(MACHMODE_H) $(FLAGS_H) toplev.h
 
 prefix.o: prefix.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) prefix.h \
 	Makefile $(BASEVER)
@@ -2577,6 +2608,12 @@ tree-ssa-loop-prefetch.o: tree-ssa-loop-prefetch.c $(TREE_FLOW_H) $(CONFIG_H) \
    $(CFGLOOP_H) $(PARAMS_H) langhooks.h $(BASIC_BLOCK_H) \
    $(DIAGNOSTIC_CORE_H) langhooks.h $(TREE_INLINE_H) $(TREE_DATA_REF_H) \
    $(OPTABS_H) tree-pretty-print.h
+tree-ssa-loop-promote.o: tree-ssa-loop-promote.c \
+   coretypes.h $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TOPLEV_H) \
+   $(RTL_H) $(TM_P_H) hard-reg-set.h $(OBSTACK_H) $(BASIC_BLOCK_H) \
+   pointer-set.h intl.h $(TREE_H) $(GIMPLE_H) $(HASHTAB_H) $(DIAGNOSTIC_H) \
+   $(TREE_FLOW_H) $(TREE_DUMP_H) $(CFGLOOP_H) $(FLAGS_H) $(TIMEVAR_H) \
+   tree-pass.h $(TM_H) tree-pretty-print.h
 tree-predcom.o: tree-predcom.c $(CONFIG_H) $(SYSTEM_H) $(TREE_H) $(TM_P_H) \
    $(CFGLOOP_H) $(TREE_FLOW_H) $(GGC_H) $(TREE_DATA_REF_H) \
    $(PARAMS_H) $(DIAGNOSTIC_H) $(TREE_PASS_H) $(TM_H) coretypes.h \
@@ -3084,6 +3121,11 @@ implicit-zee.o : implicit-zee.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RT
    $(DF_H) $(TIMEVAR_H) tree-pass.h $(RECOG_H) $(EXPR_H) \
    $(REGS_H) $(TREE_H) $(TM_P_H) insn-config.h $(INSN_ATTR_H) $(DIAGNOSTIC_CORE_H) \
    $(TARGET_H) $(OPTABS_H) insn-codes.h rtlhooks-def.h $(PARAMS_H) $(CGRAPH_H)
+ee.o : ee.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
+   hard-reg-set.h $(FLAGS_H) $(BASIC_BLOCK_H) $(FUNCTION_H) output.h \
+   $(DF_H) $(TIMEVAR_H) tree-pass.h $(RECOG_H) $(EXPR_H) \
+   $(REGS_H) $(TREE_H) $(TM_P_H) insn-config.h $(INSN_ATTR_H) $(TOPLEV_H) $(DIAGNOSTIC_CORE_H) \
+   $(TARGET_H) $(OPTABS_H) insn-codes.h rtlhooks-def.h $(PARAMS_H) $(CGRAPH_H)
 gcse.o : gcse.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(REGS_H) hard-reg-set.h $(FLAGS_H) insn-config.h $(GGC_H) \
    $(RECOG_H) $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) output.h toplev.h $(DIAGNOSTIC_CORE_H) \
@@ -3104,7 +3146,8 @@ lcm.o : lcm.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) $(REGS_H) \
 mode-switching.o : mode-switching.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
    $(TM_H) $(RTL_H) $(REGS_H) hard-reg-set.h $(FLAGS_H) insn-config.h \
    $(INSN_ATTR_H) $(RECOG_H) $(BASIC_BLOCK_H) $(TM_P_H) $(FUNCTION_H) \
-   output.h $(TREE_PASS_H) $(TIMEVAR_H) $(DF_H) $(TARGET_H) $(EMIT_RTL_H)
+   output.h $(TREE_PASS_H) $(TIMEVAR_H) $(DF_H) $(TARGET_H) $(EMIT_RTL_H) \
+   integrate.h
 tree-ssa-dce.o : tree-ssa-dce.c $(CONFIG_H) $(SYSTEM_H) $(TREE_H) \
     $(TREE_FLOW_H) $(DIAGNOSTIC_H) $(TIMEVAR_H) $(TM_H) \
     coretypes.h $(TREE_DUMP_H) $(TREE_PASS_H) $(FLAGS_H) $(BASIC_BLOCK_H) \
@@ -3125,6 +3168,11 @@ tree-sra.o : tree-sra.c $(CONFIG_H) $(SYSTEM_H) coretypes.h alloc-pool.h \
    $(IPA_PROP_H) $(DIAGNOSTIC_H) statistics.h $(TREE_DUMP_H) $(TIMEVAR_H) \
    $(PARAMS_H) $(TARGET_H) $(FLAGS_H) $(EXPR_H) tree-pretty-print.h \
    $(DBGCNT_H) $(TREE_INLINE_H) gimple-pretty-print.h
+tree-if-switch-conversion.o : tree-if-switch-conversion.c $(CONFIG_H) \
+    $(SYSTEM_H) $(TREE_H) $(TM_P_H) $(TREE_FLOW_H) $(DIAGNOSTIC_H) \
+    $(TREE_INLINE_H) $(TIMEVAR_H) $(TM_H) coretypes.h $(TREE_DUMP_H) \
+    $(GIMPLE_H) $(TREE_PASS_H) $(FLAGS_H) $(EXPR_H) $(BASIC_BLOCK_H) output.h \
+    $(GGC_H) $(OBSTACK_H) $(PARAMS_H) $(CPPLIB_H) $(PARAMS_H)
 tree-switch-conversion.o : tree-switch-conversion.c $(CONFIG_H) $(SYSTEM_H) \
     $(TREE_H) $(TM_P_H) $(TREE_FLOW_H) $(DIAGNOSTIC_H) $(TREE_INLINE_H) \
     $(TIMEVAR_H) $(TM_H) coretypes.h $(TREE_DUMP_H) $(GIMPLE_H) \
@@ -3281,7 +3329,7 @@ postreload.o : postreload.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
    $(RTL_H) $(FLAGS_H) $(EXPR_H) $(OPTABS_H) reload.h $(REGS_H) \
    hard-reg-set.h insn-config.h $(BASIC_BLOCK_H) $(RECOG_H) output.h \
    $(FUNCTION_H) $(DIAGNOSTIC_CORE_H) cselib.h $(TM_P_H) $(EXCEPT_H) $(TREE_H) $(MACHMODE_H) \
-   $(OBSTACK_H) $(TARGET_H) $(TIMEVAR_H) $(TREE_PASS_H) $(DF_H) $(DBGCNT_H)
+   $(OBSTACK_H) $(TARGET_H) $(TIMEVAR_H) $(TREE_PASS_H) addresses.h $(DF_H) $(DBGCNT_H)
 postreload-gcse.o : postreload-gcse.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
    $(TM_H) $(RTL_H) $(REGS_H) hard-reg-set.h $(FLAGS_H) insn-config.h \
    $(RECOG_H) $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) output.h $(DIAGNOSTIC_CORE_H) \
@@ -3445,7 +3493,7 @@ cfglayout.o : cfglayout.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
 timevar.o : timevar.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
    $(TIMEVAR_H) $(FLAGS_H) intl.h toplev.h $(DIAGNOSTIC_CORE_H) $(RTL_H) timevar.def
 regcprop.o : regcprop.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
-   $(RTL_H) insn-config.h $(BASIC_BLOCK_H) $(REGS_H) hard-reg-set.h \
+   $(RTL_H) insn-config.h $(BASIC_BLOCK_H) $(REGS_H) hard-reg-set.h dce.h \
    output.h $(RECOG_H) $(FUNCTION_H) $(OBSTACK_H) $(FLAGS_H) $(TM_P_H) \
    addresses.h reload.h $(DIAGNOSTIC_CORE_H) $(TIMEVAR_H) $(TREE_PASS_H) $(DF_H)
 regrename.o : regrename.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
@@ -3473,13 +3521,17 @@ target-globals.o : target-globals.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
    $(TM_H) insn-config.h $(MACHMODE_H) $(GGC_H) toplev.h target-globals.h \
    $(FLAGS_H) $(REGS_H) $(RTL_H) reload.h expmed.h $(EXPR_H) $(OPTABS_H) \
    $(LIBFUNCS_H) $(CFGLOOP_H) $(IRA_INT_H) builtins.h gcse.h bb-reorder.h
+hw-doloop.o : hw-doloop.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+   $(RTL_H) $(FLAGS_H) $(EXPR_H) hard-reg-set.h $(BASIC_BLOCK_H) $(TM_P_H) \
+   $(DF_H) $(CFGLAYOUT_H) $(CFGLOOP_H) output.h $(RECOG_H) $(TARGET_H) \
+   $(REGS_H) hw-doloop.h
 
 $(out_object_file): $(out_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h insn-config.h conditions.h \
    output.h $(INSN_ATTR_H) $(SYSTEM_H) toplev.h $(DIAGNOSTIC_CORE_H) \
    $(TARGET_H) $(LIBFUNCS_H) $(TARGET_DEF_H) $(FUNCTION_H) $(SCHED_INT_H) \
    $(TM_P_H) $(EXPR_H) langhooks.h $(GGC_H) $(OPTABS_H) $(REAL_H) \
-   tm-constrs.h $(GIMPLE_H) $(DF_H) cselib.h
+   tm-constrs.h $(GIMPLE_H) $(DF_H) cselib.h hw-doloop.h
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) \
 		$(out_file) $(OUTPUT_OPTION)
 
@@ -3750,6 +3802,7 @@ GTFILES = $(CPP_ID_DATA_H) $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/ipa-prop.h \
   $(srcdir)/lto-streamer.h \
   $(srcdir)/target-globals.h \
+  $(srcdir)/final.c \
   @all_gtfiles@
 
 # Compute the list of GT header files from the corresponding C sources,

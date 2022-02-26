@@ -298,6 +298,11 @@ esac
 case "${host}" in
   *-*-linux*)
     case "${host_cpu}" in
+      hexagon*)
+	# Expose the C++ atomics only for the Hexagon Linux ABI
+	# and not for the phone ABI.
+	abi_baseline_pair=hexagon-linux-gnu
+	;;
       i[567]86)
         abi_baseline_pair=i486-linux-gnu
         ;;
@@ -326,6 +331,9 @@ case "${host}" in
 	port_specific_symbol_files="\$(srcdir)/../config/os/gnu-linux/arm-eabi-extra.ver"
 	;;
     esac
+    ;;
+  arm*-*-nucleuseabi)
+    port_specific_symbol_files="\$(srcdir)/../config/os/nucleus/arm-eabi-extra.ver"
     ;;
   powerpc*-*-darwin*)
     port_specific_symbol_files="\$(srcdir)/../config/os/bsd/darwin/ppc-extra.ver"

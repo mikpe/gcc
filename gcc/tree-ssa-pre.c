@@ -3509,6 +3509,47 @@ insert_into_preds_of_block (basic_block block, unsigned int exprnum,
 }
 
 
+/* Indicate if, when optimizing for speed, it is appropriate to make
+   INSERTS_NEEDED insertions in order to make EXPR in BLOCK redundant.  */
+static bool
+ppre_n_insert_for_speed_p (pre_expr expr, basic_block block,
+			   unsigned int inserts_needed)
+{
+  /* The more expensive EXPR is, the more we should be prepared to insert
+     in the predecessors of BLOCK to make EXPR fully redundant.
+     For now, only recognize AND, OR, XOR, PLUS and MINUS of a multiple-use
+     SSA_NAME with a constant as cheap.  */
+  int cost;
+
+  if (flag_tree_pre_partial_partial_obliviously)
+    return true;
+  if (expr->kind == NARY)
+    {
+      vn_nary_op_t nary = PRE_EXPR_NARY (expr);
+      switch (nary->opcode)
+	{
+	  tree name, cnst;
+	case BIT_AND_EXPR: case BIT_IOR_EXPR: case BIT_XOR_EXPR:
+	case PLUS_EXPR: case MINUS_EXPR:
+
+	  gcc_assert (nary->length == 2);
+	  name = nary->op[0];
+	  cnst = nary->op[1];
+	  if (TREE_CODE (name) != SSA_NAME || has_single_use (name))
+	    return true;
+	  if (!is_gimple_min_invariant (cnst))
+	    return true;
+	  cost = 1;
+	  break;
+	default:
+	  return true;
+	}
+    }
+  else
+    return true;
+  return EDGE_COUNT (block->preds) * cost >= inserts_needed;
+
+}
 
 /* Perform insertion of partially redundant values.
    For BLOCK, do the following:
@@ -3763,10 +3804,23 @@ do_partial_partial_insertion (basic_block block, basic_block dom)
 	  if (!cant_insert && by_all && dbg_cnt (treepre_insert))
 	    {
 	      pre_stats.pa_insert++;
-	      if (insert_into_preds_of_block (block, get_expression_id (expr),
-					      avail))
-		new_stuff = true;
-	    }
+	      /* Assuming the expression is 50% anticipatable, we have
+		 to multiply the number of insertions needed by two for a cost
+		 comparison.  */
+	      if (!optimize_function_for_speed_p (cfun)
+		  || ppre_n_insert_for_speed_p (expr, block,
+						2 * EDGE_COUNT (block->preds)))
+		{
+		  if (insert_into_preds_of_block (block,
+						  get_expression_id (expr),
+						  avail))
+		    new_stuff = true;
+		}  
+	      else if (dump_file && (dump_flags & TDF_DETAILS))
+		fprintf (dump_file, "Not inserting (optimizing for %s)\n",
+			 optimize_function_for_speed_p (cfun)
+			 ? "speed" : "size");
+	    }	    
 	  free (avail);
 	}
     }
@@ -4852,7 +4906,8 @@ execute_pre (bool do_fre)
 {
   unsigned int todo = 0;
 
-  do_partial_partial = optimize > 2 && optimize_function_for_speed_p (cfun);
+  do_partial_partial =
+    flag_tree_pre_partial_partial && optimize_function_for_speed_p (cfun);
 
   /* This has to happen before SCCVN runs because
      loop_optimizer_init may create new phis, etc.  */

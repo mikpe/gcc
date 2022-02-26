@@ -241,6 +241,9 @@ const char *m68k_library_id_string = "_current_shared_library_a5_offset_";
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE m68k_option_override
 
+#undef TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE
+#define TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE m68k_option_override
+
 #undef TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS m68k_rtx_costs
 
@@ -1380,7 +1383,7 @@ m68k_expand_epilogue (bool sibcall_p)
 			   EH_RETURN_STACKADJ_RTX));
 
   if (!sibcall_p)
-    emit_jump_insn (gen_rtx_RETURN (VOIDmode));
+    emit_jump_insn (ret_rtx);
 }
 
 /* Return true if X is a valid comparison operator for the dbcc 
@@ -1900,15 +1903,16 @@ m68k_legitimate_base_reg_p (rtx x, bool strict_p)
    whether we need strict checking.  */
 
 bool
-m68k_legitimate_index_reg_p (rtx x, bool strict_p)
+m68k_legitimate_index_reg_p (enum machine_mode mode, rtx x, bool strict_p)
 {
   if (!strict_p && GET_CODE (x) == SUBREG)
     x = SUBREG_REG (x);
 
   return (REG_P (x)
 	  && (strict_p
-	      ? REGNO_OK_FOR_INDEX_P (REGNO (x))
-	      : REGNO_OK_FOR_INDEX_NONSTRICT_P (REGNO (x))));
+	      ? REGNO_MODE_OK_FOR_INDEX_P (REGNO (x), mode)
+	      : (MODE_OK_FOR_INDEX_P (mode)
+		 && REGNO_OK_FOR_INDEX_NONSTRICT_P (REGNO (x)))));
 }
 
 /* Return true if X is a legitimate index expression for a (d8,An,Xn) or
@@ -1916,7 +1920,8 @@ m68k_legitimate_index_reg_p (rtx x, bool strict_p)
    ADDRESS if so.  STRICT_P says whether we need strict checking.  */
 
 static bool
-m68k_decompose_index (rtx x, bool strict_p, struct m68k_address *address)
+m68k_decompose_index (enum machine_mode mode, rtx x, bool strict_p,
+		      struct m68k_address *address)
 {
   int scale;
 
@@ -1940,7 +1945,7 @@ m68k_decompose_index (rtx x, bool strict_p, struct m68k_address *address)
       && GET_MODE (XEXP (x, 0)) == HImode)
     x = XEXP (x, 0);
 
-  if (m68k_legitimate_index_reg_p (x, strict_p))
+  if (m68k_legitimate_index_reg_p (mode, x, strict_p))
     {
       address->scale = scale;
       address->index = x;
@@ -2094,7 +2099,7 @@ m68k_decompose_address (enum machine_mode mode, rtx x,
      accesses to unplaced labels in other cases.  */
   if (GET_CODE (x) == PLUS
       && m68k_jump_table_ref_p (XEXP (x, 1))
-      && m68k_decompose_index (XEXP (x, 0), strict_p, address))
+      && m68k_decompose_index (mode, XEXP (x, 0), strict_p, address))
     {
       address->offset = XEXP (x, 1);
       return true;
@@ -2126,7 +2131,7 @@ m68k_decompose_address (enum machine_mode mode, rtx x,
 	 worse code.  */
       if (address->offset
 	  && symbolic_operand (address->offset, VOIDmode)
-	  && m68k_decompose_index (x, strict_p, address))
+	  && m68k_decompose_index (mode, x, strict_p, address))
 	return true;
     }
   else
@@ -2145,14 +2150,14 @@ m68k_decompose_address (enum machine_mode mode, rtx x,
   if (GET_CODE (x) == PLUS)
     {
       if (m68k_legitimate_base_reg_p (XEXP (x, 0), strict_p)
-	  && m68k_decompose_index (XEXP (x, 1), strict_p, address))
+	  && m68k_decompose_index (mode, XEXP (x, 1), strict_p, address))
 	{
 	  address->base = XEXP (x, 0);
 	  return true;
 	}
 
       if (m68k_legitimate_base_reg_p (XEXP (x, 1), strict_p)
-	  && m68k_decompose_index (XEXP (x, 0), strict_p, address))
+	  && m68k_decompose_index (mode, XEXP (x, 0), strict_p, address))
 	{
 	  address->base = XEXP (x, 1);
 	  return true;
@@ -4285,7 +4290,8 @@ notice_update_cc (rtx exp, rtx insn)
       && GET_MODE_CLASS (GET_MODE (XEXP (cc_status.value2, 0))) == MODE_FLOAT)
     {
       cc_status.flags = CC_IN_68881;
-      if (!FP_REG_P (XEXP (cc_status.value2, 0)))
+      if (!FP_REG_P (XEXP (cc_status.value2, 0))
+	  && FP_REG_P (XEXP (cc_status.value2, 1)))
 	cc_status.flags |= CC_REVERSED;
     }
 }
@@ -6158,7 +6164,14 @@ m68k_sched_variable_issue (FILE *sched_dump ATTRIBUTE_UNUSED,
 	  gcc_unreachable ();
 	}
 
-      gcc_assert (insn_size <= sched_ib.filled);
+      if (insn_size > sched_ib.filled)
+	/* Scheduling for register pressure does not always take DFA into
+	   account.  Workaround instruction buffer not being filled enough.  */
+	{
+	  gcc_assert (sched_pressure_p);
+	  insn_size = sched_ib.filled;
+	}
+
       --can_issue_more;
     }
   else if (GET_CODE (PATTERN (insn)) == ASM_INPUT

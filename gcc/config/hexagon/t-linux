@@ -1,0 +1,32 @@
+LIB1ASMFUNCS += _hexagon_memcpy_likely_aligned_min32bytes_mult8bytes \
+                _udivmodsi4 _udivsi3 _umodsi3 _divsi3 _modsi3 \
+                _udivmoddi4 _udivdi3 _umoddi3 _divdi3 _moddi3 \
+                _hexagon_memcpy_volatile
+
+ifeq (,$(findstring HEXAGON_STAGE_1,$(CFLAGS)))
+LIB2FUNCS_STATIC_EXTRA += $(srcdir)/config/hexagon/linux-atomic.c
+endif
+
+SHLIB_MAPFILES += $(srcdir)/config/hexagon/libgcc-glibc.ver
+
+# Assemble startup files.
+$(T)crti.o: $(srcdir)/config/hexagon/crti.asm $(GCC_PASSES)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(MULTILIB_CFLAGS) $(INCLUDES) \
+	-c -o $(T)crti.o -x assembler $(srcdir)/config/hexagon/crti.asm
+
+$(T)crtn.o: $(srcdir)/config/hexagon/crtn.asm $(GCC_PASSES)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(MULTILIB_CFLAGS) $(INCLUDES) \
+	-c -o $(T)crtn.o -x assembler $(srcdir)/config/hexagon/crtn.asm
+
+# Compile crtbeginS.o and crtendS.o with pic.
+CRTSTUFF_T_CFLAGS_S = $(CRTSTUFF_T_CFLAGS) -fPIC
+# Compile libgcc.a with pic.
+TARGET_LIBGCC2_CFLAGS = -fPIC
+
+MULTILIB_OPTIONS    = march=hexagonv5
+MULTILIB_DIRNAMES   = v5
+MULTILIB_MATCHES    =
+MULTILIB_EXCEPTIONS =
+MULTILIB_EXTRA_OPTS =
+
+EXTRA_MULTILIB_PARTS = crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o

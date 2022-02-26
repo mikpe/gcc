@@ -1423,16 +1423,12 @@ uw_advance_context (struct _Unwind_Context *context, _Unwind_FrameState *fs)
 /* Fill in CONTEXT for top-of-stack.  The only valid registers at this
    level will be the return address and the CFA.  */
 
-#define uw_init_context(CONTEXT)					   \
-  do									   \
-    {									   \
-      /* Do any necessary initialization to access arbitrary stack frames. \
-	 On the SPARC, this means flushing the register windows.  */	   \
-      __builtin_unwind_init ();						   \
-      uw_init_context_1 (CONTEXT, __builtin_dwarf_cfa (),		   \
-			 __builtin_return_address (0));			   \
-    }									   \
-  while (0)
+#define uw_init_context(CONTEXT)					\
+  /* Do any necessary initialization to access arbitrary stack frames.	\
+     On the SPARC, this means flushing the register windows.  */	\
+  (__builtin_unwind_init (),						\
+   uw_init_context_1 ((CONTEXT), __builtin_dwarf_cfa (),		\
+		      __builtin_return_address (0)))
 
 static inline void
 init_dwarf_reg_size_table (void)
@@ -1440,7 +1436,7 @@ init_dwarf_reg_size_table (void)
   __builtin_init_dwarf_reg_size_table (dwarf_reg_size_table);
 }
 
-static void __attribute__((noinline))
+static _Unwind_Reason_Code __attribute__((noinline))
 uw_init_context_1 (struct _Unwind_Context *context,
 		   void *outer_cfa, void *outer_ra)
 {
@@ -1454,7 +1450,8 @@ uw_init_context_1 (struct _Unwind_Context *context,
   context->flags = EXTENDED_CONTEXT_BIT;
 
   code = uw_frame_state_for (context, &fs);
-  gcc_assert (code == _URC_NO_REASON);
+  if (code != _URC_NO_REASON)
+    return code;
 
 #if __GTHREADS
   {
@@ -1480,6 +1477,8 @@ uw_init_context_1 (struct _Unwind_Context *context,
      initialization context, then we can't see it in the given
      call frame data.  So have the initialization context tell us.  */
   context->ra = __builtin_extract_return_addr (outer_ra);
+
+  return _URC_NO_REASON;
 }
 
 static void _Unwind_DebugHook (void *, void *)

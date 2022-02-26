@@ -1,5 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fpredictive-commoning -fdump-tree-pcom-details" } */
+/* { dg-options "-O2 -funroll-loops --param max-unroll-times=8 -fpredictive-com
+moning -fdump-tree-pcom-details" } */
 
 int a[1000], b[1000];
 

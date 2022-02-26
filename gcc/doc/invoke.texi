@@ -257,6 +257,7 @@ Objective-C and Objective-C++ Dialects}.
 -Woverlength-strings  -Wpacked  -Wpacked-bitfield-compat  -Wpadded @gol
 -Wparentheses  -Wpedantic-ms-format -Wno-pedantic-ms-format @gol
 -Wpointer-arith  -Wno-pointer-to-int-cast @gol
+-Wno-poison-system-directories @gol
 -Wredundant-decls @gol
 -Wreturn-type  -Wsequence-point  -Wshadow @gol
 -Wsign-compare  -Wsign-conversion  -Wstack-protector @gol
@@ -334,7 +335,8 @@ Objective-C and Objective-C++ Dialects}.
 
 @item Optimization Options
 @xref{Optimize Options,,Options that Control Optimization}.
-@gccoptlist{-falign-functions[=@var{n}] -falign-jumps[=@var{n}] @gol
+@gccoptlist{-falign-arrays
+-falign-functions[=@var{n}] -falign-jumps[=@var{n}] @gol
 -falign-labels[=@var{n}] -falign-loops[=@var{n}] -fassociative-math @gol
 -fauto-inc-dec -fbranch-probabilities -fbranch-target-load-optimize @gol
 -fbranch-target-load-optimize2 -fbtr-bb-exclusive -fcaller-saves @gol
@@ -385,14 +387,14 @@ Objective-C and Objective-C++ Dialects}.
 -fschedule-insns -fschedule-insns2 -fsection-anchors @gol
 -fselective-scheduling -fselective-scheduling2 @gol
 -fsel-sched-pipelining -fsel-sched-pipelining-outer-loops @gol
--fsignaling-nans -fsingle-precision-constant -fsplit-ivs-in-unroller @gol
--fsplit-wide-types -fstack-protector -fstack-protector-all @gol
--fstrict-aliasing -fstrict-overflow -fthread-jumps -ftracer @gol
--ftree-bit-ccp @gol
+-fshrink-wrap -fsignaling-nans -fsingle-precision-constant @gol
+-fsplit-ivs-in-unroller -fsplit-wide-types -fstack-protector @gol
+-fstack-protector-all -fstrict-aliasing -fstrict-overflow @gol
+-fthread-jumps -ftracer -ftree-bit-ccp @gol
 -ftree-builtin-call-dce -ftree-ccp -ftree-ch -ftree-copy-prop @gol
 -ftree-copyrename -ftree-dce -ftree-dominator-opts -ftree-dse @gol
--ftree-forwprop -ftree-fre -ftree-loop-if-convert @gol
--ftree-loop-if-convert-stores -ftree-loop-im @gol
+-ftree-forwprop -ftree-fre -ftree-if-to-switch-conversion @gol
+-ftree-loop-if-convert -ftree-loop-if-convert-stores -ftree-loop-im @gol
 -ftree-phiprop -ftree-loop-distribution -ftree-loop-distribute-patterns @gol
 -ftree-loop-ivcanon -ftree-loop-linear -ftree-loop-optimize @gol
 -ftree-parallelize-loops=@var{n} -ftree-pre -ftree-pta -ftree-reassoc @gol
@@ -474,7 +476,7 @@ Objective-C and Objective-C++ Dialects}.
 -mthumb  -marm @gol
 -mtpcs-frame  -mtpcs-leaf-frame @gol
 -mcaller-super-interworking  -mcallee-super-interworking @gol
--mtp=@var{name} @gol
+-mtp=@var{name} -mtls-dialect=@var{dialect} @gol
 -mword-relocations @gol
 -mfix-cortex-m3-ldrd}
 
@@ -704,7 +706,7 @@ Objective-C and Objective-C++ Dialects}.
 @gccoptlist{-EL  -EB  -march=@var{arch}  -mtune=@var{arch} @gol
 -mips1  -mips2  -mips3  -mips4  -mips32  -mips32r2 @gol
 -mips64  -mips64r2 @gol
--mips16  -mno-mips16  -mflip-mips16 @gol
+-mips16  -mips16e  -mno-mips16  -mflip-mips16 @gol
 -minterlink-mips16  -mno-interlink-mips16 @gol
 -mabi=@var{abi}  -mabicalls  -mno-abicalls @gol
 -mshared  -mno-shared  -mplt  -mno-plt  -mxgot  -mno-xgot @gol
@@ -726,6 +728,7 @@ Objective-C and Objective-C++ Dialects}.
 -mdivide-traps  -mdivide-breaks @gol
 -mmemcpy  -mno-memcpy  -mlong-calls  -mno-long-calls @gol
 -mmad  -mno-mad  -mfused-madd  -mno-fused-madd  -nocpp @gol
+-mfix-24k -mno-fix-24k @gol
 -mfix-r4000  -mno-fix-r4000  -mfix-r4400  -mno-fix-r4400 @gol
 -mfix-r10000 -mno-fix-r10000  -mfix-vr4120  -mno-fix-vr4120 @gol
 -mfix-vr4130  -mno-fix-vr4130  -mfix-sb1  -mno-fix-sb1 @gol
@@ -935,6 +938,7 @@ See S/390 and zSeries Options.
 -finhibit-size-directive  -finstrument-functions @gol
 -finstrument-functions-exclude-function-list=@var{sym},@var{sym},@dots{} @gol
 -finstrument-functions-exclude-file-list=@var{file},@var{file},@dots{} @gol
+-finstrument-function-calls @gol
 -fno-common  -fno-ident @gol
 -fpcc-struct-return  -fpic  -fPIC -fpie -fPIE @gol
 -fno-jump-tables @gol
@@ -3780,6 +3784,14 @@ headers---for that, @option{-Wunknown-pragmas} must also be used.
  for most targets, it is made up of code and thus requires the stack
  to be made executable in order for the program to work properly.
 
+@item -Wno-poison-system-directories
+@opindex Wno-poison-system-directories
+Do not warn for @option{-I} or @option{-L} options using system
+directories such as @file{/usr/include} when cross compiling.  This
+option is intended for use in chroot environments when such
+directories contain the correct headers and libraries for the target
+system rather than the host.
+
 @item -Wfloat-equal
 @opindex Wfloat-equal
 @opindex Wno-float-equal
@@ -5973,6 +5985,7 @@ also turns on the following optimization flags:
 -fsched-interblock  -fsched-spec @gol
 -fschedule-insns  -fschedule-insns2 @gol
 -fstrict-aliasing -fstrict-overflow @gol
+-ftree-if-to-switch-conversion @gol
 -ftree-switch-conversion @gol
 -ftree-pre @gol
 -ftree-vrp}
@@ -6714,6 +6727,11 @@ This option has no effect until one of @option{-fselective-scheduling} or
 When pipelining loops during selective scheduling, also pipeline outer loops.
 This option has no effect until @option{-fsel-sched-pipelining} is turned on.
 
+@item -fshrink-wrap
+@opindex fshrink-wrap
+Emit function prologues only before parts of the function that need it,
+rather than at the top of the function.
+
 @item -fcaller-saves
 @opindex fcaller-saves
 Enable values to be allocated in registers that will be clobbered by
@@ -6867,6 +6885,10 @@ at @option{-O} and higher.
 Perform conversion of simple initializations in a switch to
 initializations from a scalar array.  This flag is enabled by default
 at @option{-O2} and higher.
+
+@item -ftree-if-to-switch-conversion
+Perform conversion of chains of ifs into switches.  This flag is enabled by
+default at @option{-O2} and higher.
 
 @item -ftree-dce
 @opindex ftree-dce
@@ -7400,6 +7422,14 @@ arithmetic on constants, the overflowed value can still be used with
 
 The @option{-fstrict-overflow} option is enabled at levels
 @option{-O2}, @option{-O3}, @option{-Os}.
+
+@item -falign-arrays
+@opindex falign-arrays
+Set the minimum alignment for array variables to be the largest power
+of two less than or equal to their total storage size, or the biggest
+alignment used on the machine, whichever is smaller.  This option may be
+helpful when compiling legacy code that uses type punning on arrays that
+does not strictly conform to the C standard.
 
 @item -falign-functions
 @itemx -falign-functions=@var{n}
@@ -8219,6 +8249,21 @@ int foo (void)
 
 Not all targets support this option.
 
+@item -fremove-local-statics
+@opindex fremove-local-statics
+Converts function-local static variables to automatic variables when it
+is safe to do so.  This transformation can reduce the number of
+instructions executed due to automatic variables being cheaper to
+read/write than static variables.
+
+@item -fpromote-loop-indices
+@opindex fpromote-loop-indices
+Converts loop indices that have a type shorter than the word size to
+word-sized quantities.  This transformation can reduce the overhead
+associated with sign/zero-extension and truncation of such variables.
+Using @option{-funsafe-loop-optimizations} with this option may result
+in more effective optimization.
+
 @item --param @var{name}=@var{value}
 @opindex param
 In some places, GCC uses various constants to control the amount of
@@ -8908,6 +8953,12 @@ partitions.
 @item cxx-max-namespaces-for-diagnostic-help
 The maximum number of namespaces to consult for suggestions when C++
 name lookup fails for an identifier.  The default is 1000.
+
+@item if-to-switch-threshold
+If-chain to switch conversion, enabled by
+@option{-ftree-if-to-switch-conversion} convert chains of ifs of sufficient
+length into switches.  The parameter @option{if-to-switch-threshold} can be
+used to set the minimal required length.  The default value is 3.
 
 @end table
 @end table
@@ -10199,9 +10250,8 @@ assembly code.  Permissible names are: @samp{arm2}, @samp{arm250},
 @samp{arm1136j-s}, @samp{arm1136jf-s}, @samp{mpcore}, @samp{mpcorenovfp},
 @samp{arm1156t2-s}, @samp{arm1156t2f-s}, @samp{arm1176jz-s}, @samp{arm1176jzf-s},
 @samp{cortex-a5}, @samp{cortex-a8}, @samp{cortex-a9}, @samp{cortex-a15},
-@samp{cortex-r4}, @samp{cortex-r4f}, @samp{cortex-m4}, @samp{cortex-m3},
-@samp{cortex-m1},
-@samp{cortex-m0},
+@samp{cortex-r4}, @samp{cortex-r4f}, @samp{cortex-r5}, @samp{cortex-m4},
+@samp{cortex-m3}, @samp{cortex-m1}, @samp{cortex-m0},
 @samp{xscale}, @samp{iwmmxt}, @samp{iwmmxt2}, @samp{ep9312}.
 
 @item -mtune=@var{name}
@@ -10405,6 +10455,18 @@ models are @option{soft}, which generates calls to @code{__aeabi_read_tp},
 (supported in the arm6k architecture), and @option{auto}, which uses the
 best available method for the selected processor.  The default setting is
 @option{auto}.
+
+@item -mtls-dialect=@var{dialect}
+@opindex mtls-dialect
+Specify the dialect to use for accessing thread local storage.  Two
+dialects are supported - @option{gnu} and @option{gnu2}.  The
+@option{gnu} dialect selects the original GNU scheme for supporting
+local and global dynamic TLS models.  The @option{gnu2} dialect
+selects the GNU descriptor scheme, which provides better performance
+for shared libraries.  The GNU descriptor scheme is compatible with
+the original scheme, but does require new assembler, linker and
+library support.  Initial and local exec TLS models are unaffected by
+this option and always use the original scheme.
 
 @item -mword-relocations
 @opindex mword-relocations
@@ -13418,7 +13480,7 @@ below, which also classifies the CPUs into families:
 
 @multitable @columnfractions 0.20 0.80
 @item @strong{Family} @tab @strong{@samp{-mcpu} arguments}
-@item @samp{51} @tab @samp{51} @samp{51ac} @samp{51cn} @samp{51em} @samp{51qe}
+@item @samp{51} @tab @samp{51} @samp{51ac} @samp{51ag} @samp{51cn} @samp{51em} @samp{51je} @samp{51jf} @samp{51jg} @samp{51jm} @samp{51mm} @samp{51qe} @samp{51qm}
 @item @samp{5206} @tab @samp{5202} @samp{5204} @samp{5206}
 @item @samp{5206e} @tab @samp{5206e}
 @item @samp{5208} @tab @samp{5207} @samp{5208}
@@ -14198,7 +14260,7 @@ The processor names are:
 @samp{74kc}, @samp{74kf2_1}, @samp{74kf1_1}, @samp{74kf3_2},
 @samp{1004kc}, @samp{1004kf2_1}, @samp{1004kf1_1},
 @samp{loongson2e}, @samp{loongson2f}, @samp{loongson3a},
-@samp{m4k},
+@samp{m4k}, @samp{m14ke}, @samp{m14kec},
 @samp{octeon},
 @samp{orion},
 @samp{r2000}, @samp{r3000}, @samp{r3900}, @samp{r4000}, @samp{r4400},
@@ -14296,11 +14358,14 @@ Equivalent to @samp{-march=mips64}.
 Equivalent to @samp{-march=mips64r2}.
 
 @item -mips16
+@itemx -mips16e
 @itemx -mno-mips16
 @opindex mips16
+@opindex mips16e
 @opindex mno-mips16
 Generate (do not generate) MIPS16 code.  If GCC is targetting a
 MIPS32 or MIPS64 architecture, it will make use of the MIPS16e ASE@.
+@option{-mips16e} is a deprecated alias for @option{-mips16}.
 
 MIPS16 code generation can also be controlled on a per-function basis
 by means of @code{mips16} and @code{nomips16} attributes.
@@ -14741,15 +14806,24 @@ Enable (disable) use of the floating point multiply-accumulate
 instructions, when they are available.  The default is
 @option{-mfused-madd}.
 
-When multiply-accumulate instructions are used, the intermediate
-product is calculated to infinite precision and is not subject to
-the FCSR Flush to Zero bit.  This may be undesirable in some
-circumstances.
+On the R8000 CPU when multiply-accumulate instructions are used,
+the intermediate product is calculated to infinite precision
+and is not subject to the FCSR Flush to Zero bit.  This may be
+undesirable in some circumstances.  On other processors the result
+is numerically identical to the equivalent computation using
+separate multiply, add, subtract and negate instructions.
 
 @item -nocpp
 @opindex nocpp
 Tell the MIPS assembler to not run its preprocessor over user
 assembler files (with a @samp{.s} suffix) when assembling them.
+
+@item -mfix-24k
+@item -mno-fix-24k
+@opindex mfix-24k
+@opindex mno-fix-24k
+Work around the 24K E48 (lost data on stores during refill) errata.
+The workarounds are implemented by the assembler rather than by GCC.
 
 @item -mfix-r4000
 @itemx -mno-fix-r4000
@@ -16086,12 +16160,11 @@ header to indicate that @samp{eabi} extended relocations are used.
 On System V.4 and embedded PowerPC systems do (do not) adhere to the
 Embedded Applications Binary Interface (eabi) which is a set of
 modifications to the System V.4 specifications.  Selecting @option{-meabi}
-means that the stack is aligned to an 8 byte boundary, a function
-@code{__eabi} is called to from @code{main} to set up the eabi
-environment, and the @option{-msdata} option can use both @code{r2} and
+means that the stack is aligned to an 8 byte boundary,
+and the @option{-msdata} option can use both @code{r2} and
 @code{r13} to point to two separate small data areas.  Selecting
 @option{-mno-eabi} means that the stack is aligned to a 16 byte boundary,
-do not call an initialization function from @code{main}, and the
+and the
 @option{-msdata} option will only use @code{r13} to point to a single
 small data area.  The @option{-meabi} option is on by default if you
 configured GCC using one of the @samp{powerpc*-*-eabi*} options.
@@ -18119,6 +18192,33 @@ match is done on substrings: if the @var{sym} parameter is a substring
 of the function name, it is considered to be a match.  For C99 and C++
 extended identifiers, the function name must be given in UTF-8, not
 using universal character names.
+
+@item -finstrument-function-calls
+@opindex finstrument-function-calls
+Generate instrumentation calls immediately before and after each
+function call. The following profiling functions will be called with
+the address of the function that is called between them. Use
+@code{__builtin_return_address(0)} inside the profiling functions to
+get the addresses from where they are called.
+
+@smallexample
+void __cyg_profile_call_enter  (void *fn);
+void __cyg_profile_call_exit   (void *fn);
+@end smallexample
+
+Additionally instrumentation calls are inserted at the beginning of
+each function. The argument is the address of the function where the
+insertion occurred. 
+
+@smallexample
+void __cyg_profile_call_inside (void *fn);
+@end smallexample
+
+If an instrumented function gets inlined, calling
+@code{__builtin_return_address(0)} from inside @code{__cyg_profile_call_inside}
+will return an address that is in the address range of the function
+where it was inlined into. This can be used to detect if inlining
+occurred for the function that contains @code{__cyg_profile_call_inside}.
 
 @item -fstack-check
 @opindex fstack-check

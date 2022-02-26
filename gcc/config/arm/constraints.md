@@ -29,13 +29,14 @@
 ;; in Thumb-1 state: I, J, K, L, M, N, O
 
 ;; The following multi-letter normal constraints have been used:
-;; in ARM/Thumb-2 state: Da, Db, Dc, Dn, Dl, DL, Dv, Dy, Di, Dz
+;; in ARM/Thumb-2 state: D0, Da, Db, Dc, Dn, Dl, DL, Dv, Dy, Di, Dz
 ;; in Thumb-1 state: Pa, Pb, Pc, Pd
 ;; in Thumb-2 state: Ps, Pt, Pu, Pv, Pw, Px
 
 ;; The following memory constraints have been used:
 ;; in ARM/Thumb-2 state: Q, Ut, Uv, Uy, Un, Um, Us
 ;; in ARM state: Uq
+;; in Thumb state: Uw
 
 
 (define_register_constraint "f" "TARGET_ARM ? FPA_REGS : NO_REGS"
@@ -205,6 +206,13 @@
  (and (match_code "const_vector")
       (match_test "TARGET_NEON && op == CONST0_RTX (mode)")))
 
+(define_constraint "D0"
+ "@internal
+  In ARM/Thumb-2 state a 0.0 floating point constant which can
+  be loaded with a Neon vmov immediate instruction."
+ (and (match_code "const_double")
+      (match_test "TARGET_NEON && op == CONST0_RTX (mode)")))
+
 (define_constraint "Da"
  "@internal
   In ARM/Thumb-2 state a const_int, const_double or const_vector that can
@@ -326,6 +334,19 @@
   In ARM/Thumb-2 state an address that is a single base register."
  (and (match_code "mem")
       (match_test "REG_P (XEXP (op, 0))")))
+
+; The 16-bit post-increment LDR/STR accepted by thumb1_legitimate_address_p
+; are actually LDM/STM instructions, so cannot be used to access unaligned
+; data.
+(define_memory_constraint "Uw"
+ "@internal
+  In Thumb state an address that is valid in 16bit encoding, and that can be
+  used for unaligned accesses."
+ (and (match_code "mem")
+      (match_test "TARGET_THUMB
+		   && thumb1_legitimate_address_p (GET_MODE (op), XEXP (op, 0),
+						   0)
+		   && GET_CODE (XEXP (op, 0)) != POST_INC")))
 
 ;; We used to have constraint letters for S and R in ARM state, but
 ;; all uses of these now appear to have been removed.

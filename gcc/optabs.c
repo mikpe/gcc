@@ -4169,11 +4169,13 @@ prepare_cmp_insn (rtx x, rtx y, enum rtx_code comparison, rtx size,
 	 result against 1 in the biased case, and zero in the unbiased
 	 case. For unsigned comparisons always compare against 1 after
 	 biasing the unbiased result by adding 1. This gives us a way to
-	 represent LTU. */
+	 represent LTU.
+	 The comparisons in the fixed-point helper library are always
+	 biased.  */
       x = result;
       y = const1_rtx;
 
-      if (!TARGET_LIB_INT_CMP_BIASED)
+      if (!TARGET_LIB_INT_CMP_BIASED && !ALL_FIXED_POINT_MODE_P (mode))
 	{
 	  if (unsignedp)
 	    x = plus_constant (result, 1);
@@ -5454,13 +5456,22 @@ gen_libfunc (optab optable, const char *opname, int suffix, enum machine_mode mo
   unsigned opname_len = strlen (opname);
   const char *mname = GET_MODE_NAME (mode);
   unsigned mname_len = strlen (mname);
-  char *libfunc_name = XALLOCAVEC (char, 2 + opname_len + mname_len + 1 + 1);
+  int prefix_len = targetm.libfunc_gnu_prefix ? 6 : 2;
+  int len = prefix_len + opname_len + mname_len + 1 + 1;
+  char *libfunc_name = XALLOCAVEC (char, len);
   char *p;
   const char *q;
 
   p = libfunc_name;
   *p++ = '_';
   *p++ = '_';
+  if (targetm.libfunc_gnu_prefix)
+    {
+      *p++ = 'g';
+      *p++ = 'n';
+      *p++ = 'u';
+      *p++ = '_';
+    }
   for (q = opname; *q; )
     *p++ = *q++;
   for (q = mname; *q; q++)
@@ -5664,6 +5675,7 @@ gen_interclass_conv_libfunc (convert_optab tab,
 
   const char *fname, *tname;
   const char *q;
+  int prefix_len = targetm.libfunc_gnu_prefix ? 6 : 2;
   char *libfunc_name, *suffix;
   char *nondec_name, *dec_name, *nondec_suffix, *dec_suffix;
   char *p;
@@ -5674,11 +5686,19 @@ gen_interclass_conv_libfunc (convert_optab tab,
 
   mname_len = strlen (GET_MODE_NAME (tmode)) + strlen (GET_MODE_NAME (fmode));
 
-  nondec_name = XALLOCAVEC (char, 2 + opname_len + mname_len + 1 + 1);
+  nondec_name = XALLOCAVEC (char, prefix_len + opname_len + mname_len + 1 + 1);
   nondec_name[0] = '_';
   nondec_name[1] = '_';
-  memcpy (&nondec_name[2], opname, opname_len);
-  nondec_suffix = nondec_name + opname_len + 2;
+  if (targetm.libfunc_gnu_prefix)
+    {
+      nondec_name[2] = 'g';
+      nondec_name[3] = 'n';
+      nondec_name[4] = 'u';
+      nondec_name[5] = '_';
+    }
+
+  memcpy (&nondec_name[prefix_len], opname, opname_len);
+  nondec_suffix = nondec_name + opname_len + prefix_len;
 
   dec_name = XALLOCAVEC (char, 2 + dec_len + opname_len + mname_len + 1 + 1);
   dec_name[0] = '_';
@@ -5789,6 +5809,7 @@ gen_intraclass_conv_libfunc (convert_optab tab, const char *opname,
 
   const char *fname, *tname;
   const char *q;
+  int prefix_len = targetm.libfunc_gnu_prefix ? 6 : 2;
   char *nondec_name, *dec_name, *nondec_suffix, *dec_suffix;
   char *libfunc_name, *suffix;
   char *p;
@@ -5802,8 +5823,15 @@ gen_intraclass_conv_libfunc (convert_optab tab, const char *opname,
   nondec_name = XALLOCAVEC (char, 2 + opname_len + mname_len + 1 + 1);
   nondec_name[0] = '_';
   nondec_name[1] = '_';
-  memcpy (&nondec_name[2], opname, opname_len);
-  nondec_suffix = nondec_name + opname_len + 2;
+  if (targetm.libfunc_gnu_prefix)
+    {
+      nondec_name[2] = 'g';
+      nondec_name[3] = 'n';
+      nondec_name[4] = 'u';
+      nondec_name[5] = '_';
+    }
+  memcpy (&nondec_name[prefix_len], opname, opname_len);
+  nondec_suffix = nondec_name + opname_len + prefix_len;
 
   dec_name = XALLOCAVEC (char, 2 + dec_len + opname_len + mname_len + 1 + 1);
   dec_name[0] = '_';
@@ -6533,8 +6561,16 @@ init_optabs (void)
 
   /* Explicitly initialize the bswap libfuncs since we need them to be
      valid for things other than word_mode.  */
-  set_optab_libfunc (bswap_optab, SImode, "__bswapsi2");
-  set_optab_libfunc (bswap_optab, DImode, "__bswapdi2");
+  if (targetm.libfunc_gnu_prefix)
+    {
+      set_optab_libfunc (bswap_optab, SImode, "__gnu_bswapsi2");
+      set_optab_libfunc (bswap_optab, DImode, "__gnu_bswapdi2");
+    }
+  else
+    {
+      set_optab_libfunc (bswap_optab, SImode, "__bswapsi2");
+      set_optab_libfunc (bswap_optab, DImode, "__bswapdi2");
+    }
 
   /* Use cabs for double complex abs, since systems generally have cabs.
      Don't define any libcall for float complex, so that cabs will be used.  */
@@ -6564,6 +6600,14 @@ init_optabs (void)
     = init_one_libfunc ("__cyg_profile_func_enter");
   profile_function_exit_libfunc
     = init_one_libfunc ("__cyg_profile_func_exit");
+
+  /* For call entry/exit instrumentation.  */
+  profile_call_entry_libfunc
+    = init_one_libfunc ("__cyg_profile_call_enter");
+  profile_call_inside_libfunc
+    = init_one_libfunc ("__cyg_profile_call_inside");
+  profile_call_exit_libfunc
+    = init_one_libfunc ("__cyg_profile_call_exit");
 
   gcov_flush_libfunc = init_one_libfunc ("__gcov_flush");
 

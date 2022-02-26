@@ -844,7 +844,7 @@ fixup_match_2 (rtx insn, rtx dst, rtx src, rtx offset)
 	break;
 
       /* If we have passed a call instruction, and the
-         pseudo-reg SRC is not already live across a call,
+         pseudo-reg DST is not already live across a call,
          then don't perform the optimization.  */
       /* reg_set_p is overly conservative for CALL_INSNS, thinks that all
 	 hard regs are clobbered.  Thus, we only use it for src for
@@ -857,11 +857,11 @@ fixup_match_2 (rtx insn, rtx dst, rtx src, rtx offset)
 	      freq_calls += REG_FREQ_FROM_BB  (BLOCK_FOR_INSN (p));
 	    }
 
-	  if (REG_N_CALLS_CROSSED (REGNO (src)) == 0)
+	  if (REG_N_CALLS_CROSSED (REGNO (dst)) == 0)
 	    break;
 
-	  if (call_used_regs [REGNO (dst)]
-	      || find_reg_fusage (p, CLOBBER, dst))
+	  if (call_used_regs [REGNO (src)]
+	      || find_reg_fusage (p, CLOBBER, src))
 	    break;
 	}
       else if (reg_set_p (src, PATTERN (p)))

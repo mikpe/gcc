@@ -376,6 +376,7 @@ extern struct gimple_opt_pass pass_empty_loop;
 extern struct gimple_opt_pass pass_record_bounds;
 extern struct gimple_opt_pass pass_graphite;
 extern struct gimple_opt_pass pass_graphite_transforms;
+extern struct gimple_opt_pass pass_promote_indices;
 extern struct gimple_opt_pass pass_if_conversion;
 extern struct gimple_opt_pass pass_loop_distribution;
 extern struct gimple_opt_pass pass_vectorize;
@@ -446,6 +447,7 @@ extern struct gimple_opt_pass pass_tracer;
 extern struct gimple_opt_pass pass_warn_unused_result;
 extern struct gimple_opt_pass pass_split_functions;
 extern struct gimple_opt_pass pass_feedback_split_functions;
+extern struct gimple_opt_pass pass_remove_local_statics;
 
 /* IPA Passes */
 extern struct simple_ipa_opt_pass pass_ipa_lower_emutls;
@@ -483,6 +485,7 @@ extern struct rtl_opt_pass pass_rtl_eh;
 extern struct rtl_opt_pass pass_initial_value_sets;
 extern struct rtl_opt_pass pass_unshare_all_rtl;
 extern struct rtl_opt_pass pass_instantiate_virtual_regs;
+extern struct rtl_opt_pass pass_ee;
 extern struct rtl_opt_pass pass_rtl_fwprop;
 extern struct rtl_opt_pass pass_rtl_fwprop_addr;
 extern struct rtl_opt_pass pass_jump2;
@@ -547,6 +550,7 @@ extern struct rtl_opt_pass pass_peephole2;
 extern struct rtl_opt_pass pass_if_after_reload;
 extern struct rtl_opt_pass pass_regrename;
 extern struct rtl_opt_pass pass_cprop_hardreg;
+extern struct rtl_opt_pass pass_cprop_hardreg2;
 extern struct rtl_opt_pass pass_reorder_blocks;
 extern struct rtl_opt_pass pass_branch_target_load_optimize2;
 extern struct rtl_opt_pass pass_leaf_regs;
@@ -576,6 +580,7 @@ extern struct gimple_opt_pass pass_inline_parameters;
 extern struct gimple_opt_pass pass_all_early_optimizations;
 extern struct gimple_opt_pass pass_update_address_taken;
 extern struct gimple_opt_pass pass_convert_switch;
+extern struct gimple_opt_pass pass_if_to_switch;
 
 /* The root of the compilation pass tree, once constructed.  */
 extern struct opt_pass *all_passes, *all_small_ipa_passes, *all_lowering_passes,

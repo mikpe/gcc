@@ -66,8 +66,11 @@ extern void hook_void_gcc_optionsp (struct gcc_options *);
 
 extern int hook_int_const_tree_0 (const_tree);
 extern int hook_int_const_tree_const_tree_1 (const_tree, const_tree);
+extern int hook_int_tree_tree_int_0 (tree, tree, int);
 extern int hook_int_rtx_0 (rtx);
 extern int hook_int_rtx_bool_0 (rtx, bool);
+
+extern int hook_int_void_0 (void);
 
 extern tree hook_tree_const_tree_null (const_tree);
 

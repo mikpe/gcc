@@ -39,6 +39,10 @@ AC_CANONICAL_TARGET
 # Determine the noncanonical target name, for directory use.
 ACX_NONCANONICAL_TARGET
 
+CSL_AC_LICENSE_VERSION
+CSL_AC_LICENSE
+CSL_AC_LICENSE_FEATURE
+
 # Determine the target- and build-specific subdirectories
 GCC_TOPLEV_SUBDIRS
 
@@ -221,7 +225,7 @@ fi
 AC_ARG_WITH(demangler-in-ld,
 [  --with-demangler-in-ld  try to use demangler in GNU ld.],
 demangler_in_ld="$with_demangler_in_ld",
-demangler_in_ld=no)
+demangler_in_ld=yes)
 
 # ----------------------
 # Find default assembler
@@ -633,6 +637,10 @@ AC_ARG_ENABLE(fixed-point,
 ],
 [
   case $target in
+    arm*)
+      enable_fixed_point=yes
+      ;;
+
     mips*-*-*)
       case $host in
 	mips*-sgi-irix*)
@@ -759,6 +767,14 @@ AC_ARG_WITH(specs,
   [CONFIGURE_SPECS=]
 )
 AC_SUBST(CONFIGURE_SPECS)
+
+AC_ARG_WITH(eglibc-configs,
+  [AS_HELP_STRING([--with-eglibc-configs=CONFIGS],
+                  [build multilibs for these EGLIBC configurations])],
+  [EGLIBC_CONFIGS=$withval],
+  [EGLIBC_CONFIGS=]
+)
+AC_SUBST(EGLIBC_CONFIGS)
 
 ACX_PKGVERSION([GCC])
 ACX_BUGURL([http://gcc.gnu.org/bugs.html])
@@ -2678,6 +2694,29 @@ x:      .long   25
 	tls_first_major=2
 	tls_first_minor=14
 	;;
+      hexagon-*-*)
+	conftest_s='
+	.section ".tdata", "awT", @progbits
+	.extern foo
+	.type foo, @tls_object
+	.section ".tbss", "awT", @nobits
+	.globl bar
+	.type bar, @tls_object
+bar: .skip 4
+	.text
+	r1 = #LO(foo@GDGOT)
+	r2 = #HI(foo@IEGOT)
+	r2 = #LO(foo@IE)
+	r2 = #HI(foo@DTPREL)
+	r2 = #HI(foo@TPREL)
+	r1 = #LO(bar@GDGOT)
+	r2 = #HI(bar@IEGOT)
+	r2 = #LO(bar@IE)
+	r2 = #HI(bar@DTPREL)
+	r2 = #HI(bar@TPREL)'
+	tls_first_major=2
+	tls_first_minor=20
+	;;
   hppa*-*-linux*)
     conftest_s='
 t1:	.reg	%r20
@@ -3842,7 +3881,8 @@ esac
 # ??? Once 2.11 is released, probably need to add first known working
 # version to the per-target configury.
 case "$cpu_type" in
-  alpha | arm | avr | bfin | cris | i386 | m32c | m68k | microblaze | mips \
+  alpha | arm | avr | bfin | cris | hexagon | i386 \
+  | m32c | m68k | microblaze | mips \
   | pa | rs6000 | score | sparc | spu | xstormy16 | xtensa)
     insn="nop"
     ;;
@@ -4341,6 +4381,9 @@ AC_CACHE_CHECK(__stack_chk_fail in target C library,
       [gcc_cv_libc_provides_ssp=no
     case "$target" in
        *-*-linux* | *-*-kfreebsd*-gnu | *-*-knetbsd*-gnu)
+      if test "x$enable_libssp" = "xno"; then
+	gcc_cv_libc_provides_ssp=yes
+      fi
       [# glibc 2.4 and later provides __stack_chk_fail and
       # either __stack_chk_guard, or TLS access to stack guard canary.
       if test -f $target_header_dir/features.h \
@@ -4691,6 +4734,16 @@ else
   slibdir='$(libdir)'
 fi)
 AC_SUBST(slibdir)
+
+AC_ARG_ENABLE([poison-system-directories],
+	      AS_HELP_STRING([--enable-poison-system-directories],
+			     [warn for use of native system header directories]),,
+	      [enable_poison_system_directories=no])
+if test "x${enable_poison_system_directories}" = "xyes"; then
+  AC_DEFINE([ENABLE_POISON_SYSTEM_DIRECTORIES],
+	    [1],
+	    [Define to warn for use of native system header directories])
+fi
 
 # Substitute configuration variables
 AC_SUBST(subdirs)

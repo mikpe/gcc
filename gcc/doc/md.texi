@@ -4947,7 +4947,19 @@ RTL generation phase.  In this case it is to support machines where
 multiple instructions are usually needed to return from a function, but
 some class of functions only requires one instruction to implement a
 return.  Normally, the applicable functions are those which do not need
-to save any registers or allocate stack space.
+to save any registers or allocate stack space, although some targets
+have instructions that can perform both the epilogue and function return
+in one instruction.
+
+@cindex @code{simple_return} instruction pattern
+@item @samp{simple_return}
+Subroutine return instruction.  This instruction pattern name should be
+defined only if a single instruction can do all the work of returning
+from a function on a path where no epilogue is required.  This pattern
+is very similar to the @code{return} instruction pattern, but it is emitted
+only by the shrink-wrapping optimization on paths where the function
+prologue has not been executed, and a function return should occur without
+any of the effects of the epilogue.
 
 @findex reload_completed
 @findex leaf_function_p
@@ -5316,6 +5328,13 @@ sibling call (aka tail call) sites.
 The @code{sibcall_epilogue} pattern must not clobber any arguments used for
 parameter passing or any stack slots for arguments passed to the current
 function.
+
+@cindex @code{use_initial_val} instruction pattern
+@item @samp{use_initial_val}
+This pattern, if defined, emits an insn that shows use a pseudo register
+created by @code{get_hard_reg_initial_val}.  This is useful if a port may
+introduce additional uses of this pseudo in late optimization passes, when
+the initial ones may already have been optimized away.
 
 @cindex @code{trap} instruction pattern
 @item @samp{trap}
@@ -6775,6 +6794,14 @@ by the target machine.  It looks like:
 @end smallexample
 
 @var{name} is a string specifying the name of the attribute being defined.
+Some predicates are used in a special way by the rest of the compiler. The
+@code{enabled} attribute can be used to conditionally enable or disable
+insn alternatives (@pxref{Disable Insn Alternatives}). The @code{predicable}
+attribute, together with a suitable @code{define_cond_exec}
+(@pxref{Conditional Execution}), can be used to automatically generate
+conditional variants of instruction patterns. The compiler internally uses
+the names @code{ce_enabled} and @code{nonce_enabled}, so they should not be
+used elsewhere as alternative names.
 
 @var{list-of-values} is either a string that specifies a comma-separated
 list of values that can be assigned to the attribute, or a null string to
@@ -7984,11 +8011,14 @@ if the current insn is predicated, and will otherwise be @code{NULL}.
 
 When @code{define_cond_exec} is used, an implicit reference to
 the @code{predicable} instruction attribute is made.
-@xref{Insn Attributes}.  This attribute must be boolean (i.e.@: have
-exactly two elements in its @var{list-of-values}).  Further, it must
-not be used with complex expressions.  That is, the default and all
-uses in the insns must be a simple constant, not dependent on the
-alternative or anything else.
+@xref{Insn Attributes}.  This attribute must be a boolean (i.e.@: have
+exactly two elements in its @var{list-of-values}), with the possible
+values being @code{no} and @code{yes}.  The default and all uses in
+the insns must be a simple constant, not a complex expressions.  It
+may, however, depend on the alternative, by using a comma-separated
+list of values.  If that is the case, the port should also define an
+@code{enabled} attribute (@pxref{Disable Insn Alternatives}), which
+should also allow only @code{no} and @code{yes} as its values.
 
 For each @code{define_insn} for which the @code{predicable}
 attribute is true, a new @code{define_insn} pattern will be

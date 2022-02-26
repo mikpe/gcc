@@ -38,8 +38,10 @@ using namespace __cxxabiv1;
 // terminate.
 
 extern "C" void
-__cxa_call_terminate(_Unwind_Exception* ue_header) throw ()
-{
+__cxxabiv1::__cxa_call_terminate(__gnu_cxa_call_arg exc_obj_in) throw ()
+ {
+  _Unwind_Exception* ue_header
+    = reinterpret_cast<_Unwind_Exception*>(exc_obj_in);
 
   if (ue_header)
     {
@@ -65,7 +67,7 @@ __cxa_call_terminate(_Unwind_Exception* ue_header) throw ()
 // The ARM EABI __cxa_call_unexpected has the same semantics as the generic
 // routine, but the exception specification has a different format.
 extern "C" void
-__cxa_call_unexpected(void* exc_obj_in)
+__cxxabiv1::__cxa_call_unexpected(_Unwind_Control_Block* exc_obj_in)
 {
   _Unwind_Exception* exc_obj
     = reinterpret_cast<_Unwind_Exception*>(exc_obj_in);

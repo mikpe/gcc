@@ -178,11 +178,11 @@ void bar()
   foof (__builtin_powf (__FLT_MAX__, 3.5F));
   foo (__builtin_pow (__DBL_MAX__, 3.5));
   fool (__builtin_powl (__LDBL_MAX__, 3.5L));
-  TESTIT2 (pow, 2.0, 0x1p50);
+  TESTIT2 (pow, 3.0, 0x1p50);
   foof (__builtin_powf (__FLT_MAX__, -3.5F));
   foo (__builtin_pow (__DBL_MAX__, -3.5));
   fool (__builtin_powl (__LDBL_MAX__, -3.5L));
-  TESTIT2 (pow, 2.0, -0x1p50);
+  TESTIT2 (pow, 3.0, -0x1p50);
   
   /* The sqrt arg must be [0 ... Inf] inclusive.  */
   TESTIT (sqrt, -0.5);

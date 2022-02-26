@@ -2352,6 +2352,19 @@ set_label_offsets (rtx x, rtx insn, int initial_p)
 
       if (! offsets_known_at[CODE_LABEL_NUMBER (x) - first_label_num])
 	{
+	  if (x == insn)
+	    {
+	      basic_block bb;
+
+	      bb = BLOCK_FOR_INSN (insn);
+
+	      /* If the label is the target of a non-local GOTO, we must use
+	         the initial elimination offsets.  */
+	      if (bb && BB_HEAD (bb) == insn
+		  && (bb->flags & BB_NON_LOCAL_GOTO_TARGET))
+		initial_p = true;
+	    }
+	  
 	  for (i = 0; i < NUM_ELIMINABLE_REGS; i++)
 	    offsets_at[CODE_LABEL_NUMBER (x) - first_label_num][i]
 	      = (initial_p ? reg_eliminate[i].initial_offset

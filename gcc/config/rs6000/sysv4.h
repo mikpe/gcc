@@ -575,8 +575,11 @@ extern int fixuplabelno;
 #define CC1_SECURE_PLT_DEFAULT_SPEC ""
 #endif
 
+#undef CC1_EXTRA_SPEC
+#define CC1_EXTRA_SPEC ""
+
 /* Pass -G xxx to the compiler and set correct endian mode.  */
-#define	CC1_SPEC "%{G*} %(cc1_cpu) \
+#define	CC1_SPEC "%{G*} %(cc1_cpu) %(cc1_float) \
 %{mlittle|mlittle-endian: %(cc1_endian_little);           \
   mbig   |mbig-endian   : %(cc1_endian_big);              \
   mcall-aixdesc |					  \
@@ -599,7 +602,7 @@ extern int fixuplabelno;
 %{msdata: -msdata=default} \
 %{mno-sdata: -msdata=none} \
 %{!mbss-plt: %{!msecure-plt: %(cc1_secure_plt_default)}} \
-%{profile: -p}"
+%{profile: -p}" CC1_EXTRA_SPEC
 
 /* Default starting address if specified.  */
 #define LINK_START_SPEC "\
@@ -760,15 +763,15 @@ extern int fixuplabelno;
 #define CPP_OS_MVME_SPEC ""
 
 /* PowerPC simulator based on netbsd system calls support.  */
-#define LIB_SIM_SPEC "--start-group -lsim -lc --end-group"
+#define LIB_SIM_SPEC LIB_DEFAULT_SPEC
 
-#define	STARTFILE_SIM_SPEC "ecrti.o%s sim-crt0.o%s crtbegin.o%s"
+#define	STARTFILE_SIM_SPEC "ecrti.o%s crtbegin.o%s"
 
-#define	ENDFILE_SIM_SPEC "crtend.o%s ecrtn.o%s"
+#define	ENDFILE_SIM_SPEC "crtend.o%s ecrtn.o%s -Tsim-hosted.ld"
 
 #define LINK_START_SIM_SPEC ""
 
-#define LINK_OS_SIM_SPEC "-m elf32ppcsim"
+#define LINK_OS_SIM_SPEC ""
 
 #define CPP_OS_SIM_SPEC ""
 

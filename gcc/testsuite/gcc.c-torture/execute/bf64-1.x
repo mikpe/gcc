@@ -5,4 +5,5 @@ if { [istarget "mcore-*-*"] } {
 	set torture_execute_xfail "mcore-*-*"
 }
 
+set additional_flags "-fsigned-bitfields"
 return 0

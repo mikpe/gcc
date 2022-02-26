@@ -1,5 +1,6 @@
 // PR c++/37146
 // { dg-do run }
+// { dg-options "-fsigned-bitfields" }
 
 extern "C" void abort ();
 int a, b;

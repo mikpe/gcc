@@ -1,7 +1,7 @@
 /* Test for diagnostics for constant overflow.  */
 /* Origin: Joseph Myers <joseph@codesourcery.com> */
 /* { dg-do compile } */
-/* { dg-options "-fpermissive" } */
+/* { dg-options "-fpermissive -fsigned-bitfields" } */
 
 #include <limits.h>
 

@@ -1,0 +1,41 @@
+MD_INCLUDES =	$(srcdir)/config/hexagon/hexagon-v1.md \
+		$(srcdir)/config/hexagon/hexagon-v2.md \
+		$(srcdir)/config/hexagon/hexagon-v3.md \
+		$(srcdir)/config/hexagon/hexagon-v4.md \
+		$(srcdir)/config/hexagon/hexagon-v5.md \
+		$(srcdir)/config/hexagon/manual_builtins.md \
+		$(srcdir)/config/hexagon/vector.md
+
+# If any special flags are necessary when building libgcc2 put them here.
+TARGET_LIBGCC2_CFLAGS =
+
+LIB1ASMSRC    = hexagon/lib1funcs.asm
+LIB1ASMFUNCS  = _udivmodsi4 _udivsi3 _umodsi3 _divsi3 _modsi3 \
+                _udivmoddi4 _udivdi3 _umoddi3 _divdi3 _moddi3 \
+                _common_prologue_epilogue
+
+# We want fine grained libraries, so use the new code to build the
+# floating point emulation libraries.
+FPBIT = fp-bit.c
+DPBIT = dp-bit.c
+
+fp-bit.c: $(srcdir)/config/fp-bit.c
+	echo '#define FLOAT' > fp-bit.c
+	cat $(srcdir)/config/fp-bit.c >> fp-bit.c
+
+dp-bit.c: $(srcdir)/config/fp-bit.c
+	cat $(srcdir)/config/fp-bit.c > dp-bit.c
+
+# Enable the following if multilibs are needed.
+# See gcc/genmultilib, gcc/gcc.texi and gcc/tm.texi for a
+# description of the options and their values.
+
+MULTILIB_OPTIONS    = march=hexagonv5/march=hexagonv55 G0
+MULTILIB_DIRNAMES   = v5 v55 G0
+MULTILIB_MATCHES    =
+MULTILIB_EXCEPTIONS =
+MULTILIB_EXTRA_OPTS =
+
+ifneq (,$(with_newlib))
+gt-hexagon.h: s-gtype ; @true
+endif

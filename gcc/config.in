@@ -18,6 +18,18 @@
 #endif
 
 
+/* Required license feature */
+#ifndef USED_FOR_TARGET
+#undef CSL_LICENSE_FEATURE
+#endif
+
+
+/* Required license version */
+#ifndef USED_FOR_TARGET
+#undef CSL_LICENSE_VERSION
+#endif
+
+
 /* Define to enable the use of a default assembler. */
 #ifndef USED_FOR_TARGET
 #undef DEFAULT_ASSEMBLER
@@ -141,6 +153,12 @@
 /* Define to enable plugin support. */
 #ifndef USED_FOR_TARGET
 #undef ENABLE_PLUGIN
+#endif
+
+
+/* Define to warn for use of native system header directories */
+#ifndef USED_FOR_TARGET
+#undef ENABLE_POISON_SYSTEM_DIRECTORIES
 #endif
 
 

@@ -110,6 +110,10 @@ mextern-sdata
 Target Report Var(TARGET_EXTERN_SDATA) Init(1)
 Use -G for data that is not defined by the current object
 
+mfix-24k
+Target Report Var(TARGET_FIX_24K)
+Work around certain 24K errata
+
 mfix-r4000
 Target Report Mask(FIX_R4000)
 Work around certain R4000 errata
@@ -189,6 +193,10 @@ Target RejectNegative Joined
 mips16
 Target Report RejectNegative Mask(MIPS16)
 Generate MIPS16 code
+
+mips16e
+Target Report RejectNegative Mask(MIPS16) MaskExists
+Deprecated; alias for -mips16
 
 mips3d
 Target Report RejectNegative Mask(MIPS3D)

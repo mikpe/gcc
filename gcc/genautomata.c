@@ -7776,6 +7776,8 @@ output_max_insn_queue_index_def (void)
   for (i = 0; (1 << i) <= max; i++)
     ;
   gcc_assert (i >= 0);
+  if (i == 1)
+    i = 2;
   fprintf (output_file, "\nconst int max_insn_queue_index = %d;\n\n",
 	   (1 << i) - 1);
 }

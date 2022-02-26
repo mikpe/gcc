@@ -231,3 +231,8 @@
 (define_constraint "Yx"
    "@internal"
    (match_operand 0 "low_bitmask_operand"))
+
+(define_memory_constraint "YE"
+  "A single reg memory operand."
+  (and (match_code "mem")
+       (match_test "REG_P (XEXP (op, 0))")))

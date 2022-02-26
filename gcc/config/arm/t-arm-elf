@@ -46,6 +46,7 @@ MULTILIB_MATCHES     =
 #MULTILIB_MATCHES      += march?armv7=march?armv7-a
 #MULTILIB_MATCHES      += march?armv7=march?armv7-r
 #MULTILIB_MATCHES      += march?armv7=march?armv7-m
+#MULTILIB_MATCHES      += march?armv7=march?armv7e-m
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-a8
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-r4
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-m3

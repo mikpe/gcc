@@ -5310,6 +5310,11 @@ check_cfg (rtx head, rtx tail)
 		    gcc_assert (/* Usual case.  */
                                 (EDGE_COUNT (bb->succs) > 1
                                  && !BARRIER_P (NEXT_INSN (head)))
+				/* Special cases, see cfglayout.c:
+				   fixup_reorder_chain.  */
+				|| (EDGE_COUNT (bb->succs) == 1
+				    && (!onlyjump_p (head)
+					|| returnjump_p (head)))
                                 /* Or jump to the next instruction.  */
                                 || (EDGE_COUNT (bb->succs) == 1
                                     && (BB_HEAD (EDGE_I (bb->succs, 0)->dest)

@@ -83,6 +83,7 @@
   "
   [(set_attr "predicable" "yes")
    (set_attr "type" "*,*,*,*,load1,store1,r_2_f,f_2_r,fcpys,f_loads,f_stores")
+   (set_attr "neon_type" "*,*,*,*,*,*,neon_mcr,neon_mrc,neon_vmov,neon_ldr,neon_str")
    (set_attr "insn" "mov,mov,mvn,mov,*,*,*,*,*,*,*")
    (set_attr "pool_range"     "*,*,*,*,4096,*,*,*,*,1020,*")
    (set_attr "neg_pool_range" "*,*,*,*,4084,*,*,*,*,1008,*")]
@@ -125,6 +126,7 @@
   "
   [(set_attr "predicable" "yes")
    (set_attr "type" "*,*,*,*,load1,load1,store1,store1,r_2_f,f_2_r,fcpys,f_loads,f_stores")
+   (set_attr "neon_type" "*,*,*,*,*,*,*,*,neon_mcr,neon_mrc,neon_vmov,*,*")
    (set_attr "insn" "mov,mov,mvn,mov,*,*,*,*,*,*,*,*,*")
    (set_attr "pool_range"     "*,*,*,*,1020,4096,*,*,*,*,*,1020,*")
    (set_attr "neg_pool_range" "*,*,*,*,   0,   0,*,*,*,*,*,1008,*")]
@@ -134,9 +136,9 @@
 ;; DImode moves
 
 (define_insn "*arm_movdi_vfp"
-  [(set (match_operand:DI 0 "nonimmediate_di_operand" "=r, r,m,w,r,w,w, Uv")
+  [(set (match_operand:DI 0 "nonimmediate_di_operand" "=r, r, m,w,r,w,w, Uv")
 	(match_operand:DI 1 "di_operand"              "rIK,mi,r,r,w,w,Uvi,w"))]
-  "TARGET_ARM && TARGET_HARD_FLOAT && TARGET_VFP
+  "TARGET_ARM && TARGET_HARD_FLOAT && TARGET_VFP && arm_tune != cortexa8
    && (   register_operand (operands[0], DImode)
        || register_operand (operands[1], DImode))"
   "*
@@ -163,6 +165,49 @@
     }
   "
   [(set_attr "type" "*,load2,store2,r_2_f,f_2_r,ffarithd,f_loadd,f_stored")
+   (set_attr "neon_type" "*,*,*,neon_mcr_2_mcrr,neon_mrrc,neon_vmov,*,*")
+   (set (attr "length") (cond [(eq_attr "alternative" "0,1,2") (const_int 8)
+			       (eq_attr "alternative" "5")
+				(if_then_else
+				 (eq (symbol_ref "TARGET_VFP_SINGLE") (const_int 1))
+				 (const_int 8)
+				 (const_int 4))]
+			      (const_int 4)))
+   (set_attr "pool_range"     "*,1020,*,*,*,*,1020,*")
+   (set_attr "neg_pool_range" "*,1008,*,*,*,*,1008,*")]
+)
+
+(define_insn "*arm_movdi_vfp_cortexa8"
+  [(set (match_operand:DI 0 "nonimmediate_di_operand" "=r, r,m,w,!r,w,w, Uv")
+	(match_operand:DI 1 "di_operand"              "rIK,mi,r,r,w,w,Uvi,w"))]
+  "TARGET_ARM && TARGET_HARD_FLOAT && TARGET_VFP && arm_tune == cortexa8
+   && (   register_operand (operands[0], DImode)
+       || register_operand (operands[1], DImode))"
+  "*
+  switch (which_alternative)
+    {
+    case 0: 
+      return \"#\";
+    case 1:
+    case 2:
+      return output_move_double (operands);
+    case 3:
+      return \"fmdrr%?\\t%P0, %Q1, %R1\\t%@ int\";
+    case 4:
+      return \"fmrrd%?\\t%Q0, %R0, %P1\\t%@ int\";
+    case 5:
+      if (TARGET_VFP_SINGLE)
+	return \"fcpys%?\\t%0, %1\\t%@ int\;fcpys%?\\t%p0, %p1\\t%@ int\";
+      else
+	return \"fcpyd%?\\t%P0, %P1\\t%@ int\";
+    case 6: case 7:
+      return output_move_vfp (operands);
+    default:
+      gcc_unreachable ();
+    }
+  "
+  [(set_attr "type" "*,load2,store2,r_2_f,f_2_r,ffarithd,f_loadd,f_stored")
+   (set_attr "neon_type" "*,*,*,neon_mcr_2_mcrr,neon_mrrc,neon_vmov,*,*")
    (set (attr "length") (cond [(eq_attr "alternative" "0,1,2") (const_int 8)
 			       (eq_attr "alternative" "5")
 				(if_then_else
@@ -201,6 +246,7 @@
     }
   "
   [(set_attr "type" "*,load2,store2,r_2_f,f_2_r,ffarithd,f_loadd,f_stored")
+   (set_attr "neon_type" "*,*,*,neon_mcr_2_mcrr,neon_mrrc,neon_vmov,*,*")
    (set (attr "length") (cond [(eq_attr "alternative" "0,1,2") (const_int 8)
 			       (eq_attr "alternative" "5")
 				(if_then_else
@@ -355,6 +401,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "type"
      "r_2_f,f_2_r,fconsts,f_loads,f_stores,load1,store1,fcpys,*")
+   (set_attr "neon_type" "neon_mcr,neon_mrc,*,*,*,*,*,neon_vmov,*")
    (set_attr "insn" "*,*,*,*,*,*,*,*,mov")
    (set_attr "pool_range" "*,*,*,1020,*,4096,*,*,*")
    (set_attr "neg_pool_range" "*,*,*,1008,*,4080,*,*,*")]
@@ -392,6 +439,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "type"
      "r_2_f,f_2_r,fconsts,f_loads,f_stores,load1,store1,fcpys,*")
+   (set_attr "neon_type" "neon_mcr,neon_mrc,*,*,*,*,*,neon_vmov,*")
    (set_attr "insn" "*,*,*,*,*,*,*,*,mov")
    (set_attr "pool_range" "*,*,*,1020,*,4092,*,*,*")
    (set_attr "neg_pool_range" "*,*,*,1008,*,0,*,*,*")]
@@ -401,8 +449,8 @@
 ;; DFmode moves
 
 (define_insn "*movdf_vfp"
-  [(set (match_operand:DF 0 "nonimmediate_soft_df_operand" "=w,?r,w ,r, m,w  ,Uv,w,r")
-	(match_operand:DF 1 "soft_df_operand"		   " ?r,w,Dy,mF,r,UvF,w, w,r"))]
+  [(set (match_operand:DF 0 "nonimmediate_soft_df_operand" "=w,?r,w ,w, r, m,w  ,Uv,w,r")
+	(match_operand:DF 1 "soft_df_operand"		   " ?r,w,Dy,D0,mF,r,UvF,w, w,r"))]
   "TARGET_ARM && TARGET_HARD_FLOAT && TARGET_VFP
    && (   register_operand (operands[0], DFmode)
        || register_operand (operands[1], DFmode))"
@@ -417,16 +465,18 @@
       case 2:
 	gcc_assert (TARGET_VFP_DOUBLE);
         return \"fconstd%?\\t%P0, #%G1\";
-      case 3: case 4:
+      case 3:
+	return \"vmov.i32\\t%P0, #0\";
+      case 4: case 5:
 	return output_move_double (operands);
-      case 5: case 6:
+      case 6: case 7:
 	return output_move_vfp (operands);
-      case 7:
+      case 8:
 	if (TARGET_VFP_SINGLE)
 	  return \"fcpys%?\\t%0, %1\;fcpys%?\\t%p0, %p1\";
 	else
 	  return \"fcpyd%?\\t%P0, %P1\";
-      case 8:
+      case 9:
         return \"#\";
       default:
 	gcc_unreachable ();
@@ -434,9 +484,10 @@
     }
   "
   [(set_attr "type"
-     "r_2_f,f_2_r,fconstd,f_loadd,f_stored,load2,store2,ffarithd,*")
-   (set (attr "length") (cond [(eq_attr "alternative" "3,4,8") (const_int 8)
-			       (eq_attr "alternative" "7")
+     "r_2_f,f_2_r,fconstd,*,f_loadd,f_stored,load2,store2,ffarithd,*")
+   (set_attr "neon_type" "neon_mcr_2_mcrr,neon_mrrc,*,neon_vmov,*,*,*,*,neon_vmov,*")
+   (set (attr "length") (cond [(eq_attr "alternative" "4,5,9") (const_int 8)
+			       (eq_attr "alternative" "8")
 				(if_then_else
 				 (eq (symbol_ref "TARGET_VFP_SINGLE")
 				     (const_int 1))
@@ -444,14 +495,16 @@
 				 (const_int 4))]
 			      (const_int 4)))
    (set_attr "predicable" "yes")
-   (set_attr "pool_range" "*,*,*,1020,*,1020,*,*,*")
-   (set_attr "neg_pool_range" "*,*,*,1008,*,1008,*,*,*")]
+   (set_attr "pool_range" "*,*,*,*,1020,*,1020,*,*,*")
+   (set_attr "neg_pool_range" "*,*,*,*,1008,*,1008,*,*,*")]
 )
 
 (define_insn "*thumb2_movdf_vfp"
-  [(set (match_operand:DF 0 "nonimmediate_soft_df_operand" "=w,?r,w ,r, m,w  ,Uv,w,r")
-	(match_operand:DF 1 "soft_df_operand"		   " ?r,w,Dy,mF,r,UvF,w, w,r"))]
-  "TARGET_THUMB2 && TARGET_HARD_FLOAT && TARGET_VFP"
+  [(set (match_operand:DF 0 "nonimmediate_soft_df_operand" "=w,?r,w ,w,r, m,w  ,Uv,w,r")
+	(match_operand:DF 1 "soft_df_operand"		   " ?r,w,Dy,D0,mF,r,UvF,w, w,r"))]
+  "TARGET_THUMB2 && TARGET_HARD_FLOAT && TARGET_VFP
+   && (   register_operand (operands[0], DFmode)
+       || register_operand (operands[1], DFmode))"
   "*
   {
     switch (which_alternative)
@@ -463,11 +516,13 @@
       case 2:
 	gcc_assert (TARGET_VFP_DOUBLE);
 	return \"fconstd%?\\t%P0, #%G1\";
-      case 3: case 4: case 8:
+      case 3:
+	return \"vmov.i32\\t%P0, #0\";
+      case 4: case 5: case 9:
 	return output_move_double (operands);
-      case 5: case 6:
+      case 6: case 7:
 	return output_move_vfp (operands);
-      case 7:
+      case 8:
 	if (TARGET_VFP_SINGLE)
 	  return \"fcpys%?\\t%0, %1\;fcpys%?\\t%p0, %p1\";
 	else
@@ -478,17 +533,18 @@
     }
   "
   [(set_attr "type"
-     "r_2_f,f_2_r,fconstd,load2,store2,f_loadd,f_stored,ffarithd,*")
-   (set (attr "length") (cond [(eq_attr "alternative" "3,4,8") (const_int 8)
-			       (eq_attr "alternative" "7")
+     "r_2_f,f_2_r,fconstd,*,load2,store2,f_loadd,f_stored,ffarithd,*")
+   (set_attr "neon_type" "neon_mcr_2_mcrr,neon_mrrc,*,neon_vmov,*,*,*,*,neon_vmov,*")
+   (set (attr "length") (cond [(eq_attr "alternative" "4,5,9") (const_int 8)
+			       (eq_attr "alternative" "8")
 				(if_then_else
 				 (eq (symbol_ref "TARGET_VFP_SINGLE")
 				     (const_int 1))
 				 (const_int 8)
 				 (const_int 4))]
 			      (const_int 4)))
-   (set_attr "pool_range" "*,*,*,4096,*,1020,*,*,*")
-   (set_attr "neg_pool_range" "*,*,*,0,*,1008,*,*,*")]
+   (set_attr "pool_range" "*,*,*,*,4096,*,1020,*,*,*")
+   (set_attr "neg_pool_range" "*,*,*,*,0,*,1008,*,*,*")]
 )
 
 
@@ -514,7 +570,8 @@
    fmrs%D3\\t%0, %2\;fmrs%d3\\t%0, %1"
    [(set_attr "conds" "use")
     (set_attr "length" "4,4,8,4,4,8,4,4,8")
-    (set_attr "type" "fcpys,fcpys,fcpys,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")]
+    (set_attr "type" "fcpys,fcpys,fcpys,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")
+    (set_attr "neon_type" "neon_vmov,neon_vmov,neon_vmov,neon_mcr,neon_mcr,neon_mcr,neon_mrc,neon_mrc,neon_mrc")]
 )
 
 (define_insn "*thumb2_movsfcc_vfp"
@@ -537,7 +594,8 @@
    ite\\t%D3\;fmrs%D3\\t%0, %2\;fmrs%d3\\t%0, %1"
    [(set_attr "conds" "use")
     (set_attr "length" "6,6,10,6,6,10,6,6,10")
-    (set_attr "type" "fcpys,fcpys,fcpys,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")]
+    (set_attr "type" "fcpys,fcpys,fcpys,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")
+    (set_attr "neon_type" "neon_vmov,neon_vmov,neon_vmov,neon_mcr,neon_mcr,neon_mcr,neon_mrc,neon_mrc,neon_mrc")]
 )
 
 (define_insn "*movdfcc_vfp"
@@ -560,7 +618,8 @@
    fmrrd%D3\\t%Q0, %R0, %P2\;fmrrd%d3\\t%Q0, %R0, %P1"
    [(set_attr "conds" "use")
     (set_attr "length" "4,4,8,4,4,8,4,4,8")
-    (set_attr "type" "ffarithd,ffarithd,ffarithd,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")]
+    (set_attr "type" "ffarithd,ffarithd,ffarithd,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")
+    (set_attr "neon_type" "neon_vmov,neon_vmov,neon_vmov,neon_mcr_2_mcrr,neon_mcr_2_mcrr,neon_mcr_2_mcrr,neon_mrrc,neon_mrrc,neon_mrrc")]
 )
 
 (define_insn "*thumb2_movdfcc_vfp"
@@ -583,7 +642,8 @@
    ite\\t%D3\;fmrrd%D3\\t%Q0, %R0, %P2\;fmrrd%d3\\t%Q0, %R0, %P1"
    [(set_attr "conds" "use")
     (set_attr "length" "6,6,10,6,6,10,6,6,10")
-    (set_attr "type" "ffarithd,ffarithd,ffarithd,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")]
+    (set_attr "type" "ffarithd,ffarithd,ffarithd,r_2_f,r_2_f,r_2_f,f_2_r,f_2_r,f_2_r")
+    (set_attr "neon_type" "neon_vmov,neon_vmov,neon_vmov,neon_mcr_2_mcrr,neon_mcr_2_mcrr,neon_mcr_2_mcrr,neon_mrrc,neon_mrrc,neon_mrrc")]
 )
 
 
@@ -712,23 +772,25 @@
 ;; Division insns
 
 (define_insn "*divsf3_vfp"
-  [(set (match_operand:SF	  0 "s_register_operand" "+t")
-	(div:SF (match_operand:SF 1 "s_register_operand" "t")
-		(match_operand:SF 2 "s_register_operand" "t")))]
+  [(set (match_operand:SF	  0 "s_register_operand" "+t,&t")
+	(div:SF (match_operand:SF 1 "s_register_operand" "t,t")
+		(match_operand:SF 2 "s_register_operand" "t,t")))]
   "TARGET_32BIT && TARGET_HARD_FLOAT && TARGET_VFP"
   "fdivs%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
-   (set_attr "type" "fdivs")]
+   (set_attr "type" "fdivs")
+   (set_attr "arch" "notvfp9,vfp9")]
 )
 
 (define_insn "*divdf3_vfp"
-  [(set (match_operand:DF	  0 "s_register_operand" "+w")
-	(div:DF (match_operand:DF 1 "s_register_operand" "w")
-		(match_operand:DF 2 "s_register_operand" "w")))]
+  [(set (match_operand:DF	  0 "s_register_operand" "+w,&w")
+	(div:DF (match_operand:DF 1 "s_register_operand" "w,w")
+		(match_operand:DF 2 "s_register_operand" "w,w")))]
   "TARGET_32BIT && TARGET_HARD_FLOAT && TARGET_VFP_DOUBLE"
   "fdivd%?\\t%P0, %P1, %P2"
   [(set_attr "predicable" "yes")
-   (set_attr "type" "fdivd")]
+   (set_attr "type" "fdivd")
+   (set_attr "arch" "notvfp9,vfp9")]
 )
 
 
@@ -991,21 +1053,23 @@
 ;; Sqrt insns.
 
 (define_insn "*sqrtsf2_vfp"
-  [(set (match_operand:SF	   0 "s_register_operand" "=t")
-	(sqrt:SF (match_operand:SF 1 "s_register_operand" "t")))]
+  [(set (match_operand:SF	   0 "s_register_operand" "=t,&t")
+	(sqrt:SF (match_operand:SF 1 "s_register_operand" "t,t")))]
   "TARGET_32BIT && TARGET_HARD_FLOAT && TARGET_VFP"
   "fsqrts%?\\t%0, %1"
   [(set_attr "predicable" "yes")
-   (set_attr "type" "fdivs")]
+   (set_attr "type" "fdivs")
+   (set_attr "arch" "notvfp9,vfp9")]
 )
 
 (define_insn "*sqrtdf2_vfp"
-  [(set (match_operand:DF	   0 "s_register_operand" "=w")
-	(sqrt:DF (match_operand:DF 1 "s_register_operand" "w")))]
+  [(set (match_operand:DF	   0 "s_register_operand" "=w,&w")
+	(sqrt:DF (match_operand:DF 1 "s_register_operand" "w,w")))]
   "TARGET_32BIT && TARGET_HARD_FLOAT && TARGET_VFP_DOUBLE"
   "fsqrtd%?\\t%P0, %P1"
   [(set_attr "predicable" "yes")
-   (set_attr "type" "fdivd")]
+   (set_attr "type" "fdivd")
+   (set_attr "arch" "notvfp9,vfp9")]
 )
 
 

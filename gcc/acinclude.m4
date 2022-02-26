@@ -521,3 +521,53 @@ dnl Make sure that build_exeext is looked for
 AC_DEFUN([gcc_AC_BUILD_EXEEXT], [
 ac_executable_extensions="$build_exeext"])
 
+
+# --with-license=PATH
+AC_DEFUN([CSL_AC_LICENSE],[
+  AC_ARG_WITH(license,
+    AC_HELP_STRING([--with-license],
+                   [the path to the installed license component]),
+    [case "$withval" in
+     (yes) AC_MSG_ERROR([license not specified]) ;;
+     (no)  with_license= ;;
+     (*) ;;
+  esac],
+  [with_license=])
+  AC_SUBST(licensedir, $with_license)
+])
+
+# --with-csl-license-feature=FOO
+AC_DEFUN([CSL_AC_LICENSE_FEATURE],[
+  AC_ARG_WITH(csl-license-feature,
+    AC_HELP_STRING([--with-csl-license-feature=FEATURE],
+                   [Use FEATURE to communicate with the license manager]),
+    [case "$withval" in
+      (yes) AC_MSG_ERROR([license feature not specified]) ;;
+      (no)  CSL_LICENSE_FEATURE="" ;; 
+      (*)   CSL_LICENSE_FEATURE="$withval" ;;
+     esac],
+     CSL_LICENSE_FEATURE=""
+  )
+  if test x"$CSL_LICENSE_FEATURE" != x; then
+    AC_DEFINE_UNQUOTED(CSL_LICENSE_FEATURE, "$CSL_LICENSE_FEATURE",
+                       [Required license feature])
+  fi
+])
+
+# --with-csl-license-version=VERSION
+AC_DEFUN([CSL_AC_LICENSE_VERSION],[
+  AC_ARG_WITH(csl-license-version,
+    AC_HELP_STRING([--with-csl-license-version=VERSION],
+                   [Use VERSION to communicate with the license manager]),
+    [case "$withval" in
+      (yes) AC_MSG_ERROR([license version not specified]) ;;
+      (no)  CSL_LICENSE_VERSION="" ;; 
+      (*)   CSL_LICENSE_VERSION="$withval" ;;
+     esac],
+     CSL_LICENSE_VERSION=""
+  )
+  if test x"$CSL_LICENSE_VERSION" != x; then
+    AC_DEFINE_UNQUOTED(CSL_LICENSE_VERSION, "$CSL_LICENSE_VERSION",
+                       [Required license version])
+  fi
+])

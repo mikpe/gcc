@@ -143,6 +143,22 @@ options enabled.  Therefore @code{MULTILIB_EXCEPTIONS} is set to:
 *mthumb/*mhard-float*
 @end smallexample
 
+@findex MULTILIB_ALIASES
+@item MULTILIB_ALIASES
+Sometimes it is desirable to support a large set of multilib options, but
+only build libraries for a subset of those multilibs.  The remaining
+combinations use a sutiable alternative multilb.  In that case, set
+@code{MULTILIB_ALIASES} to a list of the form @samp{realname=aliasname}.
+
+For example, consider a little-endian ARM toolchain with big-endian and
+Thumb multilibs.  If a big-endian Thumb multilib is not wanted, then
+setting @code{MULTILIB_ALIASES} to @samp{mbig-endian=mbig-endian/mthumb} 
+makes this combination use the big-endian ARM libraries instead.
+
+If the multilib is instead excluded by setting @code{MULTILIB_EXCEPTIONS}
+then big-endian Thumb code uses the default multilib as none of the
+remaining multilibs match.
+
 @findex MULTILIB_EXTRA_OPTS
 @item MULTILIB_EXTRA_OPTS
 Sometimes it is desirable that when building multiple versions of

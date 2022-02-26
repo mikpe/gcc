@@ -515,8 +515,10 @@ cgraph_node (tree decl)
   if (DECL_CONTEXT (decl) && TREE_CODE (DECL_CONTEXT (decl)) == FUNCTION_DECL)
     {
       node->origin = cgraph_node (DECL_CONTEXT (decl));
+      node->origin->ever_was_nested = 1;
       node->next_nested = node->origin->nested;
       node->origin->nested = node;
+      node->ever_was_nested = 1;
     }
   if (assembler_name_hash)
     {

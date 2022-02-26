@@ -1,7 +1,7 @@
 /* Test for diagnostics for constant overflow.  Test with -pedantic.  */
 /* Origin: Joseph Myers <joseph@codesourcery.com> */
 /* { dg-do compile } */
-/* { dg-options "-fpermissive -pedantic" } */
+/* { dg-options "-fpermissive -pedantic -fsigned-bitfields" } */
 
 #include <limits.h>
 

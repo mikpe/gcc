@@ -1,0 +1,15 @@
+# Assemble startup files.
+$(T)crti.o: $(srcdir)/config/hexagon/crti.asm $(GCC_PASSES)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(MULTILIB_CFLAGS) $(INCLUDES) \
+	-c -o $(T)crti.o -x assembler $(srcdir)/config/hexagon/crti.asm
+
+$(T)crtn.o: $(srcdir)/config/hexagon/crtn.asm $(GCC_PASSES)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(MULTILIB_CFLAGS) $(INCLUDES) \
+	-c -o $(T)crtn.o -x assembler $(srcdir)/config/hexagon/crtn.asm
+
+EXTRA_MULTILIB_PARTS = crti.o crtn.o crtbegin.o crtend.o
+
+ifneq (,$(with_newlib))
+LIB1ASMFUNCS += _hexagon_memcpy_likely_aligned_min32bytes_mult8bytes _crt0_standalone_support
+endif
+

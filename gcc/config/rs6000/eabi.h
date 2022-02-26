@@ -23,10 +23,6 @@
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_EABI)
 
-/* Invoke an initializer function to set up the GOT.  */
-#define NAME__MAIN "__eabi"
-#define INVOKE__main
-
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (PowerPC Embedded)");
 
@@ -42,3 +38,20 @@
       TARGET_OS_SYSV_CPP_BUILTINS ();     \
     }                                     \
   while (0)
+
+/* Add -te500v1 and -te500v2 options for convenience in generating
+   multilibs.  */
+#undef CC1_EXTRA_SPEC
+#define CC1_EXTRA_SPEC \
+  "%{te500v1: -mcpu=8540 -mfloat-gprs=single -mspe=yes -mabi=spe} " \
+  "%{te500v2: -mcpu=8548 -mfloat-gprs=double -mspe=yes -mabi=spe} " \
+  "%{te600: -mcpu=7400 -maltivec -mabi=altivec}"		    \
+  "%{te500mc: -mcpu=e500mc -maix-struct-return}"
+
+#undef ASM_DEFAULT_SPEC
+#define ASM_DEFAULT_SPEC			\
+  "%{te500v1:-mppc -mspe -me500 ;		\
+     te500v2:-mppc -mspe -me500 ;		\
+     te600:-mppc -maltivec ;			\
+     te500mc:-mppc -me500mc ;			\
+     :-mppc%{m64:64}}"

@@ -137,3 +137,29 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
+
+#if _GLIBCXX_C_LOCALE_GNU
+/* Because of a bad cross-compilation fallback in a configure test,
+   Sourcery G++ toolchains for GNU/Linux targets formerly used the
+   "generic" locale model in libstdc++.  Improve compatibility with
+   those toolchains by exporting symbol aliases under the "generic"
+   names for the "gnu" functions.  */
+#define _GLIBCXX_LOCALE_COMPAT(generic, gnu) \
+  extern "C" void generic (void) __attribute__ ((alias (#gnu), weak))
+
+#ifdef _GLIBCXX_SIZE_T_IS_UINT
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIcEC1EPiPKtbj, _ZNSt5ctypeIcEC1EP15__locale_structPKtbj);
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIcEC2EPiPKtbj, _ZNSt5ctypeIcEC2EP15__locale_structPKtbj);
+#ifdef _GLIBCXX_USE_WCHAR_T
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIwEC1EPij, _ZNSt5ctypeIwEC1EP15__locale_structj);
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIwEC2EPij, _ZNSt5ctypeIwEC2EP15__locale_structj);
+#endif
+#else
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIcEC1EPiPKtbm, _ZNSt5ctypeIcEC1EP15__locale_structPKtbm);
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIcEC2EPiPKtbm, _ZNSt5ctypeIcEC2EP15__locale_structPKtbm);
+#ifdef _GLIBCXX_USE_WCHAR_T
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIwEC1EPim, _ZNSt5ctypeIwEC1EP15__locale_structm);
+_GLIBCXX_LOCALE_COMPAT (_ZNSt5ctypeIwEC2EPim, _ZNSt5ctypeIwEC2EP15__locale_structm);
+#endif
+#endif
+#endif

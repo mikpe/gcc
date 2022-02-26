@@ -24,6 +24,7 @@
 #define GCC_ARM_PROTOS_H
 
 extern int use_return_insn (int, rtx);
+extern bool use_simple_return_p (void);
 extern enum reg_class arm_regno_class (int);
 extern void arm_load_pic_register (unsigned long);
 extern int arm_volatile_func (void);
@@ -54,6 +55,7 @@ extern rtx legitimize_pic_address (rtx, enum machine_mode, rtx);
 extern rtx legitimize_tls_address (rtx, rtx);
 extern int arm_legitimate_address_outer_p (enum machine_mode, rtx, RTX_CODE, int);
 extern int thumb_legitimate_offset_p (enum machine_mode, HOST_WIDE_INT);
+extern int thumb1_legitimate_address_p (enum machine_mode, rtx, int);
 extern bool arm_legitimize_reload_address (rtx *, enum machine_mode, int, int,
 					   int);
 extern rtx thumb_legitimize_reload_address (rtx *, enum machine_mode, int, int,
@@ -135,7 +137,7 @@ extern int arm_address_offset_is_imm (rtx);
 extern const char *output_add_immediate (rtx *);
 extern const char *arithmetic_instr (rtx, int);
 extern void output_ascii_pseudo_op (FILE *, const unsigned char *, int);
-extern const char *output_return_instruction (rtx, int, int);
+extern const char *output_return_instruction (rtx, bool, bool, bool);
 extern void arm_poke_function_name (FILE *, const char *);
 extern void arm_final_prescan_insn (rtx);
 extern int arm_debugger_arg_offset (int, rtx);
@@ -175,6 +177,7 @@ extern int is_called_in_ARM_mode (tree);
 #endif
 extern int thumb_shiftable_const (unsigned HOST_WIDE_INT);
 #ifdef RTX_CODE
+extern enum arm_cond_code maybe_get_arm_condition_code (rtx);
 extern void thumb1_final_prescan_insn (rtx);
 extern void thumb2_final_prescan_insn (rtx);
 extern const char *thumb_load_double_from_address (rtx *);
@@ -220,9 +223,15 @@ struct tune_params
   bool (*rtx_costs) (rtx, RTX_CODE, RTX_CODE, int *, bool);
   bool (*sched_adjust_cost) (rtx, rtx, rtx, int *);
   int constant_limit;
+  /* Maximum number of instructions to conditionalise in
+     arm_final_prescan_insn.  */
+  int max_insns_skipped;
   int num_prefetch_slots;
   int l1_cache_size;
   int l1_cache_line_size;
+  bool prefer_constant_pool;
+  int (*branch_cost) (bool, bool);
+  bool aggressive_unrolling;
 };
 
 extern const struct tune_params *current_tune;

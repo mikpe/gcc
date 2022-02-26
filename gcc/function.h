@@ -755,6 +755,8 @@ extern void used_types_insert (tree);
 
 extern int get_next_funcdef_no (void);
 
+extern unsigned int alignment_for_aligned_arrays (tree, unsigned int);
+
 /* In predict.c */
 extern bool optimize_function_for_size_p (struct function *);
 extern bool optimize_function_for_speed_p (struct function *);

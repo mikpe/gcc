@@ -203,8 +203,8 @@ std::rethrow_exception(std::exception_ptr ep)
   dep->primaryException = obj;
   __sync_add_and_fetch (&eh->referenceCount, 1);
 
-  dep->unexpectedHandler = __unexpected_handler;
-  dep->terminateHandler = __terminate_handler;
+  dep->unexpectedHandler = __get_unexpected_handler ();
+  dep->terminateHandler = __get_terminate_handler ();
   __GXX_INIT_DEPENDENT_EXCEPTION_CLASS(dep->unwindHeader.exception_class);
   dep->unwindHeader.exception_cleanup = __gxx_dependent_exception_cleanup;
 

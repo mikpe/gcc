@@ -412,6 +412,10 @@ struct GTY((variable_size)) rtvec_def {
   (JUMP_P (INSN) && (GET_CODE (PATTERN (INSN)) == ADDR_VEC || \
 		     GET_CODE (PATTERN (INSN)) == ADDR_DIFF_VEC))
 
+/* Predicate yielding nonzero iff X is a return or simple_preturn.  */
+#define ANY_RETURN_P(X) \
+  (GET_CODE (X) == RETURN || GET_CODE (X) == SIMPLE_RETURN)
+
 /* 1 if X is a unary operator.  */
 
 #define UNARY_P(X)   \
@@ -970,6 +974,11 @@ enum insn_note
 extern const char * const note_insn_name[NOTE_INSN_MAX];
 #define GET_NOTE_INSN_NAME(NOTE_CODE) \
   (note_insn_name[(NOTE_CODE)])
+
+/* Predicate yielding nonzero iff X is a deleted insn note.  */
+#define DELETED_NOTE_P(X)					\
+  (NOTE_P (X) && (NOTE_KIND (X) == NOTE_INSN_DELETED		\
+		  || NOTE_KIND (X) == NOTE_INSN_DELETED_LABEL))
 
 /* The name of a label, in case it corresponds to an explicit label
    in the input source code.  */
@@ -2041,6 +2050,8 @@ enum global_rtl_index
 {
   GR_PC,
   GR_CC0,
+  GR_RETURN,
+  GR_SIMPLE_RETURN,
   GR_STACK_POINTER,
   GR_FRAME_POINTER,
 /* For register elimination to work properly these hard_frame_pointer_rtx,
@@ -2130,6 +2141,8 @@ extern struct target_rtl *this_target_rtl;
 
 /* Standard pieces of rtx, to be substituted directly into things.  */
 #define pc_rtx                  (global_rtl[GR_PC])
+#define ret_rtx                 (global_rtl[GR_RETURN])
+#define simple_return_rtx       (global_rtl[GR_SIMPLE_RETURN])
 #define cc0_rtx                 (global_rtl[GR_CC0])
 
 /* All references to certain hard regs, except those created

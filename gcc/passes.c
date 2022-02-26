@@ -767,6 +767,7 @@ init_optimization_passes (void)
 	  NEXT_PASS (pass_cd_dce);
 	  NEXT_PASS (pass_early_ipa_sra);
 	  NEXT_PASS (pass_tail_recursion);
+	  NEXT_PASS (pass_if_to_switch);
 	  NEXT_PASS (pass_convert_switch);
           NEXT_PASS (pass_cleanup_eh);
           NEXT_PASS (pass_profile);
@@ -822,6 +823,7 @@ init_optimization_passes (void)
       NEXT_PASS (pass_rename_ssa_copies);
       NEXT_PASS (pass_complete_unrolli);
       NEXT_PASS (pass_ccp);
+      NEXT_PASS (pass_promote_indices);
       NEXT_PASS (pass_forwprop);
       NEXT_PASS (pass_call_cdce);
       /* pass_build_alias is a dummy pass that ensures that we
@@ -829,10 +831,12 @@ init_optimization_passes (void)
 	 alias information also rewrites no longer addressed
 	 locals into SSA form if possible.  */
       NEXT_PASS (pass_build_alias);
+      NEXT_PASS (pass_remove_local_statics);
       NEXT_PASS (pass_return_slot);
       NEXT_PASS (pass_phiprop);
       NEXT_PASS (pass_fre);
       NEXT_PASS (pass_copy_prop);
+      NEXT_PASS (pass_if_to_switch);
       NEXT_PASS (pass_merge_phi);
       NEXT_PASS (pass_vrp);
       NEXT_PASS (pass_dce);
@@ -996,6 +1000,7 @@ init_optimization_passes (void)
       NEXT_PASS (pass_initialize_regs);
       NEXT_PASS (pass_ud_rtl_dce);
       NEXT_PASS (pass_combine);
+      NEXT_PASS (pass_ee);
       NEXT_PASS (pass_if_after_combine);
       NEXT_PASS (pass_partition_blocks);
       NEXT_PASS (pass_regmove);
@@ -1014,6 +1019,7 @@ init_optimization_passes (void)
 	  struct opt_pass **p = &pass_postreload.pass.sub;
 	  NEXT_PASS (pass_postreload_cse);
 	  NEXT_PASS (pass_gcse2);
+	  NEXT_PASS (pass_cprop_hardreg);
 	  NEXT_PASS (pass_split_after_reload);
 	  NEXT_PASS (pass_implicit_zee);
 	  NEXT_PASS (pass_compare_elim_after_reload);
@@ -1024,7 +1030,7 @@ init_optimization_passes (void)
 	  NEXT_PASS (pass_peephole2);
 	  NEXT_PASS (pass_if_after_reload);
 	  NEXT_PASS (pass_regrename);
-	  NEXT_PASS (pass_cprop_hardreg);
+	  NEXT_PASS (pass_cprop_hardreg2);
 	  NEXT_PASS (pass_fast_rtl_dce);
 	  NEXT_PASS (pass_reorder_blocks);
 	  NEXT_PASS (pass_branch_target_load_optimize2);

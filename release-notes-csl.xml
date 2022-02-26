@@ -1,0 +1,772 @@
+<!-- This file contains a series of release note fragments processed
+     by gnu-notes.  To add a note to it, use "gnu-notes -a
+     $release_config gcc".  The TARGET line should contain a
+     list of shell glob patterns for target names to which the note is
+     relevant; it may be removed if it is relevant to all targets.
+ -->
+
+      <!-- UUID: bfe1ea8b-9acb-4cc3-b254-fe7d9a3065f7 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 16563 -->
+      <formalpara>
+        <title>Hardware loop bug fix</title>
+        <para>
+	  A compiler optimization bug has been fixed that caused some
+	  hardware loops to use an incorrect iteration count.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 15fefc9c-380f-4bb2-adf6-570b2bd648b3 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 16620 -->
+      <formalpara>
+        <title>Compiler fix for invalid packets</title>
+        <para>
+	  The compiler no longer produces packets
+	  using the result of a floating point instruction with
+	  <code>.new</code>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 0c454525-b8bc-41f1-bef1-1149d31f6555 -->
+      <!-- TARGET: hexagon-linux -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15858 -->
+      <formalpara>
+        <title>Default architecture</title>
+        <para>
+	  The default target architecture is now V5.
+        </para>
+      </formalpara>
+
+      <!-- UUID: de047217-b50b-42ad-b720-1ccc7d7cd152 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 16006 -->
+      <formalpara>
+        <title>Fix to packet optimization</title>
+        <para>
+	  A compiler optimization bug has been fixed that incorrectly changed
+	  the order of related write instructions.
+        </para>
+      </formalpara>
+
+      <!-- UUID: f2a75c0d-d0ca-4ffa-bef2-5b69cab8434e -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 16135 -->
+      <formalpara>
+        <title>Fix for debug info bug</title>
+        <para>
+	  A compiler bug has been fixed that was causing incomplete DWARF-2
+	  debug information for function prologues in some situations.
+        </para>
+      </formalpara>
+
+      <!-- UUID: c77bc305-ad13-4d80-b1a9-92b009ab6083 -->
+      <!-- TARGET: * -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: -->
+      <formalpara>
+        <title>Restriction on new-value compare jumps</title>
+        <para>
+	  New-value compare jump instructions cannot use the result of
+	  a floating-point instruction created in the same packet.
+	  The compiler no longer produces such packets.
+        </para>
+      </formalpara>
+
+      <!-- UUID: de3a3841-0f8f-41d9-8a79-794c05883652 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15954 -->
+      <formalpara>
+        <title>Fix for internal compiler error</title>
+	  An internal compiler error (ICE) in
+	  <function>insert_value_copy_on_edge</function> has been fixed.
+      </formalpara>
+
+      <!-- UUID: 7523efc0-0e76-4cff-9f8b-285234450551 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15828 -->
+      <formalpara>
+        <title>Fix for internal compiler error</title>
+        <para>
+	  An internal compiler error (ICE) in
+	  <function>change_queue_index</function> has been fixed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 8156b43a-3484-498a-88f6-6002f9728290 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15805 -->
+      <formalpara>
+        <title>Fix for internal compiler error</title>
+        <para>
+	  An internal compiler error (ICE) in
+	  <function>merge_if_block</function> has been fixed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 27e30e52-ff37-46d5-b25b-d591168a83e8 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15711 -->
+      <formalpara>
+        <title>Fix for hardware loop compile error</title>
+        <para>
+	  An internal compiler error (ICE) in hwloop_optimize
+	  has been fixed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 048d21ca-d8ec-42b2-bb38-d63d7c89cc30 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15728 15820 -->
+      <formalpara>
+        <title>Optimization fix for hardware loops</title>
+        <para>
+	  A GCC optimization bug has been fixed that sometimes caused
+	  incorrect code to be generated for hardware loops.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 809c91a3-0d6d-4f6a-b904-b71a08dfdb21 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 16027 -->
+      <formalpara>
+        <title>Fix for <code>hexagon-gcc -mno-dealloc_return</code></title>
+        <para>
+	  A code generation bug for <option>-mno-dealloc_return</option>
+	  has been fixed that sometimes caused an infinite loop.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 16635643-fc5f-4eb2-a952-f3e12b99706b -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15983 -->
+      <formalpara>
+        <title>New compiler option</title>
+        <para>
+	  Support was added for <code>hexagon-gcc -mno-dealloc_return</code>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: a6d25aaf-01a0-4699-a71b-abd3ec81f2ff -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15774 -->
+      <formalpara>
+        <title>Optimization fix for packed structs</title>
+        <para>
+          A GCC optimization bug has been fixed that could cause an
+	  unaligned access to a member of a packed struct.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 1a7c3bef-e8c7-43b2-b9e5-ae9970824359 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15473 -->
+      <formalpara>
+        <title>Switch statement optimization bug fix</title>
+        <para>
+          A GCC optimization bug has been fixed that caused incorrect code
+          for some switch statements.
+        </para>
+      </formalpara>
+
+      <!-- UUID: f1959e0d-69b0-4792-902f-8c735155f63f -->
+      <!-- TARGET: hexagon-linux -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15441 -->
+      <formalpara>
+        <title>Variadic functions corrupting the stack</title>
+        <para>
+          A gcc optimization bug has been fixed that caused a function with
+	  a variadic argument list to corrupt its caller's stack.
+        </para>
+      </formalpara>
+
+      <!-- UUID: bab9220e-f777-466f-b97f-fa003bc8e7b6 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15218 -->
+      <formalpara>
+        <title>Missing debug info</title>
+        <para>
+          A gcc bug has been fixed that prevented the debug option
+	  (<option>-g</option>) from being passed to the assembler.
+        </para>
+      </formalpara>
+
+      <!-- UUID: ee6a14c8-754a-45ad-afa4-29a6e94c9af3 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 15107-->
+      <formalpara>
+        <title>Loop optimization fix</title>
+        <para>
+          A bug that caused a compiler crash when optimizing certain
+	  patterns of loop code has been fixed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: f6f41c9f-63f5-41d4-98d8-c04743d604d6 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14738 -->
+      <formalpara>
+        <title>Optimizer bug fix</title>
+        <para>
+          A bug that caused the compiler to generate incorrect code
+          for read-modify-write operations at optimization level
+          <option>-O2</option> and above has been fixed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 8c4644a8-41f3-48c7-81a3-4730fd34a83c -->
+      <!-- TARGET: hexagon-linux -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14649 -->
+      <formalpara>
+        <title>Stack corruption bug</title>
+        <para>
+          The compiler no longer generates stack-corrupting code for
+          functions using variable argument lists when targeting Hexagon V4.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 28433b49-c950-41ae-b92d-11a4be27937a -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14574 -->
+      <formalpara>
+        <title>Hexagon V55 support in QDSP6 compatibility mode</title>
+        <para>
+	  The compiler no longer encounters an ICE in
+          <function>c_cpp_builtins</function> when invoked with both
+          <option>-mv55</option> and <option>-mqdsp6-compat</option>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: b8ba700b-99bc-49b7-a134-0ad5e175e1e2 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: -->
+      <formalpara>
+        <title>Support for Hexagon architectures</title>
+        <para>
+	  Generating code for Hexagon V4 architecture is now the default.
+	  Support for older architectures is removed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: b8ba700b-99bc-49b7-a134-0ad5e175e1e2 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: -->
+      <formalpara>
+        <title>Support for Hexagon architectures</title>
+        <para>
+	  Generating code for Hexagon V4 architecture is now the default.
+	  Support for older architectures is removed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: cb9f8ba9-fcfc-4753-a3cd-9819bd480e25 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14351 -->
+      <formalpara>
+        <title>Fix for internal compiler error</title>
+        <para>
+          A GCC bug has been fixed that caused it to report an internal
+	  compiler error in <function>add_var_loc_to_decl</function> when
+	  compiling some files with <option>-g</option>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: a18c9640-5a27-4701-8d3d-28d11b80cf46 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13895 -->
+      <formalpara>
+        <title>Hexagon V55 preprocessor macros</title>
+        <para>
+          The behavior of preprocessor macros indicating Hexagon V55 has
+          been modified.  When compiling for that architecture version,
+          the <constant>__HEXAGON_ARCH__</constant> macro is now set to
+          <literal>55</literal>, and <constant>__HEXAGON_V5__</constant>
+          is no longer defined.
+        </para>
+      </formalpara>
+
+      <!-- UUID: fd2d3800-ff7f-4df5-b399-a3f94cd15f25 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14095 -->
+      <formalpara>
+        <title>Corrected loop initialization</title>
+        <para>
+          A GCC bug has been fixed that caused incorrect code for some loop
+	  initializations.
+        </para>
+      </formalpara>
+
+      <!-- UUID: d296ac1c-ac21-4645-b40d-787d10f1bc96 -->
+      <!-- TARGET: heagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14094 -->
+      <formalpara>
+        <title>Internal compiler error with jumps</title>
+        <para>
+          A GCC bug has been fixed that caused it to report an internal
+	  compiler error in <literal>patch_jump_insn</literal>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: bba70903-2046-4739-8ae0-4a32e97a8890 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13895 -->
+      <formalpara>
+        <title>Hexagon V55 support</title>
+        <para>
+          The toolchain now contains nominal support for Hexagon V55.
+        </para>
+      </formalpara>
+
+      <!-- UUID: dabb646a-ebd5-4129-a1f4-eae5ac82a919 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 14097 -->
+      <formalpara>
+        <title>Internal compiler error with intrinsics</title>
+        <para>
+          A bug has been fixed that caused internal compiler
+          errors when using certain intrinsics from the
+          <filename class='headerfile'>hexagon_protos.h</filename>
+          header file.
+        </para>
+      </formalpara>
+
+      <!-- UUID: bda665fe-e1f3-49fa-a9ca-cb08a852d8c1 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: #14110, #14123 -->
+      <formalpara>
+        <title>Double-precision float compatibility</title>
+        <para>
+          The compiler no longer generates several double-precision
+          floating-point instructions which have been removed from the
+          Hexagon V5 architecture.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 86d7c85c-36c9-4a7a-8e40-af4a38a2e0a8 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13682 -->
+      <formalpara>
+        <title>Volatile memory accesses</title>
+        <para>
+          For Hexagon V4 and above the compiler may now generate instruction
+          packets containing 2 volatile memory accesses by default.  This
+          functionality was previously controlled by the command-line option
+          <option>-mpacketize-volatiles</option>, which has been removed.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 770b84e7-d048-4926-afde-2fd06d93e943 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13679 -->
+      <formalpara>
+        <title>Internal compiler error with virtual functions</title>
+        <para>
+          A compiler bug has been fixed that caused internal compiler errors
+          when compiling a virtual function in some cases of multiple or
+          virtual inheritance.
+        </para>
+      </formalpara>
+
+      <!-- UUID: a6fe303a-2d53-4576-a6b8-7a27349b88d8 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13577 -->
+      <formalpara>
+         <title>Missing register names fixed</title>
+         <para>
+           The compiler now recognizes the register names <code>gp</code>,
+           <code>cs0</code>, and <code>cs1</code> in inline assembly
+           specifications.  These registers are also now available in the
+           debugger.
+         </para>
+      </formalpara>
+
+      <!-- UUID: 0e9e6988-a525-4e81-9206-3858735521bc -->
+      <!-- TARGET: hexagon -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13555 -->
+      <formalpara>
+        <title>Stack-frame debug info fix</title>
+        <para>
+          A bug in the stack-frame debug information emitted by the
+          compiler has been fixed that caused <literal>Could not find the
+          frame base</literal> errors when examining function arguments
+          and local variables in the debugger.
+        </para>
+      </formalpara>
+
+      <!-- UUID: aa2de0de-e410-4119-ab17-0b4e04d97e94 -->
+      <!-- TARGET: hexagon -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13455 -->
+      <formalpara>
+        <title>Duplicate <code>.debug_line</code> sections fixed</title>
+        <para>
+          A GCC bug has been fixed that caused assembler errors when
+	  compiling with both the <option>-g</option> and
+	  <option>-Wa,-gdwarf2</option> options.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 0f05b365-e9c7-4eb2-aa5f-6040e9ae7c0c -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13270, 13312, 13176, 13110, 13003, 13231 -->
+      <formalpara>
+        <title>Compiler optimization improvements</title>
+	<para>
+	  The compiler now generates faster and/or smaller code in many
+	  cases due to optimization improvements.  In addition, several
+	  performance regressions of the previous release relative to
+	  legacy QuIC toolchains have been addressed.  Specific
+	  improvements include:
+	  <itemizedlist>
+	  <listitem>
+            The compiler now makes more efficient use of constant extenders
+	    in generated code for Hexagon V4 and above.  For example, it now
+  	    avoids duplicating the same absolute base address in multiple
+	    loads and stores.
+	  </listitem>
+	  <listitem>
+            The compiler can now generate the floating-point
+            multiply-accumulate instructions supported by Hexagon V5.
+          </listitem>
+	  <listitem>
+            Support for comparisons has been improved in the compiler,
+            allowing (for example) better code to be generated for
+            comparisons between <code>short</code> variables on Hexagon
+            V4 and above.
+          </listitem>
+          <listitem>
+  	    Hardware loop instructions are now
+            generated more effectively for loops with <code>short</code>
+            or <code>char</code> index variables.
+          </listitem>
+          <listitem>
+            The compiler is now able to generate the conditional forms of the
+            sign-extend and shift-halfword instructions, supported by
+            Hexagon V4 and above.
+          </listitem>
+          <listitem>
+            The compiler now uses post-increment and post-decrement
+            addressing modes more effectively on all architecture versions,
+            and generates conditional loads and stores on Hexagon V4
+            and above.
+          </listitem>
+          <listitem>
+            The compiler now provides improved support for read-modify-write
+            (<code>MEMOP</code> class) instructions on Hexagon V4 and above.
+          </listitem>
+          <listitem>
+            The compiler now optimizes calls to <code>pow</code> with a
+            constant base 2 into equivalent calls to <code>exp2</code>
+            or <code>ldexp</code>.
+          </listitem>
+	  </itemizedlist>
+        </para>
+      </formalpara>
+
+      <!-- UUID: e4b1cba9-fac6-4842-a081-d7dc757e4c1b -->
+      <!-- TARGET: hexagon -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13136 -->
+      <formalpara>
+        <title>Shared linking</title>
+        <para>
+          The compiler driver now supports shared linking with the
+	  <option>-shared</option> option.
+        </para>
+      </formalpara>
+
+      <!-- UUID: eab7bacf-315f-4936-8247-e105ce467ac0 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13059, 13096 -->
+      <formalpara>
+        <title>Hardware loops</title>
+        <para>
+          The compiler now uses hardware loop instructions
+          more aggressively. While this results in faster code,
+          it can also result in incorrect program behavior if
+          loop counters overflow. For more information see <xref
+          linkend="hexagon-hardware-loops"/>. Additionally, hardware
+          loop initialization code has been improved in many cases.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 26250d8f-a694-4a86-8b01-c65509707857 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13056 -->
+      <formalpara>
+        <title>New-value jumps</title>
+        <para>
+          The compiler now makes better use of new-value comparison jumps.
+        </para>
+      </formalpara>
+
+      <!-- UUID: cfe1bef1-8a82-4d21-ae9c-efdc430a0f9f -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13079 -->
+      <formalpara>
+        <title>Hexagon V5 intrinsics</title>
+        <para>
+          Incorrect type information for Hexagon V5 intrinsics has
+          been corrected in the compiler.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 9a7a448b-c9fa-46bc-ba2e-cca3e7eb96b8 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12948 -->
+      <formalpara>
+        <title>Long calls</title>
+        <para>
+          Code generation in the compiler has been improved by making
+          better use of long calls.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 443fef9c-32af-4a2d-b0d1-7946a59457ce -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12714 -->
+      <formalpara>
+        <title>Position-independent code</title>
+        <para>
+          A bug has been fixed in the compiler that caused it to emit
+          code that is not position-independent when compiling with
+          <option>-fPIC</option>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 87faa6e1-d0bf-4826-9d5b-e88bd7ef08a0 -->
+      <!-- TARGET: hexagon -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12262 -->
+      <formalpara>
+        <title>Target prefix changed</title>
+        <para>
+          The compiler and other executables for the bare-metal
+          &csl_target_name; toolchain now use <literal>hexagon-</literal>
+          as the target prefix instead of <literal>hexagon-elf-</literal>.
+          For example, the C compiler is now named
+          <command>hexagon-gcc</command>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 8f61c2ce-21d4-40f4-98e6-757b6a55b612 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 13002 -->
+      <formalpara>
+        <title>Constant-extended conditional loads/stores</title>
+        <para>
+          A bug has been fixed that prevented the compiler from
+          generating constant-extended conditional loads/stores;
+          these are more efficient than conditional jumps. 
+        </para>
+      </formalpara>
+
+      <!-- UUID: 0a71ad26-5682-4ecf-a4ba-ce82af0a60ec -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12788 -->
+      <formalpara>
+        <title>Incorrect compilation bug fix</title>
+        <para>
+          A bug has been fixed which sometimes caused the compiler to
+          incorrectly reorder writes to memory.
+        </para>
+      </formalpara>
+
+      <!-- UUID: b6f3d9e6-43c0-434d-9b69-92f605a6df3c -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12807 -->
+      <formalpara>
+        <title>Some target preprocessor defines removed</title>
+        <para>
+          The preprocessor no longer defines <code>hexagon</code>
+          or <code>__hexagon</code> by default. Similarly,
+          <code>qdsp6</code> and <code>__qdsp6</code> are no longer
+          defined when using <option>-mqdsp6-compat</option>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: a15e04e4-49e0-43be-b180-aabf59c1f2b6 -->
+      <!-- TARGET: hexagon* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12995 -->
+      <formalpara>
+        <title>GCC comparison improvements</title>
+        <para>
+          The compiler now generates better code for comparison
+          operations, in particular when the result of a comparison is
+          assigned to a variable. Better code is also generated in some
+          cases for logical operations on Boolean values.
+        </para>
+      </formalpara>
+
+      <!-- UUID: d67eed99-7ad8-4e1a-a10b-5fe26368b9f6 -->
+      <!-- TARGET: * -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: issue12323 -->
+      <formalpara>
+        <title>GCC stack usage improvement</title>
+        <para>
+          GCC now generates better code for stack allocation in some
+          cases when compiling with <option>-fno-strict-aliasing</option>.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 226921b4-6719-48c2-959d-6cb34423275a -->
+      <!-- TARGET: m68k*-elf m68k*-uclinux -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12354 -->
+      <formalpara>
+        <title>Support for the MCF51JG ColdFire+ processor</title>
+        <para>
+          &csl_sgxx; now supports the Freescale MCF51JG family
+          of ColdFire+ microcontrollers.  Use the <option>-mcpu=51jg</option>
+          option to generate code for these devices.
+          <phrase features="cs3">
+            CS3 board support for MCF51JG64, MCF51JG128 and MCF51JG256
+            microcontrollers has also been added.
+          </phrase>
+        </para>
+      </formalpara>
+
+      <!-- UUID: 125c84ab-b0d7-41c6-b61d-660f4a53f148 -->
+      <!-- TARGET: arm* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12100 -->
+      <formalpara features="armfloat">
+        <title>Internal compiler error with NEON intrinsics</title>
+        <para>
+          A compiler bug has been fixed that caused internal compiler
+          errors when using certain NEON intrinsics.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 62831151-597d-4d65-bc75-b253cda277d3 -->
+      <!-- TARGET: arm* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 11339 12112 -->
+      <formalpara features="armfloat">
+        <title>ARM VFP9-S errata workaround</title>
+        <para>
+	  A compiler workaround for ARM Errata Notice GENC-010704
+	  (760019: Canceled FDIV or FSQRT can be executed twice) has been
+	  implemented.
+        </para>
+      </formalpara>
+
+      <!-- UUID: bf0501b8-af4b-4213-8699-4d02cb877fc3 -->
+      <!-- TARGET: m68k*-elf m68k*-uclinux -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 11914 12259 -->
+      <formalpara>
+        <title>Support for MCF51JF and MCF51QM ColdFire+ processors</title>
+        <para>
+          &csl_sgxx; now supports the Freescale MCF51JF and MCF51QM families
+	  of ColdFire+ microcontrollers.  Use the <option>-mcpu=51jf</option>
+          and <option>-mcpu=51qm</option> options to generate code for these
+          devices.
+          <phrase features="cs3">
+            CS3 board support for MCF51JF32, MCF51JF64, MCF51JF128,
+            MCF51QM32, MCF51QM64 and MCF51QM128 microcontrollers has
+            also been added.
+	  </phrase>
+        </para>
+      </formalpara>
+
+      <!-- UUID: 68f5007d-9ad5-407f-87ae-0d5cd19e2b27 -->
+      <!-- TARGET: m68k* -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 12169 -->
+      <formalpara>
+        <title>ColdFire comparison fix</title>
+        <para>
+          A compiler bug that caused floating-point comparisons with zero
+          to be miscompiled in some circumstances has been fixed. This
+          only affected code using the hardware floating-point unit,
+          not soft-float code.
+        </para>
+      </formalpara>
+
+       <!-- UUID: d014e5ea-38b6-431d-a0d9-47ec7053b502 -->
+       <!-- TARGET: mips* -->
+       <!-- SORT: gcc -->
+       <!-- ISSUE: 12036 -->
+       <formalpara>
+         <title>MIPS16 branch bug fix</title>
+         <para>
+           A compiler bug that caused incorrect code to be generated for
+ 	  MIPS16 branches with offsets greater than 65534 or less than
+ 	  -65536 has been fixed.
+         </para>
+       </formalpara>
+
+      <!-- UUID: c2fd168f-b0b3-4c64-be16-797f4a3711e1 -->
+      <!-- TARGET: * -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: 11564 -->
+      <formalpara>
+        <title>Map file name demangling bug fix</title>
+        <para>
+	  GCC now properly passes the 
+	  <option>--demangle</option> and <option>--no-demangle</option>
+	  options to the linker to control map file output.  The default
+	  behavior on all hosts is now to demangle C++ names.
+        </para>
+      </formalpara>
+
+      <!-- UUID: 50bd5797-9139-4eb0-9c1f-d1020aa42d0c -->
+      <!-- TARGET: * -->
+      <!-- SORT: gcc -->
+      <!-- ISSUE: -->
+      <formalpara>
+        <title>GCC version 4.6</title>
+        <para>
+          &csl_prod; for &csl_target_name; is now based on GCC
+          version 4.6. For more information about changes from GCC
+          version 4.5 that was included in previous releases, see
+          <uri>http://gcc.gnu.org/gcc-4.6/changes.html</uri>.
+        </para>
+      </formalpara>
+
+<!-- Release notes end here.  -->

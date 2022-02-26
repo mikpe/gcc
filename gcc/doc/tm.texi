@@ -973,6 +973,8 @@ which an incoming parameter is copied, or the outgoing result is computed;
 then the hook should return the same mode as @code{promote_mode}, though
 the signedness may be different.
 
+@var{type} can be NULL when promoting function arguments of libcalls.
+
 The default is to not promote arguments and return values.  You can
 also define the hook to @code{default_promote_function_mode_always_promote}
 if you would like to apply the same rules given by @code{PROMOTE_MODE}.
@@ -1588,6 +1590,15 @@ Define this macro if @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is not
 @code{TFmode} but you want @code{TFmode} routines in @file{libgcc2.a}
 anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
 is 128 then the default is 1, otherwise it is 0.
+@end defmac
+
+@defmac LIBGCC2_GNU_PREFIX
+This macro corresponds to the @code{TARGET_LIBFUNC_GNU_PREFIX} target
+hook and should be defined if that hook is overriden to be true.  It
+causes function names in libgcc to be changed to use a @code{__gnu_}
+prefix for their name rather than the default @code{__}.  A port which
+uses this macro should also arrange to use @file{t-gnu-prefix} in
+the libgcc @file{config.host}.
 @end defmac
 
 @defmac SF_SIZE
@@ -2450,6 +2461,15 @@ address where its value is either multiplied by a scale factor or
 added to another register (as well as added to a displacement).
 @end defmac
 
+@defmac MODE_INDEX_REG_CLASS (@var{mode})
+This is a variation of the @code{INDEX_REG_CLASS} macro which allows
+the selection of an index register in a mode dependent manner.  It can
+return @code{NO_REGS} for modes that do not support any form of index
+register.  If @var{mode} is @code{VOIDmode} then the macro should
+return a class of registers that is suitable for all addresses in
+which an index register of some form is allowed.
+@end defmac
+
 @defmac REGNO_OK_FOR_BASE_P (@var{num})
 A C expression which is nonzero if register number @var{num} is
 suitable for use as a base register in operand addresses.
@@ -2543,6 +2563,14 @@ reload add a @code{!} in front of the constraint: the x86 back-end uses
 this feature to discourage usage of 387 registers when math is done in
 the SSE registers (and vice versa).
 @end deftypefn
+
+@defmac REGNO_MODE_OK_FOR_INDEX_P (@var{num}, @var{mode})
+A C expression that is just like @code{REGNO_OK_FOR_INDEX_P}, except
+that the expression may examine the mode of the memory reference
+in @var{mode}.  If @var{mode} is @code{VOIDmode}, the macro should
+return true if @var{x} is suitable for all modes in which some
+form of index register is allowed.
+@end defmac
 
 @defmac PREFERRED_RELOAD_CLASS (@var{x}, @var{class})
 A C expression that places additional restrictions on the register class
@@ -3208,6 +3236,12 @@ determine the return address of other frames.
 @defmac RETURN_ADDR_IN_PREVIOUS_FRAME
 Define this if the return address of a particular stack frame is accessed
 from the frame pointer of the previous stack frame.
+@end defmac
+
+@defmac RETURN_ADDR_REGNUM
+If defined, a C expression whose value is the register number of the return
+address for the current function.  Targets that pass the return address on
+the stack should not define this macro.
 @end defmac
 
 @defmac INCOMING_RETURN_ADDR_RTX
@@ -4928,6 +4962,10 @@ TARGET_STRUCT_VALUE_RTX, FRAME_POINTER_REGNUM, EH_USES,
 FRAME_POINTER_REGNUM, ARG_POINTER_REGNUM, and the PIC_OFFSET_TABLE_REGNUM.
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_WARN_FUNC_RESULT (void)
+True if a function's return statements should be checked for matching the function's return type.  This includes checking for falling off the end of a non-void function.  Return false if no such check should be made.
+@end deftypefn
+
 @node Stack Smashing Protection
 @subsection Stack smashing protection
 @cindex stack smashing protection
@@ -5248,6 +5286,17 @@ are ABI-mandated names that the compiler should provide.
 @findex set_optab_libfunc
 @findex init_one_libfunc
 @deftypefn {Target Hook} void TARGET_INIT_LIBFUNCS (void)
+
+@deftypefn {Target Hook} bool TARGET_HAS_EXP10 (void)
+When this macro is nonzero, GCC will implicitly replace calls to
+@code{pow(10.0, x)} with calls to @code{exp10(x)}.  The default is zero.
+The target has to provide the following functions:
+@smallexample
+double exp10(double x);
+float exp10f(float x);
+long double exp10l(long double x);
+@end smallexample
+@end deftypefn
 This hook should declare additional library routines or rename
 existing ones, using the functions @code{set_optab_libfunc} and
 @code{init_one_libfunc} defined in @file{optabs.c}.
@@ -5256,6 +5305,15 @@ library routines.
 
 The default is to do nothing.  Most ports don't need to define this hook.
 @end deftypefn
+
+@deftypevr {Target Hook} bool TARGET_LIBFUNC_GNU_PREFIX
+If false (the default), internal library routines start with two
+underscores.  If set to true, these routines start with @code{__gnu_}
+instead.  E.g., @code{__muldi3} changes to @code{__gnu_muldi3}.  This
+currently only affects functions defined in @file{libgcc2.c}.  If this
+is set to true, the @file{tm.h} file must also
+@code{#define LIBGCC2_GNU_PREFIX}.
+@end deftypevr
 
 @defmac FLOAT_LIB_COMPARE_RETURNS_BOOL (@var{mode}, @var{comparison})
 This macro should return @code{true} if the library routine that
@@ -9878,6 +9936,10 @@ This target hook returns @code{false} if the @var{caller} function
 cannot inline @var{callee}, based on target specific information.  By
 default, inlining is not allowed if the callee function has function
 specific target options and the caller does not use the same options.
+@end deftypefn
+
+@deftypefn {Target Hook} int TARGET_ALIGN_INSNS (void)
+Return the log2 of the instruction alignment in bytes.
 @end deftypefn
 
 @node Emulated TLS

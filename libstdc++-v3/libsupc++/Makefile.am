@@ -86,13 +86,19 @@ sources = \
 	pbase_type_info.cc \
 	pmem_type_info.cc \
 	pointer_type_info.cc \
-	pure.cc \
 	si_class_type_info.cc \
 	tinfo.cc \
 	tinfo2.cc \
 	vec.cc \
 	vmi_class_type_info.cc \
 	vterminate.cc
+
+if !GLIBCXX_CSLIBC
+# CSLIBC (or, more accurately, CS3) provides its own implementation of
+# __cxa_pure_virtual.
+sources += \
+	pure.cc
+endif
 
 libsupc___la_SOURCES = $(sources) $(c_sources) 
 libsupc__convenience_la_SOURCES = $(sources) $(c_sources)

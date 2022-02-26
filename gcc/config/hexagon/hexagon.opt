@@ -1,0 +1,179 @@
+
+march=
+Target Report RejectNegative Joined
+Generate code for a given architecture (default hexagonv4)
+
+mv4
+Target RejectNegative Alias(march=,hexagonv4)
+alias for -march=hexagonv4
+
+mv5
+Target RejectNegative Alias(march=,hexagonv5)
+alias for -march=hexagonv5
+
+mv55
+Target RejectNegative Alias(march=,hexagonv55)
+alias for -march=hexagonv55
+
+mcpu=
+Target Report RejectNegative Joined
+currently an alias for march
+
+mabi=
+Target Report Undocumented RejectNegative Joined
+Adhere to the specified ABI (default abi2)
+
+moslib=
+Target Report RejectNegative Joined
+Add the specified OS library to the link command in such a way that it can resolve symbols referenced by the C library
+
+; Same as option from g.opt, without the "Separate" property.
+; Hexagon uses a G0 multilib, "Separate" interferes with multilib selection.
+G
+Target Joined UInteger Var(g_switch_value)
+-G<number>      Put global and static data smaller than <number> bytes into a special section (on some targets)
+
+mlong-calls
+Target Report Mask(LONG_CALLS)
+Make all calls indirect except those where the target is known to be close
+
+msort-sda
+Target Report Mask(SECTION_SORTING)
+Disable small data sections sorting (default)
+
+msort-sda-code-support
+Target Report Mask(SECTION_SORTING_CODE_SUPPORT)
+Disable small data sections sorting code support (default)
+
+mextended-crossjumping
+Target Report Mask(EXTENDED_CROSSJUMPING) Optimization
+Allow Reordering instructions to facilitate crossjumping (default at -Os)
+
+mdeep-phi-match
+Target Report Mask(DEEP_PHI_MATCH) Optimization
+Enable advanced PHI chain matching (default)
+
+mno-falign
+Target Report RejectNegative Optimization
+Do not use the falign directive (default with -O0 or -Os)
+
+mfalign-loops
+Target Report RejectNegative Optimization
+Use the falign directive before loops (default with -O or -O2)
+
+mfalign-labels
+Target Report RejectNegative Optimization
+Use the falign directive before all labels
+
+mfalign-all
+Target Report RejectNegative Optimization
+Use the falign directive before all labels and after packets containing calls (default with -O3)
+
+mliteral-pool
+Target Report Mask(LITERAL_POOL)
+Enable placing literal values into .sdata (default)
+
+mliteral-pool-addresses
+Target Report Mask(LITERAL_POOL_ADDRESSES)
+Enable placing literal address values into .sdata (default)
+
+mhardware-loops
+Target Report Mask(HARDWARE_LOOPS)
+Enable hardware loops (default)
+
+mnew-predicates
+Target Report Mask(NEW_PREDICATES)
+Enable .new-predicates (default)
+
+mnew-value-stores
+Target Report Mask(NEW_VALUE_STORES)
+Enable .new-value stores (default)
+
+; Disable the store-followed-by-load feature that did not make it into V5.
+; This code may be ressurected for a future architecture version.
+; To re-enable, uncomment this and remove the #defines of MASK_NEW_MEMORY_LOADS
+; and TARGET_NEW_MEMORY_LOADS from hexagon.h.
+;mnew-memory-loads
+;Target Report Mask(NEW_MEMORY_LOADS)
+;Enable .new-memory loads (default)
+
+mpackets
+Target Report Mask(PACKETS)
+Form packets of instructions for parallel execution (default at -O2)
+
+mpullup
+Target Report Mask(PULLUP) Optimization
+Pull up instructions across basic block boundaries (default at -O2)
+
+mbase-plus-index
+Target Report Mask(BASE_PLUS_INDEX)
+Enable base+index addressing if supported by the architecture (default)
+
+mmemops
+Target Report Mask(MEMOPS)
+Enable load-op-store instructions if supported by the architecture (default)
+
+mliteral-intrinsics
+Target Report Mask(LITERAL_INTRINSICS)
+Force intrinsics to mean the corresponding instruction, not just the corresponding operation
+
+mv1-v2-uncached-data
+Target Report Undocumented Mask(UNCACHED_DATA)
+Limit the number of memory accesses in a packet to one
+
+mqdsp6-compat
+Target Report Undocumented Mask(QDSP6_COMPAT)
+Accept code written for legacy QDSP6 compiler
+
+mlocal-combine
+Target Report Mask(LOCAL_COMBINE) Optimization
+Run local combine pass (default at -Os)
+
+mlocal-combine-immediate
+Target Report Mask(LOCAL_COMBINE_IMMEDIATE) Optimization
+Run local combine pass on immediates (default at -O2 and -Os)
+
+mmod_hw_loops
+Target Report Undocumented Mask(MOD_HW_LOOPS)
+Enable modulo sched for HW loops
+
+mresolve-restrict-aliasing
+Target Report Mask(RESOLVE_RESTRICT_ALIASING) Optimization
+Perform MIDI specific optimizations
+
+menable-subreg1
+Target Report Mask(ENABLE_SUBREG1) Optimization
+Enable the subreg1 pass
+
+maggregate-access
+Target Report Mask(AGGREGATE_ACCESS) Optimization
+Optimize large struct member accesses (default at -O2)
+
+mduplex-scheduling
+Target Report Mask(DUPLEX_SCHEDULING) Optimization
+Enable duplex scheduling (default at -Os)
+
+mannotate_duplex
+Target Undocumented Mask(ANNOTATE_DUPLEX)
+Duplex debugging
+
+mnew-value-jump
+Target Report Mask(NEW_VALUE_JUMP)
+Enable new value jump (default)
+
+msave-restore-r25
+Target Report Mask(SAVE_RESTORE_R25)
+Save and restore r25 for all functions
+
+mieee-rnd-near
+Target Report Mask(IEEE_RND_NEAR)
+Enable IEEE rounding mode
+
+muse-common-prologue-epilogue-functions
+Target Report Undocumented Mask(USE_COMMON_PROLOGUE_EPILOGUE_FUNCTIONS)
+Enable using functions to implement common prologue/epilogue sequences
+
+mdealloc_return
+Target Report Mask(DEALLOC_RETURN)
+Enable use of the dealloc_return instruction (default)
+

@@ -1,4 +1,5 @@
 /* { dg-require-effective-target size32plus } */
+/* { dg-add-options large_stack } */
 
 /* Formerly known as ltrans-8.c */
 

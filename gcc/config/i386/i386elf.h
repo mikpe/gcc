@@ -20,10 +20,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Use stabs instead of DWARF debug format.  */
-#undef  PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
 #define TARGET_VERSION fprintf (stderr, " (i386 bare ELF target)");
 
 /* The ELF ABI for the i386 says that records and unions are returned
@@ -36,12 +32,9 @@ along with GCC; see the file COPYING3.  If not see
 #undef CPP_SPEC
 #define CPP_SPEC ""
 
-#define ENDFILE_SPEC "crtend.o%s"
+#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
 
-#define STARTFILE_SPEC "%{!shared: \
-			 %{!symbolic: \
-			  %{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}}\
-			crtbegin.o%s"
+#define STARTFILE_SPEC "crtbegin.o%s crti.o%s"
 
 #undef DBX_REGISTER_NUMBER
 #define DBX_REGISTER_NUMBER(n) \

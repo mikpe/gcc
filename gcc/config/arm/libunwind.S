@@ -38,8 +38,6 @@
 	.eabi_attribute 25, 1
 #endif /* __ARM_EABI__ */
 
-#ifndef __symbian__
-
 #include "lib1funcs.asm"
 
 .macro UNPREFIX name
@@ -59,7 +57,7 @@
 #endif
 #endif
 
-#ifdef __ARM_ARCH_6M__
+#if defined(__ARM_ARCH_6M__) || defined(__ARM_ARCH_6SM__)
 
 /* r0 points to a 16-word block.  Upload these values to the actual core
    state.  */
@@ -359,5 +357,3 @@ UNWIND_WRAPPER _Unwind_Resume 1
 UNWIND_WRAPPER _Unwind_Resume_or_Rethrow 1
 UNWIND_WRAPPER _Unwind_ForcedUnwind 3
 UNWIND_WRAPPER _Unwind_Backtrace 2
-
-#endif  /* ndef __symbian__ */

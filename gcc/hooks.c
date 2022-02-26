@@ -149,11 +149,24 @@ hook_int_const_tree_0 (const_tree a ATTRIBUTE_UNUSED)
   return 0;
 }
 
+int
+hook_int_void_0 (void)
+{
+  return 0;
+}
+
 /* ??? Used for comp_type_attributes, which ought to return bool.  */
 int
 hook_int_const_tree_const_tree_1 (const_tree a ATTRIBUTE_UNUSED, const_tree b ATTRIBUTE_UNUSED)
 {
   return 1;
+}
+
+int
+hook_int_tree_tree_int_0 (tree a ATTRIBUTE_UNUSED, tree b ATTRIBUTE_UNUSED,
+                          int c ATTRIBUTE_UNUSED)
+{
+  return 0;
 }
 
 int

@@ -298,7 +298,7 @@ WARN_CXXFLAGS = \
 
 # -I/-D flags to pass when compiling.
 AM_CPPFLAGS = $(GLIBCXX_INCLUDES)
-pythondir = $(datadir)/gcc-$(gcc_version)/python
+pythondir = $(tooldir)/share/gcc-$(gcc_version)/python
 nobase_python_DATA = \
     libstdcxx/v6/printers.py \
     libstdcxx/v6/__init__.py \
@@ -404,6 +404,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@GLIBCXX_HOSTED_FALSE@install-data-local:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -492,22 +493,22 @@ gdb.py: hook.in Makefile
 	sed -e 's,@pythondir@,$(pythondir),' \
 	    -e 's,@toolexeclibdir@,$(toolexeclibdir),' < $(srcdir)/hook.in > $@
 
-install-data-local: gdb.py
-	@$(mkdir_p) $(DESTDIR)$(toolexeclibdir)
-	@here=`pwd`; cd $(DESTDIR)$(toolexeclibdir); \
-	  for file in libstdc++*; do \
-	    case $$file in \
-	      *-gdb.py) ;; \
-	      *.la) ;; \
-	      *) if test -h $$file; then \
-	           continue; \
-	         fi; \
-	         libname=$$file;; \
-	    esac; \
-	  done; \
-	cd $$here; \
-	echo " $(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py"; \
-	$(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py
+@GLIBCXX_HOSTED_TRUE@install-data-local: gdb.py
+@GLIBCXX_HOSTED_TRUE@	@$(mkdir_p) $(DESTDIR)$(toolexeclibdir)
+@GLIBCXX_HOSTED_TRUE@	@here=`pwd`; cd $(DESTDIR)$(toolexeclibdir); \
+@GLIBCXX_HOSTED_TRUE@	  for file in libstdc++*; do \
+@GLIBCXX_HOSTED_TRUE@	    case $$file in \
+@GLIBCXX_HOSTED_TRUE@	      *-gdb.py) ;; \
+@GLIBCXX_HOSTED_TRUE@	      *.la) ;; \
+@GLIBCXX_HOSTED_TRUE@	      *) if test -h $$file; then \
+@GLIBCXX_HOSTED_TRUE@	           continue; \
+@GLIBCXX_HOSTED_TRUE@	         fi; \
+@GLIBCXX_HOSTED_TRUE@	         libname=$$file;; \
+@GLIBCXX_HOSTED_TRUE@	    esac; \
+@GLIBCXX_HOSTED_TRUE@	  done; \
+@GLIBCXX_HOSTED_TRUE@	cd $$here; \
+@GLIBCXX_HOSTED_TRUE@	echo " $(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py"; \
+@GLIBCXX_HOSTED_TRUE@	$(INSTALL_DATA) gdb.py $(DESTDIR)$(toolexeclibdir)/$$libname-gdb.py
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,0 +1,12 @@
+GCC_4.4.0 {
+  __hexagon_memcpy_likely_aligned_min32bytes_mult8bytes
+  __hexagon_memcpy_volatile
+  __hexagon_fast_adddf3
+  __hexagon_fast_divdf3
+  __hexagon_fast_gtdf2
+  __hexagon_fast_ltdf2
+  __hexagon_fast_muldf3
+  __hexagon_fast_negdf2
+  __hexagon_fast_subdf3
+}
+

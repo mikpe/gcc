@@ -221,9 +221,14 @@ endif
 
 dbexec_LTLIBRARIES = libjvm.la
 
-pkgconfigdir = $(libdir)/pkgconfig
+# Install the pkgconfig file in a target-specific directory, since the
+# libraries it indicates
 
-jardir = $(datadir)/java
+pkgconfigdir = $(toolexeclibdir)/pkgconfig
+
+# We install the JAR in a target-specific directory so that toolchains
+# build from different sources can be installed in the same directory.
+jardir = $(prefix)/$(target_noncanonical)/share/java
 jar_DATA = libgcj-$(gcc_version).jar libgcj-tools-$(gcc_version).jar
 if INSTALL_ECJ_JAR
 jar_DATA += $(ECJ_BUILD_JAR)

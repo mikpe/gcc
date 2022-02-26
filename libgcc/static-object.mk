@@ -8,8 +8,9 @@ base := $(basename $(notdir $o))
 
 ifeq ($(suffix $o),.c)
 
+c_flags-$(base)$(objext) := $(c_flags)
 $(base)$(objext): $o
-	$(gcc_compile) $(c_flags) -c $< $(vis_hide)
+	$(gcc_compile) $(c_flags-$@) -c $< $(vis_hide)
 
 else
 

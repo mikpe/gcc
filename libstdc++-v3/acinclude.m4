@@ -3204,6 +3204,23 @@ AC_DEFUN([AC_LC_MESSAGES], [
   ])
 ])
 
+# Check whether or not we are using CSLIBC.  If using CSLIBC, you
+# should configure with --with-cslibc *in addition to* --with-newlib.
+AC_DEFUN([GLIBCXX_WITH_CSLIBC], [
+  AC_ARG_WITH([cslibc],
+    AC_HELP_STRING([--with-cslibc],
+                   [assume CSLIBC as system C library]),,
+    [with_cslibc=no])
+  if test "$with_cslibc" = yes; then
+    cslibc_define=1
+  else
+    cslibc_define=0
+  fi
+  GLIBCXX_CONDITIONAL(GLIBCXX_CSLIBC, test $with_cslibc = yes)
+  AC_DEFINE_UNQUOTED(_GLIBCXX_CSLIBC, $cslibc_define,
+    [Define to 1 if building for use with CSLIBC, or 0 otherwise.])
+])
+
 # Macros from the top-level gcc directory.
 m4_include([../config/gc++filt.m4])
 m4_include([../config/tls.m4])

@@ -284,6 +284,8 @@ struct GTY((chain_next ("%h.next"), chain_prev ("%h.previous"))) cgraph_node {
   unsigned process : 1;
   /* Set for aliases once they got through assemble_alias.  */
   unsigned alias : 1;
+  /* Set if the function is a nested function or has nested functions.  */
+  unsigned ever_was_nested : 1;
   /* Set for nodes that was constructed and finalized by frontend.  */
   unsigned finalized_by_frontend : 1;
   /* Set for alias and thunk nodes, same_body points to the node they are alias

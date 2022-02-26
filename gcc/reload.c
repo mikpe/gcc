@@ -5086,7 +5086,8 @@ find_reloads_address (enum machine_mode mode, rtx *memrefloc, rtx ad,
 
       if (double_reg_address_ok
 	  && regno_ok_for_base_p (REGNO (XEXP (ad, 0)), mode,
-				  PLUS, CONST_INT))
+				  PLUS, CONST_INT)
+	  && index_reg_class (mode) != NO_REGS)
 	{
 	  /* Unshare the sum as well.  */
 	  *loc = ad = copy_rtx (ad);
@@ -5094,8 +5095,8 @@ find_reloads_address (enum machine_mode mode, rtx *memrefloc, rtx ad,
 	  /* Reload the displacement into an index reg.
 	     We assume the frame pointer or arg pointer is a base reg.  */
 	  find_reloads_address_part (XEXP (ad, 1), &XEXP (ad, 1),
-				     INDEX_REG_CLASS, GET_MODE (ad), opnum,
-				     type, ind_levels);
+				     index_reg_class (mode), GET_MODE (ad),
+				     opnum, type, ind_levels);
 	  return 0;
 	}
       else
@@ -5489,13 +5490,13 @@ find_reloads_address_1 (enum machine_mode mode, rtx x, int context,
 #define REG_OK_FOR_CONTEXT(CONTEXT, REGNO, MODE, OUTER, INDEX)		\
   ((CONTEXT) == 0							\
    ? regno_ok_for_base_p (REGNO, MODE, OUTER, INDEX)			\
-   : REGNO_OK_FOR_INDEX_P (REGNO))
+   : regno_ok_for_index_p (REGNO, MODE))
 
   enum reg_class context_reg_class;
   RTX_CODE code = GET_CODE (x);
 
   if (context == 1)
-    context_reg_class = INDEX_REG_CLASS;
+    context_reg_class = index_reg_class (mode);
   else
     context_reg_class = base_reg_class (mode, outer_code, index_code);
 
@@ -5587,17 +5588,17 @@ find_reloads_address_1 (enum machine_mode mode, rtx x, int context,
 
 	else if (code0 == REG && code1 == REG)
 	  {
-	    if (REGNO_OK_FOR_INDEX_P (REGNO (op1))
+	    if (regno_ok_for_index_p (REGNO (op1), mode)
 		&& regno_ok_for_base_p (REGNO (op0), mode, PLUS, REG))
 	      return 0;
-	    else if (REGNO_OK_FOR_INDEX_P (REGNO (op0))
+	    else if (regno_ok_for_index_p (REGNO (op0), mode)
 		     && regno_ok_for_base_p (REGNO (op1), mode, PLUS, REG))
 	      return 0;
 	    else if (regno_ok_for_base_p (REGNO (op0), mode, PLUS, REG))
 	      find_reloads_address_1 (mode, orig_op1, 1, PLUS, SCRATCH,
 				      &XEXP (x, 1), opnum, type, ind_levels,
 				      insn);
-	    else if (REGNO_OK_FOR_INDEX_P (REGNO (op1)))
+	    else if (regno_ok_for_index_p (REGNO (op1), mode))
 	      find_reloads_address_1 (mode, orig_op0, 0, PLUS, REG,
 				      &XEXP (x, 0), opnum, type, ind_levels,
 				      insn);
@@ -5605,7 +5606,7 @@ find_reloads_address_1 (enum machine_mode mode, rtx x, int context,
 	      find_reloads_address_1 (mode, orig_op0, 1, PLUS, SCRATCH,
 				      &XEXP (x, 0), opnum, type, ind_levels,
 				      insn);
-	    else if (REGNO_OK_FOR_INDEX_P (REGNO (op0)))
+	    else if (regno_ok_for_index_p (REGNO (op0), mode))
 	      find_reloads_address_1 (mode, orig_op1, 0, PLUS, REG,
 				      &XEXP (x, 1), opnum, type, ind_levels,
 				      insn);
@@ -5675,7 +5676,7 @@ find_reloads_address_1 (enum machine_mode mode, rtx x, int context,
 	   need to live longer than a TYPE reload normally would, so be
 	   conservative and class it as RELOAD_OTHER.  */
 	if ((REG_P (XEXP (op1, 1))
-	     && !REGNO_OK_FOR_INDEX_P (REGNO (XEXP (op1, 1))))
+	     && !regno_ok_for_index_p (REGNO (XEXP (op1, 1)), mode))
 	    || GET_CODE (XEXP (op1, 1)) == PLUS)
 	  find_reloads_address_1 (mode, XEXP (op1, 1), 1, code, SCRATCH,
 				  &XEXP (op1, 1), opnum, RELOAD_OTHER,

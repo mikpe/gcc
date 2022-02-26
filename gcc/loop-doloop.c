@@ -154,9 +154,10 @@ doloop_condition_get (rtx doloop_pat)
   /* Extract loop termination condition.  */
   condition = XEXP (SET_SRC (cmp), 0);
 
-  /* We expect a GE or NE comparison with 0 or 1.  */
+  /* We expect a GE, GTU or NE comparison with 0 or 1.  */
   if ((GET_CODE (condition) != GE
-       && GET_CODE (condition) != NE)
+       && GET_CODE (condition) != NE
+       && GET_CODE (condition) != GTU)
       || (XEXP (condition, 1) != const0_rtx
           && XEXP (condition, 1) != const1_rtx))
     return 0;
@@ -407,6 +408,15 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 	  <= ((unsigned HOST_WIDEST_INT) 1
 	      << (GET_MODE_BITSIZE (mode) - 1)))
 	nonneg = 1;
+      break;
+
+    case GTU:
+      /* Only GTU comparison with one is supported.  */
+      gcc_assert (XEXP (condition, 1) == const1_rtx);
+      
+      noloop = const1_rtx;
+      nonneg = 1;
+      increment_count = true;
       break;
 
       /* Abort if an invalid doloop pattern has been generated.  */

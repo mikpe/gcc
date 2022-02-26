@@ -144,6 +144,7 @@ case $target in
 	x86_64-*-* | \
 	ia64-*-* | \
 	hppa*64*-*-* | \
+	hexagon* | \
 	i[34567]86-*-darwin* | \
 	i[34567]86-*-solaris2.1[0-9]* | \
 	i[34567]86-w64-mingw* | \

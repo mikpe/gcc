@@ -724,11 +724,11 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 
 /* Wrapper around REGNO_OK_FOR_INDEX_P, to allow pseudo registers.  */
 static inline bool
-ok_for_index_p_nonstrict (rtx reg)
+ok_for_index_p_nonstrict (rtx reg, enum machine_mode mode)
 {
   unsigned regno = REGNO (reg);
 
-  return regno >= FIRST_PSEUDO_REGISTER || REGNO_OK_FOR_INDEX_P (regno);
+  return regno >= FIRST_PSEUDO_REGISTER || ok_for_index_p_1 (regno, mode);
 }
 
 /* A version of regno_ok_for_base_p for use here, when all
@@ -766,7 +766,7 @@ record_address_regs (enum machine_mode mode, rtx x, int context,
   enum reg_class rclass;
 
   if (context == 1)
-    rclass = INDEX_REG_CLASS;
+    rclass = index_reg_class (mode);
   else
     rclass = base_reg_class (mode, outer_code, index_code);
 
@@ -813,7 +813,8 @@ record_address_regs (enum machine_mode mode, rtx x, int context,
 	   just record registers in any non-constant operands.  We
 	   assume here, as well as in the tests below, that all
 	   addresses are in canonical form.  */
-	else if (INDEX_REG_CLASS == base_reg_class (VOIDmode, PLUS, SCRATCH))
+	else if (index_reg_class (mode)
+		 == base_reg_class (mode, PLUS, SCRATCH))
 	  {
 	    record_address_regs (mode, arg0, context, PLUS, code1, scale);
 	    if (! CONSTANT_P (arg1))
@@ -834,7 +835,7 @@ record_address_regs (enum machine_mode mode, rtx x, int context,
 	else if (code0 == REG && code1 == REG
 		 && REGNO (arg0) < FIRST_PSEUDO_REGISTER
 		 && (ok_for_base_p_nonstrict (arg0, mode, PLUS, REG)
-		     || ok_for_index_p_nonstrict (arg0)))
+		     || ok_for_index_p_nonstrict (arg0, mode)))
 	  record_address_regs (mode, arg1,
 			       ok_for_base_p_nonstrict (arg0, mode, PLUS, REG)
 			       ? 1 : 0,
@@ -842,7 +843,7 @@ record_address_regs (enum machine_mode mode, rtx x, int context,
 	else if (code0 == REG && code1 == REG
 		 && REGNO (arg1) < FIRST_PSEUDO_REGISTER
 		 && (ok_for_base_p_nonstrict (arg1, mode, PLUS, REG)
-		     || ok_for_index_p_nonstrict (arg1)))
+		     || ok_for_index_p_nonstrict (arg1, mode)))
 	  record_address_regs (mode, arg0,
 			       ok_for_base_p_nonstrict (arg1, mode, PLUS, REG)
 			       ? 1 : 0,
@@ -1766,17 +1767,27 @@ ira_tune_allocno_costs_and_cover_classes (void)
 	      regno = ira_class_hard_regs[cover_class][j];
 	      rclass = REGNO_REG_CLASS (regno);
 	      cost = 0;
-	      if (! ira_hard_reg_not_in_set_p (regno, mode, call_used_reg_set)
-		  || HARD_REGNO_CALL_PART_CLOBBERED (regno, mode))
-		cost += (ALLOCNO_CALL_FREQ (a)
-			 * (ira_memory_move_cost[mode][rclass][0]
+
+	      /* If regno is not clobbered by call set its cost to zero.
+		 This is to make this regno preferable choice for
+		 allocation.  */
+	      if (! ira_hard_reg_not_in_set_p
+		  (regno, mode, ALLOCNO_CROSSED_CALLS_CLOBBERED_REGS (a)))
+		{
+		  if (! ira_hard_reg_not_in_set_p (regno, mode,
+						   call_used_reg_set)
+		      || HARD_REGNO_CALL_PART_CLOBBERED (regno, mode))
+		    cost += (ALLOCNO_CALL_FREQ (a)
+			     * (ira_memory_move_cost[mode][rclass][0]
 			    + ira_memory_move_cost[mode][rclass][1]));
 #ifdef IRA_HARD_REGNO_ADD_COST_MULTIPLIER
-	      cost += ((ira_memory_move_cost[mode][rclass][0]
-			+ ira_memory_move_cost[mode][rclass][1])
-		       * ALLOCNO_FREQ (a)
-		       * IRA_HARD_REGNO_ADD_COST_MULTIPLIER (regno) / 2);
+		  cost += ((ira_memory_move_cost[mode][rclass][0]
+			    + ira_memory_move_cost[mode][rclass][1])
+			   * ALLOCNO_FREQ (a)
+			   * IRA_HARD_REGNO_ADD_COST_MULTIPLIER (regno) / 2);
 #endif
+		}
+
 	      reg_costs[j] += cost;
 	      if (min_cost > reg_costs[j])
 		min_cost = reg_costs[j];

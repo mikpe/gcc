@@ -795,6 +795,7 @@ extern void flow_edge_list_print (const char *, const edge *, int, FILE *);
 
 /* In cfgrtl.c  */
 extern basic_block force_nonfallthru (edge);
+extern basic_block force_nonfallthru_and_redirect (edge, basic_block, rtx);
 extern rtx block_label (basic_block);
 extern bool purge_all_dead_edges (void);
 extern bool purge_dead_edges (basic_block);

@@ -883,6 +883,11 @@ DEFPARAM (CXX_MAX_NAMESPACES_FOR_DIAGNOSTIC_HELP,
 	  "name lookup fails",
 	  1000, 0, 0)
 
+DEFPARAM (PARAM_IF_TO_SWITCH_THRESHOLD,
+	  "if-to-switch-threshold",
+	  "Threshold for converting an if-chain into a switch",
+	  3, 0, 0)
+
 /*
 Local variables:
 mode:c

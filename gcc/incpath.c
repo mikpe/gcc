@@ -30,6 +30,8 @@
 #include "intl.h"
 #include "incpath.h"
 #include "cppdefault.h"
+#include "flags.h"
+#include "toplev.h"
 
 /* Microsoft Windows does not natively support inodes.
    VMS has non-numeric inodes.  */
@@ -353,6 +355,24 @@ merge_include_chains (const char *sysroot, cpp_reader *pfile, int verbose)
 	}
       fprintf (stderr, _("End of search list.\n"));
     }
+
+#ifdef ENABLE_POISON_SYSTEM_DIRECTORIES
+  if (flag_poison_system_directories)
+    {
+	struct cpp_dir *p;
+
+	for (p = heads[QUOTE]; p; p = p->next)
+	  {
+	   if ((!strncmp (p->name, "/usr/include", 12))
+	       || (!strncmp (p->name, "/usr/local/include", 18))
+	       || (!strncmp (p->name, "/usr/X11R6/include", 18)))
+	     warning (OPT_Wpoison_system_directories,
+		      "include location \"%s\" is unsafe for "
+		      "cross-compilation",
+		      p->name);
+	  }
+    }
+#endif
 }
 
 /* Use given -I paths for #include "..." but not #include <...>, and

@@ -11249,13 +11249,13 @@ ix86_expand_epilogue (int style)
 
 	  pro_epilogue_adjust_stack (stack_pointer_rtx, stack_pointer_rtx,
 				     popc, -1, true);
-	  emit_jump_insn (gen_return_indirect_internal (ecx));
+	  emit_jump_insn (gen_simple_return_indirect_internal (ecx));
 	}
       else
-	emit_jump_insn (gen_return_pop_internal (popc));
+	emit_jump_insn (gen_simple_return_pop_internal (popc));
     }
   else
-    emit_jump_insn (gen_return_internal ());
+    emit_jump_insn (gen_simple_return_internal ());
 
   /* Restore the state back to the state from the prologue,
      so that it's correct for the next epilogue.  */
@@ -30062,7 +30062,7 @@ ix86_pad_returns (void)
       rtx prev;
       bool replace = false;
 
-      if (!JUMP_P (ret) || GET_CODE (PATTERN (ret)) != RETURN
+      if (!JUMP_P (ret) || !ANY_RETURN_P (PATTERN (ret))
 	  || optimize_bb_for_size_p (bb))
 	continue;
       for (prev = PREV_INSN (ret); prev; prev = PREV_INSN (prev))
@@ -30092,7 +30092,10 @@ ix86_pad_returns (void)
 	}
       if (replace)
 	{
-	  emit_jump_insn_before (gen_return_internal_long (), ret);
+	  if (PATTERN (ret) == ret_rtx)
+	    emit_jump_insn_before (gen_return_internal_long (), ret);
+	  else
+	    emit_jump_insn_before (gen_simple_return_internal_long (), ret);
 	  delete_insn (ret);
 	}
     }
@@ -30113,7 +30116,7 @@ ix86_count_insn_bb (basic_block bb)
     {
       /* Only happen in exit blocks.  */
       if (JUMP_P (insn)
-	  && GET_CODE (PATTERN (insn)) == RETURN)
+	  && ANY_RETURN_P (PATTERN (insn)))
 	break;
 
       if (NONDEBUG_INSN_P (insn)
@@ -30186,7 +30189,7 @@ ix86_pad_short_function (void)
   FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR->preds)
     {
       rtx ret = BB_END (e->src);
-      if (JUMP_P (ret) && GET_CODE (PATTERN (ret)) == RETURN)
+      if (JUMP_P (ret) && ANY_RETURN_P (PATTERN (ret)))
 	{
 	  int insn_count = ix86_count_insn (e->src);
 

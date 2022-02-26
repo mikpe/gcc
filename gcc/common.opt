@@ -212,6 +212,12 @@ Driver Alias(c)
 -coverage
 Driver Alias(coverage)
 
+flicense-me
+Common RejectNegative Undocumented Var(license_me_flag)
+
+ffeature-proxy
+Common Undocumented Var(feature_proxy_flag) Init(1)
+
 -debug
 Common Alias(g)
 
@@ -567,6 +573,10 @@ Wpadded
 Common Var(warn_padded) Warning
 Warn when padding is required to align structure members
 
+Wpoison-system-directories
+Common Var(flag_poison_system_directories) Init(1) Warning
+Warn for -I and -L options using system directories if cross compiling
+
 Wshadow
 Common Var(warn_shadow) Warning
 Warn when one local variable shadows another
@@ -759,6 +769,12 @@ Driver Undocumented
 ; the ABI become the default version of the ABI.
 fabi-version=
 Common Joined RejectNegative UInteger Var(flag_abi_version) Init(2)
+
+falign-arrays
+Target Report Var(flag_align_arrays)
+Set the minimum alignment for array variables to be the largest power
+of two less than or equal to their total storage size, or the biggest
+alignment used on the machine, whichever is smaller.
 
 falign-functions
 Common Report Var(align_functions,0) Optimization UInteger
@@ -1001,6 +1017,14 @@ fearly-inlining
 Common Report Var(flag_early_inlining) Init(1) Optimization
 Perform early inlining
 
+fextension-elimination
+Common Report Var(flag_ee) Init(0) Optimization
+Perform extension elimination
+
+feglibc=
+Common Report Joined Undocumented
+EGLIBC configuration specifier, serves multilib purposes.
+
 feliminate-dwarf2-dups
 Common Report Var(flag_eliminate_dwarf2_dups)
 Perform DWARF2 duplicate elimination
@@ -1223,6 +1247,10 @@ Common RejectNegative Joined UInteger
 finstrument-functions
 Common Report Var(flag_instrument_function_entry_exit)
 Instrument function entry and exit with profiling calls
+
+finstrument-function-calls
+Common Report Var(flag_instrument_call_entry_exit)
+Instrument call entry and exit with profiling calls
 
 finstrument-functions-exclude-function-list=
 Common RejectNegative Joined
@@ -1553,6 +1581,10 @@ fprofile-values
 Common Report Var(flag_profile_values)
 Insert code to profile values of expressions
 
+fpromote-loop-indices
+Common Report Var(flag_promote_loop_indices) Optimization
+Promote loop indices to word-sized indices when safe
+
 frandom-seed
 Common Var(common_deferred_options) Defer
 
@@ -1731,6 +1763,11 @@ fshow-column
 Common Report Var(flag_show_column) Init(1)
 Show column numbers in diagnostics, when available.  Default on
 
+fshrink-wrap
+Common Report Var(flag_shrink_wrap) Optimization
+Emit function prologues only before parts of the function that need it,
+rather than at the top of the function.
+
 fsignaling-nans
 Common Report Var(flag_signaling_nans) Optimization SetByCombined
 Disable optimizations observable by IEEE signaling NaNs
@@ -1896,6 +1933,10 @@ ftree-switch-conversion
 Common Report Var(flag_tree_switch_conversion) Optimization
 Perform conversions of switch initializations.
 
+ftree-if-to-switch-conversion
+Common Report Var(flag_tree_if_to_switch_conversion) Optimization
+Perform conversions of chains of ifs into switches.
+
 ftree-dce
 Common Report Var(flag_tree_dce) Optimization
 Enable SSA dead code elimination optimization on trees
@@ -1955,6 +1996,15 @@ Enable SSA-PRE optimization on trees
 ftree-pta
 Common Report Var(flag_tree_pta) Init(1) Optimization
 Perform function-local points-to analysis on trees.
+
+ftree-pre-partial-partial
+Common Report Var(flag_tree_pre_partial_partial) Optimization
+In SSA-PRE optimization on trees, enable partial-partial redundancy elimination.
+
+ftree-pre-partial-partial-obliviously
+Common Report Var(flag_tree_pre_partial_partial_obliviously) Optimization
+In SSA-PRE optimization on trees, enable partial-partial redundancy
+elimination without regard for the cost of the inserted phi nodes.
 
 ftree-reassoc
 Common Report Var(flag_tree_reassoc) Init(1) Optimization
@@ -2349,5 +2399,9 @@ Create a position independent executable
 
 z
 Driver Joined Separate
+
+fuse-caller-save
+Common Report Var(flag_use_caller_save) Optimization
+Use caller save register across calls if possible
 
 ; This comment is to ensure we retain the blank line above.

@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2 -fwrapv" } */
+/* { dg-options "-O2 -fwrapv -fsigned-bitfields" } */
 
 extern void abort (void);
 extern void exit (int);

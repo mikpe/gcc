@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "output.h"
 #include "tm_p.h"
 #include "function.h"
+#include "integrate.h"
 #include "tree-pass.h"
 #include "timevar.h"
 #include "df.h"
@@ -751,6 +752,7 @@ rest_of_handle_mode_switching (void)
 {
 #ifdef OPTIMIZE_MODE_SWITCHING
   optimize_mode_switching ();
+  emit_initial_value_sets ();
 #endif /* OPTIMIZE_MODE_SWITCHING */
   return 0;
 }

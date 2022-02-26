@@ -149,3 +149,11 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define ENDFILE_SPEC \
   "%{ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
    %{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
+
+#undef SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS                              \
+do {                                                            \
+  /* __thread_support is not supported by uClibc.  */           \
+  if (OPTION_UCLIBC)                                             \
+    targetm.have_tls = 0;                                       \
+} while (0)

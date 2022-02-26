@@ -119,7 +119,7 @@ static int
 pex_win32_open_read (struct pex_obj *obj ATTRIBUTE_UNUSED, const char *name,
 		     int binary)
 {
-  return _open (name, _O_RDONLY | (binary ? _O_BINARY : _O_TEXT));
+  return open (name, _O_RDONLY | (binary ? _O_BINARY : _O_TEXT));
 }
 
 /* Open a file for writing.  */
@@ -130,10 +130,10 @@ pex_win32_open_write (struct pex_obj *obj ATTRIBUTE_UNUSED, const char *name,
 {
   /* Note that we can't use O_EXCL here because gcc may have already
      created the temporary file via make_temp_file.  */
-  return _open (name,
-		(_O_WRONLY | _O_CREAT | _O_TRUNC
-		 | (binary ? _O_BINARY : _O_TEXT)),
-		_S_IREAD | _S_IWRITE);
+  return open (name,
+	       (_O_WRONLY | _O_CREAT | _O_TRUNC
+		| (binary ? _O_BINARY : _O_TEXT)),
+	       _S_IREAD | _S_IWRITE);
 }
 
 /* Close a file.  */
@@ -753,20 +753,14 @@ pex_win32_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED, int flags,
      original descriptors.  */
   orig_in = in;
   in = _dup (orig_in);
-  if (orig_in != STDIN_FILENO)
-    _close (orig_in);
   
   orig_out = out;
   out = _dup (orig_out);
-  if (orig_out != STDOUT_FILENO)
-    _close (orig_out);
   
   if (separate_stderr)
     {
       orig_err = errdes;
       errdes = _dup (orig_err);
-      if (orig_err != STDERR_FILENO)
-	_close (orig_err);
     }
 
   stdin_handle = INVALID_HANDLE_VALUE;
@@ -842,6 +836,17 @@ pex_win32_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED, int flags,
     {
       *err = ENOENT;
       *errmsg = "CreateProcess";
+    }
+
+  if (pid != (pid_t) -1)
+    {
+      if (orig_in != STDIN_FILENO)
+	_close (orig_in);
+      if (orig_out != STDOUT_FILENO)
+	_close (orig_out);
+      if (separate_stderr
+	  && orig_err != STDERR_FILENO)
+	_close (orig_err);
     }
 
   /* Close the standard input, standard output and standard error handles

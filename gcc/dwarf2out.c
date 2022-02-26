@@ -1485,7 +1485,7 @@ compute_barrier_args_size_1 (rtx insn, HOST_WIDE_INT cur_args_size,
     {
       rtx dest = JUMP_LABEL (insn);
 
-      if (dest)
+      if (dest && !ANY_RETURN_P (dest))
 	{
 	  if (barrier_args_size [INSN_UID (dest)] < 0)
 	    {

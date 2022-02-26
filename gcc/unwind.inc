@@ -85,7 +85,8 @@ _Unwind_RaiseException(struct _Unwind_Exception *exc)
   _Unwind_Reason_Code code;
 
   /* Set up this_context to describe the current stack frame.  */
-  uw_init_context (&this_context);
+  code = uw_init_context (&this_context);
+  gcc_assert (code == _URC_NO_REASON);
   cur_context = this_context;
 
   /* Phase 1: Search.  Unwind the stack, calling the personality routine
@@ -198,7 +199,8 @@ _Unwind_ForcedUnwind (struct _Unwind_Exception *exc,
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
 
-  uw_init_context (&this_context);
+  code = uw_init_context (&this_context);
+  gcc_assert (code == _URC_NO_REASON);
   cur_context = this_context;
 
   exc->private_1 = (_Unwind_Ptr) stop;
@@ -221,7 +223,8 @@ _Unwind_Resume (struct _Unwind_Exception *exc)
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
 
-  uw_init_context (&this_context);
+  code = uw_init_context (&this_context);
+  gcc_assert (code == _URC_NO_REASON);
   cur_context = this_context;
 
   /* Choose between continuing to process _Unwind_RaiseException
@@ -251,7 +254,8 @@ _Unwind_Resume_or_Rethrow (struct _Unwind_Exception *exc)
   if (exc->private_1 == 0)
     return _Unwind_RaiseException (exc);
 
-  uw_init_context (&this_context);
+  code = uw_init_context (&this_context);
+  gcc_assert (code == _URC_NO_REASON);
   cur_context = this_context;
 
   code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context);
@@ -280,7 +284,9 @@ _Unwind_Backtrace(_Unwind_Trace_Fn trace, void * trace_argument)
   struct _Unwind_Context context;
   _Unwind_Reason_Code code;
 
-  uw_init_context (&context);
+  code = uw_init_context (&context);
+  if (code != _URC_NO_REASON)
+    return _URC_FATAL_PHASE1_ERROR;
 
   while (1)
     {

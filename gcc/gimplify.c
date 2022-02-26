@@ -1117,6 +1117,62 @@ build_stack_save_restore (gimple *save, gimple *restore)
 			    1, tmp_var);
 }
 
+/* Returns the function decl that corresponds the function called in
+   CALL_EXPR if FLAG_INSTRUMENT_CALL_ENTRY_EXIT is enabled.  */
+
+static tree
+fndecl_for_call_instrumentation (tree call_expr)
+{
+  tree fndecl = NULL_TREE;
+
+  if (flag_instrument_call_entry_exit && !gimplify_ctxp->into_ssa)
+    {
+      fndecl = get_callee_fndecl (call_expr);
+      if (is_inexpensive_builtin (fndecl))
+	  fndecl = NULL_TREE;
+    }
+
+  return fndecl;
+}
+
+/* Prepare call to PROFILE_CALL_* builtin (specified by CODE) for
+   function with decl FNDECL and add it to the sequence of GIMPLE
+   statements in PRE_P.  */
+
+static void
+maybe_add_profile_call (tree fndecl, enum built_in_function code,
+			gimple_seq *pre_p)
+{
+  if (fndecl)
+    {
+      tree x = implicit_built_in_decls[code];
+      gimple call = gimple_build_call (x, 1, build_fold_addr_expr (fndecl));
+      gimplify_seq_add_stmt (pre_p, call);
+    }
+}
+
+/* Replace existing body of function with decl FNDECL with the sequence
+   of GIMPLE statements in BODY and return the new sequence of the
+   function body.  */
+
+static gimple_seq
+replace_body_for_instrumentation (tree fndecl, gimple *bind, gimple_seq body)
+{
+  gimple_seq seq;
+  gimple old_bind = *bind;
+  *bind = gimple_build_bind (NULL, body, gimple_bind_block (old_bind));
+  /* Clear the block for OLD_BIND, since it is no longer directly inside
+     the function, but within the new block.  */
+  gimple_bind_set_block (old_bind, NULL);
+
+  /* Replace the current function body with the new one.  */
+  seq = gimple_seq_alloc ();
+  gimple_seq_add_stmt (&seq, *bind);
+  gimple_set_body (fndecl, seq);
+
+  return seq;
+}
+
 /* Gimplify a BIND_EXPR.  Just voidify and recurse.  */
 
 static enum gimplify_status
@@ -2473,6 +2529,10 @@ gimplify_call_expr (tree *expr_p, gimple_seq *pre_p, bool want_value)
      gimplify_modify_expr.  */
   if (!want_value)
     {
+      tree fndecl = fndecl_for_call_instrumentation (*expr_p);
+
+      maybe_add_profile_call (fndecl, BUILT_IN_PROFILE_CALL_ENTER, pre_p);
+
       /* The CALL_EXPR in *EXPR_P is already in GIMPLE form, so all we
 	 have to do is replicate it as a GIMPLE_CALL tuple.  */
       gimple_stmt_iterator gsi;
@@ -2480,6 +2540,9 @@ gimplify_call_expr (tree *expr_p, gimple_seq *pre_p, bool want_value)
       gimplify_seq_add_stmt (pre_p, call);
       gsi = gsi_last (*pre_p);
       fold_stmt (&gsi);
+
+      maybe_add_profile_call (fndecl, BUILT_IN_PROFILE_CALL_EXIT, pre_p);
+
       *expr_p = NULL_TREE;
     }
 
@@ -4479,6 +4542,7 @@ gimplify_modify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
   enum gimplify_status ret = GS_UNHANDLED;
   gimple assign;
   location_t loc = EXPR_LOCATION (*expr_p);
+  tree fndecl = NULL_TREE;
 
   gcc_assert (TREE_CODE (*expr_p) == MODIFY_EXPR
 	      || TREE_CODE (*expr_p) == INIT_EXPR);
@@ -4593,6 +4657,8 @@ gimplify_modify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 
   if (TREE_CODE (*from_p) == CALL_EXPR)
     {
+      fndecl = fndecl_for_call_instrumentation (*from_p);
+
       /* Since the RHS is a CALL_EXPR, we need to create a GIMPLE_CALL
 	 instead of a GIMPLE_ASSIGN.  */
       assign = gimple_build_call_from_tree (*from_p);
@@ -4605,7 +4671,9 @@ gimplify_modify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
       gimple_set_location (assign, EXPR_LOCATION (*expr_p));
     }
 
+  maybe_add_profile_call (fndecl, BUILT_IN_PROFILE_CALL_ENTER, pre_p);
   gimplify_seq_add_stmt (pre_p, assign);
+  maybe_add_profile_call (fndecl, BUILT_IN_PROFILE_CALL_EXIT, pre_p);
 
   if (gimplify_ctxp->into_ssa && is_gimple_reg (*to_p))
     {
@@ -7857,6 +7925,16 @@ gimplify_function_tree (tree fndecl)
   gimple_seq_add_stmt (&seq, bind);
   gimple_set_body (fndecl, seq);
 
+  if (flag_instrument_call_entry_exit)
+    {
+      gimple_seq body = NULL;
+
+      maybe_add_profile_call (fndecl, BUILT_IN_PROFILE_CALL_INSIDE, &body);
+      gimplify_seq_add_seq (&body, seq);
+
+      seq = replace_body_for_instrumentation (fndecl, &bind, body);
+    }
+
   /* If we're instrumenting function entry/exit, then prepend the call to
      the entry hook and wrap the whole function in a TRY_FINALLY_EXPR to
      catch the exit hook.  */
@@ -7866,7 +7944,6 @@ gimplify_function_tree (tree fndecl)
       && !flag_instrument_functions_exclude_p (fndecl))
     {
       tree x;
-      gimple new_bind;
       gimple tf;
       gimple_seq cleanup = NULL, body = NULL;
       tree tmp_var;
@@ -7895,16 +7972,7 @@ gimplify_function_tree (tree fndecl)
 				tmp_var);
       gimplify_seq_add_stmt (&body, call);
       gimplify_seq_add_stmt (&body, tf);
-      new_bind = gimple_build_bind (NULL, body, gimple_bind_block (bind));
-      /* Clear the block for BIND, since it is no longer directly inside
-         the function, but within a try block.  */
-      gimple_bind_set_block (bind, NULL);
-
-      /* Replace the current function body with the body
-         wrapped in the try/finally TF.  */
-      seq = gimple_seq_alloc ();
-      gimple_seq_add_stmt (&seq, new_bind);
-      gimple_set_body (fndecl, seq);
+      seq = replace_body_for_instrumentation (fndecl, &bind, body);
     }
 
   DECL_SAVED_TREE (fndecl) = NULL_TREE;

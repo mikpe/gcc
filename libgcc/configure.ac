@@ -192,6 +192,21 @@ EOF
     ;;
 esac
 
+# Check SPE for rs6000.
+case ${host} in
+powerpc*)
+  cat > conftest.c <<EOF
+#ifdef __SPE__
+ppc_has_spe=yes
+#else
+ppc_has_spe=no
+#endif
+EOF
+    eval `${CC-cc} -E conftest.c | grep ppc_has_spe=`
+    rm -f conftest.c
+    ;;
+esac
+
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
 

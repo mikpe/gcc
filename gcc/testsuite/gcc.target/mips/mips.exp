@@ -264,6 +264,7 @@ foreach option {
     synci
     relax-pic-calls
     mcount-ra-address
+    interlink-mips16
 } {
     lappend mips_option_groups $option "-m(no-|)$option"
 }

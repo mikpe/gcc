@@ -212,6 +212,9 @@ static unsigned int
 get_decl_align_unit (tree decl)
 {
   unsigned int align = LOCAL_DECL_ALIGNMENT (decl);
+
+  align = alignment_for_aligned_arrays (TREE_TYPE (decl), align);
+  
   return align / BITS_PER_UNIT;
 }
 
@@ -372,8 +375,9 @@ add_alias_set_conflicts (void)
 		 to elements will conflict.  In case of unions we have
 		 to be careful as type based aliasing rules may say
 		 access to the same memory does not conflict.  So play
-		 safe and add a conflict in this case.  */
-	      || contains_union)
+		 safe and add a conflict in this case when
+                 -fstrict-aliasing is used.  */
+              || (contains_union && flag_strict_aliasing))
 	    add_stack_var_conflict (i, j);
 	}
     }
