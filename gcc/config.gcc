@@ -2416,6 +2416,13 @@ vax-*-ultrix*)			# VAXen running ultrix
 	tmake_file=vax/t-memfuncs
 	use_fixproto=yes
 	;;
+xc16x*-*-elf)
+	tmake_file="xc16x/t-xc16x"
+	tm_define="TARGET_DEFAULT=(MASK_TINY)"
+	use_fixproto=yes
+	;;
+xc16x-*)
+	;;
 xscale-*-elf)
 	tm_file="arm/xscale-elf.h dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
 	tmake_file="arm/t-arm arm/t-xscale-elf"
