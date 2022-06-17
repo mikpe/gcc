@@ -287,6 +287,9 @@ m680[012]0-*-*)
 m68k-*-*)
 	extra_headers=math-68881.h
 	;;
+maxq-*-*)
+        cpu_type=maxq
+        ;;
 mips*-*-*)
 	cpu_type=mips
 	need_64bit_hwint=yes
@@ -1385,6 +1388,10 @@ m68k-*-rtems*)
 	tm_defines="MOTOROLA USE_GAS"
 	extra_parts="crtbegin.o crtend.o"
 	;;
+maxq-*-*)
+        tmake_file="maxq/t-maxq"
+        tm_file="maxq/maxq.h"
+        ;;
 mcore-*-elf)
 	tm_file="dbxelf.h elfos.h svr4.h ${tm_file} mcore/mcore-elf.h"
 	tmake_file=mcore/t-mcore

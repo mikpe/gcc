@@ -1,0 +1,24 @@
+LIB1ASMSRC = maxq/lib1funcs.asm
+LIB1ASMFUNCS = _mulqi3 _mulhi3 _divhi3 _udivhi3 _modhi3 _umodhi3 _lshrhi3 _ashrhi3 _ashlhi3 _muldi3 _divsi3 _divdi3 _udivdi3 _moddi3 _umoddi3  _ashrdi3 _lshrdi3 _ashldi3 _negdi2 
+
+#We do not have DF or DI types, so fake out the libgcc2 compilation.
+TARGET_LIBGCC2_CFLAGS = -O2 -DDI=SI -DDF=SF -D__DI__=__SI__
+
+FPBIT = fp-bit.c
+fp-bit.c: $(srcdir)/config/fp-bit.c
+	echo '#define FLOAT' > fp-bit.c
+	echo '#define FLOAT_ONLY' >> fp-bit.c
+	echo '#define SMALL_MACHINE' >> fp-bit.c
+	echo '#define CMPtype HItype' >> fp-bit.c
+	cat $(srcdir)/config/fp-bit.c >> fp-bit.c
+
+MULTILIB_OPTIONS = mq20/mq10
+MULTILIB_DIRNAMES = maxq20 maxq10 
+LIBGCC = stmp-multilib
+INSTALL_LIBGCC = install-multilib
+
+$(T)crt1.o: $(srcdir)/config/maxq/crt1.s $(GCC_PASSES)
+	$(GCC_FOR_TARGET) $(MULTILIB_CFLAGS) -c -o $(T)crt1.o -x assembler-with-cpp $(srcdir)/config/maxq/crt1.s
+
+EXTRA_PARTS = crt1.o
+#EXTRA_PARTS=crtbegin.o crtend.o
