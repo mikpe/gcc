@@ -2457,6 +2457,8 @@ information are.
 @item
 @uref{#x86-64-x-x,,x86_64-*-*, amd64-*-*}
 @item
+@uref{#xc16x-*-elf,,xc16x-*-elf}
+@item
 @uref{#xtensa-x-elf,,xtensa-*-elf}
 @item
 @uref{#xtensa-x-linux,,xtensa-*-linux*}
@@ -4067,6 +4069,13 @@ GCC supports the x86-64 architecture implemented by the AMD64 processor
 On GNU/Linux the default is a bi-arch compiler which is able to generate
 both 64-bit x86-64 and 32-bit x86 code (via the @option{-m32} switch).
 
+@html
+<hr />
+@end html
+@heading @anchor{xc16x-*-elf}xc16x-*-elf
+Infineon xc16x Processor
+This configuration is intended for embedded systems.
+                                                                                
 @html
 <hr />
 @end html

@@ -52,6 +52,10 @@ Godmar Back for his Java improvements and encouragement.
 Scott Bambrough for help porting the Java compiler.
 
 @item
+Shrirang Khisti at (KPITCummins Ltd.) for adding new target support for
+Infineon technologies  xc16x microcontroller series
+
+@item
 Wolfgang Bangerth for processing tons of bug reports.
 
 @item

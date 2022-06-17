@@ -1739,6 +1739,17 @@ results in a warning on line 3 but not line 2.
 The @code{deprecated} attribute can also be used for variables and
 types (@pxref{Variable Attributes}, @pxref{Type Attributes}.)
 
+@item disable_intr
+@cindex @code{__attribute__ ((disable_intr))}
+This attribute is specific to xc16x Infineon
+processor. This attribute is used to disable all the interrupts during
+the function call
+
+@smallexample
+int fun() __attribute__ ((disable_intr));
+int fun()
+@end smallexample
+
 @item dllexport
 @cindex @code{__declspec(dllexport)}
 On Microsoft Windows targets and Symbian OS targets the
@@ -1986,7 +1997,7 @@ ports to indicate that the specified function is an interrupt handler.
 The compiler will generate function entry and exit sequences suitable
 for use in an interrupt handler when this attribute is present.
 
-Note, interrupt handlers for the Blackfin, m68k, H8/300, H8/300H, H8S, and
+Note, interrupt handlers for the Blackfin, m68k, H8/300, H8/300H, H8S, xc16x and
 SH processors can be specified via the @code{interrupt_handler} attribute.
 
 Note, on the AVR, interrupts will be enabled inside the function.
@@ -2002,10 +2013,14 @@ Permissible values for this parameter are: IRQ, FIQ, SWI, ABORT and UNDEF@.
 
 @item interrupt_handler
 @cindex interrupt handler functions on the Blackfin, m68k, H8/300 and SH processors
-Use this attribute on the Blackfin, m68k, H8/300, H8/300H, H8S, and SH to
+Use this attribute on the Blackfin, m68k, H8/300, H8/300H, H8S, xc16x and SH to
 indicate that the specified function is an interrupt handler.  The compiler
 will generate function entry and exit sequences suitable for use in an
 interrupt handler when this attribute is present.
+
+@item interrupt_noreturn
+@cindex interrupt_noreturn for xc16x processor
+Use this attribute if interrupt handler function should not return to interrupted function
 
 @item kspisusp
 @cindex User stack pointer in interrupts on the Blackfin
@@ -2397,6 +2412,16 @@ This attribute, attached to a function, means that code must be emitted
 for the function even if it appears that the function is not referenced.
 This is useful, for example, when the function is referenced only in
 inline assembly.
+
+@item using_rbank
+@cindex @code{using_regno(rbank_no)} attribute
+This attribute is specific to Infineon xc16x processors. This attribute is
+used with the attribute interrupt_handler . Argument rbank_no  is used to
+switchto the new register bank for interrupt handling.
+                                                                                                                                                                 
+@smallexample void fun() __attribute__ ((interrupt_handler,using_regno(0xfc20)));
+void fun()
+@end smallexample
 
 @item visibility ("@var{visibility_type}")
 @cindex @code{visibility} attribute

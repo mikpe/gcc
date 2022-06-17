@@ -2905,6 +2905,22 @@ The constant 0.
 
 @end table
 
+@item xc16x---@file{config/xc16x/xc16x.h}
+@table @code
+@item b
+Eight bit register for QI mode operation
+                                                                                                                             
+@item S
+Memory operand having Symbol reference or Const
+                                                                                                                             
+@item T
+Memory operand having indirect register Plus displacement
+                                                                                                                             
+@item R
+Memory operand having indirect register or sybol reference
+                                                                                                                             
+@end table
+
 @item Xtensa---@file{config/xtensa/xtensa.h}
 @table @code
 @item a

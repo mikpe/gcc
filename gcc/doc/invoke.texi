@@ -756,6 +756,9 @@ See RS/6000 and PowerPC Options.
 @emph{x86-64 Options}
 See i386 and x86-64 Options.
 
+@emph{xc16x Options}
+@gccoptlist{-mtiny -mlarge -msmall -mno-dppsave }
+
 @emph{Xstormy16 Options}
 @gccoptlist{-msim}
 
@@ -7481,6 +7484,7 @@ platform.
 * V850 Options::
 * VAX Options::
 * x86-64 Options::
+* xc16x Options::
 * Xstormy16 Options::
 * Xtensa Options::
 * zSeries Options::
@@ -13203,6 +13207,34 @@ Output code for g-format floating point numbers instead of d-format.
 @cindex x86-64 options
 
 These are listed under @xref{i386 and x86-64 Options}.
+
+@node xc16x Options
+@subsection xc16x Options
+@cindex xc16x Options
+                                                                                                                             
+@table @gcctabopt
+@item -mtiny
+@opindex mtiny
+Generate code for the tiny memory model of xc16x architecture.
+This is the default option set for compiling if no any other option is set .
+                                                                                                                             
+@item -mlarge
+@opindex mlarge
+Generate code for the large memory model of xc16x architecture.
+For this case code is generated using DPP overriding scheme
+                                                                                                                             
+@item -msmall
+@opindex msmall
+Generate code for the small memory model of xc16x architecture.
+                                                                                                                             
+@item -mno-dppsave
+@opindex mno-dppsave
+This option is used for interrupt handlers . Using this option Data page pointers  are not saved in
+the prologue of interrupt handler.
+@end table
+                                                                                                                             
+These @samp{-m} options are defined for the xc16x implementations:
+
 
 @node Xstormy16 Options
 @subsection Xstormy16 Options
