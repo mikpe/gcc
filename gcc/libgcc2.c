@@ -1256,7 +1256,7 @@ __fixdfdi (DFtype a)
 }
 #endif
 
-#if defined(L_fixunssfdi) && LIBGCC2_HAS_SF_MODE
+#if defined(L_fixunssfdi) && LIBGCC2_HAS_SF_MODE && (LIBGCC2_HAS_DF_MODE || FLT_MANT_DIG < W_TYPE_SIZE)
 DWtype
 __fixunssfDI (SFtype a)
 {
