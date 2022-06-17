@@ -1442,6 +1442,7 @@ compute_add_length (rtx * operands)
 	    case 3:
 	      return 12;
 	    case 4:
+	      return 12; /* FIXME */
 	    }
 	}
     }
@@ -1471,6 +1472,7 @@ compute_add_length (rtx * operands)
 	    case 3:
 	      return 8;
 	    case 4:
+	      return 8; /* FIXME */
 	    }
 	}
     }
