@@ -27,10 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #undef ASM_SPEC
 #ifdef TARGET_LITTLE_ENDIAN_DEFAULT
 #define CPP_SPEC        "%{mb:-D__BIG_ENDIAN__ }%{!mb:-D__LITTLE_ENDIAN__ }" 
-#define ASM_SPEC        "%{mb:-EB }%{!mb:-EL }"
+#define ASM_SPEC        ""
 #else
 #define CPP_SPEC        "%{ml:-D__LITTLE_ENDIAN__ }%{!ml:-D__BIG_ENDIAN__}"
-#define ASM_SPEC        "%{ml:-EL } %{!ml:-EB }"
+#define ASM_SPEC        ""
 #endif
 
 #ifndef CPP_PREDEFINES
