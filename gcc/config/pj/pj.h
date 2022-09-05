@@ -1248,6 +1248,8 @@ extern short pj_debugreg_renumber_vec[FIRST_PSEUDO_REGISTER];
 
 #define DONT_USE_BUILTIN_SETJMP
 
+#define JMP_BUF_SIZE 64 /* the build requires _some_ value for this */
+
 /* We prefer to use dwarf2. */
 #undef  PREFERRED_DEBUGGING_TYPE 
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
