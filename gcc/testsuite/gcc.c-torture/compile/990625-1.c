@@ -1,5 +1,6 @@
 #define __USE_STRING_INLINES
-#include <string.h>
+/* customized for PDP10 */
+#include <string.h> /* { dg-error "No such file" } */
 
 void test()
 {

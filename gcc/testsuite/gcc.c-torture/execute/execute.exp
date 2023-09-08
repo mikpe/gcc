@@ -37,8 +37,11 @@ load_lib c-torture.exp
 foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.c]] {
     # If we're only testing specific files and this isn't one of them, skip it.
     if ![runtest_file_p $runtests $src] then {
-	continue
+        continue
     }
-
     c-torture-execute $src
+}
+
+if { $target_triplet == "pdp10-xkl-tops20" } {
+    gcctale_finish
 }

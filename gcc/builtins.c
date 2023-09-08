@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: builtins.c 664c9ee58f0e 2012/03/07 22:21:13 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -319,7 +329,15 @@ get_pointer_alignment (tree exp, unsigned int max_align)
 	      exp = get_inner_reference (exp, &bitsize, &bitpos, &offset,
 					 &mode, &unsignedp, &volatilep, true);
 	      if (bitpos)
+
+/* Taking the highest power of two contained in bitpos is too simplistic
+    -mtc 10/15/2007
+*/
+#ifdef __PDP10_H__
+		inner = MIN (inner, NATURAL_ALIGNMENT(bitpos));
+#else
 		inner = MIN (inner, (unsigned) (bitpos & -bitpos));
+#endif
 	      if (offset && TREE_CODE (offset) == PLUS_EXPR
 		  && host_integerp (TREE_OPERAND (offset, 1), 1))
 	        {
@@ -491,6 +509,16 @@ c_readstr (const char *str, enum machine_mode mode)
   HOST_WIDE_INT c[2];
   HOST_WIDE_INT ch;
   unsigned int i, j;
+#ifdef __PDP10_H__
+  /*
+  Reworked the PDP10 customization here.  We need to be sensitive to the pdp10_char_bytesize setting specified by -mchar-bytesize.
+  The const need to be in target machine format, which for the PDP10 means representing just BITS_PER_WORD in each word, and
+  packing the characters left justified in each word.
+  -mtc 3/7/2012
+  */
+  unsigned int chars_per_word = BITS_PER_WORD / pdp10_char_bytesize;
+  unsigned int charbits_per_word = chars_per_word * pdp10_char_bytesize;
+#endif
 
   gcc_assert (GET_MODE_CLASS (mode) == MODE_INT);
 
@@ -500,6 +528,14 @@ c_readstr (const char *str, enum machine_mode mode)
   for (i = 0; i < GET_MODE_SIZE (mode); i++)
     {
       j = i;
+#ifdef __PDP10_H__
+      j = (GET_MODE_SIZE(mode) / UNITS_PER_WORD) * chars_per_word -j -1;
+      j *= pdp10_char_bytesize;
+      gcc_assert (j <= 2 * charbits_per_word);
+      if (ch)
+	ch = (unsigned char) str[i];
+      c[j / charbits_per_word] |= (ch & ((1<<pdp10_char_bytesize) - 1)) << (j % charbits_per_word + BITS_PER_WORD - charbits_per_word);
+#else
       if (WORDS_BIG_ENDIAN)
 	j = GET_MODE_SIZE (mode) - i - 1;
       if (BYTES_BIG_ENDIAN != WORDS_BIG_ENDIAN
@@ -507,10 +543,10 @@ c_readstr (const char *str, enum machine_mode mode)
 	j = j + UNITS_PER_WORD - 2 * (j % UNITS_PER_WORD) - 1;
       j *= BITS_PER_UNIT;
       gcc_assert (j <= 2 * HOST_BITS_PER_WIDE_INT);
-
       if (ch)
 	ch = (unsigned char) str[i];
       c[j / HOST_BITS_PER_WIDE_INT] |= ch << (j % HOST_BITS_PER_WIDE_INT);
+#endif
     }
   return immed_double_const (c[0], c[1], mode);
 }
@@ -566,12 +602,23 @@ static rtx
 expand_builtin_return_addr (enum built_in_function fndecl_code, int count)
 {
   int i;
-
-#ifdef INITIAL_FRAME_ADDRESS_RTX
-  rtx tem = INITIAL_FRAME_ADDRESS_RTX;
-#else
   rtx tem;
 
+/* the PDP10 can't trace back through the frames if -fomit-frame-pointer is specified
+     -mtc 12/8/2006
+     TODO:
+     with the 4.1.1 merge, it looks like use of this function is supposed to override -fomit-frame-pointer
+     which would make the PDP10 fix unnecessary.  This needs to be tested.
+     -mtc 2/14/2007
+*/
+#ifdef __PDP10_H__
+  if (count > 0 && flag_omit_frame_pointer)
+  	return NULL;
+#endif
+
+#ifdef INITIAL_FRAME_ADDRESS_RTX
+  tem = INITIAL_FRAME_ADDRESS_RTX;
+#else
   /* For a zero count with __builtin_return_address, we don't care what
      frame address we return, because target-specific definitions will
      override us.  Therefore frame pointer elimination is OK, and using
@@ -582,7 +629,20 @@ expand_builtin_return_addr (enum built_in_function fndecl_code, int count)
      previous one, so we must use the hard frame pointer, and
      we must disable frame pointer elimination.  */
   if (count == 0 && fndecl_code == BUILT_IN_RETURN_ADDRESS)
+
+/* The return address isn't at a fixed offset relative to the frame_pointer, so
+    there's no way of generating an offset for it. See pdp10_initial_elimination_offset
+    for diagrams of how the stack is laid out and what routnes can calculate the offsets.
+    So RETURN_ADDR_RTX() is only correct when tem is hard_frame_pointer_rtx
+    There may be issues with this when the frame pointer is eliminated, but if the elimination
+    happens after register allocation, I think that should be OK
+    -mtc 7/27/2007
+*/
+#ifdef __PDP10_H__
+    tem = hard_frame_pointer_rtx;
+#else
     tem = frame_pointer_rtx;
+#endif
   else
     {
       tem = hard_frame_pointer_rtx;
@@ -655,11 +715,28 @@ expand_builtin_setjmp_setup (rtx buf_addr, rtx receiver_label)
   enum machine_mode sa_mode = STACK_SAVEAREA_MODE (SAVE_NONLOCAL);
   rtx stack_save;
   rtx mem;
+/*	we need to generate address arithmetic in word offsets, not byte offsets
+	-mtc 7/27/2006
+*/
+#ifdef __PDP10_H__
+  int Pmodesize = GET_MODE_SIZE(Pmode) / UNITS_PER_WORD;
+#else
+  int Pmodesize = GET_MODE_SIZE(Pmode);
+#endif
+  
 
   if (setjmp_alias_set == -1)
     setjmp_alias_set = new_alias_set ();
 
   buf_addr = convert_memory_address (Pmode, buf_addr);
+/*	we can receive buf_addr as any kind of pointer, but we're using it to save word data in, so
+	it makes sense to convert it to a word pointer
+	-mtc 7/27/2006
+*/
+#ifdef __PDP10_H__
+  if (GET_MODE (buf_addr) != Pmode)
+    buf_addr = pdp10_convert_ptr(NULL, buf_addr, NULL, ptr_mode_target_size(GET_MODE(buf_addr)), 36, 1);
+#endif
 
   buf_addr = force_reg (Pmode, force_operand (buf_addr, NULL_RTX));
 
@@ -671,7 +748,7 @@ expand_builtin_setjmp_setup (rtx buf_addr, rtx receiver_label)
   set_mem_alias_set (mem, setjmp_alias_set);
   emit_move_insn (mem, targetm.builtin_setjmp_frame_value ());
 
-  mem = gen_rtx_MEM (Pmode, plus_constant (buf_addr, GET_MODE_SIZE (Pmode))),
+  mem = gen_rtx_MEM (Pmode, plus_constant (buf_addr, Pmodesize)),
   set_mem_alias_set (mem, setjmp_alias_set);
 
   emit_move_insn (validize_mem (mem),
@@ -679,7 +756,7 @@ expand_builtin_setjmp_setup (rtx buf_addr, rtx receiver_label)
 
   stack_save = gen_rtx_MEM (sa_mode,
 			    plus_constant (buf_addr,
-					   2 * GET_MODE_SIZE (Pmode)));
+					   2 * Pmodesize));
   set_mem_alias_set (stack_save, setjmp_alias_set);
   emit_stack_save (SAVE_NONLOCAL, &stack_save, NULL_RTX);
 
@@ -1067,7 +1144,14 @@ expand_builtin_prefetch (tree exp)
 static rtx
 get_memory_rtx (tree exp, tree len)
 {
+/* Don't assume ptr_mode, which may be wrong.  Use the type that's in exp
+    -mtc 10/9/2007
+*/
+#ifdef __PDP10_H__
+  rtx addr = expand_expr (exp, NULL_RTX, VOIDmode, EXPAND_NORMAL);
+#else
   rtx addr = expand_expr (exp, NULL_RTX, ptr_mode, EXPAND_NORMAL);
+#endif
   rtx mem = gen_rtx_MEM (BLKmode, memory_address (BLKmode, addr));
 
   /* Get an expression we can use to find the attributes to assign to MEM.
@@ -3283,6 +3367,24 @@ builtin_memcpy_read_str (void *data, HOST_WIDE_INT offset,
   return c_readstr (str + offset, mode);
 }
 
+#ifdef __PDP10_H__
+/* PDP-10: return a tree expression converting EXP to an int pointer.  */
+static tree convert_to_int_ptr PARAMS ((tree exp));
+static tree
+convert_to_int_ptr (tree exp)
+{
+  tree t = make_node (NOP_EXPR);
+
+  TREE_TYPE (t) = TYPE_POINTER_TO (integer_type_node);
+  if (TREE_CODE (exp) == NOP_EXPR)
+    TREE_OPERAND (t, 0) = TREE_OPERAND (exp, 0);
+  else
+    TREE_OPERAND (t, 0) = exp;
+
+  return t;
+}
+#endif
+
 /* Expand a call EXP to the memcpy builtin.
    Return NULL_RTX if we failed, the caller should emit a normal call,
    otherwise try to get the result in TARGET, if convenient (and in
@@ -3292,6 +3394,10 @@ static rtx
 expand_builtin_memcpy (tree exp, rtx target, enum machine_mode mode)
 {
   tree fndecl = get_callee_fndecl (exp);
+
+#ifdef __PDP10_H__
+  return NULL_RTX;
+#endif
 
   if (!validate_arglist (exp,
  			 POINTER_TYPE, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
@@ -3349,6 +3455,25 @@ expand_builtin_memcpy (tree exp, rtx target, enum machine_mode mode)
 	  && can_store_by_pieces (INTVAL (len_rtx), builtin_memcpy_read_str,
 				  (void *) src_str, dest_align, false))
 	{
+/* TODO:
+    This seems very questionable, it would be worth trying to remove this to find out where
+    it makes a difference and either comment this better or really fix the problem
+    -mtc 2/14/2007
+    The purpose of this seems to be to allow a corresponding hack in store_by_pieces_2 to
+    figure out whether the address of the MEM is a byte or word pointer and to insert appropriate
+    address conversions.  But really, the type pointer should be manifest in the machine modes
+    so this is unnecessary and actually causes problems when it doesn't match.
+    -mtc 10/17/2007
+*/
+#if 0
+#ifdef __PDP10_H__
+	  /* PDP-10: rather gross hack to force a MEM_EXPR on dest_mem.  */
+	  extern tree build_indirect_ref (tree, const char *);
+	  if (MEM_EXPR (dest_mem) == NULL_TREE)
+	    set_mem_expr (dest_mem, build_indirect_ref (dest, "foo"));
+#endif
+#endif
+
 	  dest_mem = store_by_pieces (dest_mem, INTVAL (len_rtx),
 				      builtin_memcpy_read_str,
 				      (void *) src_str, dest_align, false, 0);
@@ -3356,6 +3481,19 @@ expand_builtin_memcpy (tree exp, rtx target, enum machine_mode mode)
 	  dest_mem = convert_memory_address (ptr_mode, dest_mem);
 	  return dest_mem;
 	}
+
+#ifdef __PDP10_H__
+      /* PDP-10: convert to word addresses if an (X)BLT instruction is
+         suitable.  */
+      if (dest_align == BITS_PER_WORD && src_align == BITS_PER_WORD
+	  && GET_CODE (len_rtx) == CONST_INT)
+	{
+	  dest = convert_to_int_ptr (dest);
+	  dest_mem = get_memory_rtx (dest, len);
+	  set_mem_align (dest_mem, dest_align);
+	  src = convert_to_int_ptr (src);
+	}
+#endif
 
       src_mem = get_memory_rtx (src, len);
       set_mem_align (src_mem, src_align);
@@ -3369,6 +3507,19 @@ expand_builtin_memcpy (tree exp, rtx target, enum machine_mode mode)
       if (dest_addr == 0)
 	{
 	  dest_addr = force_operand (XEXP (dest_mem, 0), NULL_RTX);
+/*
+	memcpy() should be returning a (void *) so it shouldn't arbitrarily convert to a
+	9-bit byte pointer
+	-mtc 9/18/2006
+*/
+#ifdef __PDP10_H__
+	  /*if (MEM_EXPR (dest_mem))
+	    {
+	      if (pdp10_bytesize (TREE_TYPE (MEM_EXPR (dest_mem))) < 32)
+		dest_addr = pdp10_convert_ptr (NULL_TREE, dest_addr, NULL_RTX,
+					       36, 9, 1);
+	    }*/
+#endif
 	  dest_addr = convert_memory_address (ptr_mode, dest_addr);
 	}
       return dest_addr;
@@ -3928,6 +4079,20 @@ expand_builtin_memset_args (tree dest, tree val, tree len,
   len = builtin_save_expr (len);
 
   len_rtx = expand_normal (len);
+
+/* This little block of code has slid around with the various updates and was where it looks
+    to me like it does nothing in 422.  Back in 366 it was right after dest and len_rtx had been set
+    and right before dest_mem is set.  I'm repositioning based on that criteria.  Maybe it shouldn't
+    be here at all or we need a more complex test.
+    -mtc 11/28/2007
+*/
+#ifdef __PDP10_H__
+      /* PDP-10: convert to word address if an (X)BLT instruction is
+         suitable.  */
+      if (dest_align == BITS_PER_WORD && GET_CODE (len_rtx) == CONST_INT)
+	dest = convert_to_int_ptr (dest);
+#endif
+
   dest_mem = get_memory_rtx (dest, len);
 
   if (TREE_CODE (val) != INTEGER_CST)
@@ -3956,7 +4121,15 @@ expand_builtin_memset_args (tree dest, tree val, tree len,
       else if (!set_storage_via_setmem (dest_mem, len_rtx, val_rtx,
 					dest_align, expected_align,
 					expected_size))
+/* pdp10 has no library to fall back on so generate code to handle it
+    -mtc 9/13/2007
+*/
+#ifdef __PDP10_H__
+	set_storage_via_loop (dest_mem, len_rtx, val_rtx,
+					    dest_align);
+#else
 	goto do_libcall;
+#endif
       
       dest_mem = force_operand (XEXP (dest_mem, 0), NULL_RTX);
       dest_mem = convert_memory_address (ptr_mode, dest_mem);
@@ -3977,7 +4150,15 @@ expand_builtin_memset_args (tree dest, tree val, tree len,
       else if (!set_storage_via_setmem (dest_mem, len_rtx, GEN_INT (c),
 					dest_align, expected_align,
 					expected_size))
+/* pdp10 has no library to fall back on so generate code to handle it
+    -mtc 9/13/2007
+*/
+#ifdef __PDP10_H__
+	set_storage_via_loop (dest_mem, len_rtx, GEN_INT (c),
+					    dest_align);
+#else
 	goto do_libcall;
+#endif
       
       dest_mem = force_operand (XEXP (dest_mem, 0), NULL_RTX);
       dest_mem = convert_memory_address (ptr_mode, dest_mem);
@@ -4629,10 +4810,27 @@ expand_builtin_next_arg (void)
 {
   /* Checking arguments is already done in fold_builtin_next_arg
      that must be called before this function.  */
-  return expand_binop (ptr_mode, add_optab,
-		       current_function_internal_arg_pointer,
-		       current_function_arg_offset_rtx,
-		       NULL_RTX, 0, OPTAB_LIB_WIDEN);
+
+/* With 430 update clean up ifdefs to make it clearer what we've done
+    -mtc 11/28/2007
+*/
+#ifdef __PDP10_H__
+    /* PDP-10: words, not bytes.  */
+    rtx x = current_function_arg_offset_rtx;
+
+    if (GET_CODE (current_function_arg_offset_rtx) != CONST_INT)
+      abort ();
+    x = GEN_INT (INTVAL (current_function_arg_offset_rtx) / 4);
+	
+    return expand_binop (ptr_mode, add_optab,
+			 current_function_internal_arg_pointer,
+			 x, NULL_RTX, 0, OPTAB_LIB_WIDEN);
+#else
+    return expand_binop (ptr_mode, add_optab,
+			 current_function_internal_arg_pointer,
+			 current_function_arg_offset_rtx,
+			 NULL_RTX, 0, OPTAB_LIB_WIDEN);
+#endif
 }
 
 /* Make it easier for the backends by protecting the valist argument
@@ -5033,13 +5231,33 @@ expand_builtin_frame_address (tree fndecl, tree exp)
 	  return const0_rtx;
 	}
 
+#ifdef __PDP10_H__
+      /* Force the expression mode to the mode of the function call.
+      	Since we've decided that void pointers are byte pointers, this is not Pmode!
+      	Other code generation looks at the mode in the function call, so if we don't match
+      	we can cause compile errors.
+      	-mtc 8/22/2006
+      */
+      /* with the 4.1.1 port, we no longer have access to the call expression, so we can no
+          longer coerce the type of the rtx we return to match it.  Whoever calls us will have to
+          take care of that themselves
+          -mtc 3/29/2007
+      */
+      /*if (TYPE_MODE(TREE_TYPE(exp)) != GET_MODE(tem))
+      	tem = simplify_gen_subreg(TYPE_MODE(TREE_TYPE(exp)), tem, GET_MODE(tem), 0);*/
+#endif
+
       /* For __builtin_frame_address, return what we've got.  */
       if (DECL_FUNCTION_CODE (fndecl) == BUILT_IN_FRAME_ADDRESS)
 	return tem;
 
       if (!REG_P (tem)
 	  && ! CONSTANT_P (tem))
+#ifdef __PDP10_H__
+	tem = copy_to_mode_reg (GET_MODE(tem), tem);
+#else
 	tem = copy_to_mode_reg (Pmode, tem);
+#endif
       return tem;
     }
 }
@@ -5069,6 +5287,17 @@ expand_builtin_alloca (tree exp, rtx target)
   /* Allocate the desired space.  */
   result = allocate_dynamic_stack_space (op0, target, BITS_PER_UNIT);
   result = convert_memory_address (ptr_mode, result);
+
+/*
+	Now that we've decided to handle (void *) per the standard, alloca expects
+	a void pointer, so don't convert it.
+	-mtc 9/18/2006
+*/
+#ifdef __PDP10_H__
+  /* PDP-10: allocate_dynamic_stack_space returns a word address, so
+     convert it to a 9-bit byte pointer as expected from alloca.  */
+  /*result = pdp10_convert_ptr (NULL_TREE, result, result, 36, 9, 1);*/
+#endif
 
   return result;
 }
@@ -5889,6 +6118,13 @@ get_builtin_sync_mem (tree loc, enum machine_mode mode)
   rtx addr, mem;
 
   addr = expand_expr (loc, NULL_RTX, Pmode, EXPAND_SUM);
+
+/* If the addr expression is too complex we generate unrecognizable insns
+    -mtc 12/18/2007
+*/
+#ifdef __PDP10_H__
+  addr = copy_to_mode_reg (GET_MODE(addr), addr);
+#endif
 
   /* Note that we explicitly do not want any alias information for this
      memory, so that we kill all other live memories.  Otherwise we don't
@@ -7047,7 +7283,17 @@ fold_builtin_constant_p (tree arg)
   /* We return 1 for a numeric type that's known to be a constant
      value at compile-time or for an aggregate type that's a
      literal constant.  */
+
+/* It's safe to strip pointer nops here even when they change the
+    value of the expression, because all we care about here is whether
+    the expression is a constant
+    -mtc 10/16/2006
+*/
+#ifdef __PDP10_H__
+  STRIP_PTR_NOPS (arg);
+#else
   STRIP_NOPS (arg);
+#endif
 
   /* If we know this is a constant, emit the constant of one.  */
   if (CONSTANT_CLASS_P (arg)
@@ -8676,6 +8922,10 @@ fold_builtin_memory_op (tree dest, tree src, tree len, tree type, bool ignore, i
 {
   tree destvar, srcvar, expr;
 
+#ifdef __PDP10_H__
+	return NULL_TREE;
+#endif
+
   if (! validate_arg (dest, POINTER_TYPE)
       || ! validate_arg (src, POINTER_TYPE)
       || ! validate_arg (len, INTEGER_TYPE))
@@ -8820,8 +9070,16 @@ fold_builtin_strcpy (tree fndecl, tree dest, tree src, tree len)
   if (operand_equal_p (src, dest, 0))
     return fold_convert (TREE_TYPE (TREE_TYPE (fndecl)), dest);
 
+/* It's not clear to me why memcpy would take more space than strcpy, but
+    for now, since given the (non) state of the pdp10 library, we're more likely
+    to create a working program if we allow this transformation to proceed
+    -mtc 9/13/2007
+*/
+#ifdef __PDP10_H__
+#else
   if (optimize_size)
     return NULL_TREE;
+#endif
 
   fn = implicit_built_in_decls[BUILT_IN_MEMCPY];
   if (!fn)

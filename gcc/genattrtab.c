@@ -103,6 +103,16 @@ along with GCC; see the file COPYING3.  If not see
 #define strcmp_check(S1, S2) ((S1) != (S2))
 #endif
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: genattrtab.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "bconfig.h"
 #include "system.h"
 #include "coretypes.h"

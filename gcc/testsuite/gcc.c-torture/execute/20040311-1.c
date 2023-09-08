@@ -7,7 +7,11 @@
 
 extern void abort (void);
 
+#ifdef __PDP10__
+#define INT_BITS  (sizeof(int)*9)
+#else
 #define INT_BITS  (sizeof(int)*8)
+#endif
 
 int test1(int x)
 {

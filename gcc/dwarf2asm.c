@@ -18,6 +18,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: dwarf2asm.c 1c13986a2af8 2007/12/21 22:37:34 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -57,7 +67,30 @@ dw2_assemble_integer (int size, rtx x)
 	output_addr_const (asm_out_file, x);
     }
   else
+#ifdef __PDP10_H__
+    {
+      if (size == 4 && GET_CODE (x) != CONST_INT)
+	{
+	  /* Symbols must be word-aligned.  Pad with 0400 bytes.  */
+	  pdp10_align_with_pad (0400);
+	  assemble_integer (x, size, BITS_PER_WORD, 1);
+	}
+      else
+	{
+	  HOST_WIDE_INT y = INTVAL (x);
+	  int i;
+
+	  /* ENDIANNESS: modify here to change endianness.  */
+	  for (i = 8 * (size - 1); i >= 0; i -= 8)
+	    {
+	      rtx x = GEN_INT ((y >> i) & 0xff);
+	      assemble_integer (x, 1, BITS_PER_UNIT, 1);
+	    }
+	}
+    }
+#else
     assemble_integer (x, size, BITS_PER_UNIT, 1);
+#endif
 }
 
 
@@ -85,7 +118,9 @@ dw2_asm_output_data (int size, unsigned HOST_WIDE_INT value,
       fprintf (asm_out_file, "\t%s ", ASM_COMMENT_START);
       vfprintf (asm_out_file, comment, ap);
     }
+#ifndef __PDP10_H__
   fputc ('\n', asm_out_file);
+#endif
 
   va_end (ap);
 }
@@ -272,11 +307,21 @@ dw2_asm_output_nstring (const char *str, size_t orig_len,
     }
   else
     {
+#ifdef __PDP10_H__
+      int old_byte_size = pdp10_char_bytesize;
+#endif
+
       /* If an explicit length was given, we can't assume there
 	 is a null termination in the string buffer.  */
       if (orig_len == (size_t) -1)
 	len += 1;
+#ifdef __PDP10_H__
+      pdp10_char_bytesize = 9;
       ASM_OUTPUT_ASCII (asm_out_file, str, len);
+      pdp10_char_bytesize = old_byte_size;
+#else
+      ASM_OUTPUT_ASCII (asm_out_file, str, len);
+#endif
       if (orig_len != (size_t) -1)
 	assemble_integer (const0_rtx, 1, BITS_PER_UNIT, 1);
     }
@@ -560,7 +605,9 @@ dw2_asm_output_data_uleb128 (unsigned HOST_WIDE_INT value,
     }
   }
 #endif
+#ifndef __PDP10_H__
   fputc ('\n', asm_out_file);
+#endif
 
   va_end (ap);
 }
@@ -624,7 +671,9 @@ dw2_asm_output_data_sleb128 (HOST_WIDE_INT value,
     }
   }
 #endif
+#ifndef __PDP10_H__
   fputc ('\n', asm_out_file);
+#endif
 
   va_end (ap);
 }

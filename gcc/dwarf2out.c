@@ -56,6 +56,16 @@ along with GCC; see the file COPYING3.  If not see
    DW_CFA_... = DWARF2 CFA call frame instruction
    DW_TAG_... = DWARF2 DIE tag */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: dwarf2out.c 536224ee82d6 2008/01/30 19:17:44 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2090,20 +2100,32 @@ output_cfi (dw_cfi_ref cfi, dw_fde_ref fde, int for_eh)
   if (cfi->dw_cfi_opc == DW_CFA_advance_loc)
     dw2_asm_output_data (1, (cfi->dw_cfi_opc
 			     | (cfi->dw_cfi_oprnd1.dw_cfi_offset & 0x3f)),
+#ifdef __PDP10_H__
+			 "DW_CFA_advance_loc " HOST_WIDE_INT_PRINT_OCT,
+#else
 			 "DW_CFA_advance_loc " HOST_WIDE_INT_PRINT_HEX,
+#endif
 			 cfi->dw_cfi_oprnd1.dw_cfi_offset);
   else if (cfi->dw_cfi_opc == DW_CFA_offset)
     {
       r = DWARF2_FRAME_REG_OUT (cfi->dw_cfi_oprnd1.dw_cfi_reg_num, for_eh);
       dw2_asm_output_data (1, (cfi->dw_cfi_opc | (r & 0x3f)),
+#ifdef __PDP10_H__
+			   "DW_CFA_offset, column %lo", r);
+#else
 			   "DW_CFA_offset, column 0x%lx", r);
+#endif
       dw2_asm_output_data_uleb128 (cfi->dw_cfi_oprnd2.dw_cfi_offset, NULL);
     }
   else if (cfi->dw_cfi_opc == DW_CFA_restore)
     {
       r = DWARF2_FRAME_REG_OUT (cfi->dw_cfi_oprnd1.dw_cfi_reg_num, for_eh);
       dw2_asm_output_data (1, (cfi->dw_cfi_opc | (r & 0x3f)),
+#ifdef __PDP10_H__
+			   "DW_CFA_restore, column %lo", r);
+#else
 			   "DW_CFA_restore, column 0x%lx", r);
+#endif
     }
   else
     {
@@ -2426,7 +2448,15 @@ output_call_frame_info (int for_eh)
 			     "Initial length escape value indicating 64-bit DWARF extension");
       dw2_asm_output_delta (for_eh ? 4 : DWARF_OFFSET_SIZE, l2, l1,
 			    "FDE Length");
+#ifdef __PDP10_H__
+      {
+	char value[100];
+	snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+	ASM_OUTPUT_DEF (asm_out_file, l1, value);
+      }
+#else
       ASM_OUTPUT_LABEL (asm_out_file, l1);
+#endif
 
       if (for_eh)
 	dw2_asm_output_delta (4, l1, section_start_label, "FDE CIE offset");
@@ -2549,7 +2579,15 @@ output_call_frame_info (int for_eh)
       /* Pad the FDE out to an address sized boundary.  */
       ASM_OUTPUT_ALIGN (asm_out_file,
 			floor_log2 ((for_eh ? PTR_SIZE : DWARF2_ADDR_SIZE)));
+#ifdef __PDP10_H__
+      {
+	char value[100];
+	snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+	ASM_OUTPUT_DEF (asm_out_file, l2, value);
+      }
+#else
       ASM_OUTPUT_LABEL (asm_out_file, l2);
+#endif
     }
 
   if (for_eh && targetm.terminate_dw2_eh_frame_info)
@@ -4850,7 +4888,6 @@ dwarf_attr_name (unsigned int attr)
       return "DW_AT_body_end";
     case DW_AT_GNU_vector:
       return "DW_AT_GNU_vector";
-
     case DW_AT_VMS_rtnbeg_pd_address:
       return "DW_AT_VMS_rtnbeg_pd_address";
 
@@ -7211,8 +7248,13 @@ output_die (dw_die_ref die)
 	  {
 	    char *p = strchr (ranges_section_label, '\0');
 
+#ifdef __PDP10_H__
+	    sprintf (p, "+" HOST_WIDE_INT_PRINT_OCT, 
+	    	     a->dw_attr_val.v.val_offset);
+#else
 	    sprintf (p, "+" HOST_WIDE_INT_PRINT_HEX,
 		     a->dw_attr_val.v.val_offset);
+#endif
 	    dw2_asm_output_offset (DWARF_OFFSET_SIZE, ranges_section_label,
 				   debug_ranges_section, "%s", name);
 	    *p = '\0';
@@ -8131,11 +8173,27 @@ output_line_info (void)
       "Initial length escape value indicating 64-bit DWARF extension");
   dw2_asm_output_delta (DWARF_OFFSET_SIZE, l2, l1,
 			"Length of Source Line Info");
+#ifdef __PDP10_H__
+  {
+    char value[100];
+    snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+    ASM_OUTPUT_DEF (asm_out_file, l1, value);
+  }
+#else
   ASM_OUTPUT_LABEL (asm_out_file, l1);
+#endif
 
   dw2_asm_output_data (2, DWARF_VERSION, "DWARF Version");
   dw2_asm_output_delta (DWARF_OFFSET_SIZE, p2, p1, "Prolog Length");
+#ifdef __PDP10_H__
+  {
+    char value[100];
+    snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+    ASM_OUTPUT_DEF (asm_out_file, p1, value);
+  }
+#else
   ASM_OUTPUT_LABEL (asm_out_file, p1);
+#endif
 
   /* Define the architecture-dependent minimum instruction length (in
    bytes).  In this implementation of DWARF, this field is used for
@@ -8179,7 +8237,17 @@ output_line_info (void)
 
   /* Write out the information about the files we use.  */
   output_file_names ();
+#ifdef __PDP10_H__
+  {
+    char value[100];
+    snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+    pdp10_align_with_pad (0400);
+    pdp10_output_byte (asm_out_file, 0, 0);
+    ASM_OUTPUT_DEF (asm_out_file, p2, value);
+  }
+#else
   ASM_OUTPUT_LABEL (asm_out_file, p2);
+#endif
 
   /* We used to set the address register to the first location in the text
      section here, but that didn't accomplish anything since we already
@@ -8414,7 +8482,17 @@ output_line_info (void)
     }
 
   /* Output the marker for the end of the line number info.  */
+#ifdef __PDP10_H__
+  {
+    char value[100];
+    snprintf (value, sizeof value, "*%o", pdp10_byte_count);
+    pdp10_align_with_pad (0400);
+    pdp10_output_byte (asm_out_file, 0, 0);
+    ASM_OUTPUT_DEF (asm_out_file, l2, value);
+  }
+#else
   ASM_OUTPUT_LABEL (asm_out_file, l2);
+#endif
 }
 
 /* Given a pointer to a tree node for some base type, return a pointer to
@@ -8488,7 +8566,11 @@ base_type_die (tree type)
     add_name_attribute (base_type_result, "__unknown__");
 
   add_AT_unsigned (base_type_result, DW_AT_byte_size,
+#ifdef __PDP10_H__
+		   2 * int_size_in_bytes (type));
+#else
 		   int_size_in_bytes (type));
+#endif
   add_AT_unsigned (base_type_result, DW_AT_encoding, encoding);
 
   return base_type_result;
@@ -10039,7 +10121,12 @@ field_byte_offset (const_tree decl)
 #endif
     object_offset_in_bits = bitpos_int;
 
+#ifdef __PDP10_H__
+  return UNITS_PER_WORD * (object_offset_in_bits / BITS_PER_WORD)
+    + (object_offset_in_bits % BITS_PER_WORD) / 8;
+#else
   return object_offset_in_bits / BITS_PER_UNIT;
+#endif
 }
 
 /* The following routines define various Dwarf attributes and any data
@@ -10148,6 +10235,21 @@ add_data_member_location_attribute (dw_die_ref die, tree decl)
       op = DW_OP_plus_uconst;
 #endif
 
+#ifdef __PDP10_H__
+      /* PDP-10: double the offset.  */
+      offset *= 2;
+
+      {
+	/* PDP-10: if it's not a 8/16/32-bit type, add 1.  */
+	int type_size_in_bits;
+	tree type = TREE_TYPE (decl);
+	if (TREE_CODE (type) == ARRAY_TYPE)
+	  type = TREE_TYPE (type);
+	type_size_in_bits = tree_low_cst (TYPE_SIZE (type), 1);
+	if (type_size_in_bits % 8 == 0)
+	  offset |= 1;
+      }
+#endif
       loc_descr = new_loc_descr (op, offset, 0);
     }
 
@@ -11196,7 +11298,11 @@ add_byte_size_attribute (dw_die_ref die, tree tree_node)
      indicates that the byte size of the entity in question is variable.  We
      have no good way of expressing this fact in Dwarf at the present time,
      so just let the -1 pass on through.  */
+#ifdef __PDP10_H__
+  add_AT_unsigned (die, DW_AT_byte_size, 2 * size);
+#else
   add_AT_unsigned (die, DW_AT_byte_size, size);
+#endif
 }
 
 /* For a FIELD_DECL node which represents a bit-field, output an attribute
@@ -14693,6 +14799,9 @@ output_indirect_string (void **h, void *v ATTRIBUTE_UNUSED)
 
   if (node->form == DW_FORM_strp)
     {
+#ifdef __PDP10_H__
+      pdp10_output_byte (asm_out_file, 0, 0);
+#endif
       switch_to_section (debug_str_section);
       ASM_OUTPUT_LABEL (asm_out_file, node->label);
       assemble_string (node->str, strlen (node->str) + 1);
@@ -14980,6 +15089,11 @@ dwarf2out_finish (const char *filename)
   limbo_die_node *node, *next_node;
   dw_die_ref die = 0;
 
+#ifdef __PDP10_H__
+  extern pdp10_outputting_debug_info;
+  pdp10_outputting_debug_info = 1;
+#endif
+
   /* Add the name for the main input file now.  We delayed this from
      dwarf2out_init to avoid complications with PCH.  */
   add_name_attribute (comp_unit_die, remap_debug_filename (filename));
@@ -15207,6 +15321,9 @@ dwarf2out_finish (const char *filename)
      table too.  */
   if (debug_str_hash)
     htab_traverse (debug_str_hash, output_indirect_string, NULL);
+#ifdef __PDP10_H__
+  pdp10_outputting_debug_info = 0;
+#endif
 }
 #else
 

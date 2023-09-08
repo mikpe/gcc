@@ -1014,6 +1014,63 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
 	     == TYPE_MODE (GENERIC_TREE_TYPE (TREE_OPERAND (EXP, 0))))) \
     (EXP) = TREE_OPERAND (EXP, 0)
 
+/* Like STRIP_NOPS, but treat all pointer modes as equivalent.  */
+#ifdef __PDP10_H__
+#define STRIP_PTR_NOPS(EXP)						\
+  while ((TREE_CODE (EXP) == NOP_EXPR				\
+	  || TREE_CODE (EXP) == CONVERT_EXPR			\
+	  || TREE_CODE (EXP) == NON_LVALUE_EXPR)		\
+	 && TREE_OPERAND (EXP, 0) != error_mark_node		\
+	 && ((TYPE_MODE (TREE_TYPE (EXP))			\
+	     == TYPE_MODE (TREE_TYPE (TREE_OPERAND (EXP, 0))))	\
+	     || (PTR_MODE_P(TYPE_MODE(TREE_TYPE(EXP))) 			\
+	     	&& PTR_MODE_P(TYPE_MODE(TREE_TYPE(TREE_OPERAND(EXP,0)))))))	\
+    (EXP) = TREE_OPERAND (EXP, 0)
+
+/* Like STRIP_NOPS, but treat pointer and non pointers as different */
+/* If we consistently made word pointers WP instead of SI this wouldn't be necessary 
+    -mtc 8/22/2007
+    Actually, don't strip conversions between different pointer types either
+    -mtc 7/23/2010
+*/
+  
+#define STRIP_NONPTR_NOPS(EXP)						\
+  while ((TREE_CODE (EXP) == NOP_EXPR				\
+	  || TREE_CODE (EXP) == CONVERT_EXPR			\
+	  || TREE_CODE (EXP) == NON_LVALUE_EXPR)		\
+	 && TREE_OPERAND (EXP, 0) != error_mark_node		\
+	 && (TYPE_MODE (TREE_TYPE (EXP))			\
+	     == TYPE_MODE (TREE_TYPE (TREE_OPERAND (EXP, 0))))	\
+	 && (POINTER_TYPE_P(TREE_TYPE(EXP)) 			\
+	     == POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(EXP,0)))) \
+	 && (! POINTER_TYPE_P(TREE_TYPE(EXP)) \
+	     || (TREE_TYPE(EXP) == TREE_TYPE(TREE_OPERAND(EXP, 0))))) \
+    (EXP) = TREE_OPERAND (EXP, 0)
+
+/* Like STRIP_SIGN_NOPS, but treat pointer and non pointers as different */
+/* If we consistently made word pointers WP instead of SI this wouldn't be necessary 
+    -mtc 8/22/2007
+    Actually, don't strip conversions between different pointer types either
+    -mtc 7/23/2010
+*/
+  
+#define STRIP_SIGN_NONPTR_NOPS(EXP)						\
+  while ((TREE_CODE (EXP) == NOP_EXPR				\
+	  || TREE_CODE (EXP) == CONVERT_EXPR			\
+	  || TREE_CODE (EXP) == NON_LVALUE_EXPR)		\
+	 && TREE_OPERAND (EXP, 0) != error_mark_node		\
+	 && (TYPE_MODE (TREE_TYPE (EXP))			\
+	     == TYPE_MODE (TREE_TYPE (TREE_OPERAND (EXP, 0))))	\
+	 && (TYPE_UNSIGNED (TREE_TYPE (EXP))			\
+	     == TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (EXP, 0)))) \
+	 && (POINTER_TYPE_P(TREE_TYPE(EXP)) 			\
+	     == POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(EXP,0)))) \
+	 && (! POINTER_TYPE_P(TREE_TYPE(EXP)) \
+	     || (TREE_TYPE(EXP) == TREE_TYPE(TREE_OPERAND(EXP, 0))))) \
+    (EXP) = TREE_OPERAND (EXP, 0)
+
+#endif
+
 /* Like STRIP_NOPS, but don't let the signedness change either.  */
 
 #define STRIP_SIGN_NOPS(EXP) \
@@ -1447,6 +1504,15 @@ struct tree_fixed_cst GTY(())
 #define TREE_STRING_LENGTH(NODE) (STRING_CST_CHECK (NODE)->string.length)
 #define TREE_STRING_POINTER(NODE) \
   ((const char *)(STRING_CST_CHECK (NODE)->string.str))
+
+/* Probably it makes more sense to replace the define above, but its safer to add this definition
+    and replace only what's clearly wrong.
+    -mtc 1/11/2008
+*/
+#ifdef __PDP10_H__
+#define TREE_UNSIGNED_STRING_POINTER(NODE) \
+  ((const unsigned char *)(STRING_CST_CHECK (NODE)->string.str))
+#endif
 
 struct tree_string GTY(())
 {
@@ -2180,7 +2246,16 @@ struct tree_block GTY(())
 #define TYPE_USER_ALIGN(NODE) (TYPE_CHECK (NODE)->type.user_align)
 
 /* The alignment for NODE, in bytes.  */
+/* On the PDP10 round up
+    On other architectures the original alignment is probably always a unit multiple except for bit fields
+    and this is probably never called for bitfields anyhow
+    -mtc 8/17/2007
+*/
+#ifdef __PDP10_H__
+#define TYPE_ALIGN_UNIT(NODE) ((TYPE_ALIGN (NODE) + BITS_PER_UNIT - 1) / BITS_PER_UNIT)
+#else
 #define TYPE_ALIGN_UNIT(NODE) (TYPE_ALIGN (NODE) / BITS_PER_UNIT)
+#endif
 
 /* If your language allows you to declare types, and you want debug info
    for them, then you need to generate corresponding TYPE_DECL nodes.
@@ -2805,12 +2880,22 @@ struct tree_decl_common GTY(())
   unsigned gimple_reg_flag : 1;
   /* In a DECL with pointer type, set if no TBAA should be done.  */
   unsigned no_tbaa_flag : 1;
-  /* Padding so that 'align' can be on a 32-bit boundary.  */
-  unsigned decl_common_unused : 2;
 
-  unsigned int align : 24;
+/* These fields weren't big enough to store what they need to store, so we have to make them bigger.
+    The gcc approach of trying to encrypt the value of off_align fails because it assumes alignmens are powers of 2.
+    Not clear why it's so, but somehow gengtype's processing of this file doesn't permit use of #ifdef at this point, so
+    I'm forced to simply make the changes and leave the base version as a comment
+    -mtc 9/27/2007
+*/
+  /* Padding so that 'align' can be on a 32-bit boundary.  */
+  /*unsigned decl_common_unused : 2;*/
+
+  unsigned int align;
+  unsigned int off_align;
+
+  /*unsigned int align : 24;*/
   /* DECL_OFFSET_ALIGN, used only for FIELD_DECLs.  */
-  unsigned int off_align : 8;
+  /*unsigned int off_align : 8;*/
 
   tree size_unit;
   tree initial;
@@ -2894,12 +2979,28 @@ struct tree_decl_with_rtl GTY(())
    DECL_FIELD_OFFSET which are known to be always zero.
    DECL_OFFSET_ALIGN thus returns the alignment that DECL_FIELD_OFFSET
    has.  */
+/* off_align needs to simply hold the offset alignment
+    -mtc 9/27/2007
+*/
+#ifdef __PDP10_H__
+#define DECL_OFFSET_ALIGN(NODE) \
+  (FIELD_DECL_CHECK (NODE)->decl_common.off_align)
+#else
 #define DECL_OFFSET_ALIGN(NODE) \
   (((unsigned HOST_WIDE_INT)1) << FIELD_DECL_CHECK (NODE)->decl_common.off_align)
+ #endif
 
 /* Specify that DECL_ALIGN(NODE) is a multiple of X.  */
+/* off_align needs to simply hold the offset alignment
+    -mtc 9/27/2007
+*/
+#ifdef __PDP10_H__
+#define SET_DECL_OFFSET_ALIGN(NODE, X) \
+  (FIELD_DECL_CHECK (NODE)->decl_common.off_align = (X))
+#else
 #define SET_DECL_OFFSET_ALIGN(NODE, X) \
   (FIELD_DECL_CHECK (NODE)->decl_common.off_align = exact_log2 ((X) & -(X)))
+#endif
 /* 1 if the alignment for this type was requested by "aligned" attribute,
    0 if it is the default for this type.  */
 
@@ -3487,6 +3588,22 @@ union tree_node GTY ((ptr_alias (union lang_tree_node),
 enum tree_index
 {
   TI_ERROR_MARK,
+
+/*
+	extra QnI types for PDP10
+	-mtc 9/26/2006
+*/
+#ifdef __PDP10_H__
+  TI_INTQ6I_TYPE,
+  TI_UINTQ6I_TYPE,
+  TI_INTQ7I_TYPE,
+  TI_UINTQ7I_TYPE,
+  TI_INTQ8I_TYPE,
+  TI_UINTQ8I_TYPE,
+  TI_INTQ9I_TYPE,
+  TI_UINTQ9I_TYPE,
+#endif
+  
   TI_INTQI_TYPE,
   TI_INTHI_TYPE,
   TI_INTSI_TYPE,
@@ -3634,6 +3751,21 @@ extern GTY(()) tree global_trees[TI_MAX];
 
 #define error_mark_node			global_trees[TI_ERROR_MARK]
 
+/*
+	extra QnI modes
+	-mtc 9/26/2006
+*/
+#ifdef __PDP10_H__
+#define intQ6I_type_node			global_trees[TI_INTQ6I_TYPE]
+#define unsigned_intQ6I_type_node	global_trees[TI_UINTQ6I_TYPE]
+#define intQ7I_type_node			global_trees[TI_INTQ7I_TYPE]
+#define unsigned_intQ7I_type_node	global_trees[TI_UINTQ7I_TYPE]
+#define intQ8I_type_node			global_trees[TI_INTQ8I_TYPE]
+#define unsigned_intQ8I_type_node	global_trees[TI_UINTQ8I_TYPE]
+#define intQ9I_type_node			global_trees[TI_INTQ9I_TYPE]
+#define unsigned_intQ9I_type_node	global_trees[TI_UINTQ9I_TYPE]
+#endif
+
 #define intQI_type_node			global_trees[TI_INTQI_TYPE]
 #define intHI_type_node			global_trees[TI_INTHI_TYPE]
 #define intSI_type_node			global_trees[TI_INTSI_TYPE]
@@ -3657,6 +3789,14 @@ extern GTY(()) tree global_trees[TI_MAX];
 #define bitsize_zero_node		global_trees[TI_BITSIZE_ZERO]
 #define bitsize_one_node		global_trees[TI_BITSIZE_ONE]
 #define bitsize_unit_node		global_trees[TI_BITSIZE_UNIT]
+
+/* consider adding:
+#define bitoffset_zero_node		global_trees[TI_BITOFFSET_ZERO]
+#define bitoffset_one_node		global_trees[TI_BITOFFSET_ONE]
+#define bitoffset_unit_node		global_trees[TI_BITOFFSET_UNIT]
+   including of course the definitions of TI_xxx and the appropriate initialization
+   -mtc 6/21/2007
+*/
 
 /* Base access nodes.  */
 #define access_public_node		global_trees[TI_PUBLIC]

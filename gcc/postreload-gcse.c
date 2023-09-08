@@ -1002,7 +1002,15 @@ eliminate_partially_redundant_load (basic_block bb, rtx insn,
 	  avail_insn = a_occr->insn;
 	  avail_reg = get_avail_load_store_reg (avail_insn);
 	  gcc_assert (avail_reg);
-	  
+
+/* gen_move_insn() can return NULL which is a problem for extract_insn
+    we want to treat that case as if the move is possible
+    -mtc 10/25/2007
+*/
+#ifdef __PDP10_H__
+	  if (dest != avail_reg)
+	  	{
+#endif
 	  /* Make sure we can generate a move from register avail_reg to
 	     dest.  */
 	  extract_insn (gen_move_insn (copy_rtx (dest),
@@ -1014,6 +1022,10 @@ eliminate_partially_redundant_load (basic_block bb, rtx insn,
 	      avail_insn = NULL;
 	      continue;
 	    }
+#ifdef __PDP10_H__
+	  	}
+#endif
+
 	  if (!reg_set_between_p (avail_reg, avail_insn, next_pred_bb_end))
 	    /* AVAIL_INSN remains non-null.  */
 	    break;

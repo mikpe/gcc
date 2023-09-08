@@ -1439,7 +1439,13 @@ struct tree_opt_pass pass_lower_subreg =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+#else
   TODO_ggc_collect |
+#endif
   TODO_verify_flow,                     /* todo_flags_finish */
   'u'                                   /* letter */
 };

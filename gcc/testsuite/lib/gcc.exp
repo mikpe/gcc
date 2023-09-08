@@ -29,6 +29,13 @@
 load_lib libgloss.exp
 load_lib prune.exp
 load_lib gcc-defs.exp
+load_lib logintops20.exp
+
+set gcctaleHaveInfo -1
+set gcctaleReady -1
+set tops20_login -1
+set gcctaleFtpDone -1
+set gcctaleCleanup 1
 
 #
 # GCC_UNDER_TEST is the compiler under test.
@@ -119,7 +126,6 @@ proc gcc_init { args } {
 #
 # gcc_target_compile -- compile a source file
 #
-
 proc gcc_target_compile { source dest type options } {
     global tmpdir
     global gluefile wrap_flags
@@ -154,4 +160,772 @@ proc gcc_target_compile { source dest type options } {
     lappend options "compiler=$GCC_UNDER_TEST"
     set options [dg-additional-files-options $options $source]
     return [target_compile $source $dest $type $options]
+}
+
+
+proc gcc_load { } {
+    perror "DEBUG: Surprise!  Enter gcc_load\n" 0
+}
+
+
+proc gcctale_getinfo { } {
+    global topstaleHost topstaleUser topstalePasswd topstaleWorkDir
+    global topstalePrefix topstaleCleanup topstaleBuffsz
+    global topstaleTimeout topstaleMaxTimeouts
+    global gcctaleHaveInfo gcctaleThrottle gcctaleInclude
+    global timeout gcctaleTOMult gcctaleExpTimeout
+
+    verbose "CALLPROC gcctale_getinfo" 1
+    set gcctaleHaveInfo 0
+    # TODO: Check global params for existence prior to comparing
+    #       values to "".
+    #
+    # Get information needed to transfer assembly source onto
+    # remote TOPS20 system, assemble, link, execute, and get results.
+    # tale == test assemble, link, and execute.
+    if { $topstaleHost == "" } {
+        perror "topstaleHost not set.  Check site.exp files." 0
+        return 0
+    }
+    if { $topstaleUser == "" || $topstalePasswd == "" } {
+        set netrc "~/.netrc"
+        if {![file isfile $netrc]} {
+            perror "$netrc is not a plain file or does not exist." 0
+            return 0
+        }
+        if {![file readable $netrc]} {
+            perror "$netrc is not readable." 0
+            return 0
+        }
+        set netrcsize [file size $netrc]
+        if { $netrcsize <= 1 } {
+            perror "bad size of $netrc : $netrcsize." 0
+            return 0
+        }
+        if [catch {open $netrc r} netrcfileid] {
+            perror "failed to open $netrc : $netrcfileid." 0
+            return 0
+        }
+        if [catch {set netrcdata [read $netrcfileid $netrcsize]} result] {
+            perror "failed to read $netrc : $result" 0
+            close $netrcfileid
+            return 0
+        }
+        close $netrcfileid
+        set ii -1
+        set token "none"
+        foreach word $netrcdata {
+            switch -exact -- $token {
+                "machine"   { set host($ii) $word; set token "none" }
+                "login"     { set lg($ii) $word; set token "none" }
+                "password"  { set pw($ii) $word; set token "none" }
+                "none"      { }
+                default     { perror "Internal error parsing $netrc" 0 }
+            }
+            switch -exact -- $word {
+                "default"   { break }
+                    # .netrc 'default' entry not handled
+                "machine"   { set token "machine"; set ii [expr $ii + 1] }
+                "login"     { set token "login" }
+                "password"  { set token "password" }
+                default     { set token "none" }
+            }
+        }
+        set ii 0
+        while { $ii < [array size host] } {
+            # Here we demonstrate a limitation in Tcl switch statements.
+            # The entire switch block cannot reside inside braces because
+            # we're using a variable for comparison, and we want that
+            # variable interpolated before the comparison.  We use escaped
+            # newlines to effect a single line switch statement.
+            switch -exact -- $host($ii) \
+                $topstaleHost { \
+                    set topstaleUser $lg($ii); \
+                    set topstalePasswd $pw($ii); \
+                    break \
+                } \
+                default { }
+            set ii [expr $ii + 1]
+        }
+        if { $topstaleUser == "" || $topstalePasswd == "" } {
+            perror "Machine $topstaleHost login information not found in ~/.netrc" 0
+            return 0
+        }
+    }
+    if { $topstaleWorkDir == "" } {
+        note "topstaleWorkDir value is NULL.  Confirm setting in site.exp."
+    }
+    if { $topstalePrefix == "" } {
+        note "topstalePrefix value is NULL.  Confirm setting in site.exp."
+    }
+    if { $topstaleCleanup == "" } {
+        perror "topstaleCleanup value is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $topstaleBuffsz == "" } {
+        perror "topstaleBuffsz value is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $topstaleTimeout == "" } {
+        perror "topstaleTimeout value is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $topstaleMaxTimeouts == "" } {
+        perror "topstaleMaxTimeouts value is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $gcctaleThrottle == "" } {
+        perror "gcctaleThrottle value is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $gcctaleExpTimeout < "1" || $gcctaleExpTimeout > "1000" } {
+        perror "gcctaleExpTimeout is NULL.  Please correct setting in site.exp." 0
+        return 0
+    }
+    set timeout $gcctaleExpTimeout
+    if { $gcctaleTOMult < "2" || $gcctaleTOMult > "100" } {
+        perror "gcctaleTOMult not set properly.  Please correct setting in site.exp." 0
+        return 0
+    }
+    if { $gcctaleExpTimeout > $topstaleTimeout } {
+       warning "gcctaleExpTimeout ($gcctaleExpTimeout) value is greater than topstaleTimeout ($topstaleTimeout).\n         Verify values in site.exp files." 0
+    }
+    # Require a valid include path because we're testing a cross-compiler
+    if {![file isdirectory "$gcctaleInclude" ]} {
+        perror "gcctaleInclude not set properly.  Please correct setting in site.exp." 0
+        return 0
+    }
+    set gcctaleHaveInfo 1
+    return 1
+}
+
+
+proc gcctale_init { } {
+    global spawn_id rootme srcdir
+    global topstaleHost topstaleUser topstalePasswd topstaleWorkDir
+    global topstalePrefix topstaleCleanup topstaleBuffsz
+    global topstaleTimeout topstaleMaxTimeouts
+    global gcctaleHaveInfo gcctaleReady tops20_login gcctaleFtpDone
+
+    verbose "CALLPROC gcctale_init." 1
+
+    if { $gcctaleReady == 1 } {
+        # All systems go, nothing here to do.
+        return 1
+    }
+
+    # Install necessary files on remote test host
+    if { $gcctaleFtpDone != 1 } {
+	verbose "ftp check belongs here" 1
+	if [ catch {exec ftp -V </dev/null} ] {
+            set ftpcl "| /usr/bin/ftp -in $topstaleHost"
+	} else {
+            set ftpcl "| /usr/bin/ftp -Vin $topstaleHost"
+	}
+	verbose "completed ftp check, ftpcl = $ftpcl" 1
+        set ftpcmd "user $topstaleUser $topstalePasswd\n"
+        if { $topstaleWorkDir != "" } {
+            append ftpcmd "cd $topstaleWorkDir\n"
+        }
+        append ftpcmd "binary\n"
+        if {![file isfile "${rootme}/crtini.o" ]} {
+            warning "${rootme}/crtini.o is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${rootme}/crtini.o ${topstalePrefix}crtini.o\n"
+        }
+        if {![file isfile "${rootme}/crtfin.o" ]} {
+            warning "${rootme}/crtfin.o is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${rootme}/crtfin.o ${topstalePrefix}crtfin.o\n"
+        }
+        if {![file isfile "${rootme}/libgcc.a" ]} {
+            warning "${rootme}/libgcc.a is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${rootme}/libgcc.a ${topstalePrefix}libgcc.a\n"
+        }
+        append ftpcmd "ascii\n"
+        if {![file isfile "${srcdir}/topstale" ]} {
+            warning "${srcdir}/topstale is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${srcdir}/topstale ${topstalePrefix}topstale\n"
+        }
+        if {![file isfile "${srcdir}/macro.pl" ]} {
+            warning "${srcdir}/macro.pl is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${srcdir}/macro.pl ${topstalePrefix}macro.pl\n"
+        }
+        if {![file isfile "${srcdir}/link.pl" ]} {
+            warning "${srcdir}/link.pl is missing. Skipping remote install."
+        } else {
+            append ftpcmd "put ${srcdir}/link.pl ${topstalePrefix}link.pl\n"
+            append ftpcmd "close\nbye\n"
+        }
+	verbose "ready to try ftp, ftpcl = $ftpcl" 1
+        if [catch { open $ftpcl w } ftpPipeId ] {
+            perror "Cannot open pipeline to ftp\n" 0
+            return 0
+        }
+	verbose "ftpPipeId = $ftpPipeId" 1
+	verbose "ftpcmd = $ftpcmd" 1
+        puts -nonewline $ftpPipeId $ftpcmd
+        close $ftpPipeId
+        set gcctaleFtpDone 1
+	verbose "ftp command done" 1
+    }
+
+    verbose "tops20_login = $tops20_login" 1
+    if { $tops20_login != 1 } {
+        # login to TOPS20, cd to test directory
+	verbose "gcctaleHaveInfo = $gcctaleHaveInfo" 1
+        if { $gcctaleHaveInfo != 1 } {
+            perror "gcctale BUG: Missing data inside proc gcctale_init." 0
+            return 0
+        }
+        login_tops20 "" $topstaleHost $topstaleUser $topstalePasswd
+        if {$spawn_id == -1 } {
+            perror "TOPS20 login attempt failed." 0
+            return 0
+        }
+	verbose "topstaleWorkDir = $topstaleWorkDir" 1
+        if ![cd_tops20 $topstaleWorkDir] {
+            return 0
+        }
+    }
+
+    # launch topstale on TOPS20 here
+    set tries 0
+    set result -1
+    exp_send "\n"
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts.
+            exp_send "reset *\n"
+            exp_send "perl ${topstalePrefix}topstale\n"
+            set result 0
+        }
+        timeout {
+            note "Expect timedout while launching topstale."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+	}
+    }
+    if { $result < 0 } {
+        perror "Too many timeouts ($tries) attempting topstale launch.\n" 0
+        return 0
+    }
+
+    set tries 0
+    expect {
+        #   SETPARAMS command args:
+        #   1) File Transfer Block size in bytes
+        #   2) Timeout value in seconds (0 == no change)
+        #   3) Max topstale timeout events (0 == no change)
+        #   4) YES | NO (optional, default YES)
+        #   5) Test Directory  (optional, default "")
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -re "COMMAND READY:\r\n$" {
+            exp_send "setparams $topstaleBuffsz $topstaleTimeout $topstaleMaxTimeouts $topstaleCleanup $topstalePrefix\n"
+            set result 2
+        }
+        timeout {
+            note "Expect timed out while configuring topstale"
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 2 } {
+        perror "Too many timeouts ($tries) configuring topstale." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    set gcctaleReady 1
+    return 1
+}
+
+
+proc gcctale_transfer { asmpath } {
+    global topstaleBuffsz gcctaleThrottle gcctaleReady timeout gcctaleTOMult
+
+    verbose "CALLPROC gcctale_transfer" 1
+    if {![file isfile $asmpath]} {
+        perror "$asmpath is not a plain file." 0
+        return 0
+    }
+    if {![file readable $asmpath]} {
+        perror "$asmpath is not readable." 0
+        return 0
+    }
+    set asmsize [file size $asmpath]
+    if { $asmsize <= 1 } {
+        perror "bad size of $asmpath : $asmsize." 0
+        return 0
+    }
+    set asmfile [file tail $asmpath]
+    if [catch {open $asmpath r} fileid] {
+        perror "open $asmpath : $fileid." 0
+        return 0
+    }
+
+    # Doubt this fconfigure call are necessary,
+    # but it ain't hurtin' nothin'
+    fconfigure $fileid -translation binary
+
+    # Read entire file into memory.  This will break when filesize
+    # gets too large (how large is too large?)
+    if [catch {set asmfiledata [read $fileid $asmsize]} result] {
+        perror "read $asmpath : $result" 0
+        close $fileid
+        return 0
+    }
+    close $fileid
+
+    set tries 0
+    set result -1
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -re "COMMAND READY:\r\n$" {
+            exp_send "createf $asmfile $asmsize\n"
+            set result 0
+        }
+        timeout {
+            note "Expect timed out while creating remote file."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 0 } {
+        perror "Too many timeouts ($tries) creating remote file." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    # Increase timout in case of expunge
+    set timeout [expr $timeout * $gcctaleTOMult]
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -exact ": ERROR: " {
+            # File open (create) failed
+            perror "Failed to create $asmfile." 0
+            exp_send "reset\n"
+            return 0
+        }
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "writef\n"
+            set result 1
+        }
+        timeout {
+            note "Expect timed out while starting remote file write."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    # Reduce timout
+    set timeout [expr $timeout / $gcctaleTOMult]
+    if { $result < 1 } {
+        perror "Too many timeouts ($tries) starting remote file write." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    set tries 0
+    expect {
+        -regex "WRITEF .* READY:\r\n$" {
+            set result 2
+        }
+        timeout {
+            note "Expect timed out while transferring file data."
+            if {[incr tries] < 3} {
+                exp_continue
+            }
+        }
+    }
+    if { $result < 2 } {
+        perror "Too many timeouts ($tries) creating remote file." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    # send file data
+    set tries 0
+    set ii 0
+    set jj 0
+    set writebuf 0
+    while {$ii < $asmsize} {
+        set jj [expr $ii + $topstaleBuffsz - 1]
+        set writebuf [string range $asmfiledata $ii $jj]
+        exp_send -- "$writebuf"
+        set ii [expr $ii + $topstaleBuffsz]
+        after $gcctaleThrottle
+    }
+    # If last char is not a newline, send a newline
+    # to flush remote buffer, then one more to get a
+    # topstale prompt.  topstale knows to
+    # handle the extraneous newline properly.
+    set jj [expr $asmsize - 1]
+    set writebuf [string range $asmfiledata $jj $jj]
+    if { $writebuf != "\n" } {
+        exp_send "\n\n"
+    }
+
+    set tries 0
+    # Not using regular expressions in the following expect call
+    # for performance reasons.
+    expect {
+        -exact "COMMAND READY:" {
+            # Do whatever
+            set result 0
+        }
+        timeout {
+            note "Expect timed out purging file data from expect."
+            if {[incr tries] < 6} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $tries >= 6 } {
+        perror "Too many timeouts ($tries) while purging expect buffer." 0
+        exp_send "reset\n"
+        return 0
+    }
+    exp_send "\n"
+    return 1
+}
+
+
+proc gcctale_assemble { } {
+    global timeout gcctaleTOMult gcctaleReady
+
+    verbose "CALLPROC gcctale_assemble" 1
+    set result -1
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "assemble\n"
+            set result 0
+        }
+        timeout {
+            note "Expect timed out while attempting assemble."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 0 } {
+        perror "Too many timeouts ($tries) attempting assemble." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    # Grow some patience for TOPS20 'macro.pl' script
+    set timeout [expr $timeout * $gcctaleTOMult]
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regex ": ASSEMBLE .* failed" {
+            set result 1
+            exp_send "\n"
+        }
+        -regex "COMMAND READY:\r\n$" {
+            set result 2
+            exp_send "\n"
+        }
+        -regex ".+" {
+            exp_continue
+        }
+        timeout {
+            note "Expect timed out getting assemble result."
+            if {[incr tries] < 5} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    # Loose some patience
+    set timeout [expr $timeout / $gcctaleTOMult]
+    if { $result < 1 } {
+        perror "Too many timeouts ($tries) getting assemble result." 0
+        exp_send "reset\n"
+        return 0
+    }
+    if { $result < 2 } {
+        return 0
+    } 
+    return 1
+}
+
+
+proc gcctale_link { } {
+    global timeout gcctaleTOMult gcctaleReady
+
+    verbose "CALLPROC gcctale_link" 1
+    set result -1
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "link\n"
+            set result 0
+        }
+        timeout {
+            note "Expect timed out while attempting link."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 0 } {
+        perror "Too many timeouts ($tries) while attempting link." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    # Grow some patience for TOPS20 'ld' script
+    set timeout [expr $timeout * $gcctaleTOMult]
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regexp ": LINK .* failed" {
+            set result 1
+        }
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "\n"
+            set result 2
+        }
+        -regex ".+" {
+            exp_continue
+        }
+        timeout {
+            note "Expect timed out getting link result."
+            if {[incr tries] < 5} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+
+    # Loose some patience
+    set timeout [expr $timeout / $gcctaleTOMult]
+    if { $result < 1 } {
+        perror "Too many timeouts ($tries) getting link result." 0
+        exp_send "reset\n"
+        return 0
+    }
+    if { $result < 2 } {
+        return 0
+    } 
+    return 1
+}
+
+
+proc gcctale_execute { } {
+    global timeout gcctaleReady gcctaleTOMult
+    verbose "CALLPROC gcctale_execute" 1
+    set result -1
+    # Increase timout because some test execute a long time
+    set timeout [expr $timeout * $gcctaleTOMult]
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "execute\n"
+            set result 0
+        }
+        timeout {
+            note "Expect timed out while attempting execute."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    # Reduce timout
+    set timeout [expr $timeout / $gcctaleTOMult]
+
+    if { $result == -1 } {
+        perror "Too many timeouts ($tries) while attempting execute." 0
+        exp_send "reset\n"
+        return 0
+    }
+
+    set tries 0
+    expect {
+        -regex "(\[\r\n\]+\[^\r\n\]*\[!@\] )+$" {
+            # One or more exec prompts indicates topstale has terminated.
+            # Set appropiate flag and bail.
+            set gcctaleReady 0
+            return 0
+	}
+        -regex ": EXECUTE.*timed out" {
+            # Test execution timedout.  Topstale terminates under this
+            # condition to allow for handling of wayward test fork.
+            set gcctaleReady 0
+            return 0
+        }
+        -regex ": EXECUTE.*failed" {
+            # Test failed, nothing else to do.
+            return 0
+        }
+        -regex "COMMAND READY:\r\n$" {
+            exp_send "\n"
+            set result 1
+        }
+        timeout {
+            note "Expect timed out getting execute result."
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 1 } {
+        perror "Too many timeouts ($tries) getting execute result." 0
+        exp_send "reset\n"
+        return 0
+    }
+    return 1
+}
+
+
+proc gcctale { testcase asmout } {
+    global gcctaleReady gcctaleHaveInfo gcctaleExpTimeout
+    global gcctaleCleanup
+
+    verbose "CALLPROC gcctale\n" 1
+
+    set timeout $gcctaleExpTimeout
+    if { $gcctaleReady != "1" } {
+        if { $gcctaleHaveInfo != "1" } {
+            if ![gcctale_getinfo] {
+                return 0
+            }
+        }
+        if ![gcctale_init] {
+            return 0
+        }
+    }
+
+    if [gcctale_transfer $asmout] {
+        if { $gcctaleCleanup == 1 } {
+            # remove assembly source file now that
+            # it is transferred to TOPS20.
+            file delete $asmout
+        }
+        if [gcctale_assemble] {
+            if [gcctale_link] {
+                if [gcctale_execute] {
+                    return 1
+                } else {
+                    return 0
+                }
+            } else {
+                return 0
+            }
+        } else {
+            return 0
+        }
+    } else {
+        return 0
+    }  
+    return 0
+}
+
+
+proc gcctale_finish { } {
+    global gcctaleReady timeout gcctaleTOMult
+
+    verbose "CALLPROC gcctale_finish" 1
+    # Send EXIT to topstale on TOPS20
+
+    # If $gcctaleReady != 1, either gcctale_init was not called,
+    # or was not successful, or the last test execution timed out.
+    if {$gcctaleReady == 1} {
+        set tries 0
+        set result -1
+        # Grow some patience for final topstale expunge
+        set timeout [expr $timeout * $gcctaleTOMult]
+        exp_send "\n"
+        expect {
+            -exact "topstale: Terminated" {
+                set result 0
+            }
+            -regex "COMMAND READY:\r\n$" {
+                exp_send "exit\n"
+                set gcctaleReady 0
+                exp_continue
+            }
+            timeout {
+                note "Expect timed out while terminating topstale."
+                if {[incr tries] < 3} {
+                    # Can't do much here but count timeouts
+                    exp_send "\n"
+                    exp_continue
+                }
+            }
+        }
+        if { $result < 0 } {
+            perror "Too many timeouts ($tries) while terminating topstale." 0
+            # Last ditch effort to terminate topstale
+            exp_send "reset\nexit\n"
+            return 0
+        }
+    }
+    # Loose some patience
+    set timeout [expr $timeout / $gcctaleTOMult]
+    logout_tops20
+    set gcctaleReady 0
+    return 1
 }

@@ -1336,7 +1336,16 @@ compute_init_costs (void)
   /* Pattern for indirect jump.  */
   rtx_jump = gen_indirect_jump (reg);
 
-  /* Pattern for storing address.  */
+    /* I don't understand why some gen_ call return an insn and some a pattern, but a pattern
+      is clearly needed here and we tend to get an insn.  So check and make adjustment if needed
+      -mtc 3/20/2008
+  */
+  #ifdef __PDP10_H__
+  if (INSN_P(rtx_jump))
+  	rtx_jump = PATTERN(rtx_jump);
+#endif
+
+/* Pattern for storing address.  */
   rtx_store = gen_rtx_SET (VOIDmode, reg, gen_symbol_ref_rtx_for_label (label));
 
   /* Pattern for return insn.  */

@@ -16,6 +16,16 @@ You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 Boston, MA 02110-1301, USA.  */
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: hex.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 
 #include <stdio.h>  /* for EOF */
 #ifdef HAVE_CONFIG_H

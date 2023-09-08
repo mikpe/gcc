@@ -33,8 +33,9 @@ enum debug_info_type
   DWARF2_DEBUG,	    /* Write Dwarf v2 debug info (using dwarf2out.c).  */
   XCOFF_DEBUG,	    /* Write IBM/Xcoff debug info (using dbxout.c).  */
   VMS_DEBUG,        /* Write VMS debug info (using vmsdbgout.c).  */
-  VMS_AND_DWARF2_DEBUG /* Write VMS debug info (using vmsdbgout.c).
-                          and DWARF v2 debug info (using dwarf2out.c).  */
+  VMS_AND_DWARF2_DEBUG, /* Write VMS debug info (using vmsdbgout.c).
+			   and DWARF v2 debug info (using dwarf2out.c).  */
+  TOPS20_DEBUG	    /* Write TOPS-20 debug info (using tops20dbgout.c).  */
 };
 
 /* Specify which kind of debugging info to generate.  */
@@ -349,5 +350,10 @@ enum warn_strict_overflow_code
 
 /* Whether to emit an overflow warning whose code is C.  */
 #define issue_strict_overflow_warning(c) (warn_strict_overflow >= (int) (c))
+
+#ifdef __PDP10_H__
+/* we need to call this fold-const.c routine from tree-vrp.c */
+extern void fold_overflow_warning (const char* gmsgid, enum warn_strict_overflow_code wc);
+#endif
 
 #endif /* ! GCC_FLAGS_H */

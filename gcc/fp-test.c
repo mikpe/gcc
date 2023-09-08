@@ -36,6 +36,16 @@
    software emulation routines (for FP ops) are needed in order to
    complete the port.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: fp-test.c 64aaeca1eb6f 2007/11/19 21:57:52 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #if 0
 #include <math.h>
 #endif

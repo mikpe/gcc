@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: cse.c 774d5a759a09 2008/05/16 22:00:10 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 /* stdio.h must precede rtl.h for FFS.  */
 #include "system.h"
@@ -1360,6 +1370,13 @@ lookup_for_remove (rtx x, unsigned int hash, enum machine_mode mode)
 static rtx
 lookup_as_function (rtx x, enum rtx_code code)
 {
+/* We need an extra variable because we need to avoid clobbering our argument
+    -mtc 12/12/2006
+*/
+#ifdef __PDP10_H__
+   rtx xx = NULL_RTX;
+   int secondtry = false;
+#endif
   struct table_elt *p
     = lookup (x, SAFE_HASH (x, VOIDmode), GET_MODE (x));
 
@@ -1368,11 +1385,29 @@ lookup_as_function (rtx x, enum rtx_code code)
      than word_mode before, look for word_mode now.  */
   if (p == 0 && code == CONST_INT
       && GET_MODE_SIZE (GET_MODE (x)) < GET_MODE_SIZE (word_mode))
+/* Don't clobber x
+    also SUBREG needs to be handled differently than other expressions
+    -mtc 12/12/2006
+*/
+#ifdef __PDP10_H__
+    {
+      if (GET_CODE(x) == SUBREG)
+      	xx = SUBREG_REG(x);
+      else
+	{
+        xx = copy_rtx (x);
+        PUT_MODE (xx, word_mode);
+	}
+      p = lookup (xx, safe_hash (xx, VOIDmode) & HASH_MASK, GET_MODE(xx));
+      secondtry = true;
+    }
+#else
     {
       x = copy_rtx (x);
       PUT_MODE (x, word_mode);
       p = lookup (x, SAFE_HASH (x, VOIDmode), word_mode);
     }
+#endif
 
   if (p == 0)
     return 0;
@@ -1381,7 +1416,28 @@ lookup_as_function (rtx x, enum rtx_code code)
     if (GET_CODE (p->exp) == code
 	/* Make sure this is a valid entry in the table.  */
 	&& exp_equiv_p (p->exp, p->exp, 1, false))
+
+/* This is a general, not PDP10 specific fix.  The comment above that mode doesn't
+    matter with CONST_INT is plain wrong.  Unless the subreg is referencing the low order
+    portion of the word, it is necessary to extract the correct bits of the constant and
+    generate a new constant
+*/
+#ifdef __PDP10_H__
+      {
+      if (secondtry && (GET_CODE(x) == SUBREG) && 
+	  (subreg_lowpart_offset(GET_MODE(x), GET_MODE(xx)) != SUBREG_BYTE(x)))
+      	{
+      	HOST_WIDE_INT val = INTVAL(p->exp);
+	val >>= (GET_MODE_BITSIZE(GET_MODE(xx)) - GET_MODE_BITSIZE(GET_MODE(x))) - SUBREG_BYTE(x) * BITS_PER_UNIT;
+	val = trunc_int_for_mode(val, GET_MODE(x));
+	return GEN_INT(val);
+      	}
+      else
+	 return p->exp;
+      }
+#else
       return p->exp;
+#endif
 
   return 0;
 }
@@ -1613,6 +1669,33 @@ merge_equiv_classes (struct table_elt *class1, struct table_elt *class2)
 	  hash_arg_in_memory = 0;
 	  hash = HASH (exp, mode);
 
+/* This is a general, not PDP10 specific fix
+    The code order is slightly non-optimal to facilitate isolating the change
+    It's possible for a register expression to exist in both classes.  If it's the lowest
+    cost expression in class1, calling delete_reg_equiv on it is disasterous.
+    Otherwise we can end up with it in class1 twice, which also seems like a bad thing.
+    So check any register expression for presence in class1, and if found just remove it
+    from class2.
+    With 4.1.1 gcc added test to check REGNO_QTY_VALID_P, but that just 
+    prevents a crash when the class tables are invalid.  This check to avoid deleting
+    a register entry we still use is still essential
+    -mtc 2/15/2007
+*/
+#ifdef __PDP10_H__
+	  if (GET_CODE(exp) == REG)
+	  	{
+	  	struct table_elt *e;
+		for (e = class1; e; e = e->next_same_value)
+			if (GET_CODE(e->exp) == REG && REGNO(e->exp) == REGNO(exp))
+				{
+				remove_from_table(elt, hash);
+				break;
+				}
+		if (e)
+			continue;
+	  	}
+#endif
+
 	  if (REG_P (exp))
 	    {
 	      need_rehash = REGNO_QTY_VALID_P (REGNO (exp));
@@ -1634,7 +1717,7 @@ merge_equiv_classes (struct table_elt *class1, struct table_elt *class2)
 	}
     }
 }
-
+
 /* Flush the entire hash table.  */
 
 static void
@@ -1771,6 +1854,11 @@ invalidate (rtx x, enum machine_mode full_mode)
 	 question ignoring the offset.  */
       invalidate (XEXP (x, 0), VOIDmode);
       return;
+
+      /* PDP-10: handle (zero_extract (mem)).  */
+    case ZERO_EXTRACT:
+      x = XEXP (x, 0);
+      /* Fall through.  */
 
     case MEM:
       addr = canon_rtx (get_addr (XEXP (x, 0)));
@@ -3577,8 +3665,16 @@ fold_rtx (rtx x, rtx insn)
 					const_arg2 ? const_arg2 : XEXP (x, 2));
       break;
 
+#ifdef __PDP10_H__
+    case RTX_EXTRA:
+      if (code == UNSPEC)
+	new = pdp10_simplify_unspec (x, insn);
+      break;
+#endif
+
     default:
       break;
+
     }
 
   return new ? new : x;
@@ -4956,6 +5052,46 @@ cse_insn (rtx insn, rtx libcall_insn)
 	    invalidate (stack_pointer_rtx, VOIDmode);
 #endif
 	  dest = fold_rtx (dest, insn);
+
+	  /* PDP-10: if a MEM was folded into a ZERO_EXTRACT, update
+	     accordingly, but only if the source operand is a register.  */
+	  if (GET_CODE (dest) == ZERO_EXTRACT
+	      && GET_CODE (sets[i].src) == REG)
+	    {
+	      rtx *memp = &SET_DEST (sets[i].rtl);
+
+	      INSN_CODE (insn) = -1;
+
+	      while (GET_CODE (*memp) == SIGN_EXTRACT
+		     || GET_CODE (*memp) == ZERO_EXTRACT
+		     || GET_CODE (*memp) == SUBREG
+		     || GET_CODE (*memp) == STRICT_LOW_PART)
+		memp = &XEXP (*memp, 0);
+
+	      *memp = dest;
+	      sets[i].inner_dest = dest;
+
+	      if (sets[i].mode != SImode)
+		{
+		  rtx new = sets[i].src;
+
+		  if (GET_CODE (new) == SUBREG
+		      && SUBREG_BYTE (new) == UNITS_PER_WORD
+		      - GET_MODE_SIZE (mode))
+		    {
+		      if (GET_MODE (SUBREG_REG (new)) == SImode)
+			new = SUBREG_REG (new);
+		      else
+			new = gen_rtx_SUBREG (SImode, SUBREG_REG (new), 0);
+		    }
+		  else if (GET_CODE (new) != SUBREG
+			   && GET_CODE (new) != CONST_INT)
+		    new = gen_rtx_SUBREG (SImode, new, 0);
+
+		  SET_SRC (sets[i].rtl) = sets[i].src = new;
+		}
+	  }
+	  
 	}
 
       /* Compute the hash code of the destination now,
@@ -6994,7 +7130,13 @@ struct tree_opt_pass pass_cse =
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+#else
   TODO_ggc_collect |
+#endif
   TODO_verify_flow,                     /* todo_flags_finish */
   's'                                   /* letter */
 };
@@ -7055,7 +7197,13 @@ struct tree_opt_pass pass_cse2 =
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+#else
   TODO_ggc_collect |
+#endif
   TODO_verify_flow,                     /* todo_flags_finish */
   't'                                   /* letter */
 };

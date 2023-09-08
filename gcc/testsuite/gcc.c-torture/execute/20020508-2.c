@@ -1,3 +1,5 @@
+/* The LONGLONG tests do not work on the PDP10 because LONGLONG implementation is incomplete */
+
 #include <limits.h>
 
 #ifndef CHAR_BIT
@@ -50,6 +52,8 @@ main ()
   if (ROR (l, SHIFT1) != ROR (LONG_VALUE, SHIFT1))
     abort ();
 
+#ifndef __PDP10__
+
   if (ROR (ll, shift1) != ROR (LL_VALUE, SHIFT1))
     abort ();
 
@@ -61,6 +65,8 @@ main ()
 
   if (ROR (ll, SHIFT2) != ROR (LL_VALUE, SHIFT2))
     abort ();
+
+#endif
 
   if (ROL (c, shift1) != ROL (CHAR_VALUE, SHIFT1))
     abort ();
@@ -86,6 +92,8 @@ main ()
   if (ROL (l, SHIFT1) != ROL (LONG_VALUE, SHIFT1))
     abort ();
 
+#ifndef __PDP10__
+
   if (ROL (ll, shift1) != ROL (LL_VALUE, SHIFT1))
     abort ();
 
@@ -97,6 +105,8 @@ main ()
 
   if (ROL (ll, SHIFT2) != ROL (LL_VALUE, SHIFT2))
     abort ();
+
+#endif
 
   exit (0);
 }

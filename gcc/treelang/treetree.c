@@ -53,6 +53,16 @@
 
 /* GCC headers.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: treetree.c 1c13986a2af8 2007/12/21 22:37:34 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

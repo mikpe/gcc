@@ -235,16 +235,20 @@ extern enum machine_mode mode_for_size (unsigned int, enum mode_class, int);
 extern enum machine_mode smallest_mode_for_size (unsigned int,
 						 enum mode_class);
 
-
 /* Return an integer mode of the exact same size as the input mode,
    or BLKmode on failure.  */
 
 extern enum machine_mode int_mode_for_mode (enum machine_mode);
 
 /* Find the best mode to use to access a bit field.  */
-
+/* This should really be #ifdef, but for now cant because machmode.h can be included before pdp10.h */
+/* when called to get a mode for a struct, it's possible for bitsize and bitpos to be really big */
+extern enum machine_mode get_best_mode (unsigned HOST_WIDE_INT, unsigned HOST_WIDE_INT, unsigned int,
+						enum machine_mode, int);
+/*
 extern enum machine_mode get_best_mode (int, int, unsigned int,
-					enum machine_mode, int);
+						enum machine_mode, int);
+*/
 
 /* Determine alignment, 1<=result<=BIGGEST_ALIGNMENT.  */
 

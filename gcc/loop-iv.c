@@ -1081,7 +1081,17 @@ iv_analyze_def (struct df_ref *def, struct rtx_iv *iv)
 
   gcc_assert (SET_DEST (set) == reg);
   rhs = find_reg_equal_equiv_note (insn);
+
+/* not sure if this is a correct fix, but arith-rand-ll.c dies in assert in iv_analyze_expr because
+    a REG_EQUAL node with a different mode (DI) than the set (SI) exists.  An alternative would
+    be to track down where the REG_EQUAL is created and avoid generating them for differing modes
+    -mtc 1/8/2008
+*/
+#ifdef __PDP10_H__
+  if (rhs && GET_MODE(XEXP(rhs, 0)) == GET_MODE(reg))
+#else
   if (rhs)
+#endif
     rhs = XEXP (rhs, 0);
   else
     rhs = SET_SRC (set);

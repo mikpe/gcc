@@ -102,6 +102,18 @@ fleu (x, y)
 }
 
 long long args[] =
+#ifdef __PDP10__
+{
+  0LL,
+  1LL,
+  -1LL,
+  0x3fffffffffffffffffLL,
+  0x400000000000000000LL,
+  0x400000000000000001LL,
+  0x1C1A3F237394D36C58LL,
+  0x5793850E92CAAC1B04LL
+};
+#else
 {
   0LL,
   1LL,
@@ -112,6 +124,7 @@ long long args[] =
   0x1A3F237394D36C58LL,
   0x93850E92CAAC1B04LL
 };
+#endif
 
 int correct_results[] =
 {

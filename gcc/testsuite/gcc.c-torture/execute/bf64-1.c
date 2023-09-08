@@ -1,3 +1,46 @@
+#ifdef __PDP10__
+struct tmp
+{
+  long long int pad : 16;
+  long long int field : 56;
+};
+
+struct tmp2
+{
+  long long int field : 56;
+  long long int pad : 16;
+};
+
+struct tmp
+sub (struct tmp tmp)
+{
+  tmp.field |= 0x0048765412345678LL;
+  return tmp;
+}
+
+struct tmp2
+sub2 (struct tmp2 tmp2)
+{
+  tmp2.field |= 0x0048765412345678LL;
+  return tmp2;
+}
+
+main()
+{
+  struct tmp tmp = {0x2123, 0xFFF000FFF000FLL};
+  struct tmp2 tmp2 = {0xFFF000FFF000FLL, 0x2123};
+
+  tmp = sub (tmp);
+  tmp2 = sub2 (tmp2);
+
+  if (tmp.pad != 0x2123 || tmp.field != 0x7FFFCFFF541FFF567FLL)
+    abort ();
+  if (tmp2.pad != 0x2123 || tmp2.field != 0x7FFFCFFF541FFF567FLL)
+    abort ();
+  exit (0);
+}
+
+#else
 struct tmp
 {
   long long int pad : 12;
@@ -38,3 +81,4 @@ main()
     abort ();
   exit (0);
 }
+#endif

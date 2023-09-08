@@ -173,6 +173,26 @@ typedef		float TFtype	__attribute__ ((mode (TF)));
 typedef _Complex float TCtype	__attribute__ ((mode (TC)));
 #endif
 
+/* On dsp's there are usually qf/hf/tqf modes used instead of the above.
+   For now we don't support them in libgcc2.c.  */
+
+#undef L_fixdfdi
+#undef L_fixsfdi
+#undef L_fixtfdi
+#undef L_fixunsdfdi
+#undef L_fixunsdfsi
+#undef L_fixunssfdi
+#undef L_fixunssfsi
+#undef L_fixunstfdi
+#undef L_fixunsxfdi
+#undef L_fixunsxfsi
+#undef L_fixxfdi
+#undef L_floatdidf
+#undef L_floatdisf
+#undef L_floatditf
+#undef L_floatdixf
+
+
 typedef int cmp_return_type __attribute__((mode (__libgcc_cmp_return__)));
 typedef int shift_count_type __attribute__((mode (__libgcc_shift_count__)));
 
@@ -252,6 +272,8 @@ typedef int shift_count_type __attribute__((mode (__libgcc_shift_count__)));
 # define Wtype_MAXp1_F	0x1p16f
 #elif W_TYPE_SIZE == 32
 # define Wtype_MAXp1_F	0x1p32f
+#elif W_TYPE_SIZE == 36
+# define Wtype_MAXp1_F	0x1p36f
 #elif W_TYPE_SIZE == 64
 # define Wtype_MAXp1_F	0x1p64f
 #else

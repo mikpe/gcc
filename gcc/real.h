@@ -256,6 +256,8 @@ extern unsigned int real_hash (const REAL_VALUE_TYPE *);
 
 
 /* Target formats defined in real.c.  */
+extern const struct real_format pdp10_single_format;
+extern const struct real_format pdp10_double_format;
 extern const struct real_format ieee_single_format;
 extern const struct real_format mips_single_format;
 extern const struct real_format motorola_single_format;
@@ -306,12 +308,22 @@ extern const struct real_format decimal_quad_format;
   real_to_target (OUT, &(IN),						\
 		  mode_for_size (LONG_DOUBLE_TYPE_SIZE, MODE_FLOAT, 0))
 
+#ifdef __PDP10_H__
+#define REAL_VALUE_TO_TARGET_DOUBLE(IN, OUT) \
+  real_to_target (OUT, &(IN), mode_for_size (72, MODE_FLOAT, 0))
+#else
 #define REAL_VALUE_TO_TARGET_DOUBLE(IN, OUT) \
   real_to_target (OUT, &(IN), mode_for_size (64, MODE_FLOAT, 0))
+#endif
 
 /* IN is a REAL_VALUE_TYPE.  OUT is a long.  */
+#ifdef __PDP10_H__
+#define REAL_VALUE_TO_TARGET_SINGLE(IN, OUT) \
+  ((OUT) = real_to_target (NULL, &(IN), mode_for_size (36, MODE_FLOAT, 0)))
+#else
 #define REAL_VALUE_TO_TARGET_SINGLE(IN, OUT) \
   ((OUT) = real_to_target (NULL, &(IN), mode_for_size (32, MODE_FLOAT, 0)))
+#endif
 
 #define REAL_VALUE_FROM_INT(r, lo, hi, mode) \
   real_from_integer (&(r), mode, lo, hi, 0)

@@ -212,7 +212,7 @@ proc profopt-execute { src } {
     global prof_option_list
     global tool profile_option feedback_option prof_ext perf_ext perf_delta
     global generate_final_code use_final_code
-    global verbose
+    global verbose objdir target_triplet
 
     if ![info exists profile_option] {
         error "No profile option specified for first compile."
@@ -231,19 +231,26 @@ proc profopt-execute { src } {
     }
 
     set executable $tmpdir/[file tail [file rootname $src].x]
+    set asm_prefix "$objdir/[file rootname $testcase]"
     set basename [file tail $testcase]
     set base [file rootname $basename]
 
     set count 0
     foreach option $prof_option_list {
-	set execname1 "${executable}${count}1"
-	set execname2 "${executable}${count}2"
-	set execname3 "${executable}${count}3"
-	incr count
-
-	remote_file build delete $execname1
-	remote_file build delete $execname2
-	remote_file build delete $execname3
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+# At this point, -fprofile-arcs causes gcc10 trouble at link
+# time.  This pdp10-specific harness code is incomplete until
+# -fprofile-arcs is properly enabled.
+            set asmout "${asm_prefix}_${count}"
+        } else {
+            set execname1 "${executable}${count}1"
+            set execname2 "${executable}${count}2"
+            set execname3 "${executable}${count}3"
+            remote_file build delete $execname1
+            remote_file build delete $execname2
+            remote_file build delete $execname3
+        }
+        incr count
 	verbose "Testing $testcase, $option" 1
 
 	# Remove old profiling and performance data files.
@@ -271,13 +278,34 @@ proc profopt-execute { src } {
 	set options ""
 	lappend options "additional_flags=$option $extra_flags $profile_option"
 	set optstr "$option $profile_option"
-	set comp_output [${tool}_target_compile "$src" "$execname1" executable $options]
-	if ![${tool}_check_compile "$testcase compilation" $optstr $execname1 $comp_output] {
- 	    unresolved "$testcase execution,   $optstr"
- 	    unresolved "$testcase compilation, $option $feedback_option"
- 	    unresolved "$testcase execution,   $option $feedback_option"
-	    continue
-	}
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+            # PDP-10: Don't know where else to add these.
+            lappend options "additional_flags=-DNO_TRAMPOLINES"
+            lappend options "additional_flags=-DNO_VARARGS"
+            lappend options "additional_flags=-mlong-long-71bit"
+            set comp_output [${tool}_target_compile "$src" "${asmout}1.mac" assembly $options]
+            if ![${tool}_check_compile "$testcase compilation" $option "${asmout}1.mac" $comp_output] {
+                unresolved "$testcase execution, $option"
+                continue
+            }
+        } else {
+            set comp_output [${tool}_target_compile "$src" "$execname1" executable $options]
+            if ![${tool}_check_compile "$testcase compilation" $optstr $execname1 $comp_output] {
+                unresolved "$testcase execution,   $optstr"
+                unresolved "$testcase compilation, $option $feedback_option"
+                unresolved "$testcase execution,   $option $feedback_option"
+                continue
+            }
+        }
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+            #  Just for testing.  Complete runs later...
+            if [gcctale $testcase "${asmout}1.mac"] {
+                ${tool}_pass "$testcase execution" "$option"
+            } else {
+                ${tool}_fail "$testcase execution" "$option"
+            }
+            continue
+        }
 
 	# Run the profiled test.
 

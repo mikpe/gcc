@@ -450,7 +450,8 @@ proc check_profiling_available { test_what } {
 	     || [istarget xstormy16-*]
 	     || [istarget xtensa-*-elf]
 	     || [istarget *-*-vxworks*]
-	     || [istarget *-*-windiss] } {
+	     || [istarget *-*-windiss]
+	     || [istarget pdp10-*-*] } {
 	    set profiling_available_saved 0
 	} else {
 	    set profiling_available_saved 1

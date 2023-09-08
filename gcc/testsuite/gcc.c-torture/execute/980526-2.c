@@ -15,7 +15,11 @@ static inline kdev_t to_kdev_t(int dev)
 
 void do_mknod(const char * filename, int mode, kdev_t dev)
 {
+#ifdef __PDP10__
+	if (dev==0xD15800078)
+#else
 	if (dev==0x15800078)
+#endif
 		exit(0);
 	else
 		abort();

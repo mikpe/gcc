@@ -34,6 +34,16 @@ along with GCC; see the file COPYING3.  If not see
    The subroutines redirect_jump and invert_jump are used
    from other passes as well.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: jump.c 1c13986a2af8 2007/12/21 22:37:34 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1611,6 +1621,23 @@ rtx_renumbered_equal_p (const_rtx x, const_rtx y)
     case CODE_LABEL:
       /* If we didn't match EQ equality above, they aren't the same.  */
       return 0;
+
+/* MEM references with different offsets are not equal
+    -mtc 1/4/2007
+*/
+#ifdef __PDP10_H__
+    case MEM:
+	{
+	int xoffset = 0;
+	int yoffset = 0;
+	if (MEM_OFFSET(x))
+		xoffset = INTVAL(MEM_OFFSET(x));
+	if (MEM_OFFSET(y))
+		yoffset = INTVAL(MEM_OFFSET(y));
+	if (xoffset != yoffset)
+		return 0;
+    	}
+#endif
 
     default:
       break;

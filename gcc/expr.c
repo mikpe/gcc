@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: expr.c 6055bfa8cbc9 2012/10/19 23:34:05 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -136,6 +146,9 @@ static void store_by_pieces_1 (struct store_by_pieces *, unsigned int);
 static void store_by_pieces_2 (rtx (*) (rtx, ...), enum machine_mode,
 			       struct store_by_pieces *);
 static tree clear_storage_libcall_fn (int);
+#ifdef __PDP10_H__
+static void clear_storage_via_loop (rtx, rtx, unsigned);
+#endif
 static rtx compress_float_constant (rtx, rtx);
 static rtx get_subtarget (rtx);
 static void store_constructor_field (rtx, unsigned HOST_WIDE_INT,
@@ -367,6 +380,43 @@ convert_move (rtx to, rtx from, int unsignedp)
   enum rtx_code equiv_code = (unsignedp < 0 ? UNKNOWN
 			      : (unsignedp ? ZERO_EXTEND : SIGN_EXTEND));
 
+
+#ifdef __PDP10_H__
+/* handle pointer moves by subregs that convert them to the equivalent size integer mode
+    Other alternatives are inventing one or more unary ops to do the conversions, but
+    which may or may not generate assembly instructions, and/or adding support for each 
+    pointer copy.
+    -mtc 7/13/2006
+*/
+    if (from_mode != to_mode)
+    	{
+    	/* Simplify some cases where we otherwise generate too complex a pattern
+    	    -mtc 10/4/2007
+    	    Add PLUS to the cases where subreg will be too complex.  It's not clear if we'll eventually
+    	    have a big laundry list of complex patterns, or if we're better off specifying what we can handle
+    	    -mtc 11/9/2010
+    	*/
+    	if (((GET_CODE(from) == SYMBOL_REF) && (GET_MODE(from) != SImode)) ||
+	    ((GET_CODE(from) == CONST) && (GET_MODE(from) != SImode)) ||
+	    (GET_CODE(from) == PLUS)		)
+    		{
+    		from = force_reg(GET_MODE(from), from);
+    		}
+	if (GET_MODE_CLASS(to_mode) == MODE_PARTIAL_INT)
+		{
+		enum machine_mode new_to_mode = smallest_mode_for_size(GET_MODE_BITSIZE(to_mode), MODE_INT);
+		to = simplify_gen_subreg(new_to_mode, to, to_mode, 0);
+		to_mode = new_to_mode;
+		}
+
+	if (GET_MODE_CLASS(from_mode) == MODE_PARTIAL_INT)
+		{
+		enum machine_mode new_from_mode = smallest_mode_for_size(GET_MODE_BITSIZE(from_mode), MODE_INT);
+		from = simplify_gen_subreg(new_from_mode, from, from_mode, 0);
+		from_mode = new_from_mode;
+		}
+    	}
+#endif
 
   gcc_assert (to_real == from_real);
   gcc_assert (to_mode != BLKmode);
@@ -611,6 +661,49 @@ convert_move (rtx to, rtx from, int unsignedp)
 	}
 
       /* Fill the remaining words.  */
+
+#ifdef __PDP10_H__
+	/* the redundant sign/high order bit makes extension of conversion of unsigned values on the PDP10 */
+	/* much more complicated */
+	/* -mtc 9/20/2012 */
+	if (unsignedp)
+		{
+		  /* we need to isolate the sign bit as a value of either zero or one */
+		  /* unlike the shift for signed values, which simply need to shift enough, we need to get it right */
+		  /* we have 35 bits per word plus the high magnitude bit */
+		  fill_value = expand_shift (RSHIFT_EXPR, lowpart_mode, lowfrom, 
+		  			size_int (35 * (GET_MODE_SIZE(lowpart_mode) / UNITS_PER_WORD)), 
+		  			NULL_RTX, 1);
+		  fill_value = convert_to_mode (word_mode, fill_value, 1);
+		  for (i = 0; i < nwords; i++)
+		  	{
+			  int index = (WORDS_BIG_ENDIAN ? nwords - i - 1 : i);
+			  rtx subword = operand_subword (to, index, 1, to_mode);
+			  gcc_assert (subword);
+
+			  /* mask off the sign bit in all the low order words */
+			  if (i < GET_MODE_SIZE(lowpart_mode) / UNITS_PER_WORD)
+			  	{
+				  emit_insn(gen_andsi3(subword, subword, GEN_INT(0377777777777)));
+			  	}
+
+			  /* the next word is zero or one depending on the high magnitude bit of the original value */
+			  else if (i == GET_MODE_SIZE(lowpart_mode) / UNITS_PER_WORD)
+			  	{
+				  emit_move_insn (subword, fill_value);
+			  	}
+
+			  /* the rest of the words need to be zeroed */
+			  else
+			  	{
+				  emit_move_insn (subword, const0_rtx);
+			  	}
+		  	}
+		}
+
+	else
+#endif
+
       for (i = GET_MODE_SIZE (lowpart_mode) / UNITS_PER_WORD; i < nwords; i++)
 	{
 	  int index = (WORDS_BIG_ENDIAN ? nwords - i - 1 : i);
@@ -625,8 +718,19 @@ convert_move (rtx to, rtx from, int unsignedp)
       insns = get_insns ();
       end_sequence ();
 
+/* The last parameter is an rtx for an equivalent expression to the final result
+    This confuses cse_insn() which interprets this to mean that it's equivalent to
+    the target of the final set.  I'm not sure which interpretation of the REG_EQUAL note is correct
+    so for now avoid creating it.
+    -mtc 1/15/2007
+*/
+#ifdef __PDP10_H__
+      emit_no_conflict_block (insns, to, from, NULL_RTX,
+			      NULL_RTX);
+#else
       emit_no_conflict_block (insns, to, from, NULL_RTX,
 			      gen_rtx_fmt_e (equiv_code, to_mode, copy_rtx (from)));
+#endif
       return;
     }
 
@@ -648,10 +752,23 @@ convert_move (rtx to, rtx from, int unsignedp)
   /* Now follow all the conversions between integers
      no more than a word long.  */
 
+#ifdef __PDP10_H__
+/* To handle QnI modes properly, we need to check GET_MODE_PRECISION
+     rather than GET_MODE_BITSIZE
+     -mtc 5/17/2007
+*/
+#endif
+
   /* For truncation, usually we can just refer to FROM in a narrower mode.  */
+#ifdef __PDP10_H__
+  if (GET_MODE_PRECISION (to_mode) < GET_MODE_PRECISION (from_mode)
+      && TRULY_NOOP_TRUNCATION (GET_MODE_PRECISION (to_mode),
+				GET_MODE_PRECISION (from_mode)))
+#else
   if (GET_MODE_BITSIZE (to_mode) < GET_MODE_BITSIZE (from_mode)
       && TRULY_NOOP_TRUNCATION (GET_MODE_BITSIZE (to_mode),
 				GET_MODE_BITSIZE (from_mode)))
+#endif
     {
       if (!((MEM_P (from)
 	     && ! MEM_VOLATILE_P (from)
@@ -668,7 +785,11 @@ convert_move (rtx to, rtx from, int unsignedp)
     }
 
   /* Handle extension.  */
+#ifdef __PDP10_H__
+  if (GET_MODE_PRECISION (to_mode) > GET_MODE_PRECISION (from_mode))
+#else
   if (GET_MODE_BITSIZE (to_mode) > GET_MODE_BITSIZE (from_mode))
+#endif
     {
       /* Convert directly if that works.  */
       if ((code = can_extend_p (to_mode, from_mode, unsignedp))
@@ -686,6 +807,15 @@ convert_move (rtx to, rtx from, int unsignedp)
 	  /* Search for a mode to convert via.  */
 	  for (intermediate = from_mode; intermediate != VOIDmode;
 	       intermediate = GET_MODE_WIDER_MODE (intermediate))
+#ifdef __PDP10_H__
+	    if (((can_extend_p (to_mode, intermediate, unsignedp)
+		  != CODE_FOR_nothing)
+		 || (GET_MODE_PRECISION (to_mode) < GET_MODE_PRECISION (intermediate)
+		     && TRULY_NOOP_TRUNCATION (GET_MODE_PRECISION (to_mode),
+					       GET_MODE_PRECISION (intermediate))))
+		&& (can_extend_p (intermediate, from_mode, unsignedp)
+		    != CODE_FOR_nothing))
+#else
 	    if (((can_extend_p (to_mode, intermediate, unsignedp)
 		  != CODE_FOR_nothing)
 		 || (GET_MODE_SIZE (to_mode) < GET_MODE_SIZE (intermediate)
@@ -693,6 +823,7 @@ convert_move (rtx to, rtx from, int unsignedp)
 					       GET_MODE_BITSIZE (intermediate))))
 		&& (can_extend_p (intermediate, from_mode, unsignedp)
 		    != CODE_FOR_nothing))
+#endif
 	      {
 		convert_move (to, convert_to_mode (intermediate, from,
 						   unsignedp), unsignedp);
@@ -701,6 +832,23 @@ convert_move (rtx to, rtx from, int unsignedp)
 
 	  /* No suitable intermediate mode.
 	     Generate what we need with	shifts.  */
+#ifdef __PDP10_H__
+/* No need for us to shift when doing unsigned extension, so avoid that in addition
+    to the custom shift_amount calculation
+    -mtc 4/9/2010
+*/
+	  shift_amount = build_int_cst (NULL_TREE,
+					GET_MODE_PRECISION (to_mode)
+					- GET_MODE_PRECISION (from_mode));
+	  tmp = gen_lowpart (to_mode, force_reg (from_mode, from));
+	  if (!unsignedp)
+		{
+		tmp = expand_shift (LSHIFT_EXPR, to_mode, tmp, shift_amount,
+							to, unsignedp);
+		tmp = expand_shift (RSHIFT_EXPR, to_mode, tmp, shift_amount,
+							to, unsignedp);
+		}
+#else
 	  shift_amount = build_int_cst (NULL_TREE,
 					GET_MODE_BITSIZE (to_mode)
 					- GET_MODE_BITSIZE (from_mode));
@@ -709,6 +857,7 @@ convert_move (rtx to, rtx from, int unsignedp)
 			      to, unsignedp);
 	  tmp = expand_shift (RSHIFT_EXPR, to_mode, tmp, shift_amount,
 			      to, unsignedp);
+#endif
 	  if (tmp != to)
 	    emit_move_insn (to, tmp);
 	  return;
@@ -730,7 +879,11 @@ convert_move (rtx to, rtx from, int unsignedp)
      ??? Code above formerly short-circuited this, for most integer
      mode pairs, with a force_reg in from_mode followed by a recursive
      call to this routine.  Appears always to have been wrong.  */
+#ifdef __PDP10_H__
+  if (GET_MODE_PRECISION (to_mode) < GET_MODE_PRECISION (from_mode))
+#else
   if (GET_MODE_BITSIZE (to_mode) < GET_MODE_BITSIZE (from_mode))
+#endif
     {
       rtx temp = force_reg (to_mode, gen_lowpart (to_mode, from));
       emit_move_insn (to, temp);
@@ -848,6 +1001,38 @@ convert_modes (enum machine_mode mode, enum machine_mode oldmode, rtx x, int uns
       return gen_lowpart (mode, x);
     }
 
+#ifdef __PDP10_H__
+  /* PDP-10: If converting from an unsigned mode smaller than the
+     target mode, make sure to use zero extension.
+      We get here in test 960801-1.c  Converting a const_int -1 from HImode to DImode.
+      I'm not convinced we're handling this case right, since I think HOST_WIDE_INT
+      is 64 bits wide and our DI is 72 bits wide.
+      -mtc 6/8/2006
+  */
+  if (unsignedp && GET_CODE (x) == CONST_INT
+      && GET_MODE_SIZE (mode) > GET_MODE_SIZE (oldmode)
+      && INTVAL (x) < 0)
+    {
+      HOST_WIDE_INT val = INTVAL (x);
+      val &= ((HOST_WIDE_INT)1 << GET_MODE_BITSIZE (oldmode)) - 1;
+      return GEN_INT (trunc_int_for_mode (val, mode));
+    }
+
+  /* Some rtx can be safely converted by simply referring to them with a different mode
+      -mtc 5/7/2007
+      When mode is SImode we don't know if its a pointer or an integer.  We really
+      need to know
+      -mtc 10/4/2007
+  */
+  if ((GET_CODE(x) == SYMBOL_REF) && mode != SImode)
+  	{
+  	rtx temp = shallow_copy_rtx(x);
+	PUT_MODE(temp, mode);
+	return temp;
+  	}
+  
+#endif
+
   /* Converting from integer constant into mode is always equivalent to an
      subreg operation.  */
   if (VECTOR_MODE_P (mode) && GET_MODE (x) == VOIDmode)
@@ -902,6 +1087,19 @@ move_by_pieces (rtx to, rtx from, unsigned HOST_WIDE_INT len,
   enum insn_code icode;
 
   align = MIN (to ? MEM_ALIGN (to) : align, MEM_ALIGN (from));
+
+/* round len up to a multiple of align
+    this saves inefficient byte moves when the source and target are padded anyhow
+    Is it possible to contrive examples where this causes a problem?
+    -mtc 10/10/2007
+*/
+#ifdef __PDP10_H__
+	if (align % BITS_PER_UNIT == 0)
+		{
+		unsigned int balign = align / BITS_PER_UNIT;
+		len = (len + balign - 1) / balign * balign;
+		}
+#endif
 
   data.offset = 0;
   data.from_addr = from_addr;
@@ -1097,7 +1295,16 @@ move_by_pieces_ninsns (unsigned HOST_WIDE_INT l, unsigned int align,
       max_size = GET_MODE_SIZE (mode);
     }
 
+#ifdef __PDP10_H__
+/* we can easily end up with l nonzero if move alignment is less than 9 bits
+    in practice it takes about six instructions per byte (ldb, dpb plus two instructions per
+    byte to create the byte addresses)
+    -mtc 3/25/2011
+*/
+  n_insns += l*6;
+#else
   gcc_assert (!l);
+#endif
   return n_insns;
 }
 
@@ -1204,6 +1411,13 @@ emit_block_move_hints (rtx x, rtx y, rtx size, enum block_op_methods method,
     default:
       gcc_unreachable ();
     }
+
+/* pdp10 has no library, so don't ever use call
+    -mtc 9/12/2007
+*/
+#ifdef __PDP10_H__
+	may_use_call = false;
+#endif
 
   align = MIN (MEM_ALIGN (x), MEM_ALIGN (y));
 
@@ -1392,8 +1606,108 @@ emit_block_move_via_libcall (rtx dst, rtx src, rtx size, bool tailcall)
      pseudos.  We can then place those new pseudos into a VAR_DECL and
      use them later.  */
 
+  #ifdef __PDP10_H__
+  /* On the PDP-10, make sure to convert the pointers to 9-bit
+     byte pointers.  See comment at clear_storage_via_libcall() for more
+     discussion of what may need future change.
+     -mtc 7/27/2006
+     We're back to not converting void pointers, but with some added complexity
+     Refer to clear_storage_via_libcall() for consistency of these two routines
+     -mtc 9/15/2006
+  */
+  {
+  enum machine_mode tempmode;
+  rtx srcoffset;
+  int srcoffsetvalue;
+  rtx dstoffset;
+  int dstoffsetvalue;
+
+/* We're assuming src and dst are both references to chunks of memory., probably they have mode BLKmode
+	but at a minimum let's verify that they're really MEMs 
+	-mtc 9/19/2006 */
+  gcc_assert (MEM_P(dst) && MEM_P(src));
+
+  tempmode = GET_MODE(XEXP(dst, 0));
+  if (tempmode == VOIDmode)
+  	tempmode = Pmode;
+
+  dstoffset = MEM_OFFSET(dst);
+  dstoffsetvalue = (dstoffset ? INTVAL(dstoffset) : 0);
+ 
+  dst_addr = copy_to_mode_reg (tempmode, XEXP (dst, 0));
+  gcc_assert (PTR_MODE_P(GET_MODE(dst_addr)));
+  
+/* If there's a byte offset to include in the address, we need to deal with things as byte pointers
+	BUG: this probably doesn't work for other size byte pointers 
+	-mtc 9/19/2006*/
+  if ((dstoffsetvalue != 0) && ptr_mode_target_size(GET_MODE(dst_addr)) != 9)
+  	dst_addr = pdp10_convert_ptr(NULL, dst_addr, NULL, ptr_mode_target_size(GET_MODE(dst_addr)), 9, 1);
+  
+  if (dstoffsetvalue != 0)
+  	{
+	rtx temp = gen_reg_rtx(GET_MODE(dst_addr));
+	switch (GET_MODE(temp))
+		{
+		case SImode:
+			emit_insn(gen_ADJBP(temp, dst_addr, dstoffset));
+			break;
+		case Q9Pmode:
+			emit_insn(gen_ADJBP_Q9P(temp, dst_addr, dstoffset));
+			break;
+		default:
+			/* need to add handling of another modes that arrive here */
+			gcc_assert(false);
+		}
+	dst_addr = temp;
+  	}
+
+/* Regardless of what it actually is, we need to make the address look like a word pointer to the compiler */
+  if (GET_MODE(dst_addr) != Pmode)
+  	dst_addr = simplify_gen_subreg(Pmode, dst_addr, GET_MODE(dst_addr), 0);
+  
+  tempmode = GET_MODE(XEXP(src, 0));
+  if (tempmode == VOIDmode)
+  	tempmode = Pmode;
+  
+  srcoffset = MEM_OFFSET(src);
+  srcoffsetvalue = (srcoffset ? INTVAL(srcoffset) : 0);
+ 
+  src_addr = copy_to_mode_reg (tempmode, XEXP (src, 0));
+  gcc_assert (PTR_MODE_P(GET_MODE(src_addr)));
+  
+/* If there's a byte offset to include in the address, we need to deal with things as byte pointers
+	BUG: this probably doesn't work for other size byte pointers 
+	-mtc 9/19/2006*/
+  if ((srcoffsetvalue != 0) && ptr_mode_target_size(GET_MODE(src_addr)) != 9)
+  	src_addr = pdp10_convert_ptr(NULL, src_addr, NULL, ptr_mode_target_size(GET_MODE(src_addr)), 9, 1);
+
+  if (srcoffsetvalue != 0)
+  	{
+	rtx temp = gen_reg_rtx(GET_MODE(src_addr));
+	switch (GET_MODE(temp))
+		{
+		case SImode:
+			emit_insn(gen_ADJBP(temp, src_addr, srcoffset));
+			break;
+		case Q9Pmode:
+			emit_insn(gen_ADJBP_Q9P(temp, src_addr, srcoffset));
+			break;
+		default:
+			/* need to add handling of another modes that arrive here */
+			gcc_assert(false);
+		}
+	src_addr = temp;
+  	}
+
+/* Regardless of what it actually is, we need to make the address look like a word pointer to the compiler */
+  if (GET_MODE(src_addr) != Pmode)
+  	src_addr = simplify_gen_subreg(Pmode, src_addr, GET_MODE(src_addr), 0);
+  
+  }
+#else
   dst_addr = copy_to_mode_reg (Pmode, XEXP (dst, 0));
   src_addr = copy_to_mode_reg (Pmode, XEXP (src, 0));
+#endif
 
   dst_addr = convert_memory_address (ptr_mode, dst_addr);
   src_addr = convert_memory_address (ptr_mode, src_addr);
@@ -1402,7 +1716,6 @@ emit_block_move_via_libcall (rtx dst, rtx src, rtx size, bool tailcall)
   src_tree = make_tree (ptr_type_node, src_addr);
 
   size_mode = TYPE_MODE (sizetype);
-
   size = convert_to_mode (size_mode, size, 1);
   size = copy_to_mode_reg (size_mode, size);
 
@@ -1495,6 +1808,26 @@ emit_block_move_via_loop (rtx x, rtx y, rtx size,
 
   emit_move_insn (iter, const0_rtx);
 
+/* on pdp10 we need to pay better attention to the types of pointers
+    It would make a lot more sense to move by words.
+    It might even be the case that we're guaranteed the move amount is a word multiple.
+    -mtc 9/12/2007
+*/
+#ifdef __PDP10_H__
+  x_addr = force_operand (XEXP (x, 0), NULL_RTX);
+  y_addr = force_operand (XEXP (y, 0), NULL_RTX);
+  x_addr = pdp10_convert_ptr (NULL, x_addr, NULL, ptr_mode_target_size(GET_MODE(x_addr)), 9, true);
+  y_addr = pdp10_convert_ptr (NULL, y_addr, NULL, ptr_mode_target_size(GET_MODE(y_addr)), 9, true);
+  do_pending_stack_adjust ();
+
+  emit_jump (cmp_label);
+  emit_label (top_label);
+
+  x_addr = gen_rtx_PLUS (Q9Pmode, x_addr, iter);
+  y_addr = gen_rtx_PLUS (Q9Pmode, y_addr, iter);
+  x = change_address (x, Q9Imode, x_addr);
+  y = change_address (y, Q9Imode, y_addr);
+#else
   x_addr = force_operand (XEXP (x, 0), NULL_RTX);
   y_addr = force_operand (XEXP (y, 0), NULL_RTX);
   do_pending_stack_adjust ();
@@ -1507,6 +1840,7 @@ emit_block_move_via_loop (rtx x, rtx y, rtx size,
   y_addr = gen_rtx_PLUS (Pmode, y_addr, tmp);
   x = change_address (x, QImode, x_addr);
   y = change_address (y, QImode, y_addr);
+#endif
 
   emit_move_insn (x, y);
 
@@ -2513,6 +2847,14 @@ store_by_pieces_1 (struct store_by_pieces *data ATTRIBUTE_UNUSED,
 	if (GET_MODE_SIZE (tmode) < max_size)
 	  mode = tmode;
 
+/* Don't bother with QImode, Q9Imode is more reliable
+    -mtc 7/26/2007
+*/
+#ifdef __PDP10_H__
+	if (mode == QImode)
+		mode = Q9Imode;
+#endif
+
       if (mode == VOIDmode)
 	break;
 
@@ -2537,6 +2879,49 @@ store_by_pieces_2 (rtx (*genfun) (rtx, ...), enum machine_mode mode,
 {
   unsigned int size = GET_MODE_SIZE (mode);
   rtx to1, cst;
+  tree exp;
+
+#ifdef __PDP10_H__
+  /* PDP-10: If words from byte object, convert object address from a
+     byte pointer to a word pointer.
+
+     FIXME: If the original byte pointer was converted from a word
+     pointer, this will come out as two mutually redundant
+     conversions.  */
+ /* I doubt this code works.  The point of this routine seems to be to optimize
+     a block byte move to move words.  Converting the target address to a byte
+     pointer will at best be ignored and treated as a word address anyhow.  Or
+     it might mean that only every 4th byte is actually stored.
+     -mtc 5/24/2006
+     Added a check of ARRAY_TYPE here to compensate for what I suspect is
+     a bug in pdp10_bytesize.  If I decide to correct that, this check could be removed
+     -mtc 11/21/2006
+     See comments and hack I removed in expand_builtin_memcpy where MEM_EXPR()
+     of what shows up here as data->to is set.  The purpose seems to be to tell what
+     kind of pointer we're dealing with but is problematic because if it doesn't match
+     what the machine mode of the MEM and it's address are telling us the conversions
+     can fail and also because it can create MEM expressions that are too complex for
+     debug_rtx() to print so possibly illegal.  Since the point here seems to be to
+     optimize a block move to a word move, converting byte pointers to word pointers is
+     probably an illegal condition that should be flagged.  I think this should probably
+     either be eliminated or greatly simplified.  For now, not fabricating a MEM_EXPR
+     means this block doesn't execute for the affected test cases.
+     -mtc 10/17/2007
+ */
+  if (GET_MODE_SIZE (mode) >= UNITS_PER_WORD
+      && GET_CODE (data->to) == MEM
+      && (exp = MEM_EXPR (data->to)) != NULL
+      && TREE_TYPE (exp) != void_type_node
+      && pdp10_bytesize (TREE_TYPE (exp)) < 32
+      && TREE_CODE(TREE_TYPE(exp)) != ARRAY_TYPE)
+    {
+      rtx addr = force_reg (Pmode, XEXP (data->to, 0));
+      addr = pdp10_convert_ptr (NULL_TREE, addr, NULL_RTX,
+				pdp10_bytesize (TREE_TYPE (exp)), 36, 1);
+      data->to = change_address (data->to, VOIDmode, addr);
+      data->to_addr = XEXP (data->to, 0);
+    }
+#endif
 
   while (data->len >= size)
     {
@@ -2615,8 +3000,16 @@ clear_storage_hints (rtx object, rtx size, enum block_op_methods method,
 				   expected_align, expected_size))
     ;
   else
+
+/* pdp10 has no library so clear with a loop instead of making a libcall
+    -mtc 9/12/2007
+*/
+#ifdef __PDP10_H__
+    clear_storage_via_loop (object, size, align);
+#else
     return set_storage_via_libcall (object, size, const0_rtx,
 				    method == BLOCK_OP_TAILCALL);
+#endif
 
   return NULL;
 }
@@ -2641,7 +3034,75 @@ set_storage_via_libcall (rtx object, rtx size, rtx val, bool tailcall)
   /* Emit code to copy OBJECT and SIZE into new pseudos.  We can then
      place those into new pseudos into a VAR_DECL and use them later.  */
 
+  /*	We need to get the expression into the correct pointer mode for what
+	clear_storage_libcall_fn expects.  Strictly speaking we need more complex
+	tests of clear_storage_libcall_fn and the parameter we've been passed.
+	We also shouldn't be so naive in using ptr_type_node when creating
+	object_tree just after this.  But compile test 2000609-1.c indicates the
+	case where we need to convert from a 36 to 9 bit pointer occurs and
+	990517-1.c indicates the case where we receive a 9 bit pointer.  For now
+	just abort if we don't receive a pointer and convert whatever type of pointer
+	it is to a 9-bit one.  We could consider checking the type of ptr_type_node,
+	which is a pointer to void and forcing conversion to that instead of always
+	9 bit.
+	Compile test 20010605.c casts a zero to a record pointer and we get a
+	const_int for the address.
+	emit_block_move_via_libcall() has similar issue.
+	-mtc 7/27/2006
+	We're back to not converting void pointers, but with some added complexity
+	-mtc 9/15/2006
+*/
+#ifdef __PDP10_H__
+  enum machine_mode tempmode;
+  rtx offset;
+  int offsetvalue;
+
+/* We're assuming object is a reference to a chunk of memory to be initialized, probably its mode BLKmode
+	but at a minimum let's verify that it's really a MEM 
+	-mtc 9/19/2006 */
+  gcc_assert (MEM_P(object));
+
+  tempmode = GET_MODE(XEXP(object, 0));
+  if (tempmode == VOIDmode)
+  	tempmode = Pmode;
+
+  offset = MEM_OFFSET(object);
+  offsetvalue = (offset ? INTVAL(offset) : 0);
+ 
+  object = copy_to_mode_reg (tempmode, XEXP (object, 0));
+  gcc_assert (PTR_MODE_P(GET_MODE(object)));
+
+/* If there's a byte offset to include in the address, we need to deal with things as byte pointers
+	BUG: this probably doesn't work for other size byte pointers 
+	-mtc 9/19/2006*/
+  if ((offsetvalue != 0) && ptr_mode_target_size(GET_MODE(object)) != 9)
+  	object = pdp10_convert_ptr(NULL, object, NULL, ptr_mode_target_size(GET_MODE(object)), 9, 1);
+
+  if (offsetvalue != 0)
+  	{
+	rtx temp = gen_reg_rtx(GET_MODE(object));
+	switch (GET_MODE(temp))
+		{
+		case SImode:
+			emit_insn(gen_ADJBP(temp, object, offset));
+			break;
+		case Q9Pmode:
+			emit_insn(gen_ADJBP_Q9P(temp, object, offset));
+			break;
+		default:
+			/* need to add handling of another modes that arrive here */
+			gcc_assert(false);
+		}
+	object = temp;
+  	}
+
+/* Regardless of what it actually is, we need to make the address look like a word pointer to the compiler */
+  if (GET_MODE(object) != Pmode)
+  	object = simplify_gen_subreg(Pmode, object, GET_MODE(object), 0);
+  
+#else
   object = copy_to_mode_reg (Pmode, XEXP (object, 0));
+#endif
 
   size_mode = TYPE_MODE (sizetype);
   size = convert_to_mode (size_mode, size, 1);
@@ -2668,6 +3129,100 @@ set_storage_via_libcall (rtx object, rtx size, rtx val, bool tailcall)
 
   return retval;
 }
+
+
+#ifdef __PDP10_H__
+/* A subroutine of clear_storage.  Clear memory via an explicit
+   loop.  This is used only when libcalls are forbidden.  
+   -mtc 9/12/2007
+ */
+
+static void
+clear_storage_via_loop (rtx x, rtx size,
+			  unsigned int align ATTRIBUTE_UNUSED)
+{
+  rtx cmp_label, top_label, iter, x_addr, tmp;
+  enum machine_mode iter_mode;
+
+  iter_mode = GET_MODE (size);
+  if (iter_mode == VOIDmode)
+    iter_mode = word_mode;
+
+  top_label = gen_label_rtx ();
+  cmp_label = gen_label_rtx ();
+  iter = gen_reg_rtx (iter_mode);
+
+  emit_move_insn (iter, const0_rtx);
+
+  x_addr = force_operand (XEXP (x, 0), NULL_RTX);
+  x_addr = pdp10_convert_ptr (NULL, x_addr, NULL, ptr_mode_target_size(GET_MODE(x_addr)), 9, true);
+  do_pending_stack_adjust ();
+
+  emit_jump (cmp_label);
+  emit_label (top_label);
+
+  x_addr = gen_rtx_PLUS (Q9Pmode, x_addr, iter);
+  x = change_address (x, Q9Imode, x_addr);
+
+  emit_move_insn (x, const0_rtx);
+
+  tmp = expand_simple_binop (iter_mode, PLUS, iter, const1_rtx, iter,
+			     true, OPTAB_LIB_WIDEN);
+  if (tmp != iter)
+    emit_move_insn (iter, tmp);
+
+  emit_label (cmp_label);
+
+  emit_cmp_and_jump_insns (iter, size, LT, NULL_RTX, iter_mode,
+			   true, top_label);
+}
+
+
+/* Like clear_storage_via_loop, but set every byte to a given value.
+    -mtc 9/13/2007
+*/
+
+void
+set_storage_via_loop (rtx object, rtx size, rtx val, unsigned int align ATTRIBUTE_UNUSED)
+{
+  rtx cmp_label, top_label, iter, object_addr, tmp;
+  enum machine_mode iter_mode;
+
+  iter_mode = GET_MODE (size);
+  if (iter_mode == VOIDmode)
+    iter_mode = word_mode;
+
+  top_label = gen_label_rtx ();
+  cmp_label = gen_label_rtx ();
+  iter = gen_reg_rtx (iter_mode);
+
+  emit_move_insn (iter, const0_rtx);
+
+  object_addr = force_operand (XEXP (object, 0), NULL_RTX);
+  object_addr = pdp10_convert_ptr (NULL, object_addr, NULL, ptr_mode_target_size(GET_MODE(object_addr)), 9, true);
+  do_pending_stack_adjust ();
+
+  emit_jump (cmp_label);
+  emit_label (top_label);
+
+  object_addr = gen_rtx_PLUS (Q9Pmode, object_addr, iter);
+  object = change_address (object, Q9Imode, object_addr);
+
+  emit_move_insn (object, val);
+
+  tmp = expand_simple_binop (iter_mode, PLUS, iter, const1_rtx, iter,
+			     true, OPTAB_LIB_WIDEN);
+  if (tmp != iter)
+    emit_move_insn (iter, tmp);
+
+  emit_label (cmp_label);
+
+  emit_cmp_and_jump_insns (iter, size, LT, NULL_RTX, iter_mode,
+			   true, top_label);
+
+}
+
+#endif
 
 /* A subroutine of set_storage_via_libcall.  Create the tree node
    for the function we use for block clears.  The first time FOR_CALL
@@ -3375,8 +3930,16 @@ emit_move_insn (rtx x, rtx y)
   rtx y_cst = NULL_RTX;
   rtx last_insn, set;
 
+/* we sometimes tag constants with a mode, so our check needs to be different
+    -mtc 11/19/2007
+*/
+#ifdef __PDP10_H__
+  gcc_assert (mode != BLKmode
+	      && (GET_MODE (y) == mode || GET_MODE (y) == VOIDmode  || GET_CODE(y) == CONST_INT));
+#else
   gcc_assert (mode != BLKmode
 	      && (GET_MODE (y) == mode || GET_MODE (y) == VOIDmode));
+#endif
 
   if (CONSTANT_P (y))
     {
@@ -3806,7 +4369,7 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
 	  else if (GET_CODE (args_so_far) == CONST_INT)
 	    temp = memory_address (BLKmode,
 				   plus_constant (args_addr,
-						  skip + INTVAL (args_so_far)));
+						  (skip + INTVAL (args_so_far))));
 	  else
 	    temp = memory_address (BLKmode,
 				   plus_constant (gen_rtx_PLUS (Pmode,
@@ -3888,6 +4451,20 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
       /* Loop over all the words allocated on the stack for this arg.  */
       /* We can do it by words, because any scalar bigger than a word
 	 has a size a multiple of a word.  */
+#ifdef __PDP10_H__
+      /* PDP-10: special hack.  */
+      /* KCG I dont understand this at all.  It is pushing the portion
+	 of the argument that would normally be passed in the register set */
+
+      for (i = 0; i < size - not_stack; i++)
+	if (i < not_stack + offset)
+	  emit_push_insn (operand_subword_force (x, i, mode),
+			  word_mode, NULL_TREE, NULL_RTX, align, 0, NULL_RTX,
+			  0, args_addr,
+			  GEN_INT (args_offset + ((i /* - not_stack */ + skip)
+						  * UNITS_PER_WORD)),
+			  reg_parm_stack_space, alignment_pad);
+#else
 #ifndef PUSH_ARGS_REVERSED
       for (i = not_stack; i < size; i++)
 #else
@@ -3900,6 +4477,7 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
 			  GEN_INT (args_offset + ((i - not_stack + skip)
 						  * UNITS_PER_WORD)),
 			  reg_parm_stack_space, alignment_pad);
+#endif
     }
   else
     {
@@ -4181,7 +4759,37 @@ expand_assignment (tree to, tree from, bool nontemporal)
 	{
 	  rtx offset_rtx;
 
-	  if (!MEM_P (to_rtx))
+#ifdef __PDP10_H__
+	  /*
+	    Change test to be pdp10_bytesize(TREE_TYPE(exp)) instead of looking at bitsize.
+	    Also, adjust for both word and half -word pointers, so now the offset is in the units indicated by
+	    the TREE_TYPE().
+	    -mtc 10/30/2007
+	    Unfortunately, highest_pow2_factor() isn't reliable because the offset expression may have been
+	    copiedd to a temp, making it impossible to tell  if that the value must be a power of 2.
+	    -mtc 11/13/2007
+	   */
+	  if (pdp10_bytesize (TREE_TYPE (to)) > BITS_PER_UNIT)
+		{
+		if (pdp10_bytesize(TREE_TYPE(to)) >= BITS_PER_WORD)
+			{
+			/*gcc_assert (highest_pow2_factor(offset) >= 4);*/
+			offset = fold(build2(EXACT_DIV_EXPR, TREE_TYPE(offset), offset, size_int(4))); 
+			}
+		else
+			{
+			/*gcc_assert (highest_pow2_factor(offset) >= 2);*/
+			offset = fold(build2(EXACT_DIV_EXPR, TREE_TYPE(offset), offset, size_int(2))); 
+			}
+		}
+#endif
+
+	  if (!MEM_P (to_rtx)
+#ifdef __PDP10_H__
+	      && (GET_CODE (to_rtx) != SUBREG
+		  || GET_CODE (SUBREG_REG (to_rtx)) != ZERO_EXTRACT)
+#endif
+	      )
 	    {
 	      /* We can get constant negative offsets into arrays with broken
 		 user code.  Translate this to a trap instead of ICEing.  */
@@ -4191,6 +4799,7 @@ expand_assignment (tree to, tree from, bool nontemporal)
 	    }
 
 	  offset_rtx = expand_expr (offset, NULL_RTX, VOIDmode, EXPAND_SUM);
+
 #ifdef POINTERS_EXTEND_UNSIGNED
 	  if (GET_MODE (offset_rtx) != Pmode)
 	    offset_rtx = convert_to_mode (Pmode, offset_rtx, 0);
@@ -4209,15 +4818,68 @@ expand_assignment (tree to, tree from, bool nontemporal)
 	      && (bitsize % GET_MODE_ALIGNMENT (mode1)) == 0
 	      && MEM_ALIGN (to_rtx) == GET_MODE_ALIGNMENT (mode1))
 	    {
-	      to_rtx = adjust_address (to_rtx, mode1, bitpos / BITS_PER_UNIT);
+	      to_rtx = adjust_address (to_rtx, mode1,
+				       bitpos / BITS_PER_UNIT);
 	      bitpos = 0;
 	    }
 
-	  to_rtx = offset_address (to_rtx, offset_rtx,
-				   highest_pow2_factor_for_target (to,
-				   				   offset));
-	}
+#ifdef __PDP10_H__
+/* Modify test to explicitly test for VOIDmode
+    -mtc 8/13/2007
+    Add test for BLKmode
+    -mtc 11/9/2007
+*/
+	  if ((mode1 != VOIDmode) && (mode1 != BLKmode) && (GET_MODE_SIZE (mode1) < UNITS_PER_WORD))
+	    {
+	      rtx temp = gen_reg_rtx (ptr_mode_for_mode(mode1));
+	      rtx addr;
+	      
+	      if (GET_CODE (to_rtx) == MEM)
+		addr = XEXP (to_rtx, 0);
+	      else
+		addr = XEXP (XEXP (SUBREG_REG (to_rtx), 0), 0);
+	      
+	      if (offset_rtx != const0_rtx)
+		{
+		  /* not necessary with change to pdp10_expand_addbp3) */
+		  /*offset_rtx = force_reg (Pmode, offset_rtx);*/
 
+		  /* NOTE: this coversion is sometimes redundant with the conversion performed above
+		      -mtc 7/14/2006
+		  */
+		  
+		  if (GET_MODE(temp) != GET_MODE(addr))
+		    addr = pdp10_convert_ptr (NULL_TREE, 
+		    						addr,
+		    						NULL_RTX,
+		    						ptr_mode_target_size(GET_MODE(addr)), 
+		    						ptr_mode_target_size(GET_MODE(temp)),
+		    						1);
+		  if (GET_MODE(temp) != GET_MODE(addr))
+		  	abort();
+		  
+		  /* FIXME: this should be
+		     temp = pdp10_expand_addbp3 (type, temp, addr, offset_rtx);
+		     or similar.  */
+		  /*if (!general_operand (addr, GET_MODE(addr)))
+		    addr = force_reg (GET_MODE(addr), addr);
+		  emit_insn (gen_ADJBP (temp, addr, offset_rtx));*/
+		  temp = pdp10_expand_addbp3 (TREE_TYPE(to), temp, addr, offset_rtx);
+		  
+		  if (mode1 == VOIDmode)
+		    mode1 = smallest_mode_for_size(bitsize, MODE_INT);
+		  to_rtx = change_address (to_rtx, mode1, temp);
+		}
+	    }
+	  else
+		to_rtx = offset_address (to_rtx, offset_rtx,
+					   highest_pow2_factor_for_target (to, offset));
+#else
+	  to_rtx = offset_address (to_rtx, offset_rtx,
+				   highest_pow2_factor_for_target (to, offset));
+#endif
+	}
+      
       /* Handle expand_expr of a complex value returning a CONCAT.  */
       if (GET_CODE (to_rtx) == CONCAT)
 	{
@@ -4241,6 +4903,16 @@ expand_assignment (tree to, tree from, bool nontemporal)
 		 DECL_RTX of the parent struct.  Don't munge it.  */
 	      to_rtx = shallow_copy_rtx (to_rtx);
 
+	      /* determine and set the attributes of the MEM reference in to_rtx by chasing
+	          up through the declaration, duplicating the work of this routine and 
+	          get_inner_reference, but since we haven't yet applied bitpos, offset the 
+	          attribute description by -bitpos.
+	      
+                  If 'to' describes a bit field, set_mem_attributes_minus_bitpos actually ignores
+                  bitpos and doesn't determine the offset, I guess making the implicit assumption
+                  that they should cancel out.  
+	          -mtc 5/31/2006
+	      */
 	      set_mem_attributes_minus_bitpos (to_rtx, to, 0, bitpos);
 
 	      /* Deal with volatile and readonly fields.  The former is only
@@ -4343,18 +5015,46 @@ expand_assignment (tree to, tree from, bool nontemporal)
       && !current_function_returns_pcc_struct)
     {
       rtx from_rtx, size;
+#ifdef __PDP10_H__
+      rtx from_addr, to_addr;
+#endif
 
       push_temp_slots ();
       size = expr_size (from);
       from_rtx = expand_normal (from);
 
+#ifdef __PDP10_H__
+      to_addr = XEXP (to_rtx, 0);
+      from_addr = XEXP (from_rtx, 0);
+
+      /* PDP-10: convert pointer if necessary.  */
+      if (pdp10_bytesize (TREE_TYPE (to)) != BITS_PER_UNIT)
+	to_addr = pdp10_convert_ptr (NULL_TREE, to_addr, NULL_RTX,
+				     pdp10_bytesize (TREE_TYPE (to)),
+				     BITS_PER_UNIT, 1);
+
+      /* PDP-10: convert pointer if necessary.  */
+      if (pdp10_bytesize (TREE_TYPE (from)) != BITS_PER_UNIT)
+	from_addr = pdp10_convert_ptr (NULL_TREE, from_addr, NULL_RTX,
+				       pdp10_bytesize (TREE_TYPE (from)),
+				       BITS_PER_UNIT, 1);
+
+	emit_library_call (memmove_libfunc, LCT_NORMAL,
+			   VOIDmode, 3, to_addr, GET_MODE(to_addr), 
+			   from_addr, GET_MODE(from_addr),
+			   convert_to_mode (TYPE_MODE (sizetype),
+					    size, TYPE_UNSIGNED (sizetype)),
+			   TYPE_MODE (sizetype));
+
+#else
       emit_library_call (memmove_libfunc, LCT_NORMAL,
 			 VOIDmode, 3, XEXP (to_rtx, 0), Pmode,
 			 XEXP (from_rtx, 0), Pmode,
 			 convert_to_mode (TYPE_MODE (sizetype),
 					  size, TYPE_UNSIGNED (sizetype)),
 			 TYPE_MODE (sizetype));
-
+#endif
+      
       preserve_temp_slots (to_rtx);
       free_temp_slots ();
       pop_temp_slots ();
@@ -4698,6 +5398,11 @@ store_expr (tree exp, rtx target, int call_param_p, bool nontemporal)
 
 	      /* Figure out how much is left in TARGET that we have to clear.
 		 Do all calculations in ptr_mode.  */
+	      /* I don't see how the following if test can ever be true
+	          size was not a constant, so copy_size isn't either and copy_size_rtx is
+	          just the rtx version of the same value
+	          - mtc 5/25/2006
+	      */
 	      if (GET_CODE (copy_size_rtx) == CONST_INT)
 		{
 		  size = plus_constant (size, -INTVAL (copy_size_rtx));
@@ -5741,6 +6446,12 @@ store_field (rtx target, HOST_WIDE_INT bitsize, HOST_WIDE_INT bitpos,
 	  && GET_MODE_CLASS (mode) != MODE_COMPLEX_FLOAT)
       || REG_P (target)
       || GET_CODE (target) == SUBREG
+#ifdef __PDP10_H__
+      /* PDP-10: treat fields inside aligned words as bit fields.  */
+      || (bitsize < BITS_PER_WORD
+	  && (GET_CODE (target) != MEM
+	      || MEM_ALIGN (target) >= BITS_PER_WORD))
+#endif
       /* If the field isn't aligned enough to store as an ordinary memref,
 	 store it as a bit field.  */
       || (mode != BLKmode
@@ -5748,6 +6459,7 @@ store_field (rtx target, HOST_WIDE_INT bitsize, HOST_WIDE_INT bitpos,
 		|| bitpos % GET_MODE_ALIGNMENT (mode))
 	       && SLOW_UNALIGNED_ACCESS (mode, MEM_ALIGN (target)))
 	      || (bitpos % BITS_PER_UNIT != 0)))
+
       /* If the RHS and field are a constant size and the size of the
 	 RHS isn't the same size as the bitfield, we must use bitfield
 	 operations.  */
@@ -5910,7 +6622,49 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
       if (mode == BLKmode)
 	size_tree = TYPE_SIZE (TREE_TYPE (exp));
       else
-	*pbitsize = GET_MODE_BITSIZE (mode);
+#ifdef __PDP10_H__
+	/* KCG no clue why this is done
+	    makes no sense to me either.  Let's find out.  
+	    QImode is used for any 9-bit or smaller field, so we need to get the bitsize from the
+	    type instead of just using the mode bitsize of 9.
+	    other modes presumably should match the size of the type
+	    -mtc 8/30/2006
+	    Added check for VOIDmode because in that case TYPE_SIZE is NULL and 
+	    tree_low_cst() aborts
+	    -mtc 5/3/2007
+	    Rearrange tests and their order.  QnI modes are now set coming in here and they
+	    need to be tested separately, but also check for QImode and set the proper variant.
+	    -mtc 8/17/2007
+	    Let the precision override *pbitsize if they don't match
+	    In 8-bit mode this seems to be needed for string literals
+	    -mtc 9/18/2007
+	*/
+      if (mode == VOIDmode)
+      	{
+      	*pbitsize = BITS_PER_WORD;
+      	}
+      else
+	{
+	*pbitsize = tree_low_cst (TYPE_SIZE (TREE_TYPE (exp)), 1);
+	if (mode == QImode)
+		{
+		if (*pbitsize >=6 && *pbitsize < 9)
+			mode = really_smallest_int_mode_for_size(*pbitsize);
+		}
+	else if (GET_MODE_SIZE(mode) == 1)
+		{
+		if (*pbitsize != GET_MODE_PRECISION(mode))
+			*pbitsize = GET_MODE_PRECISION(mode);
+		}
+	else
+		{
+		if (*pbitsize != GET_MODE_BITSIZE(mode))
+			abort();
+		}
+	}
+#else
+        *pbitsize = GET_MODE_BITSIZE (mode);
+#endif
     }
 
   if (size_tree != 0)
@@ -5945,7 +6699,26 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	    if (this_offset == 0)
 	      break;
 
+#ifdef __PDP10_H__
+	  /* PDP-10: if the offset is an integer constant, fold it
+             into bit_offset.  */
+          /* in general these constants should get folded at the end anyhow, but
+              folding as we go can fold some things that folding at the end wont
+              This is not really PDP10 specific
+              -mtc 5/17/2006
+          */
+	  if (host_integerp (this_offset, 0))
+	    {
+	      tree this_bit_offset = size_binop (MULT_EXPR,
+						 bitsize_unit_node,
+						 convert (bitsizetype,
+							  this_offset));
+	      bit_offset = size_binop (PLUS_EXPR, bit_offset, this_bit_offset);
+	    }
+	  else
+#endif
 	    offset = size_binop (PLUS_EXPR, offset, this_offset);
+
 	    bit_offset = size_binop (PLUS_EXPR, bit_offset,
 				     DECL_FIELD_BIT_OFFSET (field));
 
@@ -5967,7 +6740,53 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	    if (! integer_zerop (low_bound))
 	      index = fold_build2 (MINUS_EXPR, TREE_TYPE (index),
 				   index, low_bound);
+	  
+#ifdef __PDP10_H__
+	  if (TREE_CONSTANT (index) && TREE_CONSTANT (unit_size))
+	    {
+              tree array = TREE_OPERAND (exp, 0);
+	      tree unit_bitsize = TYPE_SIZE (TREE_TYPE (TREE_TYPE(array)));
+	      tree bits_per_word = convert (bitsizetype, build_int_cst (NULL_TREE, BITS_PER_WORD));
+	      tree leftover_bits = bitsize_zero_node;
+              bit_offset = size_binop (PLUS_EXPR,
+                                                     bit_offset,
+                                                     size_binop (MULT_EXPR,
+                                                                        convert (bitsizetype, index),
+                                                                        unit_bitsize));
+/* the overflow bit can end up being set and cause our eventual tree_low_cst() call to fail
+    compile test pr21293.c is an example
+    there an array reference is indeed invalid, but it doesn't seem that should cause the compiler to abort
+    clearing the bit here works and is in pdp10 code.  alternatives would be to change the validity test
+    in tree_low_cst() or to create and use a less restrictive value extraction call
+    -mtc 7/11/2007
+    Clear both the overflow and constant_overflow bits.  If was already set in index they will both be set.
+    -mtc 8/27/2007
+    Check that unit_bitsize is an INTEGER_CST, if so assume is >= word
+    -mtc 12/14/2007
+*/
+	      TREE_OVERFLOW(bit_offset) = 0;
+	      TREE_CONSTANT_OVERFLOW(bit_offset) = 0;
 
+	      /* adjust for the pad bits that get added at the end of every word */
+	      /* when we have an array of elements that are smaller than a word */
+	      if (TREE_CODE(unit_bitsize) == INTEGER_CST && compare_tree_int (unit_bitsize, BITS_PER_WORD) == -1)
+		leftover_bits = size_binop (FLOOR_MOD_EXPR, bits_per_word,
+					    unit_bitsize);
+	      if (compare_tree_int (leftover_bits, 0) != 0)
+		{
+		  tree units_per_word = size_binop (FLOOR_DIV_EXPR,
+						    bits_per_word,
+						    unit_bitsize);
+		  tree words = size_binop (FLOOR_DIV_EXPR,
+					   convert (bitsizetype, index),
+					   units_per_word);
+		  bit_offset = size_binop (PLUS_EXPR, bit_offset,
+					   size_binop (MULT_EXPR, words,
+						       leftover_bits));
+		}
+	    }
+	  else
+#endif
 	    offset = size_binop (PLUS_EXPR, offset,
 			         size_binop (MULT_EXPR,
 					     fold_convert (sizetype, index),
@@ -6021,6 +6840,14 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	  return exp;
 	}
     }
+
+/* should really check host_integerp(bit_offset, 0) before the above call to tree_low_cst()
+    but then something has to be done to handle really large bit_offset values.
+    Also consider changing bit_offset to be initialized to bitoffset_zero_node.
+    -mtc 6/21/2007
+    This comment may be irrelevant as of 422 merge
+    -mtc 11/15/2007
+*/
 
   /* Otherwise, split it up.  */
   *pbitpos = tree_low_cst (bit_offset, 0);
@@ -6556,6 +7383,13 @@ highest_pow2_factor (const_tree exp)
 {
   unsigned HOST_WIDE_INT c0, c1;
 
+  /*This is a general fix, but is ifdeffed to replicate gcc base code behavior when not PDP10 */
+#ifdef __PDP10_H__
+#define BIGGEST_ALIGNMENT_UNITS BIGGEST_ALIGNMENT / BITS_PER_UNIT
+#else
+#define BIGGEST_ALIGNMENT_UNITS BIGGEST_ALIGNMENT
+#endif
+
   switch (TREE_CODE (exp))
     {
     case INTEGER_CST:
@@ -6566,14 +7400,14 @@ highest_pow2_factor (const_tree exp)
 	 erroneous program, so return BIGGEST_ALIGNMENT to avoid any
 	 later ICE.  */
       if (TREE_OVERFLOW (exp))
-	return BIGGEST_ALIGNMENT;
+	return BIGGEST_ALIGNMENT_UNITS;
       else
 	{
 	  /* Note: tree_low_cst is intentionally not used here,
 	     we don't care about the upper bits.  */
 	  c0 = TREE_INT_CST_LOW (exp);
 	  c0 &= -c0;
-	  return c0 ? c0 : BIGGEST_ALIGNMENT;
+	  return c0 ? c0 : BIGGEST_ALIGNMENT_UNITS;
 	}
       break;
 
@@ -6696,6 +7530,13 @@ expand_operands (tree exp0, tree exp1, rtx target, rtx *op0, rtx *op1,
   if (operand_equal_p (exp0, exp1, 0))
     {
       *op0 = expand_expr (exp0, target, VOIDmode, modifier);
+/* Try to avoid SUBREG since having them beneath a binary op tends to generate unrecognizable insns
+    -mtc 9/5/2007
+*/
+#ifdef __PDP10_H__
+	if ((GET_CODE(*op0) == SUBREG) && (modifier != EXPAND_INITIALIZER))
+		*op0 = force_reg(GET_MODE(*op0), *op0);
+#endif
       *op1 = copy_rtx (*op0);
     }
   else
@@ -6706,6 +7547,15 @@ expand_operands (tree exp0, tree exp1, rtx target, rtx *op0, rtx *op1,
 	exp0 = save_expr (exp0);
       *op0 = expand_expr (exp0, target, VOIDmode, modifier);
       *op1 = expand_expr (exp1, NULL_RTX, VOIDmode, modifier);
+/* Try to avoid SUBREG since having them beneath a binary op tends to generate unrecognizable insns
+    -mtc 9/5/2007
+*/
+#ifdef __PDP10_H__
+	if ((GET_CODE(*op0) == SUBREG) && (modifier != EXPAND_INITIALIZER))
+		*op0 = force_reg(GET_MODE(*op0), *op0);
+	if ((GET_CODE(*op0) == SUBREG) && (modifier != EXPAND_INITIALIZER))
+		*op1 = force_reg(GET_MODE(*op1), *op1);
+#endif
     }
 }
 
@@ -6837,6 +7687,114 @@ expand_expr_addr_expr_1 (tree exp, rtx target, enum machine_mode tmode,
   subtarget = offset || bitpos ? NULL_RTX : target;
   result = expand_expr_addr_expr_1 (inner, subtarget, tmode, modifier);
 
+/* PDP10 require more careful handling of byte addresses:
+    many things are illegal when not in a procedure context (cfun==null)
+    indexes should never be converted to pointer modes
+    -mtc 5/4/2007
+    rearrange order a bit so that we convert to tmode right away
+    -mtc 7/31/2007
+*/
+#ifdef __PDP10_H__
+
+  if (cfun && modifier != EXPAND_NORMAL)
+	result = force_operand (result, NULL);
+
+  /* attempt some specialized PDP10 optimizations to convert and offset all at once
+      -mtc 8/15/2007
+      add additional test to avoid spurious convert_global_pointer() call when bitpos has become zero
+      -mtc 8/16/2007
+      remove check for !offset, so that we do word offsets before byte offsets and avoid multiple
+      adjbp instructions in some common cases
+      -mtc 12/1/2008
+      modify the adjustment to handle negative bitpos values
+      -mtc 4/12/2012
+  */
+  if (bitpos)
+    {
+    if (GET_MODE(result) == SImode)
+    	{
+    	HOST_WIDE_INT wordadjust = bitpos / BITS_PER_WORD;
+	bitpos = bitpos % BITS_PER_WORD;
+	if (bitpos < 0)
+		{
+		wordadjust--;
+		bitpos += BITS_PER_WORD;
+		}
+
+	result = plus_constant (result, wordadjust);
+    	}
+
+/* Try omitting this conversion which results in a symbol reference being loaded and then converted with tlo
+     in the hopes the alternative convert_memory_address() and plus_constant will just do a load of a OWGBP
+     -mtc 10/4/2007
+
+    if ((GET_MODE(result) == SImode) && bitpos && (bitpos < BITS_PER_WORD) && ((bitpos % ptr_mode_target_size(tmode)) == 0))
+    	{
+	rtx newaddr = gen_reg_rtx(SImode);
+	emit_move_insn(newaddr, result);
+	result = convert_global_pointer(newaddr, BITS_PER_WORD, ptr_mode_target_size(tmode), bitpos / ptr_mode_target_size(tmode));
+	bitpos = 0;
+    	}
+*/
+    }
+
+  result = convert_memory_address (tmode, result);
+
+  if (offset)
+    {
+      rtx tmp;
+
+/* Before expanding offset, adjust based on the mode of result.  offset as returned by get_inner_reference() is in units
+    and should be guaranteed to be an obvious multiple of our adjustment which we will hope size_binop() is smart enough
+    to optimize out.
+    -mtc 6/30/2008
+*/
+      offset = size_binop (EXACT_DIV_EXPR, offset, 
+      						size_int ((ptr_mode_target_size (GET_MODE(result)) + BITS_PER_UNIT - 1) / BITS_PER_UNIT));
+      tmp = expand_expr (offset, NULL, VOIDmode, EXPAND_NORMAL);
+
+      if (modifier == EXPAND_SUM || modifier == EXPAND_INITIALIZER)
+	result = gen_rtx_PLUS (tmode, result, tmp);
+      else
+	{
+	  subtarget = bitpos ? NULL_RTX : target;
+	  result = expand_simple_binop (tmode, PLUS, result, tmp, subtarget,
+					1, OPTAB_LIB_WIDEN);
+	}
+    }
+
+  if (bitpos)
+    {
+      /* Someone beforehand should have rejected taking the address
+	 of such an object.  
+	 Customize this test to use the correct denominator for PDP10 and delete
+	 potential conversion to Q9Pmode
+	 -mtc 10/4/2007
+	 Adjust the test and offset to handle large offsets of Q8P and smaller character
+	 size pointers
+	 -mtc 2/26/2008
+	 modify the adjustment to handle negative bitpos values
+	 -mtc 4/12/2012
+	 */
+	int target_size = ptr_mode_target_size(GET_MODE(result));
+    	HOST_WIDE_INT wordadjust = bitpos / BITS_PER_WORD;
+	bitpos = bitpos % BITS_PER_WORD;
+	if (bitpos < 0)
+		{
+		wordadjust--;
+		bitpos += BITS_PER_WORD; /* bitpos is now >= 0 and < BITS_PER_WORD */
+		}
+	
+      gcc_assert ((bitpos % target_size) == 0);
+      result = plus_constant (result, wordadjust * (BITS_PER_WORD / target_size) + (bitpos  / target_size));
+
+      /* tag the resulting constant rtx with the correct mode
+	  -mtc 3/21/2011 */
+      result = convert_memory_address(tmode, result);
+      if (cfun && modifier < EXPAND_SUM)
+	result = force_operand (result, target);
+    }
+#else
   if (offset)
     {
       rtx tmp;
@@ -6870,6 +7828,7 @@ expand_expr_addr_expr_1 (tree exp, rtx target, enum machine_mode tmode,
       if (modifier < EXPAND_SUM)
 	result = force_operand (result, target);
     }
+#endif
 
   return result;
 }
@@ -6885,7 +7844,24 @@ expand_expr_addr_expr (tree exp, rtx target, enum machine_mode tmode,
   rtx result;
 
   /* Target mode of VOIDmode says "whatever's natural".  */
+/* PDP10 needs more robust computation of the machine mode 
+      - mtc 3/5/2007
+    Override tmode when the natural mode is a variety of character pointer.
+    Don't ever assume Pmode.  Instead use the natural mode for what we're taking the address of.
+    -mtc 10/9/2007
+*/
   if (tmode == VOIDmode)
+#ifdef __PDP10_H__
+    tmode = pdp10_mode_for_type (TREE_TYPE (exp));
+  {
+  enum machine_mode nmode = pdp10_mode_for_type(TREE_TYPE(exp));
+  if (PTR_MODE_P(nmode) && nmode != SImode)
+  	tmode = nmode;
+  
+  if (!PTR_MODE_P(tmode))
+    tmode = ptr_mode_for_type(TREE_TYPE(TREE_OPERAND(exp, 0)));
+  }
+#else
     tmode = TYPE_MODE (TREE_TYPE (exp));
 
   /* We can get called with some Weird Things if the user does silliness
@@ -6893,6 +7869,7 @@ expand_expr_addr_expr (tree exp, rtx target, enum machine_mode tmode,
      the right thing, so ignore the given target mode.  */
   if (tmode != Pmode && tmode != ptr_mode)
     tmode = Pmode;
+#endif
 
   result = expand_expr_addr_expr_1 (TREE_OPERAND (exp, 0), target,
 				    tmode, modifier);
@@ -7138,6 +8115,7 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 								  type)	  \
 				 : (expr))
 
+
   if (GIMPLE_STMT_P (exp))
     {
       type = void_type_node;
@@ -7147,7 +8125,17 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
   else
     {
       type = TREE_TYPE (exp);
+	  
+/*
+	PDP10 has a bunch of QI variants to deal with
+	-mtc 9/21/2006
+*/
+#ifdef __PDP10_H__
+      mode = pdp10_mode_for_type(type);
+#else
       mode = TYPE_MODE (type);
+#endif
+
       unsignedp = TYPE_UNSIGNED (type);
     }
   if (lang_hooks.reduce_bit_field_operations
@@ -7346,8 +8334,55 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
       return decl_rtl;
 
     case INTEGER_CST:
-      temp = immed_double_const (TREE_INT_CST_LOW (exp),
-				 TREE_INT_CST_HIGH (exp), mode);
+#ifdef __PDP10_H__
+      /* PDP-10: handle adjustments for constants bigger than a word, including 71-bit integers */
+      /* we need to check for 71-bit conversion on any integer _cst with a value big enough to require a double word
+          representation, which includes integers as well as long longs.
+          The conversion should actually be safe for any integer_cst node, so the check is really just an optimization to avoid
+          the bit shuffling.
+          -mtc 7/13/2007
+      */
+	if (TYPE_MAIN_VARIANT (type) == long_long_integer_type_node ||
+	    TYPE_MAIN_VARIANT (type) == long_long_unsigned_type_node ||
+	    GET_MODE_SIZE(TYPE_MODE(type)) > UNITS_PER_WORD)
+		{
+		HOST_WIDE_INT i0 = TREE_INT_CST_LOW (exp);
+		HOST_WIDE_INT i1 = TREE_INT_CST_HIGH (exp);
+	  	HOST_WIDE_INT mask = ((HOST_WIDE_INT)1 << 35) - 1; /* for isolating bits following redundant sign bit */
+
+		if (TARGET_71BIT)
+			{
+			/* move high half over 1 bit, shifting in msb of low half */
+			i1 = (i1 << 1) + (i0 < 0);
+
+			/* extend what will be the msb of the target value through the high half of the host representation*/
+			i1 <<= 2 * HOST_BITS_PER_WIDE_INT - 72;
+			i1 >>= 2 * HOST_BITS_PER_WIDE_INT - 72;
+
+			/* open up the space in the low half for the redundant sign bit */
+			i0 = (i0 & mask) + ((i0 & ~mask) << 1);
+
+			/* fill in the redundant sign bit */
+			if (i1 < 0)
+				i0 |= (HOST_WIDE_INT)1 << 35;
+			}
+		
+		/* adjust bits so that the high and low halves represent target machine words instead of host machine wide ints */
+		i1 = ( i1 << (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD)) | 
+			((i0 >> BITS_PER_WORD) &(((HOST_WIDE_INT) 1 << (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD)) - 1));
+		i0 = (i0 << (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD)) >> (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD);
+		
+		/* package the words as a double or integer rtx constant */      
+		temp = immed_double_const (i0, i1, mode);
+		}
+	else
+		temp = immed_double_const (TREE_INT_CST_LOW (exp),
+				   TREE_INT_CST_HIGH (exp), mode);
+
+#else
+	temp = immed_double_const (TREE_INT_CST_LOW (exp),
+				   TREE_INT_CST_HIGH (exp), mode);
+#endif
 
       return temp;
 
@@ -7498,8 +8533,17 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	      return expand_expr (t, target, tmode, modifier);
 	  }
 
+/* Avoid introducing EXPAND_SUM modifier since its generally problematic and there's no particular
+    advantaget to it.
+    -mtc 10/22/2007
+*/
+#ifdef __PDP10_H__
+	op0 = expand_expr (exp1, NULL_RTX, VOIDmode, modifier);
+#else
 	op0 = expand_expr (exp1, NULL_RTX, VOIDmode, EXPAND_SUM);
-	op0 = memory_address (mode, op0);
+#endif
+
+	op0 = memory_address_type (type, op0);
 
 	if (code == ALIGN_INDIRECT_REF)
 	  {
@@ -7670,9 +8714,20 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 
 			if (GET_MODE_CLASS (mode) == MODE_INT
 			    && GET_MODE_SIZE (mode) == 1)
+/* use of signed chars causes incorrect sign bit extension into our 9-bit chars whether or not
+    the user declares them signed or unsigned.  use of the internal type unsigned gives correct
+    behavior for both, except that if the user can't actually input a value with the high order bit set.
+    -mtc 1/11/2008
+*/
+#ifdef __PDP10_H__
+			  return gen_int_mode (TREE_UNSIGNED_STRING_POINTER (init)
+					       [TREE_INT_CST_LOW (index1)],
+					       mode);
+#else
 			  return gen_int_mode (TREE_STRING_POINTER (init)
 					       [TREE_INT_CST_LOW (index1)],
 					       mode);
+#endif
 		      }
 		  }
 	      }
@@ -7769,6 +8824,31 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 			  || modifier == EXPAND_STACK_PARM)
 			 ? modifier : EXPAND_NORMAL);
 
+#ifdef __PDP10_H__
+      /* PDP-10: in extended mode, the top bits of a struct pointer
+	 which is a byte pointer must be cleared before using it as a
+	 word pointer, or else local addressing will occur.  */
+      if (TREE_CODE (exp) == COMPONENT_REF
+	  && pdp10_bytesize (TREE_TYPE (TREE_OPERAND (exp, 0))) < BITS_PER_WORD
+	  && GET_CODE (op0) == MEM
+	  && (bitsize >= BITS_PER_WORD || MEM_ALIGN (op0) >= BITS_PER_WORD)
+	  && TARGET_EXTENDED
+	  && ! CONSTANT_ADDRESS_P (XEXP (op0, 0)))
+	{
+	  rtx tmp = gen_reg_rtx (Pmode);
+	  if (GET_CODE (XEXP (op0, 0)) == REG)
+	    emit_move_insn (tmp, XEXP (op0, 0));
+	  else if (GET_CODE (XEXP (op0, 0)) == MEM)
+	    emit_move_insn (tmp, XEXP (op0, 0));
+	  else
+	    emit_insn (gen_MOVEI (tmp, XEXP (op0, 0)));
+	  emit_insn (gen_andsi3 (tmp, tmp,
+				 GEN_INT (((HOST_WIDE_INT)1 << 30) - 1)));
+	  op0 = change_address (op0, VOIDmode, tmp);
+	  set_mem_align (op0, BITS_PER_WORD);
+	}
+#endif
+
 	/* If this is a constant, put it into a register if it is a legitimate
 	   constant, OFFSET is 0, and we won't try to extract outside the
 	   register (in case we were passed a partially uninitialized object
@@ -7806,10 +8886,62 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 
 	if (offset != 0)
 	  {
+	  
+#ifdef __PDP10_H__
+	rtx offset_rtx;
+	int offset_factor = 1;
+	/* convert offset for half-words to a half-word offset instead of a byte offset */
+	/* Doing this conversion here creates problems for arrays of structures with halfword elements
+	    This occurs with bug1264.
+	    There are probably other test programs where this was necessary though.  If so, they need
+	    to be fixed further downstream so that offset remains a byte offset here.
+	    But correcting the issue in the tree structure is nice in that it permits constant folding, so consider
+	    working with the offset and doing a new expand_expr() when doing that offset conversion
+	    -mtc 10/26/2006
+	    We now follow a model of keeping indices in the type of the corresponding pointer or machine mode
+	    We need to convert the byte offset to match whatever kind of pointer we're going to create
+	    Possibly better to use ptr_mode_for_size(pdp10_bytesize(TREE_TYPE(exp)))
+	    or ptr_mode_for_type(TREE_TYPE(exp))
+	    Check execution test 920501-3.c if this needs to be changed again
+	    - mtc 7/30/2007
+	    Change test to be pdp10_bytesize(TREE_TYPE(exp)) instead of looking at bitsize.
+	    Also, adjust for both word and half -word pointers, so now the offset is in the units indicated by
+	    the TREE_TYPE().
+	    -mtc 10/29/2007
+	    New strategy - adjust by words when we can, half-words if we can and must.  Keep track of what we adjusted by.
+	    This allows us to fold word adjustments in the tree representation where it works better than in the rtx.
+	    -mtc 11/27/2007
+	    Adjust assert for half words -- it's possible to have an array of half words where our offset_factor is 4 because it's
+	    better aligned then necessary.
+	    -mtc 12/7/2007
+	*/
+	if (highest_pow2_factor(offset) >= 4)
+		offset_factor = 4;
+	else if (highest_pow2_factor(offset) >= 2 && pdp10_bytesize (TREE_TYPE(exp)) > BITS_PER_UNIT)
+		offset_factor = 2;
+	if (offset_factor > 1)
+		offset = fold(build2(EXACT_DIV_EXPR, TREE_TYPE(offset), offset, size_int(offset_factor))); 
+		
+	if (pdp10_bytesize(TREE_TYPE(exp)) >= BITS_PER_WORD)
+		gcc_assert(offset_factor == 4);
+	else if (pdp10_bytesize (TREE_TYPE (exp)) > BITS_PER_UNIT)
+		gcc_assert(offset_factor >= 2);
+
+	offset_rtx = expand_expr (offset, NULL_RTX, VOIDmode,  EXPAND_SUM);
+
+#else
+
 	    rtx offset_rtx = expand_expr (offset, NULL_RTX, VOIDmode,
 					  EXPAND_SUM);
+#endif
 
+#ifdef __PDP10_H__
+	    gcc_assert (MEM_P (op0) ||
+		 		((GET_CODE (op0)) == SUBREG &&
+		    			(GET_CODE (SUBREG_REG (op0)) == ZERO_EXTRACT)));
+#else
 	    gcc_assert (MEM_P (op0));
+#endif
 
 #ifdef POINTERS_EXTEND_UNSIGNED
 	    if (GET_MODE (offset_rtx) != Pmode)
@@ -7817,6 +8949,20 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 #else
 	    if (GET_MODE (offset_rtx) != ptr_mode)
 	      offset_rtx = convert_to_mode (ptr_mode, offset_rtx, 0);
+#endif
+
+#ifdef __PDP10_H__
+/* If bitpos is bigger than a word alignment tests can be wrong because of the PDP10 pad
+    bits in every word.
+    So fold what we can into op0.
+    -mtc 7/29/2008
+*/
+	if (((GET_MODE(op0) == BLKmode) || (GET_MODE(op0) == SImode))
+		&& (bitpos >= BITS_PER_WORD))
+		{
+		op0 = adjust_address (op0, GET_MODE(op0), bitpos / BITS_PER_WORD * UNITS_PER_WORD);
+		bitpos = bitpos - bitpos / BITS_PER_WORD * BITS_PER_WORD;
+		}
 #endif
 
 	    if (GET_MODE (op0) == BLKmode
@@ -7832,8 +8978,84 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 		bitpos = 0;
 	      }
 
+#ifdef __PDP10_H__
+	    if (pdp10_bytesize (TREE_TYPE (exp)) >= BITS_PER_WORD)
+	      {
+#if 0 /* 20020813-2.c doesn't do well with this.  */
+		if (GET_CODE (orig_op0) == MEM
+		    && GET_CODE (XEXP (orig_op0, 0)) == SYMBOL_REF)
+		  op0 = orig_op0;
+#endif
+		op0 = offset_address (op0, offset_rtx,
+				      highest_pow2_factor (offset));
+	      }
+	    /* If the offset is an integral multiple of words, don't
+	       use ADJBP.  */
+	    /* Replaced the incorrect and convoluted test with a simple check
+	        of highest_pow2_factor to see if the offset is an integral multiple
+	        of words.  This this is really just an optimization -- ADJBP ought
+	        to work for all cases.
+	        -mtc 8/28/2006
+	        adjust test to account for change to keeping offset in TREE_TYPE() units
+	        -mtc 10/29/2007
+	        also adjust offset_rtx and highest_pow2_factor() value according to TREE_TYPE()
+	        Do we need to also pay attention to the mode of op0?
+	        -mtc 11/26/2007
+	        If we already folded the offset to words, we need to do word offsetting
+	        -mtc 11/27/2007
+	    */
+	    else if (offset_factor == 4)
+	      {
+		op0 = offset_address (op0, offset_rtx,
+				      highest_pow2_factor (offset));
+	      }
+		
+	    /* Replaced the tests and different ways of converting to byte pointers to a simple test of whether
+	        the current address mode is the desired address mode and a call to pdp10_convert_ptr()
+	        -mtc 8/29/2006
+	    */
+	    else
+	      {
+	        enum machine_mode desiredaddrmode = ptr_mode_for_size(bitsize);
+		enum machine_mode currentaddrmode;
+		rtx mem = op0;
+		rtx addr;
+
+		/* Since we're about to convert the addr to desiredaddrmode and do ADJBP, it better be
+		    a pointer mode ADJBP works on
+		    -mtc 8/29/2006
+		*/
+		if (!PTR_MODE_P(desiredaddrmode) || GET_MODE_CLASS(desiredaddrmode) == MODE_INT)
+			abort();
+
+		if (GET_CODE (op0) == SUBREG
+		    && GET_CODE (SUBREG_REG (op0)) == ZERO_EXTRACT)
+		  mem = XEXP (SUBREG_REG (op0), 0);
+
+		addr = XEXP (mem, 0);
+		currentaddrmode = GET_MODE(addr);
+
+		if (currentaddrmode != desiredaddrmode)
+			{
+			addr = pdp10_convert_ptr(NULL_TREE, addr, NULL_RTX, 
+				ptr_mode_target_size(currentaddrmode), bitsize,
+				GET_CODE(offset_rtx) != CONST_INT || INTVAL(offset_rtx) != 0);
+			}
+
+		temp = gen_reg_rtx (ptr_mode_for_size(bitsize));
+		/* emit_insn (gen_ADJBP (temp, force_reg (GET_MODE(addr), addr),
+				      force_reg (GET_MODE(offset_rtx), offset_rtx)));
+		  old code above replace by line below: */
+		temp = pdp10_expand_addbp3 (type, temp, addr, offset_rtx); 
+
+		if (mode1 == VOIDmode)
+		  mode1 = smallest_mode_for_size(bitsize, MODE_INT);
+		op0 = change_address (op0, mode1, temp);
+	      }
+#else
 	    op0 = offset_address (op0, offset_rtx,
 				  highest_pow2_factor (offset));
+#endif
 	  }
 
 	/* If OFFSET is making OP0 more aligned than BIGGEST_ALIGNMENT,
@@ -7894,7 +9116,18 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 		&& TYPE_SIZE (TREE_TYPE (exp))
 		&& TREE_CODE (TYPE_SIZE (TREE_TYPE (exp))) == INTEGER_CST
 		&& 0 != compare_tree_int (TYPE_SIZE (TREE_TYPE (exp)),
-					  bitsize)))
+					  bitsize))
+#ifdef __PDP10_H__
+	    || (bitsize < BITS_PER_UNIT
+		&& (GET_CODE (op0) != MEM
+		    || MEM_ALIGN (op0) >= BITS_PER_WORD
+		    /* PDP-10 FIXME: This shouldn't be necessary.  */
+		    || MEM_ALIGN (op0) > GET_MODE_ALIGNMENT (GET_MODE (op0))
+		    /* PDP-10 FIXME: Can we assume all BLKmode MEMs
+		       are aligned, even though MEM_ALIGN says not?  */
+		    || GET_MODE (op0) == BLKmode))
+#endif
+	    )
 	  {
 	    enum machine_mode ext_mode = mode;
 
@@ -7987,21 +9220,185 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	if (mode == BLKmode)
 	  mode1 = BLKmode;
 
+#ifndef __PDP10_H__
 	/* Get a reference to just this component.  */
 	if (modifier == EXPAND_CONST_ADDRESS
 	    || modifier == EXPAND_SUM || modifier == EXPAND_INITIALIZER)
 	  op0 = adjust_address_nv (op0, mode1, bitpos / BITS_PER_UNIT);
 	else
 	  op0 = adjust_address (op0, mode1, bitpos / BITS_PER_UNIT);
+#else
+	/* PDP-10.  */
+	{
+	  rtx old_op0 = op0;
+	  if ((code != ARRAY_REF
+	       || TREE_CONSTANT (TREE_OPERAND (exp, 1))) /* bitpos != 0 */
+	      && GET_CODE (old_op0) == MEM
+	      && bitsize < BITS_PER_WORD)
+	    {
+	      enum machine_mode mode2 = mode1;
+
+	      if (GET_MODE_SIZE (mode2) < GET_MODE_SIZE (word_mode))
+		mode2 = word_mode;
+
+	/*  Removed test of modifier==EXPAND_SUM, OxC module work.c was failing because reference to 1/2 word field
+	     of a structure used as an array index generated too complex a structure.  Might also consider not passing on the
+	     EXPAND_SUM modifier from the EXPAND_MULT case that calls this.  But it would seem that generating an
+	     invalid address isn't a great idea regardless.
+	     -mtc 9/5/2006
+	     Optimize out the ZERO_EXTRACT nodes when we can
+	     -mtc 8/28/2007
+	     Add a force_reg() call to avoid expressions that are too complex to recognize.  Let's just put them in as needed
+	     even though they're pretty innocuous and in general will get undone by instruction folding.
+	     Maybe should avoid on LHS of an assignment, but how can we tell?
+	     Perhaps modifier is EXPAND_WRITE??
+	     -mtc 9/7/2007
+	*/
+	      if (modifier == EXPAND_CONST_ADDRESS
+		  || modifier == EXPAND_INITIALIZER)
+		op0 = adjust_address_nv (op0, mode2,
+					 (bitpos / BITS_PER_WORD) * UNITS_PER_WORD);
+	      else
+		op0 = adjust_address (op0, mode2, (bitpos / BITS_PER_WORD) * UNITS_PER_WORD);
+
+	      if (CONSTANT_ADDRESS_P (XEXP (old_op0, 0)))
+		{
+		 if ((bitsize == GET_MODE_BITSIZE(mode1)) && ((bitpos % BITS_PER_WORD) % bitsize == 0))
+		 	{
+			op0 =
+				gen_rtx_SUBREG
+					(mode1,
+					force_reg(GET_MODE(op0), op0),
+					(bitpos % BITS_PER_WORD) / BITS_PER_UNIT);
+		 	}
+		 else if ((bitsize == GET_MODE_PRECISION(mode1)) && ((bitpos % BITS_PER_WORD) % bitsize == 0))
+		 	{
+			op0 =
+				gen_rtx_SUBREG
+					(mode1,
+					op0,
+					(bitpos % BITS_PER_WORD) / bitsize);
+		 	}
+		 else
+		 	{
+			op0 =
+				gen_rtx_SUBREG
+					(mode1,
+					gen_rtx_ZERO_EXTRACT
+						(word_mode,
+						op0,
+						GEN_INT (bitsize),
+						GEN_INT (bitpos % BITS_PER_WORD)),
+					UNITS_PER_WORD - GET_MODE_SIZE (mode1));
+		 	}
+		}
+	      /* This case does almost exactly the same thing the one above does except that it
+	           copies op0 and sets the mode to SImode before doing the ZERO_EXTRACT
+	           Is the distinction right, or is one of these cases in error?
+	           -mtc 5/25/2006
+	      */
+	      else if ((MEM_ALIGN (old_op0) >= BITS_PER_WORD)
+                       || (MEM_OFFSET(op0) == 0)
+                       || (INTVAL(MEM_OFFSET(op0)) == 0)
+		       || (TREE_CODE (exp) == ARRAY_REF
+			   && TREE_CODE (TREE_OPERAND (exp, 0)) == VAR_DECL))
+		{
+		  rtx x, y;
+		  x = copy_rtx (op0);
+		  PUT_MODE (x, SImode);
+		  y = gen_rtx_ZERO_EXTRACT (SImode,
+					    x,
+					    GEN_INT (bitsize),
+					    GEN_INT (bitpos % BITS_PER_WORD));
+		  op0 = gen_rtx_SUBREG (mode1, y,
+					UNITS_PER_WORD
+					- GET_MODE_SIZE (mode1));
+		}
+	      else
+		/* The tests are so convoluted its hard to tell what's possible, but if neither the if or else if above
+		     are true, we will have done an adjust_address that lost the last word portion of bitpos which
+		     seems bad unless that portion is guaranteed to be zero
+		     -mtc 5/25/2006
+                     added tests to the else if above to allow doing the SUBREG(ZERO_EXTRACT(...)) if memoffset is zero
+                     even if the alignment isn't word or better, since on the PDP10 all memory references are inherently
+                     word or better.  We don't have a character pointer mode implemented yet.  If its possible to get here
+                     with a non-zero offset, the thing to do would be to offset the address back to a word boundary and
+                     combine the offset into the bitpos and then do the SUBREG(ZERO_EXTRACE(...))
+                     -mtc 6/8/2006 */
+		{
+	  	  abort();
+	      	}
+	    }
+	  else
+	    {
+	      /* When dereferencing a struct pointer using a byte size
+		 different from the data we are accessing, first
+		 convert the pointer to the right format.  */
+	      if (TREE_CODE (exp) == COMPONENT_REF
+		  && TREE_CODE (TREE_OPERAND (exp, 0)) == INDIRECT_REF
+		  && pdp10_bytesize (TREE_TYPE (exp))
+		  != pdp10_bytesize (TREE_TYPE (TREE_OPERAND (exp, 0))))
+		{
+		  /* PDP10 TODO: put something here ! */
+		  /* How about aborting?  Probably what we want to do involves calling pdp10_convert_ptr
+		  // -mtc 5/25/2006 */
+		  abort();
+		}
+	      if (modifier == EXPAND_CONST_ADDRESS
+		  || modifier == EXPAND_SUM || modifier == EXPAND_INITIALIZER)
+		op0 = adjust_address_nv (op0, mode1,
+					 bitpos / BITS_PER_UNIT);
+	      else
+		op0 = adjust_address (op0, mode1, bitpos / BITS_PER_UNIT);
+	    }
+	}
+#endif
 
 	if (op0 == orig_op0)
 	  op0 = copy_rtx (op0);
 
+/*  We may be asking for trouble by omitting the set_mem_attributes() call, but on the PDP10 we're
+     treating the offset on MEM nodes to be a byte offset that needs to be added to the underlying address,
+     not a comment describing the address.  At this point, the offset is combined into the underlying address to
+     the extent possible, so reaching in and setting it will confuse any later code that wants to adjust
+     the address.
+     -mtc 11/16/2006
+*/
+#ifdef __PDP10_H__
+#else
 	set_mem_attributes (op0, exp, 0);
+#endif
+
+/* This test implicitly assumes op0 is a MEM node which is not necessisarily true on the PDP10
+    -mtc 9/7/2007
+*/
+#ifdef __PDP10_H__
+	if (MEM_P (op0) && REG_P (XEXP (op0, 0)))
+#else
 	if (REG_P (XEXP (op0, 0)))
+#endif
 	  mark_reg_pointer (XEXP (op0, 0), MEM_ALIGN (op0));
 
+/* PDP10 uses subreg and extract to describe bit fields and other sub word fields.
+    -mtc 4/16/2007
+    Check that we have a MEM node before setting MEM_VOLATILE_P
+    Can these COMPONENT_REFs be on the LHS and are we in trouble by forcing to a reg before doing the SUBREG ?
+    -mtc 9/7/2007
+*/
+#ifdef __PDP10_H__
+	{
+	rtx tempop = op0;
+	while  (GET_CODE(tempop) == SUBREG || GET_CODE(tempop) == ZERO_EXTRACT || GET_CODE(tempop) == SIGN_EXTRACT)
+		{
+		tempop = XEXP (tempop, 0);
+		}
+	if (MEM_P (tempop))
+		MEM_VOLATILE_P (tempop) |= volatilep;
+	}
+#else
 	MEM_VOLATILE_P (op0) |= volatilep;
+#endif
+
 	if (mode == mode1 || mode1 == BLKmode || mode1 == tmode
 	    || modifier == EXPAND_CONST_ADDRESS
 	    || modifier == EXPAND_INITIALIZER)
@@ -8104,10 +9501,53 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	  return target;
 	}
 
+#ifdef __PDP10_H__
+      if ((POINTER_TYPE_P (type)
+	   || POINTER_TYPE_P (TREE_TYPE (TREE_OPERAND (exp, 0))))
+	  && type != TREE_TYPE (TREE_OPERAND (exp, 0)))
+	{
+/* Always pass not_null, I think we need to deviate from the standard on NULL pointers.
+    We get such awful code with the checks and it prevents the programmer from creating
+    well formed byte pointers to zero.
+    -mtc 11/9/2007
+    With our new pointer conversion model, it is important to not flag a pointer as not_null
+    unless we're absolutely sure it isn't, because we need to preserve null pointers as true
+    zero values.
+    -mtc 7/13/2011
+*/    
+	  int not_null = ((TREE_CODE (TREE_OPERAND (exp, 0)) == PLUS_EXPR) ||
+	  			(TREE_CODE(TREE_OPERAND(exp, 0)) == ADDR_EXPR));
+	  rtx x = pdp10_convert_pointer(exp, NULL_RTX, target, modifier, 0, not_null);
+
+/*	  rtx x = pdp10_convert_pointer(exp, NULL_RTX, target, modifier, 0, 1);*/
+	  if (x)
+	    return x;
+	}
+#endif
+
+/*
+	on PDP10 need more robust check for QnImodes
+*/
+#ifdef __PDP10_H__
+      if (mode == pdp10_mode_for_type (TREE_TYPE (TREE_OPERAND (exp, 0))))
+#else
       if (mode == TYPE_MODE (TREE_TYPE (TREE_OPERAND (exp, 0))))
+#endif
 	{
 	  op0 = expand_expr (TREE_OPERAND (exp, 0), target, VOIDmode,
 			     modifier);
+
+/*
+	If expand_expr fails to return an rtx with the expected mode we're in trouble
+	it would be best to debug it from here rather than later when the code is
+	bad or can't be generated.  But VOIDmode is OK because it can happen if
+	we've evaluated the expression to a constant.
+	-mtc 7/13/2006
+*/
+#ifdef __PDP10_H__
+	if (mode != GET_MODE(op0) && GET_MODE(op0) != VOIDmode)
+		abort();
+#endif
 
 	  /* If the signedness of the conversion differs and OP0 is
 	     a promoted SUBREG, clear that indication since we now
@@ -8119,8 +9559,52 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	  return REDUCE_BIT_FIELD (op0);
 	}
 
+/*
+	The subordinate expansion may avoid spurious pointer conversions if the tmode we pass in indicates that we will be doing
+	a subsequent conversion, so pass in VOIDmode instead if the conversion is between dissimilar types.  This way we get
+	the proper weird conversion values for things like explicit pointer to integer conversion.
+	-mtc 9/29/2006
+	Also pass VOIDmode if this is a void * conversion
+	Then for void * conversions convert mode by renaming with subregs
+	-mtc 8/22/2007
+	Add check for void * conversion of INTEGER_CST and convert by labling it instead of using subreg
+	-mtc 11/19/2007
+	NEWVOID*
+	-mtc 11/12/2010
+*/
+#ifdef __PDP10_H__
+	{
+	enum machine_mode tmode = mode;
+	int fromvoidpointer = (POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 0))) && 
+						VOID_TYPE_P(TREE_TYPE(TREE_TYPE(TREE_OPERAND(exp, 0)))));
+	int tovoidpointer = (POINTER_TYPE_P(type) && VOID_TYPE_P(TREE_TYPE(type)));
+	int voidconversion = tovoidpointer ||fromvoidpointer;
+
+	if (POINTER_TYPE_P(type) != POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 0))))
+		tmode = VOIDmode;
+	if (voidconversion)
+		tmode = VOIDmode;
+        op0 = expand_expr (TREE_OPERAND (exp, 0), NULL_RTX,  tmode, 
+			 modifier == EXPAND_SUM ? EXPAND_NORMAL : modifier);
+
+	if (voidconversion)
+	    {
+	    /* FIXME: This will need changes to handle constant conversions from void* to other pointers */
+	    if (GET_CODE(op0) == CONST_INT)
+	    	{
+	    	op0 = shallow_copy_rtx(op0);
+		PUT_MODE(op0, mode);
+	    	}
+	    else if (fromvoidpointer)
+		op0 = convert_void_pointer(op0, ptr_mode_target_size(mode), 0);
+	    else if (GET_MODE(op0) != mode)
+	    	op0 = simplify_gen_subreg (mode, op0, GET_MODE(op0), 0);
+	    }
+  	}
+#else
       op0 = expand_expr (TREE_OPERAND (exp, 0), NULL_RTX, mode,
 			 modifier == EXPAND_SUM ? EXPAND_NORMAL : modifier);
+#endif
       if (GET_MODE (op0) == mode)
 	;
 
@@ -8131,9 +9615,34 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	  enum machine_mode inner_mode = TYPE_MODE (inner_type);
 
 	  if (modifier == EXPAND_INITIALIZER)
+#ifdef __PDP10_H__
+/* subreg() just renames bits to be a different mode
+    this is incorrect if we're converting between different types of pointers
+    -mtc 6/12/2008
+    Allow conversion from SImode anyhow.  pdp10_assemble_integer() will
+    interpret pointer subregs to mean conversion to a byte pointer.
+    It would be more correct to just change the mode of op0, but then
+    we possibly also need to propage the mode downward to the SYMBOL_REF
+    or LABEL_REF and do offset adjustments
+    -mtc 6/16/2008
+    convert_memory_address() now has the smarts to handle constant
+    pointer conversion
+    -mtc 3/21/2011
+*/
+	    {
+	    if (inner_mode == mode || inner_mode == SImode ||
+		!POINTER_TYPE_P(inner_type) || !POINTER_TYPE_P(type))
+		    op0 = simplify_gen_subreg (mode, op0, inner_mode,
+					       subreg_lowpart_offset (mode,
+								      inner_mode));
+	    else
+		op0 = convert_memory_address(mode, op0);
+	    }
+#else
 	    op0 = simplify_gen_subreg (mode, op0, inner_mode,
 				       subreg_lowpart_offset (mode,
 							      inner_mode));
+#endif
 	  else
 	    op0=  convert_modes (mode, inner_mode, op0,
 				 TYPE_UNSIGNED (inner_type));
@@ -8141,6 +9650,53 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 
       else if (modifier == EXPAND_INITIALIZER)
 	op0 = gen_rtx_fmt_e (unsignedp ? ZERO_EXTEND : SIGN_EXTEND, mode, op0);
+
+#ifdef __PDP10_H__
+      /* PDP-10: special-case the conversion of 6/7/8/16/32-bit data.  */
+      /* It's not clear how necessary this is anymore.  Consider removing it. */
+      /* -mtc 10-19-2012 */
+      else if (tree_low_cst
+	  (TYPE_SIZE (TREE_TYPE (TREE_OPERAND (exp, 0))), 1) % 9 != 0)
+	{
+	  int bitsize =
+	    tree_low_cst (TYPE_SIZE (TREE_TYPE (TREE_OPERAND (exp, 0))), 1);
+	  rtx temp = gen_reg_rtx (SImode);
+
+	  /* our instructions that get byte values into registers will zero extend */
+	  /* so remember to make use of that going forward */
+	  op0 = force_reg (GET_MODE (op0), op0);
+	  
+	  if (GET_MODE_SIZE (mode) < GET_MODE_SIZE (GET_MODE (op0)))
+	    emit_insn (gen_truncsi (temp,
+				    gen_rtx_SUBREG (SImode, op0, 0),
+				    GEN_INT (BITS_PER_WORD - bitsize)));
+	  else if (TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (exp, 0))))
+	    {
+	    emit_insn(gen_movsi(temp, gen_rtx_SUBREG (SImode, op0, 0)));
+	    /*convert_move(temp, op0, 1);*/
+	    /*emit_insn (gen_zero_extendsi (temp,
+					  gen_rtx_SUBREG (SImode, op0, 0),
+					  GEN_INT (BITS_PER_WORD - bitsize)));*/
+	    }
+	  else
+	    emit_insn (gen_sign_extendsi (temp,
+					  gen_rtx_SUBREG (SImode, op0, 0),
+					  GEN_INT (BITS_PER_WORD - bitsize)));
+
+	  op0 = temp;
+
+	      if (target == 0)
+		op0 = convert_to_mode (mode, op0,
+				       TYPE_UNSIGNED (TREE_TYPE
+						      (TREE_OPERAND (exp, 0))));
+	      else
+		{
+		  convert_move (target, op0,
+				TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (exp, 0))));
+		  op0 = target;
+		}
+	}
+#endif
 
       else if (target == 0)
 	op0 = convert_to_mode (mode, op0,
@@ -8326,7 +9882,11 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 
 	 If this is an EXPAND_SUM call, always return the sum.  */
       if (modifier == EXPAND_SUM || modifier == EXPAND_INITIALIZER
+#ifdef __PDP10_H__
+	  || (PTR_MODE_P(mode) && (unsignedp || ! flag_trapv)))
+#else
 	  || (mode == ptr_mode && (unsignedp || ! flag_trapv)))
+#endif
 	{
 	  if (modifier == EXPAND_STACK_PARM)
 	    target = 0;
@@ -8346,6 +9906,23 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 		= immed_double_const (TREE_INT_CST_LOW (TREE_OPERAND (exp, 0)),
 				      (HOST_WIDE_INT) 0,
 				      TYPE_MODE (TREE_TYPE (TREE_OPERAND (exp, 1))));
+#ifdef __PDP10_H__
+/* If we're doing pointer arithmetic, the index needs to be adjusted by the size of the object
+    Handling of sub-unit size pointers needs more thought
+    -mtc 6/10/2008
+*/
+		if (POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 1))))
+			{
+			tree object_type = TREE_TYPE(TREE_TYPE(TREE_OPERAND(exp, 1)));
+			HOST_WIDE_INT object_size = int_size_in_bytes(object_type);
+			if (object_size == -1)
+				object_size = UNITS_PER_WORD;
+
+			constant_part = GEN_INT(INTVAL(constant_part) * object_size /
+				((ptr_mode_target_size(GET_MODE(op1))+ BITS_PER_UNIT -1) / BITS_PER_UNIT));
+			}
+
+#endif
 	      op1 = plus_constant (op1, INTVAL (constant_part));
 	      if (modifier != EXPAND_SUM && modifier != EXPAND_INITIALIZER)
 		op1 = force_operand (op1, target);
@@ -8361,6 +9938,21 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	      op0 = expand_expr (TREE_OPERAND (exp, 0), subtarget, VOIDmode,
 				 (modifier == EXPAND_INITIALIZER
 				 ? EXPAND_INITIALIZER : EXPAND_SUM));
+#ifdef __PDP10_H__
+/* It's unclear what this block of code accomplishes.  It handles the case where exp0 was constant but
+    when expanded was too complex to yield a constant rtx op0.
+    The symetric case with op1 doesn't exist.
+    Simply calling simplify_gen_binary() is incorrect because it doesn't handle pointer adjustment.
+    The subsequent code ought to handle things properly anyhow.
+    Except that if modifier is EXPAND_INITIALIZER we will have probably just generated code not
+    permissible in initialization
+
+    It appears that the circumstances when this happens are such that simplify_gen_binary() isn't able to
+    simplify, so we end up with an expression pdp10_assemble_integer() can handle.
+    There are probably still cases where we don't do the pointer adjustments properly though.
+    -mtc 6/16/2008
+*/
+#endif
 	      if (! CONSTANT_P (op0))
 		{
 		  op1 = expand_expr (TREE_OPERAND (exp, 1), NULL_RTX,
@@ -8379,6 +9971,22 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 		= immed_double_const (TREE_INT_CST_LOW (TREE_OPERAND (exp, 1)),
 				      (HOST_WIDE_INT) 0,
 				      TYPE_MODE (TREE_TYPE (TREE_OPERAND (exp, 0))));
+#ifdef __PDP10_H__
+/* If we're doing pointer arithmetic, the index needs to be adjusted by the size of the object
+    Handling of sub-unit size pointers needs more thought
+    -mtc 6/10/2008
+*/
+		if (POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 0))))
+			{
+			tree object_type = TREE_TYPE(TREE_TYPE(TREE_OPERAND(exp, 0)));
+			HOST_WIDE_INT object_size = int_size_in_bytes(object_type);
+			if (object_size == -1)
+				object_size = UNITS_PER_WORD;
+
+			constant_part = GEN_INT(INTVAL(constant_part) * object_size /
+				((ptr_mode_target_size(GET_MODE(op0))+ BITS_PER_UNIT -1) / BITS_PER_UNIT));
+			}
+#endif
 	      op0 = plus_constant (op0, INTVAL (constant_part));
 	      if (modifier != EXPAND_SUM && modifier != EXPAND_INITIALIZER)
 		op0 = force_operand (op0, target);
@@ -8391,7 +9999,11 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	 And force_operand won't know whether to sign-extend or
 	 zero-extend.  */
       if ((modifier != EXPAND_SUM && modifier != EXPAND_INITIALIZER)
+#ifdef __PDP10_H__
+	  || !PTR_MODE_P(mode))
+#else
 	  || mode != ptr_mode)
+#endif
 	{
 	  expand_operands (TREE_OPERAND (exp, 0), TREE_OPERAND (exp, 1),
 			   subtarget, &op0, &op1, 0);
@@ -8401,6 +10013,17 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	    return op0;
 	  goto binop2;
 	}
+
+/* If either operand is a pointer, simplify_gen_binary() doesn't have the smarts to do the
+    index adjustment, but the normal binop handling does.  Not sure if there are cases where
+    that binop code would be wrong but the code by falling through would be good.
+    -mtc 10/22/2007
+*/
+#ifdef __PDP10_H__
+	if (POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 0)))
+	    || POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(exp, 1))))
+		goto binop;
+#endif
 
       expand_operands (TREE_OPERAND (exp, 0), TREE_OPERAND (exp, 1),
 		       subtarget, &op0, &op1, modifier);
@@ -8481,7 +10104,11 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	 And force_operand won't know whether to sign-extend or
 	 zero-extend.  */
       if ((modifier != EXPAND_SUM && modifier != EXPAND_INITIALIZER)
+#ifdef __PDP10_H__
+	  || !PTR_MODE_P(mode))
+#else
 	  || mode != ptr_mode)
+#endif
 	goto binop;
 
       expand_operands (TREE_OPERAND (exp, 0), TREE_OPERAND (exp, 1),
@@ -9143,7 +10770,7 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 
     case ADDR_EXPR:
       return expand_expr_addr_expr (exp, target, tmode, modifier);
-
+	  
     case COMPLEX_EXPR:
       /* Get the rtx code of the operands.  */
       op0 = expand_normal (TREE_OPERAND (exp, 0));
@@ -9384,8 +11011,14 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
  binop3:
   if (modifier == EXPAND_STACK_PARM)
     target = 0;
+#ifdef MD_EXPAND_BINOP  /* PDP10 */
+  temp = MD_EXPAND_BINOP (mode, this_optab, op0, op1, target, unsignedp,
+			  OPTAB_LIB_WIDEN, exp);
+#else
   temp = expand_binop (mode, this_optab, op0, op1, target,
 		       unsignedp, OPTAB_LIB_WIDEN);
+#endif
+
   gcc_assert (temp);
   return REDUCE_BIT_FIELD (temp);
 }

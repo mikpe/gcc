@@ -76,7 +76,47 @@ proc c-torture-compile { src option } {
     global output
     global srcdir tmpdir
     global host_triplet
+    global iteration objdir target_triplet gcctaleHaveInfo gcctaleInclude
 
+    verbose "Enter c-torture-compile" 1
+
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+    
+    regsub "(?q)$srcdir/" $src "" testcase
+    # If we couldn't rip $srcdir out of `src' then just do the best we can.
+    # The point is to reduce the unnecessary noise in the logs.  Don't strip
+    # out too much because different testcases with the same name can confuse
+    # `test-tool'.
+    if [string match "/*" $testcase] {
+        set testcase "[file tail [file dirname $src]]/[file tail $src]"
+    }
+
+    set asmout "$objdir/[file rootname $testcase]_$iteration.mac"
+
+    verbose "Testing $testcase, $option" 1
+
+    # Run the compiler and analyze the results.
+    set options ""
+
+    if { $gcctaleHaveInfo != "1" } {
+        if ![gcctale_getinfo] {
+            return 0
+        }
+    }
+        
+    lappend options "additional_flags=-nostdinc"
+    lappend options "additional_flags=-I${gcctaleInclude}"
+    lappend options "additional_flags=-DNO_TRAMPOLINES"
+    lappend options "additional_flags=-w"
+    # MdB -- doubt NO_VARARGS is needed
+    # lappend options "additional_flags=-DNO_VARARGS"
+
+    set comp_output [gcc_target_compile "$src" "$asmout" assembly "$options"]
+    gcc_check_compile "$testcase compilation" $option $asmout $comp_output
+    file delete $asmout
+        
+    } else {
+    
     set output "$tmpdir/[file tail [file rootname $src]].o"
 
     regsub "(?q)$srcdir/" $src "" testcase
@@ -97,6 +137,7 @@ proc c-torture-compile { src option } {
     set comp_output [gcc_target_compile "$src" "$output" object $options]
     gcc_check_compile $testcase $option $output $comp_output
     file_on_host delete $output
+    }
 }
 
 #
@@ -111,11 +152,14 @@ proc c-torture-compile { src option } {
 #
 proc c-torture-execute { sources args } {
     global tmpdir tool srcdir output compiler_conditional_xfail_data
+    global objdir target_triplet gcctaleInclude gcctaleHaveInfo
+
+    verbose "Enter c-torture-execute" 1
 
     # Use the first source filename given as the filename under test.
     set src [lindex $sources 0]
 
-    if { [llength $args] > 0 } {
+   if { [llength $args] > 0 } {
 	set additional_flags [lindex $args 0]
     } else {
 	set additional_flags ""
@@ -140,7 +184,7 @@ proc c-torture-execute { sources args } {
     }
 
     set executable $tmpdir/[file tail [file rootname $src].x]
-
+    
     regsub "(?q)$srcdir/" $src "" testcase
     # If we couldn't rip $srcdir out of `src' then just do the best we can.
     # The point is to reduce the unnecessary noise in the logs.  Don't strip
@@ -149,15 +193,26 @@ proc c-torture-execute { sources args } {
     if [string match "/*" $testcase] {
 	set testcase "[file tail [file dirname $src]]/[file tail $src]"
     }
-
+    
+    set asm_prefix "$objdir/[file rootname $testcase]"
     set count 0
     set oldstatus "foo"
     foreach option $option_list {
-	if { $count > 0 } {
-	    set oldexec $execname
-	}
-	set execname "${executable}${count}"
-	incr count
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+        
+        # Not concerned with old asm files, so no
+        # "oldasmout" business.
+        set asmout "${asm_prefix}_${count}.mac"
+            
+        } else {
+        
+        if { $count > 0} {
+            set oldexec $execname
+        }
+        set execname "${executable}${count}"
+            
+        }
+        incr count
 
 	# torture_{compile,execute}_xfail are set by the .x script
 	# (if present)
@@ -171,7 +226,9 @@ proc c-torture-execute { sources args } {
             set ignore_me [eval $torture_eval_before_compile]
 	}
 
+	if { $target_triplet != "pdp10-xkl-tops20" } {
 	file_on_host delete $execname
+	}
 	verbose "Testing $testcase, $option" 1
 
 	set options ""
@@ -179,12 +236,37 @@ proc c-torture-execute { sources args } {
 	if { $additional_flags != "" } {
 	    lappend options "additional_flags=$additional_flags"
 	}
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+        
+        if { $gcctaleHaveInfo != "1" } {
+            if ![gcctale_getinfo] {
+                return 0
+            }
+        }
+
+        lappend options "additional_flags=-nostdinc"
+        lappend options "additional_flags=-I${gcctaleInclude}"
+        # PDP-10: Don't know where to add these.
+        lappend options "additional_flags=-DNO_TRAMPOLINES"
+        lappend options "additional_flags=-mlong-long-71bit"
+        # MdB -- doubt NO_VARARGS is needed
+        # lappend options "additional_flags=-DNO_VARARGS"
+        # lappend options "additional_flags=-mno-convert-voidp"
+        set comp_output [gcc_target_compile "$src" "${asmout}" assembly "$options"]
+        if ![gcc_check_compile "$testcase compilation" $option $asmout $comp_output] {
+            unresolved "$testcase execution, $option"
+            continue
+        }
+            
+        } else {
+
 	set comp_output [gcc_target_compile "$sources" "${execname}" executable $options]
 
 	if ![gcc_check_compile "$testcase compilation" $option $execname $comp_output] {
 	    unresolved "$testcase execution, $option"
 	    file_on_host delete $execname
 	    continue
+	}
 	}
 
 	# See if this source file uses "long long" types, if it does, and
@@ -195,6 +277,15 @@ proc c-torture-execute { sources args } {
 		continue
 	    }
 	}
+
+	# PDP-10: See if this source file uses floating point types,
+	# if it does, skip execution of the test.
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+            if [expr [search_for $src "float"]+[search_for $src "double"]] then {
+                unsupported "$testcase execution, $option"
+                continue
+            }
+        }
 
 	if [info exists torture_execute_xfail] {
 	    setup_xfail $torture_execute_xfail
@@ -219,6 +310,17 @@ proc c-torture-execute { sources args } {
 	# the test is fairly small and the comparison step actually slows
 	# the entire process down because it usually does not "hit".
 	set skip 0
+
+        if { $target_triplet == "pdp10-xkl-tops20" } {
+
+        if [gcctale $testcase $asmout] {
+            ${tool}_pass "$testcase execution" "$option"
+        } else {
+            ${tool}_fail "$testcase execution" "$option"
+        }
+
+        } else {
+        
 	if { ![isnative] && [info exists oldexec] } {
 	    if { [file_on_host cmp $oldexec $execname] == 0 } {
 		set skip 1
@@ -234,11 +336,16 @@ proc c-torture-execute { sources args } {
         }
 	$status "$testcase execution, $option"
 	set oldstatus $status
+        }
     }
+    # End  foreach option $option_list ...
+
     if [info exists status] {
-	if { $status == "pass" } {
-	    file_on_host delete $execname
-	}
+        if { $target_triplet != "pdp10-xkl-tops20" } {
+            if { $status == "pass" } {
+		file_on_host delete $execname
+	    }
+        }
     }
 }
 
@@ -246,6 +353,7 @@ proc c-torture-execute { sources args } {
 # search_for -- looks for a string match in a file
 #
 proc search_for { file pattern } {
+
     set fd [open $file r]
     while { [gets $fd cur_line]>=0 } {
 	if [string match "*$pattern*" $cur_line] then {
@@ -269,11 +377,16 @@ proc search_for { file pattern } {
 # to more than 14 chars.
 #
 proc c-torture { args } {
-    global srcdir subdir compiler_conditional_xfail_data
 
-    set src [lindex $args 0]
+    verbose "Enter c-torture" 1
+    global srcdir subdir compiler_conditional_xfail_data
+    # 'iteration' is a hack to help generate unique assembly
+    # output file names
+    global iteration
+
+    set src [lindex $args 0];
     if { [llength $args] > 1 } {
-	set options [lindex $args 1]
+	set options [lindex $args 1];
     } else {
 	set options ""
     }
@@ -302,6 +415,7 @@ proc c-torture { args } {
 	set option_list $torture_without_loops
     }
 
+    set iteration "0"
     # loop through all the options
     foreach option $option_list {
 	# torture_compile_xfail is set by the .x script (if present)
@@ -313,7 +427,7 @@ proc c-torture { args } {
 	if [info exists torture_eval_before_compile] {
             set ignore_me [eval $torture_eval_before_compile]
 	}
-
 	c-torture-compile $src "$option $options"
+        set iteration [expr $iteration + 1]
     }
 }

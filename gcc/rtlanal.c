@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: rtlanal.c 6d39f0096651 2008/01/24 22:19:21 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -3188,6 +3198,19 @@ subreg_get_info (unsigned int xregno, enum machine_mode xmode,
   /* The XMODE value can be seen as a vector of NREGS_XMODE
      values.  The subreg must represent a lowpart of given field.
      Compute what field it is.  */
+/* subregs should be allowable anywhere they're properly aligned!
+    This calculation can cause underflow and I don't understand how it's ever useful
+    -mtc 6/21/2007
+    In gcc430 the following code was changed to make create offset_adj and adjust
+    that instead of offset itself.  Possibly this avoids the underflow issue, but I'm retaining
+    this comment as a caution mark in case we wander through here debugging
+    -mtc 11/21/2007
+    It looks like gcc's calculation of representable is a roundabout way of calculating
+    whether the offset is a word multiple away from the lowpart.  ie. is it the lowpart of
+    some register.  We just want to know if its properly aligned, which the various asserts
+    take care of, so set representable_p to true
+    -mtc 12/21/2007
+*/
   offset_adj = offset;
   offset_adj -= subreg_lowpart_offset (ymode,
 				       mode_for_size (GET_MODE_BITSIZE (xmode)
@@ -3207,7 +3230,11 @@ subreg_get_info (unsigned int xregno, enum machine_mode xmode,
 
   if (!rknown)
     {
+#ifdef __PDP10_H__
+      info->representable_p = true;
+#else
       info->representable_p = (!(y_offset_adj % (mode_multiple / nregs_multiple)));
+#endif
       rknown = true;
     }
   info->offset = (y_offset / (mode_multiple / nregs_multiple)) * nregs_ymode;
@@ -3253,6 +3280,22 @@ subreg_regno (const_rtx x)
   rtx subreg = SUBREG_REG (x);
   int regno = REGNO (subreg);
 
+/* Sanity check because we tend to end up with SUBREG nodes that the gcc code
+     will mishandle
+     -mtc 3/5/2007
+*/
+/*
+    Comment this test out.  It turns out the subreg_offset_representable_p() is actually a check
+    that a subreg refers to the lowpart of the register or at least of a physical subregister.
+    Probably we'll want to change it so that it instead just checks that the offset is a multiple of the
+    outer mode size and either within the register or a paradoxical subregister.
+    But for now just avoid the assert.  There aren't a lot of calls to it.
+    -mtc 5/14/2007
+#ifdef __PDP10_H__
+  gcc_assert (subreg_offset_representable_p (regno, GET_MODE (subreg),
+			  	      SUBREG_BYTE (x), GET_MODE(x)));
+#endif
+*/
   ret = regno + subreg_regno_offset (regno,
 				     GET_MODE (subreg),
 				     SUBREG_BYTE (x),
@@ -3671,6 +3714,12 @@ nonzero_bits1 (const_rtx x, enum machine_mode mode, const_rtx known_x,
       /* ??? We don't properly preserve REG_POINTER changes across
 	 pointer-to-integer casts, so we can't trust it except for
 	 things that we know must be pointers.  See execute/960116-1.c.  */
+/* on PDP10 pointers are not integers and even though stack and frame registers
+    are aligned on 4 byte boundaries, it doesn't mean that they're low bits are zero.
+    -mtc 8/16/2007
+*/
+#ifdef __PDP10_H__
+#else
       if ((x == stack_pointer_rtx
 	   || x == frame_pointer_rtx
 	   || x == arg_pointer_rtx)
@@ -3690,6 +3739,7 @@ nonzero_bits1 (const_rtx x, enum machine_mode mode, const_rtx known_x,
 
 	  nonzero &= ~(alignment - 1);
 	}
+#endif
 
       {
 	unsigned HOST_WIDE_INT nonzero_for_hook = nonzero;
@@ -3930,8 +3980,16 @@ nonzero_bits1 (const_rtx x, enum machine_mode mode, const_rtx known_x,
 	  && (GET_MODE_BITSIZE (GET_MODE (SUBREG_REG (x)))
 	      <= HOST_BITS_PER_WIDE_INT))
 	{
+/* This is nonsense.  To do this correctly it would be necessary to take into account
+    SUBREG_BYTE(x) and to use GET_MODE(SUBREG_REG(x)) instead of passing
+    along mode.
+    -mtc 1/23/2008
+*/
+#ifdef __PDP10_H__
+#else
 	  nonzero &= cached_nonzero_bits (SUBREG_REG (x), mode,
 					  known_x, known_mode, known_ret);
+#endif
 
 #if defined (WORD_REGISTER_OPERATIONS) && defined (LOAD_EXTEND_OP)
 	  /* If this is a typical RISC machine, we only have to worry

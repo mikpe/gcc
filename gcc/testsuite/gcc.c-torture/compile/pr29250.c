@@ -23,7 +23,7 @@ get_full_feature_matrix (struct TSparse* sparse_feature_matrix, int num_vec)
   {
     for (f=0; f < sparse_feature_matrix[v].num_feat_entries; f++)
     {
-      long long offs = sparse_feature_matrix[v].vec_index
+      int offs = sparse_feature_matrix[v].vec_index
 	+ sparse_feature_matrix[v].features[f].feat_index;
       fm[offs] = sparse_feature_matrix[v].features[f].entry;
     }

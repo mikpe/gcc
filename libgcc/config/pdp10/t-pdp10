@@ -1,0 +1,99 @@
+# Extra objects for crt
+EXTRA_PARTS = crtini.o crtfin.o crtini-dual-stack.o crtfin-dual-stack.o
+
+crtini.o: $(gcc_srcdir)/config/pdp10/crtini.s $(GCC_PASSES)
+	$(GCC_FOR_TARGET) -mbuild-library $(MULTILIB_CFLAGS) -c -o $@ -P -x assembler-with-cpp $<
+
+crtfin.o: $(gcc_srcdir)/config/pdp10/crtfin.s $(GCC_PASSES)
+	$(GCC_FOR_TARGET) -mbuild-library $(MULTILIB_CFLAGS) -c -o $@ -P -x assembler-with-cpp $<
+
+crtini-dual-stack.o: $(gcc_srcdir)/config/pdp10/crtini.s $(GCC_PASSES)
+	$(GCC_FOR_TARGET) -mbuild-library $(MULTILIB_CFLAGS) -D__DUALSTACK__=1 -c -o $@ -P -x assembler-with-cpp $<
+
+crtfin-dual-stack.o: $(gcc_srcdir)/config/pdp10/crtfin.s $(GCC_PASSES)
+	$(GCC_FOR_TARGET) -mbuild-library $(MULTILIB_CFLAGS) -D__DUALSTACK__=1 -c -o $@ -P -x assembler-with-cpp $<
+
+# The rule to use to build libgcc1.a.
+LIBGCC1 = libgcc1-asm.a
+
+# The rule to use to build libgcc1.a when building a cross compiler.
+CROSS_LIBGCC1 = libgcc1-asm.a
+
+# Just for these, we omit the frame pointer since it makes such a big
+# difference.  It is then pointless adding debugging.
+
+TARGET_LIBGCC2_CFLAGS = -fPIC -DUNDERSCORE=.
+LIBGCC2_DEBUG_CFLAGS = -g0
+
+# Since libgcc1 is an assembler file, we can build it automatically for the
+# cross-compiler.
+LIB1ASMSRC = pdp10/libgcc1.s
+
+#
+# not all functions are implemented yet.  see libgcc1.s
+#
+#LIB1ASMFUNCS = _udivsi3 _umodsi3 _adddf3 _subdf3 _negdf2 _muldf3 _divdf3 \
+#	_eqdf2 _nedf2 _gtdf2 _gedf2 _ltdf2 _ledf2 _fixsfsi _fixdfsi	 \
+#	_floatsisf _floatsidf BADL6 BADL7 BADL8 BADL9 BADLH BADX6	 \
+#	BADX7 BADX9 BADXH
+
+LIB1ASMFUNCS = _udivsi3 _umodsi3 _umulsi3 \
+	_udivdi3 _umoddi3 \
+	_fixsfsi _fixdfsi _fixsfdi _fixdfdi \
+	BADX6 BADX7 BADX8 BADX9 BADXH
+
+#
+# removed mregparm=0/mregparm=7
+# mregparm=7 is the library default, no one uses mregparm=0
+# It took a long time to build the all of the various combinations 
+# of libgcc with these options
+#
+#MULTILIB_OPTIONS = mregparm=0/mregparm=7 mdual-stack
+
+MULTILIB_OPTIONS = mdual-stack
+MULTILIB_EXTRA_OPTS = P
+CRTSTUFF_T_CFLAGS = -
+
+
+macro : config/pdp10/macro
+	ln -sf $< $@
+
+macro.exp : config/pdp10/macro.exp
+	ln -sf $< $@
+
+telnet_tops20.exp : config/pdp10/telnet_tops20.exp
+	ln -sf $< $@
+
+link : config/pdp10/link
+	ln -sf $< $@
+
+link.exp : config/pdp10/link.exp
+	ln -sf $< $@
+
+maklib : config/pdp10/maklib
+	ln -sf $< $@
+
+maklib.exp : config/pdp10/maklib.exp
+	ln -sf $< $@
+
+gcc-netrc : config/pdp10/gcc-netrc
+	ln -sf $< $@
+
+run : config/pdp10/run
+	ln -sf $< $@
+
+run.exp : config/pdp10/run.exp
+	ln -sf $< $@
+
+#
+# maklib aliases - ar, nm and ranlib
+#
+
+$(target)-ar : config/pdp10/maklib
+	ln -sf $< $@
+
+$(target)-nm : config/pdp10/maklib
+	ln -sf $< $@
+
+$(target)-ranlib : config/pdp10/maklib
+	ln -sf $< $@

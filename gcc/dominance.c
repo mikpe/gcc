@@ -32,6 +32,16 @@
    compression, so it's the O(e*a(e,v)) variant, where a(e,v) is the very
    slowly growing functional inverse of the Ackerman function.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: dominance.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

@@ -30,7 +30,11 @@ unsigned long struct_size()
 
 unsigned long struct_a_offset()
 {
+#ifdef __PDP10__
+  return (unsigned long)(((char *) &((struct huge_struct *) 0)->a) - ((char *)(int *)0));
+#else
   return (unsigned long)(&((struct huge_struct *) 0)->a);
+#endif
 }
 
 int main()

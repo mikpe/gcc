@@ -496,6 +496,14 @@ handle_option (const char **argv, unsigned int lang_mask)
       if (!value)
 	arg += strlen ("no-");
 
+/* Perhaps there's some way of declaring an option to work this way, but we prefer
+    to separate the argument from option name by an equal sign
+*/
+#ifdef __PDP10_H__
+      if (*arg == '=')
+	  arg++;
+#endif
+
       if (*arg == '\0' && !(option->flags & CL_MISSING_OK))
 	{
 	  if (option->flags & CL_SEPARATE)
@@ -787,7 +795,13 @@ decode_options (unsigned int argc, const char **argv)
       flag_if_conversion2 = 1;
       flag_ipa_pure_const = 1;
       flag_ipa_reference = 1;
+#ifdef __PDP10_H__
+/* Splitting double registers into multiple registers doesn't make sense on the PDP10
+    -mtc 5/22/2009
+*/
+#else
       flag_split_wide_types = 1;
+#endif
       flag_tree_ccp = 1;
       flag_tree_dce = 1;
       flag_tree_dom = 1;
@@ -830,7 +844,17 @@ decode_options (unsigned int argc, const char **argv)
       flag_schedule_insns_after_reload = 1;
 #endif
       flag_regmove = 1;
+
+/* Strict Aliasing means the compiler may infer whether pointers might reference
+    the same memory by analyzing the use of their types.  A totally invalid assumption
+    based on XKL's prolific use of pointer type casts.
+    -mtc 10/08/2007
+*/
+#ifdef __PDP10_H__
+#else
       flag_strict_aliasing = 1;
+#endif
+
       flag_strict_overflow = 1;
       flag_delete_null_pointer_checks = 1;
       flag_reorder_blocks = 1;
@@ -854,7 +878,14 @@ decode_options (unsigned int argc, const char **argv)
       flag_inline_functions = 1;
       flag_unswitch_loops = 1;
       flag_gcse_after_reload = 1;
+
+/* vector operations don't work on pdp10
+    -mtc 3/18/2008
+*/
+#ifdef __PDP10_H__
+#else
       flag_tree_vectorize = 1;
+#endif
 
       /* Allow even more virtual operators.  */
       set_param_value ("max-aliased-vops", 1000);
@@ -1757,6 +1788,10 @@ common_handle_option (size_t scode, const char *arg, int value,
     case OPT_gstabs:
     case OPT_gstabs_:
       set_debug_level (DBX_DEBUG, code == OPT_gstabs_, arg);
+      break;
+
+    case OPT_gtops:
+      set_debug_level (TOPS20_DEBUG, false, arg);
       break;
 
     case OPT_gvms:

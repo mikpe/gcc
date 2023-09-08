@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: explow.c 3a4e7553a389 2012/10/11 22:29:10 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -106,7 +116,15 @@ plus_constant (rtx x, HOST_WIDE_INT c)
 	unsigned HOST_WIDE_INT lv;
 	HOST_WIDE_INT hv;
 
+/* We're dealing with target machine format numbers, so need to use
+    target machine add
+    -mtc 1/17/2007
+*/
+#ifdef __PDP10_H__
+	pdp10_add_double (l1, h1, l2, h2, &lv, &hv);
+#else
 	add_double (l1, h1, l2, h2, &lv, &hv);
+#endif
 
 	return immed_double_const (lv, hv, VOIDmode);
       }
@@ -305,7 +323,16 @@ break_out_memory_refs (rtx x)
       rtx op1 = break_out_memory_refs (XEXP (x, 1));
 
       if (op0 != XEXP (x, 0) || op1 != XEXP (x, 1))
+
+/* What are the gcc folks thinking?  The copy should preserve the mode, not
+    change it arbitrarily to Pmode.
+    -mtc 10/10/2007
+*/
+#ifdef __PDP10_H__
+	x = gen_rtx_fmt_ee (GET_CODE (x), GET_MODE(x), op0, op1);
+#else
 	x = gen_rtx_fmt_ee (GET_CODE (x), Pmode, op0, op1);
+#endif
     }
 
   return x;
@@ -318,9 +345,113 @@ break_out_memory_refs (rtx x)
    used.  */
 
 rtx
-convert_memory_address (enum machine_mode to_mode ATTRIBUTE_UNUSED, 
+convert_memory_address (enum machine_mode to_mode, 
 			rtx x)
 {
+#ifdef __PDP10_H__
+  /* In the 3.3.6 compiler, this routine was a nop, because we don't define POINTERS_EXTEND_UNSIGNED and the
+      code simply returned.  In 4.1.1 an assert is added that cause many calls to die.
+      So we need to implement it correctly.
+      For now we implement our own variant, as PDP10 pointers cannot be extended either signed or unsigned.
+      In normal code, we can convert by calling pdp10_convert_ptr(), but that is invalid both in the global context and when
+      doing an EXPAND_INITIALIZER expansion.  global context can be detected by seeing if cfun is set.
+      EXPAND_INITIALIZER is a parameter to at least some procedures that may call us.
+      For now, try to avoid calling pdp10_convert_ptr() as much as we can and we'll see if it's necessary to add another
+      parameter somehow.
+       -mtc 5/7/2007
+       Handle constants by simply returning them.
+       It might turn out that we need to do some manipulation of them based on the types and modes, but constants dont
+       necessarily have a mode so we need to see examples to tell what to do.
+       -mtc 10/17/2007
+       Try setting mode of constants.  Note that for PDP10 the routine doesn't simply toggle between two pointer modes since
+       we have a large number of pointer modes.  Instead it converts from whatever x is, to to_mode.
+       The idea is to tag constants with their type so that we can do appropriate arithmetic on them.  The actual bits of the
+       constant itself are unaffected.  Probably we need to add conversion between different constant pointer modes here
+       -mtc 10/24/2007
+       Add handing for CONST and for PLUS where RHS is a CONST_INT.  This addresses address conversion of fields within
+       records.
+       -mtc 11/5/2010
+  */
+  rtx temp;
+  enum machine_mode from_mode = GET_MODE(x);
+
+  gcc_assert(PTR_MODE_P(to_mode));
+  gcc_assert(PTR_MODE_P(GET_MODE(x)) || (GET_MODE(x) == VOIDmode));
+
+  if (GET_MODE (x) == to_mode)
+    return x;
+
+  switch (GET_CODE(x))
+  	{
+	case CONST_INT:
+	case CONST_DOUBLE:
+		if (to_mode == ptr_mode && (from_mode == VOIDmode || from_mode == ptr_mode))
+			return x;
+
+		if (from_mode == VOIDmode)
+			{
+			temp = shallow_copy_rtx(x);
+			PUT_MODE(temp, to_mode);
+			return temp;
+			}
+
+		/* We're converting a constant between pointer types.
+		    Adjust according to the target sizes.
+		    If alignments don't match this will truncate the address to the target alignment.
+		    -mtc 3/21/2011
+		*/
+			{
+			int bitoffset = INTVAL(x) * ptr_mode_target_size(from_mode);
+			int wordoffset = bitoffset / BITS_PER_WORD;
+			bitoffset = bitoffset % BITS_PER_WORD;
+			temp = GEN_INT(wordoffset * (BITS_PER_WORD/ptr_mode_target_size(to_mode)) + bitoffset/ptr_mode_target_size(to_mode));
+			PUT_MODE(temp, to_mode);
+			return temp;
+			}
+		
+	case SYMBOL_REF:
+		temp = shallow_copy_rtx (x);
+		PUT_MODE (temp, to_mode);
+		return temp;
+
+	case CONST:
+		temp = convert_memory_address(to_mode, XEXP(x, 0));
+		if (GET_CODE(temp) == CONST)
+			return temp;
+		else
+			return gen_rtx_CONST(to_mode, temp);
+
+	case PLUS:
+		if (GET_CODE(XEXP(x, 1)) == CONST_INT)
+			{
+			int oldoffset = INTVAL(XEXP(x, 1));
+			int fromtargetsize = ptr_mode_target_size(from_mode);
+			int totargetsize = ptr_mode_target_size(to_mode);
+			int newoffset;
+
+			/* if from is a word pointer plus offset but not a symbol ref */
+			/* just apply the pointer conversion to the whole expression */
+			if (cfun && fromtargetsize == BITS_PER_WORD && GET_CODE(XEXP(x, 0)) != SYMBOL_REF)
+				return pdp10_convert_ptr(NULL, x, NULL, fromtargetsize, totargetsize, 1);
+
+			if (fromtargetsize > totargetsize)
+				newoffset = oldoffset * (fromtargetsize / totargetsize);
+			else
+				newoffset = oldoffset / (totargetsize / fromtargetsize);
+
+			temp = convert_memory_address(to_mode, XEXP(x, 0));
+			return plus_constant(temp, newoffset);
+			}
+		/* otherwise fall through to default */
+
+	default:
+		if (cfun)
+			return pdp10_convert_ptr(NULL, x, NULL, ptr_mode_target_size(GET_MODE(x)), ptr_mode_target_size(to_mode), 1);
+		gcc_assert(false);
+  	}
+  
+  return x;
+#else
 #ifndef POINTERS_EXTEND_UNSIGNED
   gcc_assert (GET_MODE (x) == to_mode || GET_MODE (x) == VOIDmode);
   return x;
@@ -402,6 +533,7 @@ convert_memory_address (enum machine_mode to_mode ATTRIBUTE_UNUSED,
   return convert_modes (to_mode, from_mode,
 			x, POINTERS_EXTEND_UNSIGNED);
 #endif /* defined(POINTERS_EXTEND_UNSIGNED) */
+#endif
 }
 
 /* Return something equivalent to X but valid as a memory address
@@ -412,13 +544,29 @@ rtx
 memory_address (enum machine_mode mode, rtx x)
 {
   rtx oldx = x;
+  enum machine_mode modeptrmode =
+#ifdef __PDP10_H__
+  	ptr_mode_for_mode(mode);
+#else
+  	Pmode;
+#endif	
 
-  x = convert_memory_address (Pmode, x);
+  x = convert_memory_address (modeptrmode, x);
+
+#ifdef __PDP10_H__
+  if (GET_MODE (x) != modeptrmode)
+  	{
+  	if (ptr_mode_ok_for_mode(GET_MODE(x), mode))
+		modeptrmode = GET_MODE(x);
+	else
+		x = pdp10_convert_ptr(NULL, x, NULL, ptr_mode_target_size(GET_MODE(x)), ptr_mode_target_size(modeptrmode), 1);
+  	}
+#endif
 
   /* By passing constant addresses through registers
      we get a chance to cse them.  */
   if (! cse_not_expected && CONSTANT_P (x) && CONSTANT_ADDRESS_P (x))
-    x = force_reg (Pmode, x);
+    x = force_reg (modeptrmode, x);
 
   /* We get better cse by rejecting indirect addressing at this stage.
      Let the combiner create indirect addresses where appropriate.
@@ -484,7 +632,7 @@ memory_address (enum machine_mode mode, rtx x)
       /* Last resort: copy the value to a register, since
 	 the register is a valid address.  */
       else
-	x = force_reg (Pmode, x);
+	x = force_reg (modeptrmode, x);
     }
 
  done:
@@ -506,6 +654,26 @@ memory_address (enum machine_mode mode, rtx x)
 
   return x;
 }
+
+#ifdef __PDP10_H__
+/* Like 'memory_address' but describe the target with a type tree instead of with
+   a machine mode.  This allows us to determine a more precise pointer mode.
+    */
+
+rtx
+memory_address_type (tree type, rtx x)
+{
+  enum machine_mode mode = TYPE_MODE(type);
+
+  /* QImode is ambiguous.  Instead try to determine a more specific QnI mode */  
+  if (mode == QImode)
+  	/* TYPE_SIZE can be null for example if TREE_CODE(type) is RECORD_TYPE 
+  	     but I think this will never be the case when mode == QImode */
+	mode = really_smallest_int_mode_for_size(tree_low_cst(TYPE_SIZE(type), 1));
+
+return memory_address(mode, x);
+}
+#endif
 
 /* Convert a mem ref into one with a valid memory address.
    Pass through anything else unchanged.  */
@@ -618,7 +786,14 @@ copy_to_mode_reg (enum machine_mode mode, rtx x)
   if (! general_operand (x, VOIDmode))
     x = force_operand (x, temp);
 
+/* we sometimes tag constants with a mode, so our check needs to be different
+    -mtc 11/19/2007
+*/
+#ifdef __PDP10_H__
+  gcc_assert (GET_MODE (x) == mode || GET_MODE (x) == VOIDmode || GET_CODE(x) == CONST_INT);
+#else
   gcc_assert (GET_MODE (x) == mode || GET_MODE (x) == VOIDmode);
+#endif
   if (x != temp)
     emit_move_insn (temp, x);
   return temp;
@@ -1110,11 +1285,19 @@ allocate_dynamic_stack_space (rtx size, rtx target, int known_align)
 #define MUST_ALIGN (PREFERRED_STACK_BOUNDARY < BIGGEST_ALIGNMENT)
 #endif
 
+/* This adjustment is redundant with the subsequent call to round_push() and seem like its
+    some sort of historical merge error
+    -mtc 11/5/2009
+*/
+#ifdef __PDP10_H__
+#else
   if (MUST_ALIGN)
     size
       = force_operand (plus_constant (size,
 				      BIGGEST_ALIGNMENT / BITS_PER_UNIT - 1),
 		       NULL_RTX);
+#endif
+
 
 #ifdef SETJMP_VIA_SAVE_AREA
   /* If setjmp restores regs from a save area in the stack frame,
@@ -1269,18 +1452,30 @@ allocate_dynamic_stack_space (rtx size, rtx target, int known_align)
 
   if (MUST_ALIGN)
     {
+      unsigned align = BIGGEST_ALIGNMENT / BITS_PER_UNIT;
+
+#ifdef __PDP10_H__
+      /* on the PDP10 align must be a word boundary, so this is all nonsense
+         - mtc 11/6/2009
+      */
+      if (align != UNITS_PER_WORD)
+	abort ();
+#else
+
       /* CEIL_DIV_EXPR needs to worry about the addition overflowing,
 	 but we know it can't.  So add ourselves and then do
 	 TRUNC_DIV_EXPR.  */
       target = expand_binop (Pmode, add_optab, target,
-			     GEN_INT (BIGGEST_ALIGNMENT / BITS_PER_UNIT - 1),
-			     NULL_RTX, 1, OPTAB_LIB_WIDEN);
+			GEN_INT (align - 1),
+			NULL_RTX, 1, OPTAB_LIB_WIDEN);
       target = expand_divmod (0, TRUNC_DIV_EXPR, Pmode, target,
-			      GEN_INT (BIGGEST_ALIGNMENT / BITS_PER_UNIT),
-			      NULL_RTX, 1);
+			 GEN_INT (align),
+			 NULL_RTX, 1);
       target = expand_mult (Pmode, target,
-			    GEN_INT (BIGGEST_ALIGNMENT / BITS_PER_UNIT),
-			    NULL_RTX, 1);
+		       GEN_INT (align),
+		       NULL_RTX, 1);
+#endif
+
     }
 
   /* Record the new stack level for nonlocal gotos.  */

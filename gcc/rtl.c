@@ -18,6 +18,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: rtl.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 /* This file is compiled twice: once for the generator programs
    once for the compiler.  */
 #ifdef GENERATOR_FILE
@@ -377,6 +387,23 @@ rtx_equal_p (const_rtx x, const_rtx y)
     case CONST_INT:
     case CONST_FIXED:
       return 0;
+
+/* MEM references with different offsets are not equal
+    -mtc 1/4/2007
+*/
+#ifdef __PDP10_H__
+    case MEM:
+	{
+	int xoffset = 0;
+	int yoffset = 0;
+	if (MEM_OFFSET(x))
+		xoffset = INTVAL(MEM_OFFSET(x));
+	if (MEM_OFFSET(y))
+		yoffset = INTVAL(MEM_OFFSET(y));
+	if (xoffset != yoffset)
+		return 0;
+    	}
+#endif
 
     default:
       break;

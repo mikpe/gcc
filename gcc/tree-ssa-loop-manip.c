@@ -72,7 +72,11 @@ create_iv (tree base, tree step, tree var, struct loop *loop,
 
   /* For easier readability of the created code, produce MINUS_EXPRs
      when suitable.  */
+#ifdef __PDP10_H__
+  if ((TREE_CODE (step) == INTEGER_CST) && !POINTER_TYPE_P(TREE_TYPE(step)))
+#else
   if (TREE_CODE (step) == INTEGER_CST)
+#endif
     {
       if (TYPE_UNSIGNED (TREE_TYPE (step)))
 	{

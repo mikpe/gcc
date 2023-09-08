@@ -33,6 +33,16 @@ along with GCC; see the file COPYING3.  If not see
    dependent is the kind of rtx's they make and what arguments they
    use.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id$";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -546,7 +556,16 @@ immed_double_const (HOST_WIDE_INT i0, HOST_WIDE_INT i1, enum machine_mode mode)
       if (GET_MODE_BITSIZE (mode) <= HOST_BITS_PER_WIDE_INT)
 	return gen_int_mode (i0, mode);
 
+/* How can the gcc folks be so blind.  Of course the target machine can have a mode between the host
+    machine wide int and twice that.
+    Hopefully they haven't totally messed up the actual logic of this and related routines.
+    -mtc 10/11/2007
+*/
+#ifdef __PDP10_H__
+      gcc_assert (GET_MODE_BITSIZE (mode) <= 2 * HOST_BITS_PER_WIDE_INT);
+#else
       gcc_assert (GET_MODE_BITSIZE (mode) == 2 * HOST_BITS_PER_WIDE_INT);
+#endif
     }
 
   /* If this integer fits in one word, return a CONST_INT.  */
@@ -689,6 +708,17 @@ validate_subreg (enum machine_mode omode, enum machine_mode imode,
   unsigned int isize = GET_MODE_SIZE (imode);
   unsigned int osize = GET_MODE_SIZE (omode);
 
+#ifdef __PDP10_H__
+/* sub byte modes need special treatment
+    -mtc 3/28/2011
+*/
+  if (osize == 1)
+  	{
+	int wordsize = BITS_PER_WORD / GET_MODE_PRECISION(omode);
+	isize = wordsize * GET_MODE_SIZE(imode) / UNITS_PER_WORD;
+  	}
+#endif
+
   /* All subregs must be aligned.  */
   if (offset % osize != 0)
     return false;
@@ -757,6 +787,13 @@ validate_subreg (enum machine_mode omode, enum machine_mode imode,
      of a subword.  A subreg does *not* perform arbitrary bit extraction.
      Given that we've already checked mode/offset alignment, we only have
      to check subword subregs here.  */
+/* subreg doesn't have the expressive power to represent arbitrary bit extraction
+    but there's no reason not to allow anything it *can* express.  That's pretty
+    much the whole point of the construct!
+    -mtc 5/14/2007
+*/
+#ifdef __PDP10_H__
+#else
   if (osize < UNITS_PER_WORD)
     {
       enum machine_mode wmode = isize > UNITS_PER_WORD ? word_mode : imode;
@@ -764,6 +801,7 @@ validate_subreg (enum machine_mode omode, enum machine_mode imode,
       if (offset % UNITS_PER_WORD != low_off)
 	return false;
     }
+#endif
   return true;
 }
 
@@ -1001,6 +1039,13 @@ set_reg_attrs_for_decl_rtl (tree t, rtx x)
   if (GET_CODE (x) == SUBREG)
     {
       gcc_assert (subreg_lowpart_p (x));
+	  
+/* NOTE that on the PDP10 SUBREG_REG(x) is not necessarily a REG node
+    It can be ZERO_EXTRACT or SIGN_EXTRACT or ???
+    We formerly ifdeffed the precursor code to this section to avoid problems
+    But it appears we will now do nothing, which I think is correct.
+    -mtc 12/21/2007
+*/
       x = SUBREG_REG (x);
     }
   if (REG_P (x))
@@ -1147,12 +1192,30 @@ gen_lowpart_common (enum machine_mode mode, rtx x)
 
   /* Unfortunately, this routine doesn't take a parameter for the mode of X,
      so we have to make one up.  Yuk.  */
+  /* YUK is right, HOST_BITS_PER_WIDE_INT has nothing to do with modes
+      on the target machine.  Just use BITS_PER_WORD.
+      Also, don't override a mode that's associated with x.  
+      -mtc 4/10/2007
+      add check for CONST_DOUBLE
+      -mtc 5/16/2007
+  */
+#ifdef __PDP10_H__
+  innermode = GET_MODE (x);
+  if (innermode ==VOIDmode)
+  	{
+  	if (GET_CODE(x) == CONST_INT || GET_CODE(x) == CONST_DOUBLE)
+		/* it might make more sense to set the mode depending on the value of the constant */
+		innermode = ((msize * BITS_PER_UNIT <= BITS_PER_WORD) ? SImode : DImode);
+	/* other cases the base code would just use a double word.  We should wait and see how that happens */
+  	}
+#else
   innermode = GET_MODE (x);
   if (GET_CODE (x) == CONST_INT
       && msize * BITS_PER_UNIT <= HOST_BITS_PER_WIDE_INT)
     innermode = mode_for_size (HOST_BITS_PER_WIDE_INT, MODE_INT, 0);
   else if (innermode == VOIDmode)
     innermode = mode_for_size (HOST_BITS_PER_WIDE_INT * 2, MODE_INT, 0);
+#endif
   
   xsize = GET_MODE_SIZE (innermode);
 
@@ -1249,6 +1312,17 @@ subreg_lowpart_offset (enum machine_mode outermode, enum machine_mode innermode)
   unsigned int offset = 0;
   int difference = (GET_MODE_SIZE (innermode) - GET_MODE_SIZE (outermode));
 
+#ifdef __PDP10_H__
+/* sub byte modes need special treatment
+    -mtc 3/28/2011
+*/
+  if (GET_MODE_SIZE(outermode) == 1)
+  	{
+	int wordsize = BITS_PER_WORD / GET_MODE_PRECISION(outermode);
+	difference = wordsize * (GET_MODE_SIZE(innermode) / UNITS_PER_WORD) - 1;
+  	}
+#endif
+
   if (difference > 0)
     {
       if (WORDS_BIG_ENDIAN)
@@ -1296,7 +1370,7 @@ subreg_lowpart_p (const_rtx x)
   return (subreg_lowpart_offset (GET_MODE (x), GET_MODE (SUBREG_REG (x)))
 	  == SUBREG_BYTE (x));
 }
-
+
 /* Return subword OFFSET of operand OP.
    The word number, OFFSET, is interpreted as the word number starting
    at the low-order address.  OFFSET 0 is the low-order word if not
@@ -1344,7 +1418,6 @@ operand_subword (rtx op, unsigned int offset, int validate_address, enum machine
   if (MEM_P (op))
     {
       rtx new = adjust_address_nv (op, word_mode, offset * UNITS_PER_WORD);
-
       if (! validate_address)
 	return new;
 
@@ -1467,11 +1540,22 @@ void
 set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 				 HOST_WIDE_INT bitpos)
 {
+/* with 430 update rework ifdefs to make pdp10 customization clearer
+    -mtc 11/28/2007
+*/
+#ifdef __PDP10_H__
+  alias_set_type alias;
+  tree expr;
+  rtx offset;
+  rtx size;
+  unsigned int align;
+#else
   alias_set_type alias = MEM_ALIAS_SET (ref);
   tree expr = MEM_EXPR (ref);
   rtx offset = MEM_OFFSET (ref);
   rtx size = MEM_SIZE (ref);
   unsigned int align = MEM_ALIGN (ref);
+#endif
   HOST_WIDE_INT apply_bitpos = 0;
   tree type;
 
@@ -1480,6 +1564,21 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
      we can see here.  */
   if (t == NULL_TREE)
     return;
+
+/* with 430 update rework ifdefs to make pdp10 customization clearer
+    -mtc 11/28/2007
+*/
+#ifdef __PDP10_H__
+  /* PDP10: Dig out the mem */
+  if (GET_CODE (ref) == SUBREG)
+    ref = XEXP (SUBREG_REG (ref), 0);
+
+  alias = MEM_ALIAS_SET (ref);
+  expr = MEM_EXPR (ref);
+  offset = MEM_OFFSET (ref);
+  size = MEM_SIZE (ref);
+  align = MEM_ALIGN (ref);
+#endif
 
   type = TYPE_P (t) ? t : TREE_TYPE (t);
   if (type == error_mark_node)
@@ -1604,6 +1703,17 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
       /* ??? There is some information that can be gleened from bit-fields,
 	 such as the word offset in the structure that might be modified.
 	 But skip it for now.  */
+
+	/* The PDP10 is now using the offset field to contain the portion of an address
+	    that hasn't been included in the explicit memory calculation under the MEM
+	    node.  Formerly, we pretty much ignored it.  It seems like the gcc model is
+	    actually that the description is supposed to match the explicit memory calculation.
+	    If it turns out that something depends on that match, the more robust solution
+	    will be to add a new "unapplied offset" attribute.
+	*/
+
+#ifdef __PDP10_H__
+#else
       else if (TREE_CODE (t) == COMPONENT_REF
 	       && ! DECL_BIT_FIELD (TREE_OPERAND (t, 1)))
 	{
@@ -1613,6 +1723,7 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	  /* ??? Any reason the field size would be different than
 	     the size we got from the type?  */
 	}
+#endif
 
       /* If this is an array reference, look for an outer field reference.  */
       else if (TREE_CODE (t) == ARRAY_REF)
@@ -1647,6 +1758,24 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	  while (TREE_CODE (t2) == ARRAY_REF);
 
 	  if (DECL_P (t2))
+
+/* Alignments on the PDP10 are weird because the word size is not a power of 2 and
+    because the character size does not necessarily divide the word size.
+    Instead of doing incorrect arithmetic, just set it based on TYPE.
+    -mtc 2/21/2008
+*/
+#ifdef __PDP10_H__
+	    {
+	      expr = t2;
+	      offset = NULL;
+	      if (host_integerp (off_tree, 1))
+		{
+		  align = GET_MODE_ALIGNMENT(TYPE_MODE(type));
+		  offset = GEN_INT(tree_low_cst (off_tree, 1));
+		  apply_bitpos = bitpos;
+		}
+	    }
+#else
 	    {
 	      expr = t2;
 	      offset = NULL;
@@ -1661,6 +1790,14 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 		  apply_bitpos = bitpos;
 		}
 	    }
+#endif
+
+/* Arrays that are a field of a struct have the same issue as fields for the PDP10.
+    It's best to leave the expr referencing the containing struct and not futz with
+    the bitoffset here.
+*/
+#ifdef __PDP10_H__
+#else
 	  else if (TREE_CODE (t2) == COMPONENT_REF)
 	    {
 	      expr = component_ref_for_mem_expr (t2);
@@ -1672,6 +1809,7 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	      /* ??? Any reason the field size would be different than
 		 the size we got from the type?  */
 	    }
+#endif
 	  else if (flag_argument_noalias > 1
 		   && (INDIRECT_REF_P (t2))
 		   && TREE_CODE (TREE_OPERAND (t2, 0)) == PARM_DECL)
@@ -1695,12 +1833,38 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
   /* If we modified OFFSET based on T, then subtract the outstanding
      bit position offset.  Similarly, increase the size of the accessed
      object to contain the negative offset.  */
+/* PDP10 is complicated by the pad bits at the end of every word
+    -mtc 2/21/2008
+*/
+#ifdef __PDP10_H__
+  if (apply_bitpos)
+    {
+      HOST_WIDE_INT bits_per_unit = GET_MODE_ALIGNMENT(TYPE_MODE(type));
+      HOST_WIDE_INT units_per_word = BITS_PER_WORD  / bits_per_unit;
+      HOST_WIDE_INT apply_words = apply_bitpos / BITS_PER_WORD;
+      HOST_WIDE_INT apply_leftover_bits = apply_bitpos % BITS_PER_WORD;
+      HOST_WIDE_INT adjustment = apply_words * units_per_word + apply_leftover_bits / bits_per_unit;
+
+      gcc_assert (apply_leftover_bits % bits_per_unit == 0);
+	  
+      /* one final adjustment to accomodate half and full word arrays
+          -mtc 2/28/2008
+      */
+      if (units_per_word < UNITS_PER_WORD)
+	  	adjustment = adjustment * (UNITS_PER_WORD / units_per_word);
+
+      offset = plus_constant (offset, -adjustment);
+      if (size)
+	size = plus_constant (size, adjustment);
+    }
+#else
   if (apply_bitpos)
     {
       offset = plus_constant (offset, -(apply_bitpos / BITS_PER_UNIT));
       if (size)
 	size = plus_constant (size, apply_bitpos / BITS_PER_UNIT);
     }
+#endif
 
   if (TREE_CODE (t) == ALIGN_INDIRECT_REF)
     {
@@ -1748,6 +1912,12 @@ set_mem_attrs_from_reg (rtx mem, rtx reg)
 void
 set_mem_alias_set (rtx mem, alias_set_type set)
 {
+#ifdef __PDP10_H__
+  /* PDP-10.  Dig out the MEM*/
+  if (GET_CODE (mem) == SUBREG && GET_CODE (XEXP (mem, 0)) == ZERO_EXTRACT)
+    mem = XEXP (XEXP (mem, 0), 0);
+#endif
+
 #ifdef ENABLE_CHECKING
   /* If the new and old alias sets don't conflict, something is wrong.  */
   gcc_assert (alias_sets_conflict_p (set, MEM_ALIAS_SET (mem)));
@@ -1805,13 +1975,21 @@ set_mem_size (rtx mem, rtx size)
    attributes are not changed.  */
 
 static rtx
-change_address_1 (rtx memref, enum machine_mode mode, rtx addr, int validate)
+change_address_1 (rtx memref1, enum machine_mode mode, rtx addr, int validate)
 {
+  rtx memref = memref1;
   rtx new;
+
+#ifdef __PDP10_H__
+  /* PDP-10: dig out the MEM.  */
+  if (GET_CODE (memref1) == SUBREG
+      && GET_CODE (SUBREG_REG (memref1)) == ZERO_EXTRACT)
+    memref = XEXP (XEXP (memref1, 0), 0);
+#endif
 
   gcc_assert (MEM_P (memref));
   if (mode == VOIDmode)
-    mode = GET_MODE (memref);
+    mode = GET_MODE (memref1);
   if (addr == 0)
     addr = XEXP (memref, 0);
   if (mode == GET_MODE (memref) && addr == XEXP (memref, 0)
@@ -1826,11 +2004,28 @@ change_address_1 (rtx memref, enum machine_mode mode, rtx addr, int validate)
 	addr = memory_address (mode, addr);
     }
 
-  if (rtx_equal_p (addr, XEXP (memref, 0)) && mode == GET_MODE (memref))
+  if (rtx_equal_p (addr, XEXP (memref1, 0)) && mode == GET_MODE (memref1))
     return memref;
 
   new = gen_rtx_MEM (mode, addr);
   MEM_COPY_ATTRIBUTES (new, memref);
+
+#ifdef __PDP10_H__
+  /* generate a new SUBREG if mode is narrower than a word */
+  if (GET_MODE_SIZE (mode) < UNITS_PER_WORD
+      && GET_CODE (memref1) == SUBREG
+      && GET_CODE (SUBREG_REG (memref1)) == ZERO_EXTRACT)
+    {
+      PUT_MODE (new, SImode);
+      new = gen_rtx_SUBREG (mode,
+			    gen_rtx_ZERO_EXTRACT (SImode,
+						  new,
+						  XEXP (SUBREG_REG (memref1), 1),
+						  XEXP (SUBREG_REG (memref1), 2)),
+			    UNITS_PER_WORD - GET_MODE_SIZE (mode));
+    }
+#endif
+
   return new;
 }
 
@@ -1838,17 +2033,29 @@ change_address_1 (rtx memref, enum machine_mode mode, rtx addr, int validate)
    way we are changing MEMREF, so we only preserve the alias set.  */
 
 rtx
-change_address (rtx memref, enum machine_mode mode, rtx addr)
+change_address (rtx memref1, enum machine_mode mode, rtx addr)
 {
-  rtx new = change_address_1 (memref, mode, addr, 1), size;
+  rtx new = change_address_1 (memref1, mode, addr, 1), size;
   enum machine_mode mmode = GET_MODE (new);
+  rtx mem, memref = memref1;
   unsigned int align;
+
+#ifdef __PDP10_H__
+  /* PDP-10: dig out the MEM.  */
+  mem = new;
+  if (GET_CODE (mem) == SUBREG && GET_CODE (SUBREG_REG (mem)) == ZERO_EXTRACT)
+    mem = XEXP (XEXP (mem, 0), 0);
+
+  if (GET_CODE (memref) == SUBREG
+      && GET_CODE (SUBREG_REG (memref)) == ZERO_EXTRACT)
+    memref = XEXP (XEXP (memref, 0), 0);
+#endif
 
   size = mmode == BLKmode ? 0 : GEN_INT (GET_MODE_SIZE (mmode));
   align = mmode == BLKmode ? BITS_PER_UNIT : GET_MODE_ALIGNMENT (mmode);
 
   /* If there are no changes, just return the original memory reference.  */
-  if (new == memref)
+  if (new == memref1)
     {
       if (MEM_ATTRS (memref) == 0
 	  || (MEM_EXPR (memref) == NULL
@@ -1857,12 +2064,38 @@ change_address (rtx memref, enum machine_mode mode, rtx addr)
 	      && MEM_ALIGN (memref) == align))
 	return new;
 
-      new = gen_rtx_MEM (mmode, XEXP (memref, 0));
-      MEM_COPY_ATTRIBUTES (new, memref);
+      mem = gen_rtx_MEM (mmode, XEXP (memref, 0));
+      MEM_COPY_ATTRIBUTES (mem, memref);
+	  
+      if (GET_CODE (memref1) == SUBREG
+	  && GET_CODE (SUBREG_REG (memref1)) == ZERO_EXTRACT)
+		new = gen_rtx_SUBREG (mmode,
+				  gen_rtx_ZERO_EXTRACT (SImode,
+							mem,
+							XEXP (SUBREG_REG (memref1), 1),
+							XEXP (SUBREG_REG (memref1), 2)),
+				  UNITS_PER_WORD - GET_MODE_SIZE (mmode));
+      else
+		new = mem;
     }
 
-  MEM_ATTRS (new)
+  MEM_ATTRS (mem)
     = get_mem_attrs (MEM_ALIAS_SET (memref), 0, 0, size, align, mmode);
+
+#if 0  
+  /* PDP10: This looks wrong to me.  
+     change_address_1 already made a new subreg if needful */
+  new = mem;
+
+  if (GET_CODE (memref1) == SUBREG
+      && GET_CODE (SUBREG_REG (memref1)) == ZERO_EXTRACT)
+    new = gen_rtx_SUBREG (mmode,
+			  gen_rtx_ZERO_EXTRACT (SImode,
+						new,
+						XEXP (SUBREG_REG (memref1), 1),
+						XEXP (SUBREG_REG (memref1), 2)),
+			  UNITS_PER_WORD - GET_MODE_SIZE (mmode));
+#endif
 
   return new;
 }
@@ -1877,11 +2110,54 @@ rtx
 adjust_address_1 (rtx memref, enum machine_mode mode, HOST_WIDE_INT offset,
 		  int validate, int adjust)
 {
+#ifdef __PDP10_H__
+    rtx memrefsave=0;
+    int subregbytesave=0;
+    /* PDP10: dig out the mem */
+    if (GET_CODE (memref) == SUBREG &&
+        GET_CODE (XEXP (memref, 0)) == ZERO_EXTRACT)
+    {
+        memrefsave = memref;
+	/* its not clear whether we should be digging the offset out of the SUBREG or out of the position in the
+	    ZERO_EXTRACT
+	    -mtc 10/22/2007
+	*/
+        subregbytesave = SUBREG_BYTE(memref);
+        memref = XEXP (XEXP (memref, 0), 0);
+    }
+{
+#endif
+
   rtx addr = XEXP (memref, 0);
   rtx new;
   rtx memoffset = MEM_OFFSET (memref);
-  rtx size = 0;
+  rtx size;
   unsigned int memalign = MEM_ALIGN (memref);
+  
+#ifdef __PDP10_H__
+    /* On the PDP10,  addresses are generally word addresses so we store the residue in the memoffset
+        Combine any existing memoffset with the offset to get the total offset and then divide that into
+        a new memoffset and word offset
+        The memoffset will always end up a non-negative number less than the number of UNITS_PER_WORD
+        Note that not specifying the adjust flag is questionable because computing the address and offset
+        separately is incredibly error prone.
+        Now that we've added byte pointer modes, we will attempt include the offset in the address when we can
+        -mtc 8/24/2006
+        Include subregbytesave in the total offset
+        -mtc 10/22/2007
+    */
+    int memoffsetvalue = (memoffset ? INTVAL(memoffset) : 0);
+    int totaloffset = offset + memoffsetvalue + subregbytesave;
+    int wordoffset;
+    
+    memoffsetvalue = totaloffset % UNITS_PER_WORD;
+    wordoffset = totaloffset / UNITS_PER_WORD;
+    if (memoffsetvalue < 0)
+    {
+        memoffsetvalue += UNITS_PER_WORD;
+        wordoffset --;
+    }
+#endif
 
   /* If there are no changes, just return the original memory reference.  */
   if (mode == GET_MODE (memref) && !offset
@@ -1895,6 +2171,80 @@ adjust_address_1 (rtx memref, enum machine_mode mode, HOST_WIDE_INT offset,
 
   if (adjust)
     {
+#ifdef __PDP10_H__
+      /* If MEMREF is a LO_SUM and the offset is within the alignment of the
+	 object, we can merge it into the LO_SUM.  */
+      if (GET_MODE (memref) != BLKmode && GET_CODE (addr) == LO_SUM
+	  && offset >= 0
+	  && (unsigned HOST_WIDE_INT) offset
+	      < GET_MODE_ALIGNMENT (GET_MODE (memref)) / BITS_PER_UNIT)
+	addr = gen_rtx_LO_SUM (Pmode, XEXP (addr, 0),
+			       plus_constant (XEXP (addr, 1), wordoffset));
+      else if (PTR_MODE_P(GET_MODE(addr)) && (GET_MODE_CLASS(GET_MODE(addr)) != MODE_INT) && (totaloffset != 0))
+		{
+		rtx temp = gen_reg_rtx(GET_MODE(addr));
+		if (!general_operand (addr, GET_MODE(addr)))
+		addr = force_reg (GET_MODE(addr), addr);
+		switch (GET_MODE(temp))
+			{
+			case SImode:
+				emit_insn (gen_ADJBP (temp, addr, GEN_INT(totaloffset)));
+				break;
+			case HPmode:
+				emit_insn (gen_ADJBP_HP (temp, addr, GEN_INT(totaloffset / 2)));
+				break;
+			case Q9Pmode:
+				emit_insn (gen_ADJBP_Q9P (temp, addr, GEN_INT(totaloffset)));
+				break;
+			case Q8Pmode:
+				emit_insn (gen_ADJBP_Q8P (temp, addr, GEN_INT(totaloffset)));
+				break;
+			default:
+				/* need to add handling of another modes that arrive here */
+				gcc_assert(false);
+			}
+		addr = temp;
+		memoffsetvalue = 0;
+		}
+      else
+          addr = plus_constant (addr, wordoffset);
+
+      /* If we have an offset to add in and it makes sense, convert the address to a byte pointer
+      	  The code for this is based losely on how convert_pointer() prepares to call convert_global_pointer()
+      	  so we copy addr to a register first.  This seems like overkill, but at least in the case that addr is a symbol_ref
+      	  without it we end up with an unrecognizable insn.  If GET_MODE(addr) can be null, we need to add
+      	  additional checks here.
+      	  -mtc 8/24/2006
+      	  The check for no_new_pseudos avoids a problem when we are called after registers are allocated and can't
+      	  call gen_reg_rtx().  Probably are other problems in that case that will need to be resolved eventually.
+      	  -mtc 8/25/2006
+      	  with 430 update is replaced by can_create_pseudo_p()
+      	  -mtc 11/30/2007
+      	  Add handling of Q8Pmode.  There's an assumption here that addr is initially a word address mode which might be wrong!
+      	  -mtc 3/6/2008
+      */
+      if (memoffsetvalue && ptr_mode_for_mode(mode) == Q8Pmode && GET_MODE(addr) != Q8Pmode && can_create_pseudo_p())
+      	{
+      	rtx newaddr = gen_reg_rtx(GET_MODE(addr)); 
+      	emit_move_insn(newaddr, addr);
+      	addr = convert_global_pointer(newaddr, BITS_PER_WORD, 8, memoffsetvalue);
+	memoffsetvalue = 0; /* since we've included the memoffsetvalue in the pointer conversion, set it to zero so we don't also include in attributes */
+      	}
+     else if (memoffsetvalue && ptr_mode_for_mode(mode) == Q9Pmode && GET_MODE(addr) != Q9Pmode && can_create_pseudo_p())
+      	{
+      	rtx newaddr = gen_reg_rtx(GET_MODE(addr)); 
+      	emit_move_insn(newaddr, addr);
+      	addr = convert_global_pointer(newaddr, BITS_PER_WORD, BITS_PER_UNIT, memoffsetvalue);
+	memoffsetvalue = 0; /* since we've included the memoffsetvalue in the pointer conversion, set it to zero so we don't also include in attributes */
+      	}
+      else if (memoffsetvalue && ptr_mode_for_mode(mode) == HPmode && GET_MODE(addr) != HPmode && can_create_pseudo_p())
+      	{
+      	rtx newaddr = gen_reg_rtx(GET_MODE(addr)); 
+      	emit_move_insn(newaddr, addr);
+      	addr = convert_global_pointer(newaddr, BITS_PER_WORD, BITS_PER_UNIT * 2, memoffsetvalue / 2);
+	memoffsetvalue = memoffsetvalue % 2; /* probably always zero */
+      	}
+#else
       /* If MEMREF is a LO_SUM and the offset is within the alignment of the
 	 object, we can merge it into the LO_SUM.  */
       if (GET_MODE (memref) != BLKmode && GET_CODE (addr) == LO_SUM
@@ -1904,36 +2254,68 @@ adjust_address_1 (rtx memref, enum machine_mode mode, HOST_WIDE_INT offset,
 	addr = gen_rtx_LO_SUM (Pmode, XEXP (addr, 0),
 			       plus_constant (XEXP (addr, 1), offset));
       else
-	addr = plus_constant (addr, offset);
+          addr = plus_constant (addr, offset);
+#endif
+ 
     }
 
+/* There's an assumption being made here that validation does not depend on
+     the value of MEM_OFFSET(memref) , which hasn't been updated yet
+     -mtc 5/26/2006
+*/
   new = change_address_1 (memref, mode, addr, validate);
 
   /* Compute the new values of the memory attributes due to this adjustment.
      We add the offsets and update the alignment.  */
-  if (memoffset)
-    memoffset = GEN_INT (offset + INTVAL (memoffset));
+#ifdef __PDP10_H__
+    if ((memoffset && (memoffsetvalue != INTVAL(memoffset))) ||
+         (memoffset == 0 && memoffsetvalue))
+        memoffset = GEN_INT (memoffsetvalue);
+#else
+    if (memoffset)
+        memoffset = GEN_INT (offset + INTVAL (memoffset));
+#endif
 
   /* Compute the new alignment by taking the MIN of the alignment and the
      lowest-order set bit in OFFSET, but don't change the alignment if OFFSET
      if zero.  */
   if (offset != 0)
-    memalign
-      = MIN (memalign,
-	     (unsigned HOST_WIDE_INT) (offset & -offset) * BITS_PER_UNIT);
+        memalign= MIN (memalign, (unsigned HOST_WIDE_INT) (offset & -offset) * BITS_PER_UNIT);
 
   /* We can compute the size in a number of ways.  */
   if (GET_MODE (new) != BLKmode)
-    size = GEN_INT (GET_MODE_SIZE (GET_MODE (new)));
+      size = GEN_INT (GET_MODE_SIZE (GET_MODE (new)));
   else if (MEM_SIZE (memref))
-    size = plus_constant (MEM_SIZE (memref), -offset);
+      size = plus_constant (MEM_SIZE (memref), -offset);
+  else
+      size = 0;
 
   MEM_ATTRS (new) = get_mem_attrs (MEM_ALIAS_SET (memref), MEM_EXPR (memref),
 				   memoffset, size, memalign, GET_MODE (new));
 
+#ifdef __PDP10_H__
+  /* PDP10  Right justify the resulting value in the subreg */
+  /* The mode and offset should all be encoded in memref, so this additional layer of wrapping
+      should no longer be necessary
+      -mtc 10/22/2007
+  if (memrefsave)
+    {
+      PUT_MODE (new, SImode);
+      new = gen_rtx_ZERO_EXTRACT (SImode, new,
+				  XEXP (SUBREG_REG (memrefsave), 1),
+				  XEXP (SUBREG_REG (memrefsave), 2));
+      new = gen_rtx_SUBREG (mode, new, UNITS_PER_WORD - GET_MODE_SIZE (mode));
+    }
+    */
+#endif
+
   /* At some point, we should validate that this offset is within the object,
      if all the appropriate values are known.  */
   return new;
+
+#ifdef __PDP10_H__
+}
+#endif
 }
 
 /* Return a memory reference like MEMREF, but with its mode changed
@@ -1945,6 +2327,12 @@ rtx
 adjust_automodify_address_1 (rtx memref, enum machine_mode mode, rtx addr,
 			     HOST_WIDE_INT offset, int validate)
 {
+/* Note that when memref is copied, we retain any offset contained within it.
+    This may or may not be what's desired when substituting a different addr
+    The alternatives are to zero it out, or to include another parameter with a substitution
+    value.
+    -mtc 5/26/2006
+*/
   memref = change_address_1 (memref, VOIDmode, addr, validate);
   return adjust_address_1 (memref, mode, offset, validate, 0);
 }
@@ -1957,8 +2345,34 @@ rtx
 offset_address (rtx memref, rtx offset, unsigned HOST_WIDE_INT pow2)
 {
   rtx new, addr = XEXP (memref, 0);
+  rtx mem;
 
+#ifdef __PDP10_H__
+	/* This is overly simplistic and will need improvement, but the offset we're being given
+	     is an expression to calculate a byte offset and generally speaking our address expressions
+	     are for word addresses.  But we actually need to take into account the modes of both the
+	     MEM node and the address node as well as any offset included in the MEM node.
+	     Some of this is impossible to do until we decide on address modes we will support so we can
+	     distinguish between word, half-word, various byte addresses
+	     -mtc 5/25/2006
+	     We've changed to a model of keeping offsets in the same units as the pointers.  So the offset
+	     adjustment here should be unnecessary.
+	     Any offset in the memref needs to be added to the offset, but it's not clear how this needs
+	     to be done, so for now assert if it's not zero.
+	*/
+	/*offset = simplify_gen_binary(UDIV, Pmode, offset, GEN_INT(UNITS_PER_WORD));*/
+	gcc_assert (MEM_OFFSET(memref) == 0 || INTVAL(MEM_OFFSET(memref)) == 0);
+#endif
+
+
+/* The new address should have the same mode as the old address
+    -mtc 10/29/2007
+*/
+#ifdef __PDP10_H__
+  new = simplify_gen_binary (PLUS, GET_MODE(addr), addr, offset);
+#else
   new = simplify_gen_binary (PLUS, Pmode, addr, offset);
+#endif
 
   /* At this point we don't know _why_ the address is invalid.  It
      could have secondary memory references, multiplies or anything.
@@ -1972,7 +2386,14 @@ offset_address (rtx memref, rtx offset, unsigned HOST_WIDE_INT pow2)
       && XEXP (addr, 0) == pic_offset_table_rtx)
     {
       addr = force_reg (GET_MODE (addr), addr);
-      new = simplify_gen_binary (PLUS, Pmode, addr, offset);
+/* The new address should have the same mode as the old address
+    -mtc 10/29/2007
+*/
+#ifdef __PDP10_H__
+  new = simplify_gen_binary (PLUS, GET_MODE(addr), addr, offset);
+#else
+  new = simplify_gen_binary (PLUS, Pmode, addr, offset);
+#endif
     }
 
   update_temp_slot_address (XEXP (memref, 0), new);
@@ -1984,10 +2405,36 @@ offset_address (rtx memref, rtx offset, unsigned HOST_WIDE_INT pow2)
 
   /* Update the alignment to reflect the offset.  Reset the offset, which
      we don't know.  */
-  MEM_ATTRS (new)
+  mem = new;
+
+#ifdef __PDP10_H__
+  /* PDP10: Dig out the mem */
+  if (GET_CODE (new) == SUBREG && GET_CODE (SUBREG_REG (new)) == ZERO_EXTRACT)
+    mem = XEXP (SUBREG_REG (new), 0);
+  if (GET_CODE (memref) == SUBREG
+      && GET_CODE (SUBREG_REG (memref)) == ZERO_EXTRACT)
+    memref = XEXP (SUBREG_REG (memref), 0);
+#endif
+
+/* We're setting the offset attribute to zero, which makes sense since we've just folded the offset
+     into the address expression.
+     We're also setting the size to zero, which doesn't make sense to me.  I would think we should preserve
+     the description of the size.
+     -mtc 5/19/2006
+*/
+
+#ifdef __PDP10_H__
+  MEM_ATTRS (mem)
+    = get_mem_attrs (MEM_ALIAS_SET (memref), MEM_EXPR (memref), 0, 0,
+		     MIN (MEM_ALIGN (memref), ptr_mode_target_size(GET_MODE(addr)) * pow2 * BITS_PER_UNIT),
+		     GET_MODE (new));
+#else
+  MEM_ATTRS (mem)
     = get_mem_attrs (MEM_ALIAS_SET (memref), MEM_EXPR (memref), 0, 0,
 		     MIN (MEM_ALIGN (memref), pow2 * BITS_PER_UNIT),
 		     GET_MODE (new));
+#endif
+
   return new;
 }
 
@@ -2025,6 +2472,18 @@ widen_memory_access (rtx memref, enum machine_mode mode, HOST_WIDE_INT offset)
   tree expr = MEM_EXPR (new);
   rtx memoffset = MEM_OFFSET (new);
   unsigned int size = GET_MODE_SIZE (mode);
+
+/* TODO:
+     There could be some issues here with the way we're now using MEM_OFFSET
+     to contain the portion of the address offset that can't be represented with a word address.
+     Note that memoffset will contain offset, since adjust_address_1 rolls whatever part can't
+     be folded into the word address into the offset.
+     The following code needs to be examined and possibly modified to ensure that we don't
+     delete or modify it improperly
+     -mtc 5/26/2006
+     It looks like pdp10 code never calls this.  Maybe it should be because we have exactly the issue
+     its header indicates its designed to help with.
+ */
 
   /* If there are no changes, just return the original memory reference.  */
   if (new == memref)
@@ -4846,6 +5305,14 @@ copy_insn_1 (rtx orig)
   RTX_CODE code;
   const char *format_ptr;
 
+/* gcc430 update added some circumstances where NULL gets passed in
+    -mtc 12/20/2007
+*/
+#ifdef __PDP10_H__
+  if (orig == NULL_RTX)
+  	return NULL_RTX;
+#endif
+
   code = GET_CODE (orig);
 
   switch (code)
@@ -5205,7 +5672,14 @@ init_emit_once (int line_numbers)
        mode != VOIDmode;
        mode = GET_MODE_WIDER_MODE (mode))
     {
+/* the mode precision is the true width of character types
+    compare with the -mchar-bytesize specified value rather than the BITS_PER_UNIT default
+*/
+#ifdef __PDP10_H__
+      if (GET_MODE_PRECISION (mode) == pdp10_char_bytesize
+#else
       if (GET_MODE_BITSIZE (mode) == BITS_PER_UNIT
+#endif
 	  && byte_mode == VOIDmode)
 	byte_mode = mode;
 
@@ -5286,10 +5760,20 @@ init_emit_once (int line_numbers)
 
       const_tiny_rtx[i][(int) VOIDmode] = GEN_INT (i);
 
+/*
+	PDP10 QnI modes are below the GET_CLASS_NARROWEST_MODE threshold
+	-mtc 9/29/2006
+*/
+#ifdef __PDP10_H__
+      for (mode = Q6Imode; mode != VOIDmode;
+	   mode = GET_MODE_WIDER_MODE (mode))
+	const_tiny_rtx[i][(int) mode] = GEN_INT (i);
+#else
       for (mode = GET_CLASS_NARROWEST_MODE (MODE_INT);
 	   mode != VOIDmode;
 	   mode = GET_MODE_WIDER_MODE (mode))
 	const_tiny_rtx[i][(int) mode] = GEN_INT (i);
+#endif
 
       for (mode = GET_CLASS_NARROWEST_MODE (MODE_PARTIAL_INT);
 	   mode != VOIDmode;
@@ -5328,6 +5812,13 @@ init_emit_once (int line_numbers)
       const_tiny_rtx[0][(int) mode] = gen_const_vector (mode, 0);
       const_tiny_rtx[1][(int) mode] = gen_const_vector (mode, 1);
     }
+
+#ifdef __PDP10_H__
+  for (mode = Q6Pmode;
+       mode != VOIDmode;
+       mode = GET_MODE_WIDER_MODE (mode))
+    const_tiny_rtx[0][(int) mode] = GEN_INT(0);
+#endif
 
   for (mode = GET_CLASS_NARROWEST_MODE (MODE_FRACT);
        mode != VOIDmode;

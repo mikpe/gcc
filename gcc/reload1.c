@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: reload1.c 2f1e3a927334 2008/03/11 01:52:58 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -619,6 +629,42 @@ replace_pseudos_in (rtx *loc, enum machine_mode mem_mode, rtx usage)
 	replace_pseudos_in (& XVECEXP (x, i, j), mem_mode, usage);
 }
 
+#ifdef __PDP10_H__
+void pdp10_fixup_subreg(rtx);
+
+void
+pdp10_fixup_subreg (rtx first)
+{
+  rtx insn;
+
+  for (insn = first; insn != NULL_RTX; insn = NEXT_INSN (insn))
+    {
+      rtx set = single_set (insn);
+      rtx dest, src, x;
+
+      if (! set)
+	continue;
+      dest = SET_DEST (set);
+      src = SET_SRC (set);
+
+      if (GET_CODE (dest) == SUBREG
+	  && GET_CODE (SUBREG_REG (dest)) == ZERO_EXTRACT
+	  && (x = simplify_subreg (SImode, src, GET_MODE (src), 0)))
+	{
+	  SET_DEST (set) = SUBREG_REG (dest);
+	  SET_SRC (set) = x;
+	}
+      else if (GET_CODE (src) == SUBREG
+	       && GET_CODE (SUBREG_REG (src)) == ZERO_EXTRACT
+	       && (x = simplify_subreg (SImode, dest, GET_MODE (dest), 0)))
+	{
+	  SET_DEST (set) = x;
+	  SET_SRC (set) = SUBREG_REG (src);
+	}
+    }
+}
+#endif
+
 /* Determine if the current function has an exception receiver block
    that reaches the exit block via non-exceptional edges  */
 
@@ -884,6 +930,14 @@ reload (rtx first, int global)
   offsets_known_at = XNEWVEC (char, num_labels);
   offsets_at = (HOST_WIDE_INT (*)[NUM_ELIMINABLE_REGS]) xmalloc (num_labels * NUM_ELIMINABLE_REGS * sizeof (HOST_WIDE_INT));
 
+/* PDP10 requires setting this flag earlier to prevent pseudos from being created
+      during alter_reg()
+      -mtc 12/17/2007
+*/
+#ifdef __PDP10_H__
+reload_in_progress = 1;
+#endif
+
   /* Alter each pseudo-reg rtx to contain its hard reg number.
      Assign stack slots to the pseudos that lack hard regs or equivalents.
      Do not touch virtual registers.  */
@@ -980,19 +1034,25 @@ reload (rtx first, int global)
 	if (reg_renumber[i] < 0 && reg_equiv_memory_loc[i])
 	  {
 	    rtx x = eliminate_regs (reg_equiv_memory_loc[i], 0, NULL_RTX);
+	    rtx addr = XEXP (x, 0);
+
+	    if (GET_CODE (x) == SUBREG
+		&& GET_CODE (SUBREG_REG (x)) == ZERO_EXTRACT)
+	      addr = XEXP (XEXP (SUBREG_REG (x), 0), 0);
 
 	    if (strict_memory_address_p (GET_MODE (regno_reg_rtx[i]),
-					 XEXP (x, 0)))
+					 addr))
 	      reg_equiv_mem[i] = x, reg_equiv_address[i] = 0;
-	    else if (CONSTANT_P (XEXP (x, 0))
-		     || (REG_P (XEXP (x, 0))
-			 && REGNO (XEXP (x, 0)) < FIRST_PSEUDO_REGISTER)
-		     || (GET_CODE (XEXP (x, 0)) == PLUS
-			 && REG_P (XEXP (XEXP (x, 0), 0))
-			 && (REGNO (XEXP (XEXP (x, 0), 0))
-			     < FIRST_PSEUDO_REGISTER)
-			 && CONSTANT_P (XEXP (XEXP (x, 0), 1))))
-	      reg_equiv_address[i] = XEXP (x, 0), reg_equiv_mem[i] = 0;
+	    else if (GET_CODE (x) != SUBREG
+		     && (CONSTANT_P (addr)
+			 || (REG_P (addr) 
+			     && REGNO (addr) < FIRST_PSEUDO_REGISTER)
+			 || (GET_CODE (addr) == PLUS
+			     && REG_P (XEXP (addr, 0))
+			     && (REGNO (XEXP (addr, 0))
+				 < FIRST_PSEUDO_REGISTER)
+			     && CONSTANT_P (XEXP (addr, 1)))))
+	      reg_equiv_address[i] = addr, reg_equiv_mem[i] = 0;
 	    else
 	      {
 		/* Make a new stack slot.  Then indicate that something
@@ -1182,7 +1242,15 @@ reload (rtx first, int global)
       rtx addr = 0;
 
       if (reg_equiv_mem[i])
-	addr = XEXP (reg_equiv_mem[i], 0);
+	{
+#ifdef __PDP10_H__
+	  if (GET_CODE (reg_equiv_mem[i]) == SUBREG
+	      && GET_CODE (SUBREG_REG (reg_equiv_mem[i])) == ZERO_EXTRACT)
+	    addr = XEXP (XEXP (SUBREG_REG (reg_equiv_mem[i]), 0), 0);
+	  else
+#endif
+	    addr = XEXP (reg_equiv_mem[i], 0);
+	}
 
       if (reg_equiv_address[i])
 	addr = reg_equiv_address[i];
@@ -1193,22 +1261,70 @@ reload (rtx first, int global)
 	    {
 	      rtx reg = regno_reg_rtx[i];
 
-	      REG_USERVAR_P (reg) = 0;
-	      PUT_CODE (reg, MEM);
-	      XEXP (reg, 0) = addr;
-	      if (reg_equiv_memory_loc[i])
-		MEM_COPY_ATTRIBUTES (reg, reg_equiv_memory_loc[i]);
-	      else
+#ifdef __PDP10_H__
+	      if (reg_equiv_mem[i] && GET_CODE (reg_equiv_mem[i]) == SUBREG
+		  && GET_CODE (SUBREG_REG (reg_equiv_mem[i])) == ZERO_EXTRACT)
 		{
-		  MEM_IN_STRUCT_P (reg) = MEM_SCALAR_P (reg) = 0;
-		  MEM_ATTRS (reg) = 0;
+		  REG_USERVAR_P (reg) = 0;
+		  PUT_CODE (reg, SUBREG);
+		  SUBREG_REG (reg) = SUBREG_REG (reg_equiv_mem[i]);
+		  SUBREG_BYTE (reg) = SUBREG_BYTE (reg_equiv_mem[i]);
+		  if (reg_equiv_memory_loc[i])
+		    {
+		      rtx mem = reg_equiv_memory_loc[i];
+		      if (GET_CODE (mem) == SUBREG
+			  && GET_CODE (SUBREG_REG (mem)) == ZERO_EXTRACT)
+			mem = XEXP (SUBREG_REG (mem), 0);
+		      MEM_COPY_ATTRIBUTES (XEXP (SUBREG_REG (reg), 0), mem);
+		    }
+		  else
+		    {
+			MEM_IN_STRUCT_P (XEXP (SUBREG_REG (reg), 0))
+			= MEM_SCALAR_P (XEXP (SUBREG_REG (reg), 0)) = 0;
+		      MEM_ATTRS (XEXP (SUBREG_REG (reg), 0)) = 0;
+		    }
+		  MEM_NOTRAP_P (XEXP (SUBREG_REG (reg), 0)) = 1;
 		}
-	      MEM_NOTRAP_P (reg) = 1;
+	      else
+#endif
+		{
+		  REG_USERVAR_P (reg) = 0;
+		  PUT_CODE (reg, MEM);
+		  XEXP (reg, 0) = addr;
+		  if (reg_equiv_memory_loc[i])
+		    MEM_COPY_ATTRIBUTES (reg, reg_equiv_memory_loc[i]);
+		  else
+		    {
+		      MEM_IN_STRUCT_P (reg) = MEM_SCALAR_P (reg) = 0;
+		      MEM_ATTRS (reg) = 0;
+		    }
+		  MEM_NOTRAP_P (reg) = 1;
+		}
 	    }
 	  else if (reg_equiv_mem[i])
-	    XEXP (reg_equiv_mem[i], 0) = addr;
+	    {
+/* Make this test more robust and match the block above where we extract addr out of reg_equiv_mem[].
+    It would appear this block never ever executed before!
+    -mtc 9/6/2007
+*/
+#ifdef __PDP10_H__
+	      if (GET_CODE (reg_equiv_mem[i]) == SUBREG
+	            && GET_CODE (SUBREG_REG (reg_equiv_mem[i])) == ZERO_EXTRACT)
+	        XEXP (XEXP (SUBREG_REG (reg_equiv_mem[i]), 0), 0)  = addr;
+	      else if (GET_CODE (reg_equiv_mem[i]) == SUBREG)
+		abort ();
+	      else
+#endif
+	      XEXP (reg_equiv_mem[i], 0) = addr;
+	    }
 	}
     }
+
+ #ifdef __PDP10_H__
+  /* PDP-10: change (set (subreg (zero_extract ...)) ...) to
+     (set (zero_extract ...) ...).  */
+  pdp10_fixup_subreg (first);
+ #endif
 
   /* We must set reload_completed now since the cleanup_subreg_operands call
      below will re-recognize each insn and reload may have generated insns
@@ -2100,6 +2216,34 @@ alter_reg (int i, int from_reg)
 		   >= inherent_size)
 	       && MEM_ALIGN (spill_stack_slot[from_reg]) >= min_align)
 	x = spill_stack_slot[from_reg];
+
+/* Our use of subreg expressions in stack slot rtxs for sub-word register modes makes
+    attempting to reuse stack slots problematic.
+    Just allocate a new stack slot.  See m68k-byte-addr.c for example of a failure
+    -mtc 12/20/2007
+*/
+#ifdef __PDP10_H__
+      else if (spill_stack_slot[from_reg] != 0)
+	{
+	  alias_set_type alias_set = new_alias_set ();
+
+	  /* No known place to spill from => no slot to reuse.  */
+	  x = assign_stack_local (mode, total_size,
+				  min_align > inherent_align
+				  || total_size > inherent_size ? -1 : 0);
+	  if (BYTES_BIG_ENDIAN)
+	    /* Cancel the  big-endian correction done in assign_stack_local.
+	       Get the address of the beginning of the slot.
+	       This is so we can do a big-endian correction unconditionally
+	       below.  */
+	    adjust = inherent_size - total_size;
+
+	  /* Nothing can alias this slot except this pseudo.  */
+	  set_mem_alias_set (x, alias_set);
+	  dse_record_singleton_alias_set (alias_set, mode);
+	}
+#endif
+
       /* Allocate a bigger slot.  */
       else
 	{
@@ -6595,6 +6739,16 @@ emit_input_reload_insns (struct insn_chain *chain, struct reload *rl,
   if (mode == VOIDmode)
     mode = rl->inmode;
 
+/*	It's very bad to end up with mode == VOIDmode
+	Default to SImode, which handles a constant index for ADJBP
+	We may need more complex tests in the future
+	-mtc 8/1/2006
+*/
+#ifdef __PDP10_H__
+   if (mode == VOIDmode)
+     mode = SImode;
+#endif
+
   /* delete_output_reload is only invoked properly if old contains
      the original pseudo register.  Since this is replaced with a
      hard reg when RELOAD_OVERRIDE_IN is set, see if we can
@@ -8560,6 +8714,15 @@ fixup_abnormal_edges (void)
     {
       edge e;
       edge_iterator ei;
+
+/* If a jump insn has been converted from an indirect jump to a jump, there may be
+    dead edges.
+    -mtc 3/10/2008
+*/
+#ifdef __PDP10_H__
+	if (JUMP_P(BB_END(bb)))
+		purge_dead_edges(bb);
+#endif
 
       /* Look for cases we are interested in - calls or instructions causing
          exceptions.  */

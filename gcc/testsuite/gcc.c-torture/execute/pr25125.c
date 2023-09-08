@@ -9,7 +9,11 @@ f (short a)
 
   if (a > 0)
     return 0;
+#ifdef __PDP10__
+  b = ((int) a) + - (int) 131072;
+#else
   b = ((int) a) + - (int) 32768;
+#endif
   return b;
 }
 
@@ -20,7 +24,11 @@ main (void)
       || sizeof (short) >= sizeof (int))
     exit (0);
 
+#ifdef __PDP10__
+  if (f (-131071) != 1)
+#else
   if (f (-32767) != 1)
+#endif
     abort ();
 
   exit (0);

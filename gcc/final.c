@@ -44,6 +44,16 @@ along with GCC; see the file COPYING3.  If not see
    directly in assembler by the target functions function_prologue and
    function_epilogue.  Those instructions never exist as rtl.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: final.c 9d92e0dd6523 2008/06/18 22:14:22 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -387,7 +397,17 @@ get_attr_length_1 (rtx insn ATTRIBUTE_UNUSED,
   else
     switch (GET_CODE (insn))
       {
+/* On PDP10 Note insns can sometimes generate code
+*/
+#ifdef __PDP10_H__
       case NOTE:
+	if (NOTE_KIND(insn) >=0 && debug_info_level == DINFO_LEVEL_NORMAL)
+		return 1;
+	else
+		return 0;
+#else
+      case NOTE:
+#endif
       case BARRIER:
       case CODE_LABEL:
 	return 0;
@@ -807,8 +827,15 @@ struct tree_opt_pass pass_compute_alignments =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 6/18/2008
+*/
+  TODO_dump_func | TODO_verify_rtl_sharing,                   /* todo_flags_finish */
+#else
   TODO_dump_func | TODO_verify_rtl_sharing
   | TODO_ggc_collect,                   /* todo_flags_finish */
+#endif
   0                                     /* letter */
 };
 
@@ -1063,8 +1090,20 @@ shorten_branches (rtx first ATTRIBUTE_UNUSED)
 	}
 
       INSN_ADDRESSES (uid) = insn_current_address + insn_lengths[uid];
-
+	  
+/* On PDP10 NOTE insns are not necessarily zero length
+*/
+#ifdef __PDP10_H__
+      if(NOTE_P(insn))
+      	{
+	if (NOTE_KIND(insn) >=0 && debug_info_level == DINFO_LEVEL_NORMAL)
+		insn_lengths[uid] = 1;
+	continue;
+      	}
+      if (BARRIER_P (insn)
+#else
       if (NOTE_P (insn) || BARRIER_P (insn)
+#endif
 	  || LABEL_P (insn))
 	continue;
       if (INSN_DELETED_P (insn))
@@ -1561,12 +1600,24 @@ profile_function (FILE *file ATTRIBUTE_UNUSED)
   if (! NO_PROFILE_COUNTERS)
     {
       int align = MIN (BIGGEST_ALIGNMENT, LONG_TYPE_SIZE);
+
+/* check alignment before calling switch_to_section
+    -mtc 11/15/2007
+*/
+#ifdef __PDP10_H__
+      if (align > BITS_PER_WORD)
+	  	data_section->common.flags |= SECTION_PALIGNED;
+#endif
       switch_to_section (data_section);
       ASM_OUTPUT_ALIGN (file, floor_log2 (align / BITS_PER_UNIT));
       targetm.asm_out.internal_label (file, "LP", current_function_funcdef_no);
       assemble_integer (const0_rtx, LONG_TYPE_SIZE / BITS_PER_UNIT, align, 1);
     }
 
+/* No alignment is available here, so it's not clear if we need to do anything to handle alignment
+    on this section switch
+    -mtc 11/15/2007
+*/
   switch_to_section (current_function_section ());
 
 #if defined(ASM_OUTPUT_REG_PUSH)
@@ -2022,7 +2073,6 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	      if (! JUMP_TABLES_IN_TEXT_SECTION)
 		{
 		  int log_align;
-
 		  switch_to_section (targetm.asm_out.function_rodata_section
 				     (current_function_decl));
 
@@ -2738,6 +2788,12 @@ alter_subreg (rtx *xp)
   rtx x = *xp;
   rtx y = SUBREG_REG (x);
 
+#ifdef __PDP10_H__
+  if (REG_P (y) && REGNO(y) < FIRST_PSEUDO_REGISTER && 
+  	!subreg_offset_representable_p(REGNO(y), GET_MODE(y), SUBREG_BYTE(x), GET_MODE(x)))
+  		return *xp;
+#endif
+
   /* simplify_subreg does not remove subreg from volatile references.
      We are required to.  */
   if (MEM_P (y))
@@ -2766,6 +2822,12 @@ alter_subreg (rtx *xp)
 
       if (new != 0)
 	*xp = new;
+
+/* If simplify_subreg() couldn't simplify the rtx, just leave it alone instead of generating bad code
+    -mtc 7/31/2007
+*/
+#ifdef __PDP10_H__
+#else
       else if (REG_P (y))
 	{
 	  /* Simplify_subreg can't handle some REG cases, but we have to.  */
@@ -2779,6 +2841,7 @@ alter_subreg (rtx *xp)
 	    offset = SUBREG_BYTE (x);
 	  *xp = gen_rtx_REG_offset (y, GET_MODE (x), regno, offset);
 	}
+#endif
     }
 
   return *xp;
@@ -3790,7 +3853,11 @@ split_double (rtx value, rtx *first, rtx *second)
   else
     {
       REAL_VALUE_TYPE r;
+#ifdef __PDP10_H__
+      long l[3];
+#else
       long l[2];
+#endif
       REAL_VALUE_FROM_CONST_DOUBLE (r, value);
 
       /* Note, this converts the REAL_VALUE_TYPE to the target's
@@ -4286,7 +4353,15 @@ struct tree_opt_pass pass_clean_state =
   0,                                    /* properties_provided */
   PROP_rtl,                             /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, but this seem like
+    a relatively safe place to call it
+    -mtc 5/16/2008
+*/
+  TODO_ggc_collect,                                    /* todo_flags_finish */
+#else
   0,                                    /* todo_flags_finish */
+#endif
   0                                     /* letter */
 };
 

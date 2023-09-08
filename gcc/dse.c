@@ -621,7 +621,15 @@ get_group_info (rtx base)
     {
       /* Find the store_base_info structure for BASE, creating a new one
 	 if necessary.  */
+#ifdef __PDP10_H__
+/* Canonicalize the rtx because different modes all refer to the same memory
+     -mtc 5/31/2011
+*/
+      tmp_gi.rtx_base = shallow_copy_rtx(base);
+      PUT_MODE(tmp_gi.rtx_base, VOIDmode);
+#else
       tmp_gi.rtx_base = base;
+#endif
       slot = htab_find_slot (rtx_group_table, &tmp_gi, INSERT);
       gi = (group_info_t) *slot;
     }
@@ -650,9 +658,15 @@ get_group_info (rtx base)
   if (gi == NULL)
     {
       *slot = gi = pool_alloc (rtx_group_info_pool);
+#ifdef __PDP10_H__
+      gi->rtx_base = tmp_gi.rtx_base;
+      gi->id = rtx_group_next_id++;
+      gi->base_mem = gen_rtx_MEM (QImode, tmp_gi.rtx_base);
+#else
       gi->rtx_base = base;
       gi->id = rtx_group_next_id++;
       gi->base_mem = gen_rtx_MEM (QImode, base);
+#endif
       gi->canon_base_mem = canon_rtx (gi->base_mem);
       gi->store1_n = BITMAP_ALLOC (NULL);
       gi->store1_p = BITMAP_ALLOC (NULL);
@@ -1104,7 +1118,13 @@ canon_address (rtx mem,
 
   if (GET_CODE (address) == PLUS && GET_CODE (XEXP (address, 1)) == CONST_INT)
     {
+#ifdef __PDP10_H__
+/* The offset in the RTX might be in byte, half-word or word units, depending on the mode of the PLUS
+*/
+      *offset = ((ptr_mode_target_size(GET_MODE(address)) + BITS_PER_UNIT - 1) / BITS_PER_UNIT) * INTVAL (XEXP (address, 1));
+#else
       *offset = INTVAL (XEXP (address, 1));
+#endif
       address = XEXP (address, 0);
     }
 
@@ -1225,6 +1245,23 @@ record_store (rtx body, bb_info_t bb_info)
       return 0;
     }
 
+/* offset is in words, so do width in words also
+    note that we could try customizing so offset is in bytes, but this keeps the usage masks smaller
+    and since allocation is always in words the savings, if any, of doing byte analysis is questionable.
+    it's also questionable whether byte analysis even works given that the generic gcc code doesn't
+    understand our byte operations.
+    -mtc 1/10/2007
+    Change back to do width in bytes, but to also do offset in bytes, by removing PDP10 customization.
+    Even though we allocate in bytes, dead store elimination looks at references to fields within records
+    and these can be in arbitrary size amounts.
+    In conjunction with this change, we need to fix the offset calculations to be in bytes.  Note that the offsets
+    within the RTX are in varying units depending on the mode of the pointers.
+*/
+#ifdef __PDP10_H__
+#if 0
+  width = (GET_MODE_SIZE (GET_MODE (mem)) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+#endif
+#endif
   width = GET_MODE_SIZE (GET_MODE (mem));
 
   if (spill_alias_set)
@@ -3300,9 +3337,17 @@ struct tree_opt_pass pass_rtl_dse1 =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+  TODO_dump_func |
+  TODO_df_finish | TODO_verify_rtl_sharing,
+#else
   TODO_dump_func |
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'w'                                   /* letter */
 };
 

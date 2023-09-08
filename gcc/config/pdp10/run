@@ -1,0 +1,292 @@
+#!/bin/bash
+set -f
+
+lopts=${*}
+usage()
+{
+    echo -e "
+usage: $0 { -e exe | -u util } [-p  parms ...] [-a arg ...] \\
+          [{ -B | -A | -T } output ...] [-t file ...] files ...
+
+       e  specify executable to be sent to TOPS20 and run
+       u  specify utility on TOPS20 to be run
+       a  specify arg(s) to utility. may be the same as files
+       p  specify parms(s) to utility.
+       B  specify binary output file(s) to be retreived using ftp binary mode
+       A  specify ascii output file(s) to be retreived using ftp ascii mode
+       T  specify binary output file(s) to be retreived using ftp tenex mode
+       d  specifies additional files to delete on tops20
+       x  don't delete any tops20 files
+       t  specify text file that needs to be sent to TOPS20
+          Files without -t are sent to TOPS20 using ftp binary mode.
+
+NOTE: The file ~/.netrc MUST contain appropriate login information for host.
+The host defaults to 'toed' but can be set using ${TOPS20_BUILD_HOST}.
+
+An entry such as 'machine ${TOPS20_BUILD_HOST} login <name> password <string>'
+suffices, where <name> is the login name to use, and <string> is the password
+string.  Don't forget to 'chmod 600 ~/.netrc' so only you can read it.
+
+The current command line is: \"$0 ${lopts}\"" 1>&2
+    exit 1
+}
+
+# determine the TOPS20_BUILD_HOST's login.
+# without this, there is no reason to proceed.
+source `dirname $0`/gcc-netrc
+# getaccount exports username & password. These are used by run.exp to login.
+getaccount
+
+#
+# parse command line and set variables appropriately
+#
+ufile=
+efile=
+parms=
+args=
+tfiles=
+files=
+bout=
+aout=
+tout=
+dfiles=
+del=1
+
+declare -i OPTIND
+
+while [ $# -ge 1 ]
+do
+    OPTIND=1
+    while getopts "e:u:p:a:t:B:A:T:d:x" opt
+    do
+        case $opt in
+            e)  efile=${OPTARG};;
+            u)  ufile=${OPTARG};;
+            p)  parms=${parms}" "${OPTARG};;
+            a)  args=${args}$'\n'${OPTARG};;
+            B)  bout=${OPTARG};;
+            A)  aout=${OPTARG};;
+            T)  tout=${OPTARG};;
+            t)  tfiles=${tfiles}${OPTARG}" ";;
+            d)  dfiles=${dfiles}$'\n'${OPTARG};;
+            x)  del=0;;
+            ?|:)usage; exit 1;;
+        esac
+    done
+    if [ $# -ge 1 ]
+    then
+        shift `expr ${OPTIND} - 1`
+        files=${files}${1}" "
+        shift 1
+    fi
+done
+
+# There must be an execuatble to run
+if [ -z "${ufile}" ] && [ -z "${efile}" ]
+then
+    usage; exit 1;
+fi
+
+# We can't execute 2 utilities.
+if [ -n "${ufile}" ] && [ -n "${efile}" ]
+then
+    usage; exit 1;
+fi
+
+# There must be result file(s) to retreive
+if [ -z "${bout}" ] && [ -z "${aout}" ] && [ -z "${tout}" ]
+then
+    usage; exit 1;
+fi
+
+###############################################################################
+#
+# Send all input files to Tops20
+#
+getftpoptions
+
+ftpcmd=""
+
+if [ -n "${tfiles}" ]
+then
+    ftpcmd=${ftpcmd}ascii$'\n'
+    for F in ${tfiles}
+    do
+        RF=`basename ${F}`
+        ftpcmd="${ftpcmd}put "${F}" "${RF}$'\n'
+    done
+fi
+
+if [ -n "${files}" ]
+then
+    ftpcmd=${ftpcmd}binary$'\n'
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd="${ftpcmd}put "${F}" "${RF}$'\n'
+    done
+fi
+
+# We need to ship the efile over to tops20
+if [ -n "${efile}" ]
+then
+    RF=`basename ${efile}`
+    ftpcmd="${ftpcmd}put "${efile}" "${RF}$'\n'
+fi
+
+echo -e -n "\nTransferring files to ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo "$sec seconds"
+
+###############################################################################
+#
+# build the remote utility command line
+#
+
+# We have checked that there is efile or ufile, not both.
+# Set efile to the utility to be run.
+if [ -n "${efile}" ] 
+then
+    rfile=`basename ${efile}`
+else
+    rfile=`basename ${ufile}`
+fi
+
+util=${rfile}${parms}${args}
+
+echo -e "\nRun the command ..."
+
+`dirname $0`/run.exp ${TOPS20_BUILD_HOST} "${util}"
+[ $? -eq 0 ] || exit $?
+
+###############################################################################
+#
+# Get return files and clean up debris
+#
+ftpcmd=""
+
+if [ -n "${bout}" ]
+then
+    for F in ${bout}
+    do
+        RF=`basename ${bout}`
+
+        rm -f ${F}
+
+        ftpcmd=${ftpcmd}binary$'\n'"get "${RF}" "${F}$'\n'
+        if [ ${del} -eq 1 ]
+        then
+            ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+        fi
+    done
+fi
+
+if [ -n "${aout}" ]
+then
+    for F in ${aout}
+    do
+        RF=`basename ${aout}`
+
+        rm -f ${F}
+
+        ftpcmd=${ftpcmd}ascii$'\n'"get "${RF}" "${F}$'\n'
+        if [ ${del} -eq 1 ]
+        then
+            ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+        fi
+    done
+fi
+
+if [ -n "${tout}" ]
+then
+    for F in ${tout}
+    do
+        RF=`basename ${tout}`
+
+        rm -f ${F}
+
+        ftpcmd=${ftpcmd}tenex$'\n'"get "${RF}" "${F}$'\n'
+        if [ ${del} -eq 1 ]
+        then
+            ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+        fi
+    done
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${files}" ]
+then
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+    done
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${tfiles}" ]
+then
+    for F in ${tfiles}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+    done
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${efile}" ]
+then
+    RF=`basename ${efile}`
+    ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+fi
+
+echo -e -n "\nRetrieving files from ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo -e "$sec seconds\n"
+
+#
+# Double check: did we fail to recieve any output file?
+#
+if [ -n "${bout}" ]
+then
+    for F in ${bout}
+    do
+        if [ ! -e "$F" ]
+        then
+            exit 1
+        fi
+    done
+fi
+
+if [ -n "${aout}" ]
+then
+    for F in ${aout}
+    do
+        if [ ! -e "$F" ]
+        then
+            exit 1
+        fi
+    done
+fi
+
+if [ -n "${tout}" ]
+then
+    for F in ${tout}
+    do
+        if [ ! -e "$F" ]
+        then
+            exit 1
+        fi
+    done
+fi
+
+exit 0

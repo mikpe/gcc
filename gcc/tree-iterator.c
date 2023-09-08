@@ -21,6 +21,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+/* Base GCC code is missing this essential line
+   -mtc 10/2/2007
+*/
+#include "tm.h"
 #include "tree.h"
 #include "tree-gimple.h"
 #include "tree-iterator.h"

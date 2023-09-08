@@ -2625,8 +2625,16 @@ bitpos_of_field (const tree fdecl)
       || TREE_CODE (DECL_FIELD_BIT_OFFSET (fdecl)) != INTEGER_CST)
     return -1;
 
+/* The stored offset is in bytes, not multiples of 8 bits!
+    -mtc 6/29/2007
+*/
+#ifdef __PDP10_H__
+  return (tree_low_cst (DECL_FIELD_OFFSET (fdecl), 1) * BITS_PER_UNIT) 
+         + tree_low_cst (DECL_FIELD_BIT_OFFSET (fdecl), 1);
+#else
   return (tree_low_cst (DECL_FIELD_OFFSET (fdecl), 1) * 8)
 	 + tree_low_cst (DECL_FIELD_BIT_OFFSET (fdecl), 1);
+#endif
 }
 
 

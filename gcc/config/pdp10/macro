@@ -1,0 +1,303 @@
+#!/bin/bash
+set -f
+
+#
+# TODO:  detect assembly errors (parse stdout) to set an exit status?
+# (Fatal errors are formatted as ?MCRxxx, where xxx is a three letter code)
+# for now, failure to produce an output file is what we look for
+#
+
+lopts=${*}
+usage()
+{
+    echo -e "
+usage: $0 [ -vag ] [ -o output ] files ...
+
+       v  print version and exit
+       b  binary files needed during execution
+       a  produce assembly listing too (as output.lst)
+       g  assemble with debug symbols (ignored)
+       o  specify output file (default is a.out)
+       u  specify universal file to retreive
+       x  don't delete files on tops20
+       n  don't retrieve files from tops20 (implies x)
+
+NOTE: The file ~/.netrc MUST contain appropriate login information for host.
+The host defaults to 'toed' but can be set using ${TOPS20_BUILD_HOST}.
+
+An entry such as 'machine ${TOPS20_BUILD_HOST} login <name> password <string>'
+suffices, where <name> is the login name to use, and <string> is the password
+string.  Don't forget to 'chmod 600 ~/.netrc' so only you can read it.
+
+The current command line is: \"$0 ${lopts}\"" 1>&2
+    exit 1
+}
+
+# determine the TOPS20_BUILD_HOST's login.
+# without this, there is no reason to proceed.
+source `dirname $0`/gcc-netrc
+getaccount
+
+#
+# parse command line and set variables appropriately
+#
+out=
+unv=
+tout=
+crf=
+lst=
+ufiles=
+files=
+default=
+listing=0
+del=1
+retrieve=1
+
+declare -i OPTIND
+
+while [ $# -ge 1 ]
+do
+    OPTIND=1
+    while getopts "vagb:o:u:xn" opt
+    do
+        case $opt in
+            v)  echo "Linux Tops20 Macro emulator 1.0.0" 1>&2; exit 0;;
+            b)  ufiles=${ufiles}" "${OPTARG};;
+            a)  listing=1;;
+            g)  ;;
+            o)  out=${OPTARG};;
+            u)  unv=${OPTARG};;
+            x)  del=0;;
+            n)  del=0;retrieve=0;;
+            ?|:)usage; exit 1;;
+        esac
+    done
+    if [ $# -ge 1 ]
+    then
+        shift `expr ${OPTIND} - 1`
+        if [ -z "${default}" ]
+        then
+            default=${1%%.*}
+        fi
+        if [ ! -f $1 ]
+        then
+            echo "$0: File not found - $1"
+            exit 1
+        fi
+        files=${files}${1}" "
+        shift 1
+    fi
+done
+
+#
+# Do we have any input files at all?
+# There must be at least one
+#
+
+if [ -z "${files}" ]
+then
+    usage; exit 1;
+fi
+
+#
+# generate a default output file name, if necessary,
+# based on the name of the first source file.
+#
+# Otherwise the default is derived from the -o option
+# Either way, we must come up with a name.  Gripe if not.
+#
+# use the default to establish crf/lst files if such are needed
+#
+
+if [ -z "$out" ]
+then
+    out=${default}.rel
+fi
+default=${out%%.*}
+
+if [ -z "${default}" ]
+then
+    usage; exit 1;
+fi
+
+if [ 1 -eq ${listing} ]
+then
+    crf=${default}.crf
+    lst=${default}.lst
+fi
+    
+###############################################################################
+#
+# Send all input files to Tops20
+#
+# Search contents of ~/.netrc for an appropriate username/password
+# for TOPS20_BUILD_HOST.
+#
+
+# This call to getftpoptions sets ftpoptions.
+getftpoptions
+
+sep=""
+rfiles=""
+ftpcmd=""
+
+if [ -n "${files}" ]
+then
+    ftpcmd=${ftpcmd}ascii$'\n'
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd="${ftpcmd}put "${F}" "${RF}$'\n'
+        rfiles=${rfiles}${sep}${RF}
+        sep="+"
+    done
+fi
+
+if [ -n "${ufiles}" ]
+then
+    ftpcmd=${ftpcmd}image$'\n'
+    for F in ${ufiles}
+    do
+        RF=`basename ${F}`
+        ftpcmd="${ftpcmd}put "${F}" "${RF}$'\n'
+    done
+fi
+
+echo -e -n "\nTransferring files to ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo "$sec seconds"
+
+###############################################################################
+#
+# build the remote assembly command line
+#
+if [ -n "${out}" ]
+then
+    rout=`basename ${out}`
+else
+    rout=""
+fi
+
+if [ -n "${lst}" ]
+then
+    rlst=`basename ${lst}`
+    rcrf=`basename ${crf}`
+else
+    rlst=""
+    rcrf=""
+fi
+
+# The macro command ends with a ^Z (no \n) to end terminal input.
+asmcmd=""
+if [ 0 -eq ${listing} ]
+then
+    asmcmd=macro$'\n'${rout}=${rfiles}$'\n'$'\cZ'
+else
+    asmcmd=macro$'\n'${rout},${rcrf}/c=${rfiles}$'\n'$'\cZ'
+    asmcmd=${asmcmd}cref$'\n'${rlst}=${rcrf}$'\n'$'\cZ'
+fi
+
+#
+# Fire up the assembler, using the above remote command
+#
+# we will get an assembly status value from the expect script
+# We should exit immediately if the assembly failed.
+#
+# We should never get assembly errors.
+# If we do, we will leave the remote files intact for manual examination
+#
+# TODO: don't pass username and password on command line, it is exposed
+# to browsing with the 'ps' command.  Pass this data in the environment....
+#
+
+echo -e "\nAssembling ..."
+
+`dirname $0`/macro.exp ${TOPS20_BUILD_HOST} $username $password "${asmcmd}"
+[ $? -eq 0 ] || exit $?
+
+###############################################################################
+#
+# Get return files and clean up assembly debris
+# note: the .crf intermediate file for listings is automatically deleted by cref
+#
+
+ftpcmd=""
+
+if [ -n "${rlst}" ]
+then
+    rm -f ${lst}
+    ftpcmd=${ftpcmd}ascii$'\n'"get "${rlst}" "${lst}$'\n'
+    if [ ${del} -eq 1 ]
+    then
+        ftpcmd=${ftpcmd}"delete "${rlst}$'\n'
+    fi
+fi
+
+if [ -n "${rout}" ]
+then
+    rm -f ${out}
+    ftpcmd=${ftpcmd}binary$'\n'"get "${rout}" "${out}$'\n'
+    if [ ${del} -eq 1 ]
+    then
+        ftpcmd=${ftpcmd}"delete "${rout}$'\n'
+    fi
+fi
+
+if [ -n "${unv}" ]
+then
+    rout=`basename ${unv}`
+    rm -f ${unv}
+    ftpcmd=${ftpcmd}binary$'\n'"get "${rout}" "${unv}$'\n'
+    if [ ${del} -eq 1 ]
+    then
+        ftpcmd=${ftpcmd}"delete "${rout}$'\n'
+    fi
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${files}" ]
+then
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+    done
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${ufiles}" ]
+then
+    for F in ${ufiles}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+    done
+fi
+
+if [ ${retrieve} -eq 1 ]
+then
+
+echo -e -n "\nRetrieving files from ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo -e "$sec seconds\n"
+
+#
+# Double check: did we recieve a non-empty output file?
+#
+if [ -s "$out" ]
+then
+    exit 0
+else
+    exit 1
+fi
+fi

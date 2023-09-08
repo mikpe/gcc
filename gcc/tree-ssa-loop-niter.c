@@ -598,6 +598,33 @@ number_of_iterations_ne (tree type, affine_iv *iv, tree final,
      not overflow, BNDS bounds the value of C.  Also, this is the
      case if the computation |FINAL - IV->base| does not overflow, i.e.,
      if BNDS->below in the result is nonnegative.  */
+
+/* avoid bogus type casts
+    -mtc 2/20/2008
+*/
+#ifdef __PDP10_H__
+  {
+  tree c_type = (POINTER_TYPE_P(niter_type) ? size_type_node : niter_type);
+  tree s_type = TREE_TYPE(iv->step);
+  s_type = (s_type ? unsigned_type_for(s_type) : size_type_node);
+  if (tree_int_cst_sign_bit (iv->step))
+    {
+      s = fold_convert (s_type,
+			fold_build1 (NEGATE_EXPR, s_type, iv->step));
+      c = fold_build2 (MINUS_EXPR, c_type,
+		       fold_convert (niter_type, iv->base),
+		       fold_convert (niter_type, final));
+      bounds_negate (bnds);
+    }
+  else
+    {
+      s = fold_convert (s_type, iv->step);
+      c = fold_build2 (MINUS_EXPR, c_type,
+		       fold_convert (niter_type, final),
+		       fold_convert (niter_type, iv->base));
+    }
+  }
+#else
   if (tree_int_cst_sign_bit (iv->step))
     {
       s = fold_convert (niter_type,
@@ -614,6 +641,7 @@ number_of_iterations_ne (tree type, affine_iv *iv, tree final,
 		       fold_convert (niter_type, final),
 		       fold_convert (niter_type, iv->base));
     }
+#endif
 
   mpz_init (max);
   number_of_iterations_ne_max (max, iv->no_overflow, c, s, bnds);
@@ -961,7 +989,14 @@ number_of_iterations_lt (tree type, affine_iv *iv0, affine_iv *iv1,
 			 bool never_infinite ATTRIBUTE_UNUSED,
 			 bounds *bnds)
 {
+/* The correct type for number of iterations is sizetype and has almost nothing to do with type
+    -mtc 2/27/2008
+*/
+#ifdef __PDP10_H__
+  tree niter_type = sizetype;
+#else
   tree niter_type = unsigned_type_for (type);
+#endif
   tree delta, step, s;
   mpz_t mstep, tmp;
 
@@ -978,9 +1013,16 @@ number_of_iterations_lt (tree type, affine_iv *iv0, affine_iv *iv1,
       niter->bound = iv0->base;
     }
 
+/* avoid the gratuous type conversions which don't really solve anything and create lots of problems
+    -mtc 2/27/2008
+*/
+#ifdef __PDP10_H__
+	delta = fold_build2 (MINUS_EXPR, sizetype, iv1->base, iv0->base);
+#else
   delta = fold_build2 (MINUS_EXPR, niter_type,
 		       fold_convert (niter_type, iv1->base),
 		       fold_convert (niter_type, iv0->base));
+#endif
 
   /* First handle the special case that the step is +-1.  */
   if ((integer_onep (iv0->step) && integer_zerop (iv1->step))
@@ -1008,11 +1050,21 @@ number_of_iterations_lt (tree type, affine_iv *iv0, affine_iv *iv1,
       return true;
     }
 
+/* avoid the gratuous type conversions which don't really solve anything and create lots of problems
+    -mtc 2/27/2008
+*/
+#ifdef __PDP10_H__
+  if (integer_nonzerop (iv0->step))
+    step =  iv0->step;
+  else
+    step = fold_build1 (NEGATE_EXPR, TREE_TYPE(iv1->step), iv1->step);
+#else
   if (integer_nonzerop (iv0->step))
     step = fold_convert (niter_type, iv0->step);
   else
     step = fold_convert (niter_type,
 			 fold_build1 (NEGATE_EXPR, type, iv1->step));
+#endif
 
   /* If we can determine the final value of the control iv exactly, we can
      transform the condition to != comparison.  In particular, this will be
@@ -1040,10 +1092,20 @@ number_of_iterations_lt (tree type, affine_iv *iv0, affine_iv *iv1,
      otherwise the loop does not roll.  */
   assert_loop_rolls_lt (type, iv0, iv1, niter, bnds);
 
+/* avoid the gratuous type conversions which don't really solve anything and create lots of problems
+    -mtc 2/27/2008
+*/
+#ifdef __PDP10_H__
+  s = fold_build2 (MINUS_EXPR, TREE_TYPE(step),
+		   step, build_int_cst (TREE_TYPE(step), 1));
+  delta = fold_build2 (PLUS_EXPR, TREE_TYPE(delta), delta, s);
+  niter->niter = fold_build2 (FLOOR_DIV_EXPR, TREE_TYPE(delta), delta, step);
+#else
   s = fold_build2 (MINUS_EXPR, niter_type,
 		   step, build_int_cst (niter_type, 1));
   delta = fold_build2 (PLUS_EXPR, niter_type, delta, s);
   niter->niter = fold_build2 (FLOOR_DIV_EXPR, niter_type, delta, step);
+#endif
 
   mpz_init (mstep);
   mpz_init (tmp);

@@ -3146,6 +3146,15 @@ insert_fake_stores (void)
 	      tree new_tree;
 	      bool notokay = false;
 
+/* Avoid generating fake stores for bit fields.  The temp would have a different value from the
+    bit field expression and it confuses computation of what's equal to what
+    -mtc 3/26/2008
+*/
+#ifdef __PDP10_H__
+	      if ((TREE_CODE(lhs) == COMPONENT_REF) && DECL_BIT_FIELD(TREE_OPERAND(lhs, 1)))
+		  	continue;
+#endif
+
 	      FOR_EACH_SSA_DEF_OPERAND (defp, stmt, iter, SSA_OP_VIRTUAL_DEFS)
 		{
 		  tree defvar = DEF_FROM_PTR (defp);

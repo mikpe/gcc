@@ -18,6 +18,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: caller-save.c 1c13986a2af8 2007/12/21 22:37:34 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -178,7 +188,13 @@ init_caller_save (void)
   rtx addr_reg;
   int offset;
   rtx address;
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+  unsigned int i, j;
+#else
   int i, j;
+#endif
 
   /* First find all the registers that we need to deal with and all
      the modes that they can have.  If we can't find a mode to use,
@@ -273,7 +289,13 @@ init_caller_save (void)
 void
 init_save_areas (void)
 {
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+  unsigned int i, j;
+#else
   int i, j;
+#endif
 
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     for (j = 1; j <= MOVE_MAX_WORDS; j++)

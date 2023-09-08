@@ -1,0 +1,8 @@
+echo adding gcc directory to path
+echo for this to work properly, the current directly must be an archive gcc directory
+PATH=`pwd`:~/dejagnu/bin:$PATH
+export PATH
+echo $PATH
+TOPS20_BUILD_HOST=topah.xkl.com
+export TOPS20_BUILD_HOST
+echo this konsole window is now set to build using $TOPS20_BUILD_HOST

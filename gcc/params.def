@@ -297,6 +297,14 @@ DEFPARAM(PARAM_MAX_ONCE_PEELED_INSNS,
 	"The maximum number of insns of a peeled loop that rolls only once",
 	400, 0, 0)
 
+#ifdef __PDP10_H__
+/* The maximum number of loops in a procedure before we'll attempt unroll loops completely.  */
+DEFPARAM(PARAM_MAX_LOOPS,
+	"max-loops",
+	"The maximum number of loops for attempting to unpeel them all",
+	20, 0, 0)
+#endif
+
 /* The maximum number of insns of an unswitched loop.  */
 DEFPARAM(PARAM_MAX_UNSWITCH_INSNS,
 	"max-unswitch-insns",

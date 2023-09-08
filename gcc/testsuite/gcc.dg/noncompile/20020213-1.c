@@ -25,6 +25,7 @@ int main ()
 }
 
 /* { dg-warning "passing argument 2 of" "2nd incompatible" { target *-*-* } 15 } */
+/* { dg-warning "converting 9" "bit byte pointer to word address" { target pdp10-xkl-tops20 } 15 } */
 /* { dg-warning "passing argument 1 of" "1st incompatible" { target *-*-* } 16 } */
 /* { dg-warning "passing argument 2 of" "2nd incompatible" { target *-*-* } 16 } */
 /* { dg-warning "passing argument 1 of" "1st incompatible" { target *-*-* } 18 } */

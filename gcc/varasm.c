@@ -27,6 +27,16 @@ along with GCC; see the file COPYING3.  If not see
    We also output the assembler code for constants stored in memory
    and are responsible for combining constants with the same value.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: varasm.c 3c87d57438ff 2011/09/29 02:51:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -172,6 +182,16 @@ section *eh_frame_section;
 /* asm_out_file's current section.  This is NULL if no section has yet
    been selected or if we lose track of what the current section is.  */
 section *in_section;
+
+/* We need to track the current section's flags as well, because it's possible for
+    a section's flags to get changed and then we switch to the section.  In that
+    case switch_to_section() needs to do the switch even though its the same section
+    -mtc 10/12/2007
+*/
+#ifdef __PDP10_H__
+unsigned int in_section_flags;
+#endif
+
 
 /* True if code for the current function is currently being directed
    at the cold section.  */
@@ -544,6 +564,13 @@ get_section (const char *name, unsigned int flags, tree decl)
 	    decl = sect->named.decl;
 	  gcc_assert (decl);
 	  error ("%+D causes a section type conflict", decl);
+
+/* we accumulate information about sections as we go
+    -mtc 11/14/2007
+*/
+#ifdef __PDP10_H__
+	  sect->common.flags |= flags;
+#endif	  
 	}
     }
   return sect;
@@ -888,7 +915,11 @@ default_no_function_rodata_section (tree decl ATTRIBUTE_UNUSED)
 
 static section *
 mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
+#ifdef __PDP10_H__
+			  unsigned HOST_WIDE_INT align,
+#else
 			  unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED,
+#endif
 			  unsigned int flags ATTRIBUTE_UNUSED)
 {
   HOST_WIDE_INT len;
@@ -932,6 +963,14 @@ mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
 	      sprintf (name, ".rodata.str%d.%d", modesize / 8,
 		       (int) (align / 8));
 	      flags |= (modesize / 8) | SECTION_MERGE | SECTION_STRINGS;
+
+/* To handle alignment greater than word, we need to mark sections as SECTION_PALIGNED
+    -mtc 11/14/2007
+*/
+#ifdef __PDP10_H__
+	      if (align > BITS_PER_WORD)
+		flags |= SECTION_PALIGNED;
+#endif
 	      return get_section (name, flags, NULL);
 	    }
 	}
@@ -944,7 +983,11 @@ mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
 
 section *
 mergeable_constant_section (enum machine_mode mode ATTRIBUTE_UNUSED,
+#ifdef __PDP10_H__
+			    unsigned HOST_WIDE_INT align,
+#else
 			    unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED,
+#endif
 			    unsigned int flags ATTRIBUTE_UNUSED)
 {
   unsigned int modesize = GET_MODE_BITSIZE (mode);
@@ -961,6 +1004,14 @@ mergeable_constant_section (enum machine_mode mode ATTRIBUTE_UNUSED,
 
       sprintf (name, ".rodata.cst%d", (int) (align / 8));
       flags |= (align / 8) | SECTION_MERGE;
+
+/* To handle alignment greater than word, we need to mark sections as SECTION_PALIGNED
+    -mtc 11/14/2007
+*/
+#ifdef __PDP10_H__
+	      if (align > BITS_PER_WORD)
+		flags |= SECTION_PALIGNED;
+#endif
       return get_section (name, flags, NULL);
     }
   return readonly_data_section;
@@ -1129,6 +1180,12 @@ get_variable_section (tree decl, bool prefer_noswitch_p)
 {
   int reloc;
 
+/* Skip all this gibberish and rely on targetm.asm_out.select_section()
+    -mtc 11/15/2007
+*/
+#ifdef __PDP10_H__
+#else
+
   /* If the decl has been given an explicit section name, then it
      isn't common, and shouldn't be handled as such.  */
   if (DECL_COMMON (decl) && DECL_SECTION_NAME (decl) == NULL)
@@ -1151,7 +1208,16 @@ get_variable_section (tree decl, bool prefer_noswitch_p)
     return get_named_section (decl, NULL, reloc);
 
   if (!DECL_THREAD_LOCAL_P (decl)
+/* these decision conditions seem plain wrong
+    we shouldn't get a noswitch section unless we want one and they exist
+    -mtc 10/11/2007
+*/
+ #ifdef __PDP10_H__
+      && prefer_noswitch_p 
+      && ! targetm.have_switchable_bss_sections
+ #else
       && !(prefer_noswitch_p && targetm.have_switchable_bss_sections)
+ #endif
       && bss_initializer_p (decl))
     {
       if (!TREE_PUBLIC (decl))
@@ -1159,6 +1225,7 @@ get_variable_section (tree decl, bool prefer_noswitch_p)
       if (bss_noswitch_section)
 	return bss_noswitch_section;
     }
+#endif
 
   return targetm.asm_out.select_section (decl, reloc, DECL_ALIGN (decl));
 }
@@ -1401,6 +1468,13 @@ make_decl_rtl (tree decl)
   x = gen_rtx_MEM (DECL_MODE (decl), x);
   if (TREE_CODE (decl) != FUNCTION_DECL)
     set_mem_attributes (x, decl, 1);
+
+#ifdef __PDP10_H__
+  /* On the PDP-10, arrays are always word-aligned.  */
+  if (TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
+    set_mem_align (x, BITS_PER_WORD);
+#endif
+
   SET_DECL_RTL (decl, x);
 
   /* Optionally set flags or add text to the name to record information
@@ -1524,7 +1598,21 @@ default_named_section_asm_out_constructor (rtx symbol, int priority)
   else
     sec = get_section (".ctors", SECTION_WRITE, NULL);
 
+/* specifying -fprofile-arcs causes us to get called even though PDP10 doesn't support cpp or constructors
+    but the way the TARGET_ASM_CONSTRUCTOR and related macros work, there doesn't seem to be a way
+    of making TARGET_INITIALIZER come out right.  To avoid linker problems, for now at least set the PSECT
+    to be one that exists.
+    -mtc 1/5/2007
+    rework for 4.2.1 update
+    -mtc 9/26/2007
+    rework again for 4.3.0
+    -mtc 11/28/2007
+*/
+#ifdef __PDP10_H__
+  assemble_addr_to_section (symbol, data_section);
+#else
   assemble_addr_to_section (symbol, sec);
+#endif
 }
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -2096,10 +2184,36 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 
+#ifdef __PDP10_H__
+/* PDP-10: the name in RTL may have been modified for function-local
+     labels.  Also, RTL can be (mem (symbol_ref)) or (mem (const (plus
+     (symbol_ref) (const_int)))).  
+
+    make this PDP10 difference an ifdef with the 4.2.1 update
+    also rearrange logic to use gcc_assert and make the relation to the gcc
+    base code clearer
+    -mtc 9/27/2007
+*/
+  gcc_assert (MEM_P (decl_rtl));
+  symbol = XEXP (decl_rtl, 0);
+  if (GET_CODE(symbol) == CONST)
+  	{
+	gcc_assert (GET_CODE (XEXP(symbol, 0)) == PLUS);
+	symbol = XEXP (XEXP (symbol, 0), 0);
+	gcc_assert (GET_CODE (symbol) == SYMBOL_REF);
+  	}
+  else
+  	{
+  	gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
+  	}
+  name = XSTR (symbol, 0);
+#else
   gcc_assert (MEM_P (decl_rtl));
   gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
   symbol = XEXP (decl_rtl, 0);
   name = XSTR (symbol, 0);
+#endif
+  
   if (TREE_PUBLIC (decl) && DECL_NAME (decl))
     notice_global_symbol (decl);
 
@@ -2114,8 +2228,26 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   if (DECL_PRESERVE_P (decl))
     targetm.asm_out.mark_decl_preserved (name);
 
+/*
+	On the PDP10 we need to switch sections first, so the ENTRY or INTERN doesn't
+	get separated from the label that will follow and our checks of what section we're in
+	don't get confused.
+	-mtc 10/20/2006
+	It's actually OK to have the ENTRY or INTERN get output before the variable, but
+	we do need constants to go into the referencing section, and the code is more readable
+	if it's all together.
+	Reviewed this with 421 update
+	-mtc 11/14/2007
+*/
+#ifdef __PDP10_H__
+ /* Switch to the appropriate section.  */
+  sect = get_variable_section (decl, false);
+  gcc_assert(SECTION_STYLE(sect) != SECTION_NOSWITCH);
+  switch_to_section (sect);
+#else
   /* First make the assembler name(s) global if appropriate.  */
   sect = get_variable_section (decl, false);
+#endif
   if (TREE_PUBLIC (decl)
       && DECL_NAME (decl)
       && (sect->common.flags & SECTION_COMMON) == 0)
@@ -2218,14 +2350,30 @@ static void
 assemble_external_real (tree decl)
 {
   rtx rtl = DECL_RTL (decl);
+  rtx sym;
 
-  if (MEM_P (rtl) && GET_CODE (XEXP (rtl, 0)) == SYMBOL_REF
-      && !SYMBOL_REF_USED (XEXP (rtl, 0))
+#ifdef __PDP10_H__
+      /* PDP-10: rtl can be either (mem (symbol_ref)) or
+	 (mem (const (plus (symbol_ref) (const_int)))).  */
+  if (!incorporeal_function_p (decl)
+      && MEM_P (rtl) 
+      && (GET_CODE (sym = XEXP (rtl, 0)) == SYMBOL_REF
+	      || (GET_CODE (sym) == CONST
+		  && GET_CODE (XEXP (sym, 0)) == PLUS
+		  && GET_CODE (sym = XEXP (XEXP (sym, 0), 0)) == SYMBOL_REF))
+      && !SYMBOL_REF_USED (sym)
+       )
+#else
+  sym = XEXP(rtl, 0);
+  if (MEM_P (rtl) && GET_CODE (sym) == SYMBOL_REF
+      && !SYMBOL_REF_USED (sym)
       && !incorporeal_function_p (decl))
+#endif
+
     {
       /* Some systems do require some output.  */
-      SYMBOL_REF_USED (XEXP (rtl, 0)) = 1;
-      ASM_OUTPUT_EXTERNAL (asm_out_file, decl, XSTR (XEXP (rtl, 0), 0));
+      SYMBOL_REF_USED (sym) = 1;
+      ASM_OUTPUT_EXTERNAL (asm_out_file, decl, XSTR (sym, 0));
     }
 }
 #endif
@@ -2355,9 +2503,15 @@ ultimate_transparent_alias_target (tree *alias)
 void
 assemble_name_raw (FILE *file, const char *name)
 {
+/* pdp10 must always process labels to be sure they are legal symbols
+    -mtc 9/12/2007
+*/
+#ifdef __PDP10_H__
+#else
   if (name[0] == '*')
     fputs (&name[1], file);
   else
+#endif
     ASM_OUTPUT_LABELREF (file, name);
 }
 
@@ -2440,7 +2594,7 @@ assemble_trampoline_template (void)
 {
   char label[256];
   const char *name;
-  int align;
+  int align = floor_log2 (TRAMPOLINE_ALIGNMENT / BITS_PER_UNIT);
   rtx symbol;
 
   if (initial_trampoline)
@@ -2451,11 +2605,19 @@ assemble_trampoline_template (void)
 #ifdef TRAMPOLINE_SECTION
   switch_to_section (TRAMPOLINE_SECTION);
 #else
+
+/* To handle alignment greater than word, we need to mark sections as SECTION_PALIGNED
+    -mtc 11/14/2007
+*/
+#ifdef __PDP10_H__
+  if (TRAMPOLINE_ALIGNMENT > BITS_PER_WORD)
+    readonly_data_section->common.flags |= SECTION_PALIGNED;
+#endif
+
   switch_to_section (readonly_data_section);
 #endif
 
   /* Write the assembler code to define one.  */
-  align = floor_log2 (TRAMPOLINE_ALIGNMENT / BITS_PER_UNIT);
   if (align > 0)
     {
       ASM_OUTPUT_ALIGN (asm_out_file, align);
@@ -2483,7 +2645,9 @@ assemble_trampoline_template (void)
 static inline unsigned
 min_align (unsigned int a, unsigned int b)
 {
-  return (a | b) & -(a | b);
+  a /= BITS_PER_UNIT;
+  b /= BITS_PER_UNIT;
+  return BITS_PER_UNIT * ((a | b) & -(a | b));
 }
 
 /* Return the assembler directive for creating a given kind of integer
@@ -2600,10 +2764,65 @@ assemble_integer (rtx x, unsigned int size, unsigned int align, int force)
 
   return false;
 }
+
+/* Helper function to make it possible to fix assemble_real()
+    Totally generic, not PDP10 specific
+    DATA contains a bunch of bits, packed 32 bits per element
+    return a CONST_INT containing the Nth item DATA if it is
+    interpreted to contain items of BITS_PER bits
+    -mtc 5/3/2007
+*/
+
+#ifdef __PDP10_H__
+rtx extract_word (long *,  int, int);
+
+rtx extract_word (long *data, int n, int bits_per)
+{
+	HOST_WIDE_INT item = 0;
+	int startbit = n*bits_per;
+	int startword = startbit / 32;
+	int endbit = startbit + bits_per - 1;
+	int endword = endbit / 32;
+	int w, b;
+	HOST_WIDE_INT extractedbits;
+
+	for (w = startword, b = startbit % 32; w <= endword; w++, b=0)
+		{
+/* make the one a long to get correct arithmetic
+-mtc 9/28/2011
+*/
+		extractedbits = data[w] & ((1L << (32 - b)) - 1);
+		if (w == endword)
+			{
+			extractedbits = (extractedbits >> (31 - (endbit % 32)));
+			item = (item << (endbit % 32 + 1)) + extractedbits;
+			}
+		else
+			item = (item << 32) + extractedbits;
+		}
+	return GEN_INT(item);
+}
+
+#endif
 
 void
 assemble_real (REAL_VALUE_TYPE d, enum machine_mode mode, unsigned int align)
 {
+/* The base code assumes, totally erroneously, that 32 is a multiple of BITS_PER_UNIT
+     and that therefore it's possible to output the value as a series of units_per size chunks.
+     When outputting assembly, its necessary to do it in target machine pieces.  We do it in words,
+     but units should also work.
+     -mtc 5/3/2007
+*/
+#ifdef __PDP10_H__
+    long data[4];
+    int nwords = GET_MODE_SIZE (mode) / UNITS_PER_WORD;
+    int i;
+
+    real_to_target (data, &d, mode);
+    for (i = 0; i < nwords; i++)
+    	assemble_integer (extract_word (data, i, BITS_PER_WORD), UNITS_PER_WORD, (i == 1 ? align : BITS_PER_WORD), 1);
+#else
   long data[4] = {0, 0, 0, 0};
   int i;
   int bitsize, nelts, nunits, units_per;
@@ -2639,6 +2858,7 @@ assemble_real (REAL_VALUE_TYPE d, enum machine_mode mode, unsigned int align)
       assemble_integer (GEN_INT (data[i]), MIN (nunits, units_per), align, 1);
       nunits -= units_per;
     }
+#endif
 }
 
 /* Given an expression EXP with a constant value,
@@ -2698,6 +2918,16 @@ decode_addr_const (tree exp, struct addr_const *value)
     case CONSTRUCTOR:
     case INTEGER_CST:
       x = output_constant_def (target, 1);
+
+#ifdef __PDP10_H__
+      /* PDP-10: decode byte pointers.  */
+      if (GET_CODE (XEXP (x, 0)) == CONST
+	  && GET_CODE (XEXP (XEXP (x, 0), 0)) == PLUS)
+	{
+	  offset += INTVAL (XEXP (XEXP (XEXP (x, 0), 0), 1));
+	  x = gen_rtx_MEM (GET_MODE (x), XEXP (XEXP (XEXP (x, 0), 0), 0));
+	}
+#endif
       break;
 
     default:
@@ -2706,7 +2936,16 @@ decode_addr_const (tree exp, struct addr_const *value)
 
   gcc_assert (MEM_P (x));
   x = XEXP (x, 0);
-
+  
+#ifdef __PDP10_H__
+  /* PDP-10: rtl can be either (mem (symbol_ref)) or
+     (mem (const (plus (symbol_ref) (const_int)))).  */
+  if ((GET_CODE (x) == CONST
+       && GET_CODE (XEXP (x, 0)) == PLUS
+       && GET_CODE (XEXP (XEXP (x, 0), 0)) == SYMBOL_REF))
+    x = XEXP( XEXP (x, 0), 0);
+#endif
+  
   value->base = x;
   value->offset = offset;
 }
@@ -4326,6 +4565,21 @@ output_constant (tree exp, unsigned HOST_WIDE_INT size, unsigned int align)
 
   /* Eliminate any conversions since we'll be outputting the underlying
      constant.  */
+/*
+	Type conversions can represent actual differences in the underlying representation
+	of the constant, so stripping the conversions seems very questionable.  On the PDP10
+	changes in machine modes used to represent pointers are an instance of this, there
+	are probably others.  For now, just use STRIP_NOPS() for PDP10 version.  This avoids
+	stripping conversions that change machine mode.  It also doesn't look for
+	VIEW_CONVERT_EXPR.  This may be innocuous for 'C'.  Finally, note that since there's
+	a good bit of checking of TREE_CODE(exp) later on, this may break things.  If so, the
+	solution is to keep around to or more variants of exp, maybe the original exp and the last
+	exp before mode changes, so we can reference the right one in each circumstance.
+	-mtc 9/28/2006
+*/
+#ifdef __PDP10_H__
+	STRIP_NOPS(exp);
+#else
   while (TREE_CODE (exp) == NOP_EXPR || TREE_CODE (exp) == CONVERT_EXPR
 	 || TREE_CODE (exp) == NON_LVALUE_EXPR
 	 || TREE_CODE (exp) == VIEW_CONVERT_EXPR)
@@ -4344,6 +4598,7 @@ output_constant (tree exp, unsigned HOST_WIDE_INT size, unsigned int align)
       else
 	exp = TREE_OPERAND (exp, 0);
     }
+#endif
 
   code = TREE_CODE (TREE_TYPE (exp));
   thissize = int_size_in_bytes (TREE_TYPE (exp));
@@ -4404,8 +4659,18 @@ output_constant (tree exp, unsigned HOST_WIDE_INT size, unsigned int align)
       switch (TREE_CODE (exp))
 	{
 	case CONSTRUCTOR:
+	  {
+#ifdef __PDP10_H__
+	  int n = tree_low_cst (TYPE_SIZE (TREE_TYPE (TREE_TYPE (exp))), 1);
+	  if (n % 9 != 0)
+	    pdp10_bits_per_unit = n / tree_low_cst (TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (exp))), 1);
+#endif
 	  output_constructor (exp, size, align);
+#ifdef __PDP10_H__
+	  pdp10_bits_per_unit = BITS_PER_UNIT;
+#endif
 	  return;
+	  }
 	case STRING_CST:
 	  thissize = MIN ((unsigned HOST_WIDE_INT)TREE_STRING_LENGTH (exp),
 			  size);
@@ -4542,6 +4807,7 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
       tree val = ce->value;
       tree index = 0;
 
+
       /* The element in a union constructor specifies the proper field
 	 or index.  */
       if ((TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE
@@ -4554,6 +4820,12 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 
 #ifdef ASM_COMMENT_START
       if (field && flag_verbose_asm)
+/* We can't handle outputing comments when we're in the middle of outputting bytes
+    -mtc 1/30/2008
+*/
+#ifdef __PDP10_H__
+	if (!pdp10_in_output_byte())
+#endif
 	fprintf (asm_out_file, "%s %s:\n",
 		 ASM_COMMENT_START,
 		 DECL_NAME (field)
@@ -4586,7 +4858,15 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 	      total_bytes += fieldsize;
 	    }
 	}
+#ifdef __PDP10_H__
+/* On the PDP10 we need to output 8-bit and smaller chars as bitfields
+    -mtc 12/18/2009
+*/
+      else if (field == 0 || (!DECL_BIT_FIELD (field) 
+	  				&& ((DECL_ALIGN(field) >= BITS_PER_WORD) || ((BITS_PER_WORD % DECL_ALIGN(field)) == 0))))
+#else
       else if (field == 0 || !DECL_BIT_FIELD (field))
+#endif
 	{
 	  /* An element that is not a bit-field.  */
 
@@ -4673,6 +4953,49 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 
 	  if (val == 0)
 	    val = integer_zero_node;
+
+		  /*	The representation of long long differs from the representation assumed by the gcc base code here.
+		To avoid redundant conversion code, we call expand_expr() here to get the correct bits.
+		Then to avoid rewriting the rest of this output code, we pack the new bits back into an INTEGER_CST
+		tree and set val.  It's a bit kludgy, but minimizes redundancy and variation from the gcc base.
+		-mtc 10/17/2006
+		add check of mode size
+		-mtc 7/13/2007
+		*/
+#ifdef __PDP10_H__
+	      if ((TREE_TYPE(val)) != NULL &&
+		  	(TYPE_MAIN_VARIANT(TREE_TYPE(val)) == long_long_integer_type_node ||
+		  	TYPE_MAIN_VARIANT(TREE_TYPE(val)) == long_long_unsigned_type_node ||
+		  	GET_MODE_SIZE(TYPE_MODE(TREE_TYPE(val))) > UNITS_PER_WORD)  )
+	      	{
+		rtx opval = expand_expr(val, NULL_RTX, VOIDmode, 0);
+		HOST_WIDE_INT highhalf;
+		HOST_WIDE_INT lowhalf;
+		tree newval = make_node(INTEGER_CST);
+
+		if (GET_CODE(opval) == CONST_DOUBLE)
+			{
+			highhalf = CONST_DOUBLE_HIGH(opval);
+			lowhalf = CONST_DOUBLE_LOW(opval);
+			}
+		else if (GET_CODE(opval) == CONST_INT)
+			{
+			lowhalf = INTVAL(opval);
+			highhalf = (lowhalf < 0 ? (HOST_WIDE_INT) -1 : (HOST_WIDE_INT) 0);
+			}
+		else /* we're in trouble */
+			abort();
+			
+		TREE_INT_CST_HIGH(newval) = 
+			highhalf >> (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD);
+		TREE_INT_CST_LOW(newval) = 
+			((highhalf & (((HOST_WIDE_INT) 1 << (HOST_BITS_PER_WIDE_INT - BITS_PER_WORD)) - 1)) << BITS_PER_WORD) | lowhalf;
+		
+		TREE_TYPE(newval) = TREE_TYPE(val);
+		val = newval;
+	      	}
+#endif
+
 
 	  /* If this field does not start in this (or, next) byte,
 	     skip some bytes.  */
@@ -5039,12 +5362,18 @@ weak_finish (void)
 static void
 globalize_decl (tree decl)
 {
-
 #if defined (ASM_WEAKEN_LABEL) || defined (ASM_WEAKEN_DECL)
   if (DECL_WEAK (decl))
     {
       const char *name = XSTR (XEXP (DECL_RTL (decl), 0), 0);
       tree *p, t;
+
+#ifdef __PDP10_H__
+  /* PDP-10: find the symbol inside a (const (plus ...)).  */
+  if (GET_CODE (XEXP (DECL_RTL (decl), 0)) == CONST
+      && GET_CODE (XEXP (XEXP (DECL_RTL (decl), 0), 0)) == PLUS)
+    name = XSTR (XEXP (XEXP (XEXP (DECL_RTL (decl), 0), 0), 0), 0);
+#endif
 
 #ifdef ASM_WEAKEN_DECL
       ASM_WEAKEN_DECL (asm_out_file, decl, name, 0);
@@ -6036,9 +6365,8 @@ default_select_rtx_section (enum machine_mode mode ATTRIBUTE_UNUSED,
 			    unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED)
 {
   if (compute_reloc_for_rtx (x) & targetm.asm_out.reloc_rw_mask ())
-    return data_section;
-  else
-    return readonly_data_section;
+    return  data_section;
+  return  readonly_data_section;
 }
 
 section *
@@ -6319,6 +6647,27 @@ output_section_asm_op (const void *directive)
 void
 switch_to_section (section *new_section)
 {
+/* pdp10 needs to track current section flags because we can modify the flags and
+    then switch into the same section
+    -mtc 10/12/2007
+    fix switch test
+    -mtc 10/25/2007
+*/
+#ifdef __PDP10_H__
+  if ((in_section == new_section) &&( in_section_flags == new_section->common.flags))
+    return;
+
+  if (new_section->common.flags & SECTION_FORGET)
+    {
+    in_section = NULL;
+    in_section_flags = 0;
+    }
+  else
+   {
+    in_section = new_section;
+    in_section_flags = new_section->common.flags;
+   }
+#else
   if (in_section == new_section)
     return;
 
@@ -6326,6 +6675,7 @@ switch_to_section (section *new_section)
     in_section = NULL;
   else
     in_section = new_section;
+#endif
 
   switch (SECTION_STYLE (new_section))
     {
@@ -6351,6 +6701,11 @@ switch_to_section (section *new_section)
     }
 
   new_section->common.flags |= SECTION_DECLARED;
+
+#ifdef __PDP10_H__
+  in_section_flags = new_section->common.flags;
+#endif
+
 }
 
 /* If block symbol SYMBOL has not yet been assigned an offset, place

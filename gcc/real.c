@@ -20,6 +20,16 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: real.c 3c87d57438ff 2011/09/29 02:51:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2627,6 +2637,288 @@ real_hash (const REAL_VALUE_TYPE *r)
   return h;
 }
 
+#ifdef __PDP10_H__
+/* PDP10 F single and double format
+   single precision:  sign bit, 8 bit excess 128 exponent, 27 bit mantissa
+                      normalized to 1/2 - 1
+
+   double precision:  adds a second word with 35 bits of additional mantissa
+                      (for a total of 62 bits of precision)
+                      The sign bit of this word should always be zero
+
+		      Neither format allows for nans or infinity.
+		      When these are encountered, the largest positive
+		      value is silently substituted. */
+
+
+
+/* encode/decode a value into/from an array of host long.
+   Always store 32 bits per long, regardless of the actual capacity.
+   The array word order is dependent on FLOAT_WORDS_BIG_ENDIAN 
+   The significand is always stored from least to most significant word */
+
+static void encode_pdp10_single PARAMS ((const struct real_format *fmt,
+					 long *, const REAL_VALUE_TYPE *));
+static void decode_pdp10_single PARAMS ((const struct real_format *,
+					 REAL_VALUE_TYPE *, const long *));
+
+static void
+encode_pdp10_single (const struct real_format *fmt ATTRIBUTE_UNUSED, long *buf, const REAL_VALUE_TYPE *r)
+{
+  unsigned long exp;
+  unsigned long sig_lo=0, sig_hi=0;
+
+  if (HOST_BITS_PER_LONG == 64)
+    {
+      sig_hi = ((r->sig[SIGSZ-1] >> 31 ) >> 1) & 0xffffffff;
+      sig_lo = r->sig[SIGSZ-1] & 0xffffffff;
+    }
+  else
+    {
+      sig_hi = r->sig[SIGSZ-1];
+      sig_lo = r->sig[SIGSZ-2];
+    }
+
+  switch (r->cl)
+    {
+    case rvc_zero:
+      buf[0] = buf[1] = 0;
+      break;
+    case rvc_nan:
+    case rvc_inf:
+      buf[0] = 0x7fffffff;                              /* largest positive value */
+      buf[1] = 0xf0000000;
+      break;
+    case rvc_normal:
+      exp = (r->uexp + 128) & 0xff;
+      buf[0] = 0  						/* sign bit         0   (1) */
+	     | ((exp       << 23)  & 0x7f800000)  /* exp  bits      1-8   (8) */
+	     | ((sig_hi >> 9)   & 0x007fffff);    /* mantissa bits  9-31 (23) */
+      buf[1] = ((sig_hi << 23)  & 0xf0000000);    /* mantissa bits 32-35  (4) */
+                                                  /* unused bits         (28) */
+
+/* negation is accomplished by taking the twos complement of the entire number */
+/* mtc 9/28/2011 */
+      if (r->sign)
+      	{
+      	buf[1] = -buf[1];
+	buf[0] = (buf[1] ? ~buf[0] : -buf[0]);
+      	}
+
+      break;
+    default:
+      abort ();
+    } 
+  if (FLOAT_WORDS_BIG_ENDIAN)
+    ;
+  else
+    {
+      long temp = buf[0];
+      buf[0] = buf[1];
+      buf[1] = temp;
+    }
+}
+
+static void
+decode_pdp10_single (const struct real_format *fmt ATTRIBUTE_UNUSED, REAL_VALUE_TYPE *r, const long *buf)
+{
+  long tmp[2], sig_lo=0, sig_hi=0;
+  if (FLOAT_WORDS_BIG_ENDIAN)
+    {
+      tmp[0] = buf[1];
+      tmp[1] = buf[0];
+    } else {
+      tmp[0] = buf[0];
+      tmp[1] = buf[1];
+    }
+  r->sign = (tmp[0] >> (HOST_BITS_PER_LONG - 1)) & 0x1;
+  r->uexp  = (tmp[0] >> (HOST_BITS_PER_LONG - 9)) & 0xff;
+  
+  sig_hi = ((tmp[0] << 9)  & 0xfffffe00)  /* mantissa bits  0-22 (23) */
+         | ((tmp[1] >> 23) & 0x000008e0); /* mantissa bits 23-26  (4) */
+                                         /* unused bits          (5) */
+  if (r->sign || r->uexp || sig_hi)
+    {
+      r->cl = rvc_normal;
+      r->uexp = r->uexp - 128;
+    }
+  else
+    {
+      r->cl = rvc_zero;
+      r->sign = r->uexp = sig_hi = sig_lo = 0;
+    }
+
+  if (HOST_BITS_PER_LONG == 64)
+    {
+      r->sig[SIGSZ-1] = ((sig_hi << 31) << 1 ) | sig_lo;
+    }
+  else
+    {
+      r->sig[SIGSZ-1] = sig_hi;
+      r->sig[SIGSZ-2] = sig_lo;
+    }
+}
+
+const struct real_format pdp10_single_format = 
+  {
+    encode_pdp10_single,
+    decode_pdp10_single,
+    2,
+    27,
+    27,
+    -128,
+    127,
+    0,
+    -1,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  };
+
+static void encode_pdp10_double  (const struct real_format *fmt,
+					 long *, const REAL_VALUE_TYPE *);
+static void decode_pdp10_double  (const struct real_format *,
+					 REAL_VALUE_TYPE *, const long *);
+
+static void
+encode_pdp10_double (const struct real_format *fmt ATTRIBUTE_UNUSED, long *buf, const REAL_VALUE_TYPE *r)
+{
+  unsigned long exp;
+  unsigned long sig_hi = 0, sig_lo = 0;
+
+  if (HOST_BITS_PER_LONG == 64)
+    {
+      sig_hi = ((r->sig[SIGSZ-1] >> 31 ) >> 1) & 0xffffffff;
+      sig_lo = r->sig[SIGSZ-1] & 0xffffffff;
+    }
+  else
+    {
+      sig_hi = r->sig[SIGSZ-1];
+      sig_lo = r->sig[SIGSZ-2];
+    }
+  
+  switch (r->cl)
+    {
+    case rvc_zero:
+      buf[0] = buf[1] = buf[2] = 0;
+      break;
+    case rvc_nan:
+    case rvc_inf:
+      buf[0] = 0x7fffffff;                              /* largest positive value */
+      buf[1] = 0xf7ffffff;
+      buf[2] = 0xff000000;
+      break;
+    case rvc_normal:
+      exp = (r->uexp + 128) & 0xff;
+      buf[0] = 0 					       /* sign bit           0   (1) */
+	     | ((exp       << 23) & 0x7f800000)  /* exp bits         1-8   (8) */
+	     | ((sig_hi >> 9)  & 0x007fffff);    /* mantissa bits    9-31 (23) */
+      buf[1] = ((sig_hi << 23) & 0xf0000000)     /* mantissa bits   32-35  (4) */
+	                                         /* must be zero bit   36  (1) */
+	     | ((sig_hi << 22) & 0x07c00000)     /* mantissa bits   37-41  (5) */
+	     | ((sig_lo >> 10) & 0x003fffff);    /* mantissa bits   42-63 (22) */
+      buf[2] = ((sig_lo << 22) & 0xff000000);    /* mantissa bits   64-71  (8) */
+                                                 /* unused bits           (24) */
+
+/* negation is accomplished by taking the twos complement of the entire number
+- mtc 9/28/2011 
+ */
+      if (r->sign)
+      	{
+      	buf[2] = -buf[2];
+	buf[1] = (buf[2] ? ~buf[1] : -buf[1]);
+	buf[0] = (buf[2] || buf[1] ? ~buf[0] : -buf[0]);
+      	}
+												 
+      break;
+    default:
+      abort ();
+    }
+  if (FLOAT_WORDS_BIG_ENDIAN)
+    ;
+  else
+    {
+      long temp = buf[0];
+      buf[0] = buf[2];
+      buf[2] = temp;
+    }
+} 
+
+static void
+decode_pdp10_double (const struct real_format *fmt ATTRIBUTE_UNUSED, REAL_VALUE_TYPE *r, const long *buf)
+{
+  long tmp[3];
+  long sig_hi=0, sig_lo=0;
+
+  if (FLOAT_WORDS_BIG_ENDIAN)
+    {
+      tmp[0] = buf[0];
+      tmp[1] = buf[1];
+      tmp[2] = buf[2];
+    } else {
+      tmp[0] = buf[2];
+      tmp[1] = buf[1];
+      tmp[2] = buf[0];
+    }
+  
+  r->sign = (tmp[0] >> (HOST_BITS_PER_LONG - 1)) & 0x1;
+  r->uexp  = (tmp[0] >> (HOST_BITS_PER_LONG - 9)) & 0xff;
+  
+  sig_hi = ((tmp[0] << 9)  & 0xfffffe00)  /* mantissa bits  0-22  (23) */
+         | ((tmp[1] >> 23) & 0x000001e0)  /* mantissa bits 23-26   (4) */
+                                          /* skip must be zero bit (1) */
+         | ((tmp[1] >> 22) & 0x0000001f); /* mantissa bits 27-31   (5) */
+  sig_lo = ((tmp[1] << 10) & 0xfffffc00)  /* mantissa bits 32-53  (22) */
+         | ((tmp[2] >> 22) & 0x000003fc); /* mantissa bits 54-61   (8) */
+                                          /* unused bits           (2) */
+  
+  if (r->sign || r->uexp || sig_hi || sig_lo)
+    {
+      r->cl = rvc_normal;
+      r->uexp = (r->uexp - 128);
+    }
+  else
+    {
+      r->cl = rvc_zero;
+      r->sign = r->uexp = sig_hi = sig_lo = 0;
+    }
+
+ if (HOST_BITS_PER_LONG == 64)
+    {
+      r->sig[SIGSZ-1] = ((sig_hi << 31) << 1 ) | sig_lo;
+    }
+  else
+    {
+      r->sig[SIGSZ-1] = sig_hi;
+      r->sig[SIGSZ-2] = sig_lo;
+    }
+}
+
+const struct real_format pdp10_double_format = 
+  {
+    encode_pdp10_double,
+    decode_pdp10_double,
+    2,
+    62,
+    62,
+    -128,
+    127,
+    0,
+    -1,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  };
+
+#endif
+
+
 /* IEEE single-precision format.  */
 
 static void encode_ieee_single (const struct real_format *fmt,

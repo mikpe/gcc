@@ -55,6 +55,91 @@ fle (x)
     return FALSE;
 }
 
+#ifdef __PDP10__
+main ()
+{
+  if (feq (0LL) != TRUE)
+    abort ();
+  if (feq (-1LL) != FALSE)
+    abort ();
+  if (feq (0x400000000000000000LL) != FALSE)
+    abort ();
+  if (feq (0x400000000000000001LL) != FALSE)
+    abort ();
+  if (feq (1LL) != FALSE)
+    abort ();
+  if (feq (0x3fffffffffffffffffLL) != FALSE)
+    abort ();
+
+  if (fne (0LL) != FALSE)
+    abort ();
+  if (fne (-1LL) != TRUE)
+    abort ();
+  if (fne (0x400000000000000000LL) != TRUE)
+    abort ();
+  if (fne (0x400000000000000001LL) != TRUE)
+    abort ();
+  if (fne (1LL) != TRUE)
+    abort ();
+  if (fne (0x3fffffffffffffffffLL) != TRUE)
+    abort ();
+
+  if (flt (0LL) != FALSE)
+    abort ();
+  if (flt (-1LL) != TRUE)
+    abort ();
+  if (flt (0x400000000000000000LL) != TRUE)
+    abort ();
+  if (flt (0x400000000000000001LL) != TRUE)
+    abort ();
+  if (flt (1LL) != FALSE)
+    abort ();
+  if (flt (0x3fffffffffffffffffLL) != FALSE)
+    abort ();
+
+  if (fge (0LL) != TRUE)
+    abort ();
+  if (fge (-1LL) != FALSE)
+    abort ();
+  if (fge (0x400000000000000000LL) != FALSE)
+    abort ();
+  if (fge (0x400000000000000001LL) != FALSE)
+    abort ();
+  if (fge (1LL) != TRUE)
+    abort ();
+  if (fge (0x3fffffffffffffffffLL) != TRUE)
+    abort ();
+
+  if (fgt (0LL) != FALSE)
+    abort ();
+  if (fgt (-1LL) != FALSE)
+    abort ();
+  if (fgt (0x400000000000000000LL) != FALSE)
+    abort ();
+  if (fgt (0x400000000000000001LL) != FALSE)
+    abort ();
+  if (fgt (1LL) != TRUE)
+    abort ();
+  if (fgt (0x3fffffffffffffffffLL) != TRUE)
+    abort ();
+
+  if (fle (0LL) != TRUE)
+    abort ();
+  if (fle (-1LL) != TRUE)
+    abort ();
+  if (fle (0x400000000000000000LL) != TRUE)
+    abort ();
+  if (fle (0x400000000000000001LL) != TRUE)
+    abort ();
+  if (fle (1LL) != FALSE)
+    abort ();
+  if (fle (0x3fffffffffffffffffLL) != FALSE)
+    abort ();
+
+  exit (0);
+}
+
+#else
 main ()
 {
   if (feq (0LL) != TRUE)
@@ -137,3 +222,4 @@ main ()
 
   exit (0);
 }
+#endif

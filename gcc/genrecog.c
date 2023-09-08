@@ -50,6 +50,16 @@
    the new rtl is returned in an INSN list, and LAST_INSN will point
    to the last recognized insn in the old sequence.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: genrecog.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "bconfig.h"
 #include "system.h"
 #include "coretypes.h"

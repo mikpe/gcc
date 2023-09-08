@@ -1808,7 +1808,13 @@ tree
 get_vectype_for_scalar_type (tree scalar_type)
 {
   enum machine_mode inner_mode = TYPE_MODE (scalar_type);
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+  unsigned int nbytes = GET_MODE_SIZE (inner_mode);
+#else
   int nbytes = GET_MODE_SIZE (inner_mode);
+#endif
   int nunits;
   tree vectype;
 

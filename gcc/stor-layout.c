@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: stor-layout.c 201ce82ffba9 2010/05/28 18:26:26 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -267,7 +277,16 @@ int_mode_for_mode (enum machine_mode mode)
 unsigned int
 get_mode_alignment (enum machine_mode mode)
 {
+/* PDP10 needs to handle sub-byte size modes
+    -mtc 6/8/2007
+    Need to handle BLKmode specially
+    -mtc 5/27/2010
+*/
+#ifdef __PDP10_H__
+  return ((mode == BLKmode) ? BITS_PER_WORD : MIN (BIGGEST_ALIGNMENT, MAX (1, GET_MODE_PRECISION(mode))));
+#else
   return MIN (BIGGEST_ALIGNMENT, MAX (1, mode_base_align[mode]*BITS_PER_UNIT));
+#endif
 }
 
 
@@ -327,8 +346,18 @@ layout_decl (tree decl, unsigned int known_align)
      don't set it again since we can be called twice for FIELD_DECLs.  */
 
   DECL_UNSIGNED (decl) = TYPE_UNSIGNED (type);
+
   if (DECL_MODE (decl) == VOIDmode)
-    DECL_MODE (decl) = TYPE_MODE (type);
+
+/*
+	handle additional QnI modes on PDP10
+	-mtc 9/26/2006
+*/
+#ifdef __PDP10_H__
+	DECL_MODE (decl) = pdp10_mode_for_type(type);
+#else
+	DECL_MODE (decl) = TYPE_MODE (type);
+#endif
 
   if (DECL_SIZE (decl) == 0)
     {
@@ -389,21 +418,37 @@ layout_decl (tree decl, unsigned int known_align)
 	      enum machine_mode xmode
 		= mode_for_size_tree (DECL_SIZE (decl), MODE_INT, 1);
 
+#ifdef __PDP10_H__
+	      if (xmode != BLKmode
+		  && (known_align % GET_MODE_ALIGNMENT (xmode) == 0))
+#else
 	      if (xmode != BLKmode
 		  && (known_align == 0
 		      || known_align >= GET_MODE_ALIGNMENT (xmode)))
+#endif
 		{
 		  DECL_ALIGN (decl) = MAX (GET_MODE_ALIGNMENT (xmode),
 					   DECL_ALIGN (decl));
 		  DECL_MODE (decl) = xmode;
+#ifdef __PDP10_H__
+		  if (GET_MODE_ALIGNMENT(xmode) >=BITS_PER_UNIT)
+#endif
 		  DECL_BIT_FIELD (decl) = 0;
 		}
 	    }
 
 	  /* Turn off DECL_BIT_FIELD if we won't need it set.  */
+#ifdef __PDP10_H__
+	  if (TYPE_MODE (type) == BLKmode && DECL_MODE (decl) == BLKmode
+	      && (known_align % TYPE_ALIGN (type) == 0)
+	      && (DECL_ALIGN (decl) % TYPE_ALIGN (type) == 0)
+	      && (TYPE_ALIGN (type) >= BITS_PER_UNIT))
+#else
 	  if (TYPE_MODE (type) == BLKmode && DECL_MODE (decl) == BLKmode
 	      && known_align >= TYPE_ALIGN (type)
 	      && DECL_ALIGN (decl) >= TYPE_ALIGN (type))
+#endif
+	  
 	    DECL_BIT_FIELD (decl) = 0;
 	}
       else if (packed_p && DECL_USER_ALIGN (decl))
@@ -419,7 +464,15 @@ layout_decl (tree decl, unsigned int known_align)
 	 DECL_USER_ALIGN, so we need to check old_user_align instead.  */
       if (packed_p
 	  && !old_user_align)
+
+/* non-bitfields need to be aligned per min of their type and word alignment
+    -mtc 11/12/2007
+*/
+#ifdef __PDP10_H__
+	DECL_ALIGN (decl) = MIN (DECL_ALIGN (decl), BITS_PER_WORD);
+#else
 	DECL_ALIGN (decl) = MIN (DECL_ALIGN (decl), BITS_PER_UNIT);
+#endif
 
       if (! packed_p && ! DECL_USER_ALIGN (decl))
 	{
@@ -519,7 +572,18 @@ start_record_layout (tree t)
 
 #ifdef STRUCTURE_SIZE_BOUNDARY
   /* Packed structures don't need to have minimum size.  */
+/*
+	Being packed should affect the way fields within a structure are laid out, not how
+	the structure itself is align.
+	On the PDP10, the alignment of all structures is on word boundaries.  Although if
+	a structure is contained within a different packed structure, then it need not be aligned
+	according to its own type, just like the simple types.
+	-mtc 10/30/2006
+*/
+#ifdef __PDP10_H__
+#else
   if (! TYPE_PACKED (t))
+#endif
     {
       unsigned tmp;
 
@@ -1213,7 +1277,22 @@ place_field (record_layout_info rli, tree field)
     }
   else
     {
+      int s = tree_low_cst (DECL_SIZE (field), 1);
+
       rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, DECL_SIZE (field));
+
+      /* 7/8/16/32-bit fields leave some unused bits in every word.  */
+      switch (s)
+      {
+      case 7: case 8: case 16: case 32:
+	if (! DECL_BIT_FIELD_TYPE (field)
+	    && tree_low_cst (rli->bitpos, 1)
+	    == BITS_PER_WORD - (BITS_PER_WORD % s))
+	  rli->bitpos
+	    = size_binop (PLUS_EXPR, rli->bitpos,
+			  bitsize_int (BITS_PER_WORD % s));
+      }
+
       normalize_rli (rli);
     }
 }
@@ -1582,6 +1661,16 @@ layout_type (tree type)
 
       TYPE_MODE (type) = smallest_mode_for_size (TYPE_PRECISION (type),
 						 MODE_INT);
+/* Let's build the size field with the correct value for the various char type nodes
+    so we don't have to special case it everywhere.
+    Not sure what ramifications this might have
+    -mtc 10/4/2007
+*/
+#ifdef __PDP10_H__
+      if (GET_MODE_SIZE(TYPE_MODE(type)) == 1)
+      	TYPE_SIZE (type) = bitsize_int (TYPE_PRECISION(type));
+      else
+#endif
       TYPE_SIZE (type) = bitsize_int (GET_MODE_BITSIZE (TYPE_MODE (type)));
       TYPE_SIZE_UNIT (type) = size_int (GET_MODE_SIZE (TYPE_MODE (type)));
       break;
@@ -1696,13 +1785,24 @@ layout_type (tree type)
     case POINTER_TYPE:
     case REFERENCE_TYPE:
       {
-
+/* With the 3.4.4 upgrade, the gcc base code references TYPE_MODE(type) and fails to set it.
+    Since the point of this section is to set TYPE_MODE(type) and other stuff, this seems very wrong.
+    PDP10 needs to set pointer types carefully, so I've maintained our ifdef, albeit with changes to
+    match the new code.
+    -mtc 2/15/2007
+*/
+#ifdef __PDP10_H__
+	enum machine_mode mode;
+	int nbits;
+	TYPE_MODE (type) = mode = ptr_mode_for_type(TREE_TYPE(type));
+	nbits = GET_MODE_BITSIZE (mode);
+#else
 	enum machine_mode mode = ((TREE_CODE (type) == REFERENCE_TYPE
 				   && reference_types_internal)
 				  ? Pmode : TYPE_MODE (type));
 
 	int nbits = GET_MODE_BITSIZE (mode);
-
+#endif
 	TYPE_SIZE (type) = bitsize_int (nbits);
 	TYPE_SIZE_UNIT (type) = size_int (GET_MODE_SIZE (mode));
 	TYPE_UNSIGNED (type) = 1;
@@ -1760,6 +1860,22 @@ layout_type (tree type)
 		&& TREE_CODE (TYPE_MAX_VALUE (index)) != INTEGER_CST)
 	      length = size_binop (MAX_EXPR, length, size_zero_node);
 
+/* adjustments for arrays of chars less than 9-bits in size
+    -mtc 11/8/2007
+    add check for zero to avoid divide by zero
+    -mtc 12/17/2009
+*/
+#ifdef __PDP10_H__
+	    if (host_integerp(element_size, 1) 
+			&& tree_low_cst(element_size, 1) < BITS_PER_WORD 
+			&& tree_low_cst(element_size, 1) > 0)
+	    	{
+	    	tree elts_per_word = size_binop(TRUNC_DIV_EXPR, bitsize_int(BITS_PER_WORD), element_size);
+		tree word_length = size_binop(CEIL_DIV_EXPR, fold_convert(bitsizetype, length), elts_per_word);
+		TYPE_SIZE (type) = size_binop (MULT_EXPR, bitsize_int(BITS_PER_WORD), word_length);
+	    	}
+	    else
+#endif
 	    TYPE_SIZE (type) = size_binop (MULT_EXPR, element_size,
 					   fold_convert (bitsizetype,
 							 length));
@@ -1779,12 +1895,18 @@ layout_type (tree type)
 
 	/* Now round the alignment and size,
 	   using machine-dependent criteria if any.  */
-
+#ifdef __PDP10_H__
+	/* On the pdp10 all arrays need to be aligned on at least word boundaries
+	     -mtc 12/17/2009
+	*/
+	TYPE_ALIGN (type) = MAX (TYPE_ALIGN (element), BITS_PER_WORD);
+#else
 #ifdef ROUND_TYPE_ALIGN
 	TYPE_ALIGN (type)
 	  = ROUND_TYPE_ALIGN (type, TYPE_ALIGN (element), BITS_PER_UNIT);
 #else
 	TYPE_ALIGN (type) = MAX (TYPE_ALIGN (element), BITS_PER_UNIT);
+#endif
 #endif
 	if (!TYPE_SIZE (element))
 	  /* We don't know the size of the underlying element type, so
@@ -1887,6 +2009,16 @@ make_signed_type (int precision)
 
   TYPE_PRECISION (type) = precision;
 
+/* sub-byte types are should only be aligned to the precision
+    this prevents problems later in intialization with the size getting rounded up
+    overall ramifications are a big unknown
+    -mtc 10/4/2007
+*/
+#ifdef __PDP10_H__
+  if (precision < BITS_PER_UNIT)
+  	TYPE_ALIGN (type) = precision;
+#endif
+
   fixup_signed_type (type);
   return type;
 }
@@ -1899,6 +2031,16 @@ make_unsigned_type (int precision)
   tree type = make_node (INTEGER_TYPE);
 
   TYPE_PRECISION (type) = precision;
+
+/* sub-byte types are should only be aligned to the precision
+    this prevents problems later in intialization with the size getting rounded up
+    overall ramifications are a big unknown
+    -mtc 10/4/2007
+*/
+#ifdef __PDP10_H__
+  if (precision < BITS_PER_UNIT)
+  	TYPE_ALIGN (type) = precision;
+#endif
 
   fixup_unsigned_type (type);
   return type;
@@ -2182,9 +2324,16 @@ fixup_unsigned_type (tree type)
    If VOLATILEP is true the narrow_volatile_bitfields target hook is used to
    decide which of the above modes should be used.  */
 
+/* This should really be #ifdef, but for now cant because machmode.h can be included before pdp10.h */
+/* when called to get a mode for a struct, it's possible for bitsize and bitpos to be really big */
+enum machine_mode
+get_best_mode (unsigned HOST_WIDE_INT bitsize, unsigned HOST_WIDE_INT bitpos, unsigned int align,
+	       enum machine_mode largest_mode, int volatilep)
+/*
 enum machine_mode
 get_best_mode (int bitsize, int bitpos, unsigned int align,
 	       enum machine_mode largest_mode, int volatilep)
+*/
 {
   enum machine_mode mode;
   unsigned int unit = 0;

@@ -1809,6 +1809,9 @@ extern GTY(()) rtx const_int_rtx[MAX_SAVED_CONST_INT * 2 + 1];
 #define const1_rtx	(const_int_rtx[MAX_SAVED_CONST_INT+1])
 #define const2_rtx	(const_int_rtx[MAX_SAVED_CONST_INT+2])
 #define constm1_rtx	(const_int_rtx[MAX_SAVED_CONST_INT-1])
+#ifdef __PDP10_H__
+#define constm2_rtx	(const_int_rtx[MAX_SAVED_CONST_INT-2])
+#endif
 extern GTY(()) rtx const_true_rtx;
 
 extern GTY(()) rtx const_tiny_rtx[3][(int) MAX_MACHINE_MODE];
@@ -1988,6 +1991,13 @@ extern rtx gen_rtx_MEM (enum machine_mode, rtx);
 extern rtx output_constant_def (tree, int);
 extern rtx lookup_constant_def (tree);
 
+/* need to track combine pass since it's also illegal to create pseudos there
+    -mtc 12/13/2007
+*/
+#ifdef __PDP10_H__
+extern int combine_in_progress;
+#endif
+
 /* Nonzero after end of reload pass.
    Set to 1 or 0 by reload1.c.  */
 
@@ -2004,7 +2014,11 @@ extern int reload_in_progress;
 /* This macro indicates whether you may create a new
    pseudo-register.  */
 
+#ifdef __PDP10_H__
+#define can_create_pseudo_p() (!reload_in_progress && !reload_completed && !combine_in_progress)
+#else
 #define can_create_pseudo_p() (!reload_in_progress && !reload_completed)
+#endif
 
 #ifdef STACK_REGS
 /* Nonzero after end of regstack pass.
@@ -2210,6 +2224,17 @@ extern void dump_local_alloc (FILE *);
 
 /* In reload1.c */
 extern int function_invariant_p (const_rtx);
+
+/* We need machine dependent versions all the above routines to handle arithmetic on target machine format
+    numbers, which is different than host machine format numbers once we get beyond 36 bit values
+    -mtc 1/17/2007
+*/
+#ifdef __PDP10_H__
+extern int pdp10_add_double		PARAMS ((unsigned HOST_WIDE_INT, HOST_WIDE_INT,
+					 unsigned HOST_WIDE_INT, HOST_WIDE_INT,
+					 unsigned HOST_WIDE_INT *,
+					 HOST_WIDE_INT *));
+#endif
 
 /* In calls.c */
 enum libcall_type

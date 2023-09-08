@@ -1,5 +1,7 @@
 /* This tests the rotate patterns that some machines support.  */
 
+/* The LONGLONG tests do not work on the PDP10 because LONGLONG implementation is incomplete */
+
 #include <limits.h>
 
 #ifndef CHAR_BIT
@@ -52,6 +54,8 @@ main ()
   if (ROR (ul, SHIFT1) != ROR (LONG_VALUE, SHIFT1))
     abort ();
 
+#ifndef __PDP10__
+
   if (ROR (ull, shift1) != ROR (LL_VALUE, SHIFT1))
     abort ();
 
@@ -63,6 +67,8 @@ main ()
 
   if (ROR (ull, SHIFT2) != ROR (LL_VALUE, SHIFT2))
     abort ();
+
+#endif
 
   if (ROL (uc, shift1) != ROL (CHAR_VALUE, SHIFT1))
     abort ();
@@ -88,6 +94,8 @@ main ()
   if (ROL (ul, SHIFT1) != ROL (LONG_VALUE, SHIFT1))
     abort ();
 
+#ifndef __PDP10__
+
   if (ROL (ull, shift1) != ROL (LL_VALUE, SHIFT1))
     abort ();
 
@@ -99,6 +107,8 @@ main ()
 
   if (ROL (ull, SHIFT2) != ROL (LL_VALUE, SHIFT2))
     abort ();
+
+#endif
 
   exit (0);
 }

@@ -27,6 +27,16 @@ along with GCC; see the file COPYING3.  If not see
    overhead per string, which is unacceptable.  Also, this algorithm
    is faster.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: stringpool.c 64aaeca1eb6f 2007/11/19 21:57:52 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

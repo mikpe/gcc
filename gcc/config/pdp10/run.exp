@@ -1,0 +1,103 @@
+#!/usr/bin/expect
+
+set ProgName "run.exp"
+set tops20_login 0
+set User ""
+set Passwd ""
+set Rcmd ""
+set telnet_lib [file dirname $argv0]
+append telnet_lib "/" "telnet_tops20.exp"
+source $telnet_lib
+set timeout 120
+
+# Get username & password from the env array.
+# These two values were exported in getaccount called in run.
+foreach { var value } [array get env username] {
+    set User $value
+}
+foreach { var value } [array get env password] {
+    set Passwd $value
+}
+
+proc RemoteRun { rcmd } {
+    global timeout ProgName
+
+#exp_internal 1
+    set tries 0
+    set result -1
+
+    exp_send "$rcmd\n"
+
+    expect {
+        -regex "expect@ $" {
+            set result 1
+            # TOPS exec prompt. We are done.
+        }
+	-regex "\r\n\\?.*" {
+            set result 2
+        }
+        timeout {
+            puts "$ProgName: Expect timed out while waiting for utility"
+            if {[incr tries] < 4} {
+                exp_send "\n"
+                exp_continue
+            }
+	}
+    }
+#exp_internal 0
+    if { $result == 1 } {
+        return 1
+    }
+    if { $result < 1 } {
+	# timed out or error, kill whatever is running with ^c
+        puts stderr "$ProgName: Too many timeouts ($tries) waiting for utility"
+	exp_send "\003"
+        return 0
+    }
+    return 0
+}
+
+
+proc Usage { } {
+    global ProgName
+    puts stderr "usage: $ProgName host remote_command"
+}
+
+
+if { $argc != 2 } {
+    puts stderr "$ProgName: wrong number of command line arguments"
+    Usage
+    exit 2
+}
+
+set ii 0
+foreach arg $argv {
+    set ii [expr $ii + 1]
+    switch -exact -- $ii {
+        1 { set Host $arg }
+        2 { set Rcmd $arg }
+        default {
+            puts stderr "$ProgName: error parsing command line arguments"
+            exit 3
+        }
+    }
+}
+
+log_user 0
+if { [login_tops20 "" $Host $User $Passwd] < 1 } {
+    puts stderr "$ProgName: login to $Host as $User failed"
+    exit 1
+}
+
+log_user 1
+if ![RemoteRun $Rcmd] {
+    puts stderr "$ProgName: failed"
+    log_user 0
+    logout_tops20
+    exit 1
+}
+
+log_user 0
+logout_tops20
+
+exit 0

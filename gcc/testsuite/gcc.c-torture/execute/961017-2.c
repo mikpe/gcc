@@ -10,7 +10,11 @@ main ()
       do {
 	z -= 0x00004000;
 	i++;
+#ifdef __PDP10__
+	if (i > 0x00400000)
+#else
 	if (i > 0x00040000)
+#endif
 	  abort ();
       } while (z > 0);
       exit (0);
@@ -22,7 +26,11 @@ main ()
       do {
 	z -= 0x00004000;
 	i++;
+#ifdef __PDP10__
+	if (i > 0x00400000)
+#else
 	if (i > 0x00040000)
+#endif
 	  abort ();
       } while (z > 0);
       exit (0);

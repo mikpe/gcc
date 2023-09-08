@@ -66,8 +66,15 @@ proc dg-scan { name positive testcase output_file orig_args } {
 # dg-scan for details.
 
 proc scan-assembler { args } {
+    global target_triplet objdir
     upvar 2 name testcase
-    set output_file "[file rootname [file tail $testcase]].s"
+    
+    # This must match the rule in gcc-dg.exp.
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+        set output_file "$objdir/[file rootname $testcase].mac"
+    } else {
+        set output_file "[file rootname [file tail $testcase]].s"
+    }
 
     dg-scan "scan-assembler" 1 $testcase $output_file $args
 }
@@ -76,8 +83,15 @@ proc scan-assembler { args } {
 # compiler.  See dg-scan for details.
 
 proc scan-assembler-not { args } {
+    global target_triplet objdir
     upvar 2 name testcase
-    set output_file "[file rootname [file tail $testcase]].s"
+    
+    # This must match the rule in gcc-dg.exp.
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+        set output_file "$objdir/[file rootname $testcase].mac"
+    } else {
+        set output_file "[file rootname [file tail $testcase]].s"
+    }
 
     dg-scan "scan-assembler-not" 0 $testcase $output_file $args
 }
@@ -145,6 +159,7 @@ proc scan-file-not { output_file args } {
 
 # Call pass if pattern is present given number of times, otherwise fail.
 proc scan-assembler-times { args } {
+    global target_triplet objdir
     if { [llength $args] < 2 } {
 	error "scan-assembler: too few arguments"
         return
@@ -168,7 +183,11 @@ proc scan-assembler-times { args } {
     upvar 2 name testcase
 
     # This must match the rule in gcc-dg.exp.
-    set output_file "[file rootname [file tail $testcase]].s"
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+        set output_file "$objdir/[file rootname $testcase].mac"
+    } else {
+        set output_file "[file rootname [file tail $testcase]].s"
+    }
 
     set fd [open $output_file r]
     set text [read $fd]
@@ -184,7 +203,7 @@ proc scan-assembler-times { args } {
 # Utility for scanning demangled compiler result, invoked via dg-final.
 # Call pass if pattern is present, otherwise fail.
 proc scan-assembler-dem { args } {
-    global cxxfilt
+    global cxxfilt target_triplet objdir
     global base_dir
 
     if { [llength $args] < 1 } {
@@ -215,7 +234,11 @@ proc scan-assembler-dem { args } {
     }
 
     upvar 2 name testcase
-    set output_file "[file rootname [file tail $testcase]].s"
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+        set output_file "$objdir/[file rootname $testcase].mac"
+    } else {
+        set output_file "[file rootname [file tail $testcase]].s"
+    }
 
     set output [remote_exec host "$cxxfilt" "" "$output_file"]
     set text [lindex $output 1]
@@ -229,7 +252,7 @@ proc scan-assembler-dem { args } {
 
 # Call pass if demangled pattern is not present, otherwise fail.
 proc scan-assembler-dem-not { args } {
-    global cxxfilt
+    global cxxfilt target_triplet objdir
     global base_dir
 
     if { [llength $args] < 1 } {
@@ -260,7 +283,11 @@ proc scan-assembler-dem-not { args } {
     }
 
     upvar 2 name testcase
-    set output_file "[file rootname [file tail $testcase]].s"
+    if { $target_triplet == "pdp10-xkl-tops20" } {
+        set output_file "$objdir/[file rootname $testcase].mac"
+    } else {
+        set output_file "[file rootname [file tail $testcase]].s"
+    }
 
     set output [remote_exec host "$cxxfilt" "" "$output_file"]
     set text [lindex $output 1]

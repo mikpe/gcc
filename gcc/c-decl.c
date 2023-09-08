@@ -26,6 +26,16 @@ along with GCC; see the file COPYING3.  If not see
 /* ??? not all decl nodes are given the most useful possible
    line numbers.  For example, the CONST_DECLs for enum values.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: c-decl.c bece59bcf632 2012/03/06 02:12:24 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -6268,6 +6278,35 @@ start_function (struct c_declspecs *declspecs, struct c_declarator *declarator,
   declare_parm_level ();
 
   restype = TREE_TYPE (TREE_TYPE (current_function_decl));
+
+/* The following code snippet was removed between 422 and 430 and its absence causes the PDP10 compiler
+    to fail in expand_value_return() becaue we set TARGET_PROMOTE_FUNCTION_RETURN.
+    I think the real solution is that this snippet needs to be replaced by something involving a check of
+    targetm.calls.promote_function_return() and does the equivalent of promote_mode() at the tree level.
+    But for now I'm going to try not setting TARGET_PROMOTE_FUNCTION_RETURN to see if there's a
+    particular need for it on the PDP10
+    -mtc 12/7/2007
+*/
+#ifdef __PDP10_H__
+
+#if 0
+  /* Promote the value to int before returning it.  */
+  if (c_promoting_integer_type_p (restype))
+    {
+      /* It retains unsignedness if not really getting wider.  */
+      if (TYPE_UNSIGNED (restype)
+	  && (TYPE_PRECISION (restype)
+		  == TYPE_PRECISION (integer_type_node)))
+	restype = unsigned_type_node;
+      else
+	restype = integer_type_node;
+    }
+#endif
+
+#endif
+
+
+
   resdecl = build_decl (RESULT_DECL, NULL_TREE, restype);
   DECL_ARTIFICIAL (resdecl) = 1;
   DECL_IGNORED_P (resdecl) = 1;
@@ -6755,6 +6794,8 @@ finish_function (void)
       && !current_function_returns_value && !current_function_returns_null
       /* Don't complain if we are no-return.  */
       && !current_function_returns_abnormally
+      /* Don't complain if we are declared noreturn. */
+      && !TREE_THIS_VOLATILE (fndecl)
       /* Don't warn for main().  */
       && !MAIN_NAME_P (DECL_NAME (fndecl))
       /* Or if they didn't actually specify a return type.  */

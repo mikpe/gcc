@@ -1,5 +1,4 @@
 #include <limits.h>
-#include <assert.h>
 
 #if __INT_MAX__ > 2147483647L
 # if __INT_MAX__ >= 9223372036854775807L

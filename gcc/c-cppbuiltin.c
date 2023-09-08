@@ -376,7 +376,7 @@ static void
 define__GNUC__ (void)
 {
   /* The format of the version string, enforced below, is
-     ([^0-9]*-)?[0-9]+[.][0-9]+([.][0-9]+)?([- ].*)?  */
+     ([^0-9]*-)?[0-9]+[.][0-9]+([.][0-9]+)?([- .].*)?  */
   const char *q, *v = version_string;
 
   while (*v && !ISDIGIT (*v))
@@ -408,7 +408,7 @@ define__GNUC__ (void)
   else
     builtin_define_with_value_n ("__GNUC_PATCHLEVEL__", "0", 1);
 
-  gcc_assert (!*v || *v == ' ' || *v == '-');
+  gcc_assert (!*v || *v == ' ' || *v == '-' || *v=='.');
 }
 
 /* Define macros used by <stdint.h>.  Currently only defines limits
@@ -874,6 +874,27 @@ builtin_define_with_hex_fp_value (const char *macro,
 static void
 builtin_define_type_max (const char *macro, tree type, int is_long)
 {
+/*
+	PDP10 requires handling of 6, 7 and 8-bit chars in addition to 9-bit chars
+	-mtc 9/18/2006
+	suffix list is indexed just by is_long formulae and is not parallel to values
+	also fix the long long values and make selection sensitive to TARGET_71BIT
+	-mtc 3/21/2012
+*/
+#ifdef __PDP10_H__
+  static const char *const values[]
+    = { 
+        "0x1f", "0x3f",
+        "0x3f", "0x7f",
+        "0x7f", "0xff",
+        "0xff", "0x1ff",
+	"0x1ffff", "0x3ffff",
+	"0x7ffffffff", "0xfffffffff",
+	"0x3fffffffffffffffff", "0x7fffffffffffffffff",
+	"0x7fffffffffffffffff", "0xffffffffffffffffff",
+    };
+  static const char *const suffixes[] = { "", "U", "L", "UL", "LL", "ULL" };
+#else
   static const char *const values[]
     = { "127", "255",
 	"32767", "65535",
@@ -882,6 +903,7 @@ builtin_define_type_max (const char *macro, tree type, int is_long)
 	"170141183460469231731687303715884105727",
 	"340282366920938463463374607431768211455" };
   static const char *const suffixes[] = { "", "U", "L", "UL", "LL", "ULL" };
+#endif
 
   const char *value, *suffix;
   char *buf;
@@ -892,11 +914,21 @@ builtin_define_type_max (const char *macro, tree type, int is_long)
      precisions that we support, so it's really a waste of time.  */
   switch (TYPE_PRECISION (type))
     {
+#ifdef __PDP10_H__
+    case 6:     idx = 0; break;
+    case 7:     idx = 2; break;
+    case 8:     idx = 4; break;
+    case 9:     idx = 6; break;
+    case 18:    idx = 8; break;
+    case 36:    idx = 10; break;
+    case 72:    if (TARGET_71BIT) idx = 12; else idx = 14; break;
+#else
     case 8:	idx = 0; break;
     case 16:	idx = 2; break;
     case 32:	idx = 4; break;
     case 64:	idx = 6; break;
     case 128:	idx = 8; break;
+#endif
     default:    gcc_unreachable ();
     }
 

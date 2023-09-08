@@ -156,15 +156,35 @@ do {								\
 
 /* Convert the implicit sum in a `struct args_size' into a tree
    of type ssizetype.  */
+/* PDP10 needs arg sizes in words
+    -mtc 6/27/2007
+*/
+#ifdef __PDP10_H__
+#define ARGS_SIZE_TREE(SIZE)					\
+((SIZE).var == 0 ? ssize_int ((SIZE).constant / UNITS_PER_WORD)			\
+ : size_binop (PLUS_EXPR, \
+		size_binop (TRUNC_DIV_EXPR, convert (ssizetype, (SIZE).var), ssize_int(UNITS_PER_WORD)), 	\
+		ssize_int ((SIZE).constant / UNITS_PER_WORD)))
+#else
 #define ARGS_SIZE_TREE(SIZE)					\
 ((SIZE).var == 0 ? ssize_int ((SIZE).constant)			\
  : size_binop (PLUS_EXPR, fold_convert (ssizetype, (SIZE).var),	\
 	       ssize_int ((SIZE).constant)))
+#endif
 
 /* Convert the implicit sum in a `struct args_size' into an rtx.  */
+/* PDP10 needs arg sizes in words
+    -mtc 6/27/2007
+*/
+#ifdef __PDP10_H__
+#define ARGS_SIZE_RTX(SIZE)					\
+((SIZE).var == 0 ? GEN_INT ((SIZE).constant / UNITS_PER_WORD)			\
+ : expand_expr (ARGS_SIZE_TREE (SIZE), NULL_RTX, VOIDmode, 0))
+#else
 #define ARGS_SIZE_RTX(SIZE)					\
 ((SIZE).var == 0 ? GEN_INT ((SIZE).constant)			\
  : expand_normal (ARGS_SIZE_TREE (SIZE)))
+#endif
 
 /* Supply a default definition for FUNCTION_ARG_PADDING:
    usually pad upward, but pad short args downward on
@@ -442,6 +462,13 @@ rtx set_storage_via_libcall (rtx, rtx, rtx, bool);
 extern bool set_storage_via_setmem (rtx, rtx, rtx, unsigned int, 
 				    unsigned int, HOST_WIDE_INT);
 
+/* pdp10 has no library to fall back on, so emit code inline when possible
+    -mtc 9/13/2007
+*/
+#ifdef __PDP10_H__
+extern void set_storage_via_loop (rtx, rtx, rtx, unsigned int);
+#endif
+
 /* Determine whether the LEN bytes can be moved by using several move
    instructions.  Return nonzero if a call to move_by_pieces should
    succeed.  */
@@ -615,6 +642,9 @@ extern rtx eliminate_constant_term (rtx, rtx *);
 /* Convert arg to a valid memory address for specified machine mode,
    by emitting insns to perform arithmetic if nec.  */
 extern rtx memory_address (enum machine_mode, rtx);
+#ifdef __PDP10_H__
+extern rtx memory_address_type (tree, rtx);
+#endif
 
 /* Return a memory reference like MEMREF, but with its mode changed
    to MODE and its address changed to ADDR.

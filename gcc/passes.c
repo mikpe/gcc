@@ -297,7 +297,14 @@ struct tree_opt_pass pass_rest_of_compilation =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   0                                     /* letter */
 };
 
@@ -320,7 +327,14 @@ struct tree_opt_pass pass_postreload =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 6/18/2008
+*/
+  TODO_verify_rtl_sharing,
+#else
   TODO_ggc_collect | TODO_verify_rtl_sharing, /* todo_flags_finish */
+#endif
   0					/* letter */
 };
 

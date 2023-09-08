@@ -54,13 +54,22 @@ typedef void *(*line_map_realloc) (void *, size_t);
    creation of this line map, SYSP is one for a system header, two for
    a C system header file that therefore needs to be extern "C"
    protected in C++, and zero otherwise.  */
+
+/* PDP10 fix, not PDP10 specific
+    changed field width of reason to be 8 instead of CHAR_BIT
+    It just needs to be wide enough to accomodate the size of the lc_reason enumeration
+    which is very small and has nothing to do with CHAR_BIT which is an architecture
+    dependent value and is not necessarily declared when this file is needed
+    -mtc 3/29/2007
+*/
+
 struct line_map GTY(())
 {
   const char *to_file;
   unsigned int to_line;
   source_location start_location;
   int included_from;
-  ENUM_BITFIELD (lc_reason) reason : CHAR_BIT;
+  ENUM_BITFIELD (lc_reason) reason : 8;
   /* The sysp field isn't really needed now that it's in cpp_buffer.  */
   unsigned char sysp;
   /* Number of the low-order source_location bits used for a column number.  */

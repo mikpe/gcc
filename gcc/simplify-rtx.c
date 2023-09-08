@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: simplify-rtx.c 9741fd6945e4 2012/10/23 23:17:45 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1540,6 +1550,18 @@ simplify_binary_operation (enum rtx_code code, enum machine_mode mode,
       tem = op0, op0 = op1, op1 = tem;
     }
 
+/* Don't bother simplifying float operations of variable and constant.
+    They have subtle effects.
+    -mtc 5/22/2007
+*/
+#ifdef __PDP10_H__
+  if (mode == DFmode)
+  	{
+	if (!(CONSTANT_P(op0) && CONSTANT_P(op1)))
+		return 0;
+	}
+#endif
+
   trueop0 = avoid_constant_pool_reference (op0);
   trueop1 = avoid_constant_pool_reference (op1);
 
@@ -1619,7 +1641,11 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	      coeff0h = -1;
 	      lhs = XEXP (lhs, 0);
 	    }
+#ifdef __PDP10_H__
+	  else if ((GET_CODE (lhs) == MULT || GET_CODE(lhs) == UMUL)
+#else
 	  else if (GET_CODE (lhs) == MULT
+#endif
 		   && GET_CODE (XEXP (lhs, 1)) == CONST_INT)
 	    {
 	      coeff0l = INTVAL (XEXP (lhs, 1));
@@ -1642,7 +1668,11 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	      coeff1h = -1;
 	      rhs = XEXP (rhs, 0);
 	    }
+#ifdef __PDP10_H__
+	  else if ((GET_CODE (rhs) == MULT || GET_CODE(rhs) == UMUL)
+#else
 	  else if (GET_CODE (rhs) == MULT
+#endif
 		   && GET_CODE (XEXP (rhs, 1)) == CONST_INT)
 	    {
 	      coeff1l = INTVAL (XEXP (rhs, 1));
@@ -1814,7 +1844,11 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	      coeff0h = -1;
 	      lhs = XEXP (lhs, 0);
 	    }
+#ifdef __PDP10_H__
+	  else if ((GET_CODE (lhs) == MULT || GET_CODE(lhs) == UMUL)
+#else
 	  else if (GET_CODE (lhs) == MULT
+#endif
 		   && GET_CODE (XEXP (lhs, 1)) == CONST_INT)
 	    {
 	      coeff0l = INTVAL (XEXP (lhs, 1));
@@ -1837,7 +1871,11 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	      negcoeff1h = 0;
 	      rhs = XEXP (rhs, 0);
 	    }
+#ifdef __PDP10_H__
+	  else if ((GET_CODE (rhs) == MULT || GET_CODE(rhs) == UMUL)
+#else
 	  else if (GET_CODE (rhs) == MULT
+#endif
 		   && GET_CODE (XEXP (rhs, 1)) == CONST_INT)
 	    {
 	      negcoeff1l = -INTVAL (XEXP (rhs, 1));
@@ -1961,6 +1999,9 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
       break;
 
     case MULT:
+#ifdef __PDP10_H__
+    case UMUL:
+#endif
       if (trueop1 == constm1_rtx)
 	return simplify_gen_unary (NEG, mode, op0, mode);
 
@@ -1980,6 +2021,15 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	  && trueop1 == CONST1_RTX (mode))
 	return op0;
 
+#ifdef __PDP10_H__
+/* PDP10 has a fast multiply and is preferable to shift for integer arithmetic
+    -mtc 11/12/2008
+    But for unsigned we don't have a multiply insn at all, so retain the optimization there
+    -mtc 1/22//2009
+*/
+    if (code == UMUL)
+    {
+#else
       /* Convert multiply by constant power of two into shift unless
 	 we are still generating RTL.  This test is a kludge.  */
       if (GET_CODE (trueop1) == CONST_INT
@@ -2000,6 +2050,11 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
 	  && (val = exact_log2 (CONST_DOUBLE_HIGH (trueop1))) >= 0)
 	return simplify_gen_binary (ASHIFT, mode, op0,
 				    GEN_INT (val + HOST_BITS_PER_WIDE_INT));
+
+#endif
+#ifdef __PDP10_H__
+    	}
+#endif
 
       /* x*2 is x+x and x*(-1) is -x */
       if (GET_CODE (trueop1) == CONST_DOUBLE
@@ -2581,6 +2636,9 @@ simplify_binary_operation_1 (enum rtx_code code, enum machine_mode mode,
       goto canonicalize_shift;
 
     case LSHIFTRT:
+#ifdef __PDP10_H__
+    case LSHIFTRT72:
+#endif
       if (trueop1 == CONST0_RTX (mode))
 	return op0;
       if (trueop0 == CONST0_RTX (mode) && ! side_effects_p (op1))
@@ -3105,7 +3163,15 @@ simplify_const_binary_operation (enum rtx_code code, enum machine_mode mode,
 	  /* Fall through....  */
 
 	case PLUS:
+/* probably all the other constant arithmetic code needs machine format number routines
+    also
+    -mtc 1/17/2007
+*/
+#ifdef __PDP10_H__
+	  pdp10_add_double (l1, h1, l2, h2, &lv, &hv);
+#else
 	  add_double (l1, h1, l2, h2, &lv, &hv);
+#endif
 	  break;
 
 	case MULT:
@@ -3256,6 +3322,9 @@ simplify_const_binary_operation (enum rtx_code code, enum machine_mode mode,
 	  break;
 	  
 	case MULT:
+#ifdef __PDP10_H__
+	case UMUL:
+#endif
 	  val = arg0s * arg1s;
 	  break;
 	  
@@ -3391,7 +3460,7 @@ simplify_const_binary_operation (enum rtx_code code, enum machine_mode mode,
 }
 
 
-
+
 /* Simplify a PLUS or MINUS, at least one of whose operands may be another
    PLUS or MINUS.
 
@@ -4614,12 +4683,25 @@ static rtx
 simplify_immed_subreg (enum machine_mode outermode, rtx op, 
 		       enum machine_mode innermode, unsigned int byte)
 {
+#ifdef __PDP10_H__
+  /* This routine assumes both target and host have word sizes that are multiples of value_bit
+       Try to work around it by setting value_bit to 1 and max_bitsize to an express that should
+       be the same as a V8DF
+       -mtc 4/11/2007
+  */
+  enum {
+    max_bitsize = BITS_PER_WORD * 16,
+    value_bit = 1,
+    value_mask = (1 << value_bit) - 1
+  };
+#else
   /* We support up to 512-bit values (for V8DFmode).  */
   enum {
     max_bitsize = 512,
     value_bit = 8,
     value_mask = (1 << value_bit) - 1
   };
+#endif
   unsigned char value[max_bitsize / value_bit];
   int value_start;
   int i;
@@ -4632,6 +4714,24 @@ simplify_immed_subreg (enum machine_mode outermode, rtx op,
   rtvec result_v = NULL;
   enum mode_class outer_class;
   enum machine_mode outer_submode;
+
+/*
+	It doesn't make sense to subreg the pdp10 sub byte size modes or to use them
+	on anything smaller than a word
+	Unfortunately the compiler generates subreg to do type coersion, so we're stuck
+	with QnI subreg meaning bits from the left when the reg number is 0 and bits from the
+	right when its large.  Anyhow, only flag conversion between different QnI subregs as
+	errors.
+	-mtc 9/25/2006
+	It turns out its easy enough to get conversion between the different QnI modes.  So
+	we're stuck with allowing this at least for now.
+	-mtc 9/27/2006
+
+#ifdef __PDP10_H__
+	gcc_assert (GET_MODE_SIZE(innermode) == 1 && GET_MODE_SIZE(outermode) == 1 &&
+  		(GET_MODE_BITSIZE(innermode) != GET_MODE_BITSIZE(outermode)));
+#endif
+*/
 
   /* Some ports misuse CCmode.  */
   if (GET_MODE_CLASS (outermode) == MODE_CC && GET_CODE (op) == CONST_INT)
@@ -4692,6 +4792,30 @@ simplify_immed_subreg (enum machine_mode outermode, rtx op,
       
 	case CONST_DOUBLE:
 	  if (GET_MODE (el) == VOIDmode)
+/* Doubles are packed one target machine word per host wide int
+    The base gcc code essentially only works when host and target machines have the same word size
+    -mtc 7/11/2007
+*/
+#ifdef __PDP10_H__
+	    {
+	      /* If this triggers, someone should have generated a
+		 CONST_INT instead.  */
+	      gcc_assert (elem_bitsize > BITS_PER_WORD);
+
+	      for (i = 0; i < BITS_PER_WORD; i += value_bit)
+		*vp++ = CONST_DOUBLE_LOW (el) >> i;
+	      while (i < BITS_PER_WORD * 2 && i < elem_bitsize)
+		{
+		  *vp++
+		    = CONST_DOUBLE_HIGH (el) >> (i - BITS_PER_WORD);
+		  i += value_bit;
+		}
+	      /* It shouldn't matter what's done here, so fill it with
+		 zero.  */
+	      for (; i < elem_bitsize; i += value_bit)
+		*vp++ = 0;
+	    }
+#else
 	    {
 	      /* If this triggers, someone should have generated a
 		 CONST_INT instead.  */
@@ -4710,6 +4834,7 @@ simplify_immed_subreg (enum machine_mode outermode, rtx op,
 	      for (; i < elem_bitsize; i += value_bit)
 		*vp++ = 0;
 	    }
+#endif
 	  else
 	    {
 	      long tmp[max_bitsize / 32];
@@ -4928,8 +5053,34 @@ simplify_subreg (enum machine_mode outermode, rtx op,
 	      || GET_MODE (op) == VOIDmode);
 
   gcc_assert ((byte % GET_MODE_SIZE (outermode)) == 0);
+#ifdef __PDP10_H__
+/*
+	We have to relax this test because when the outemode is a QnI mode the effective byte size of a
+	word can be up to six bytes.
+	-mtc 3/29/2010
+*/
+  gcc_assert (byte < GET_MODE_SIZE (innermode) || GET_MODE_SIZE(outermode) == 1);
+#else
   gcc_assert (byte < GET_MODE_SIZE (innermode));
+#endif
 
+/*
+	It doesn't make sense to subreg the pdp10 sub byte size modes or to use them
+	on anything smaller than a word
+	Unfortunately the compiler generates subreg to do type coersion, so we're stuck
+	with QnI subreg meaning bits from the left when the reg number is 0 and bits from the
+	right when its large.  Anyhow, only flag conversion between different QnI subregs as
+	errors.
+	-mtc 9/25/2006
+	It turns out its easy enough to get conversion between the different QnI modes.  So
+	we're stuck with allowing this at least for now.
+	-mtc 9/27/2006
+
+#ifdef __PDP10_H__
+	gcc_assert (GET_MODE_SIZE(innermode) == 1 && GET_MODE_SIZE(outermode) == 1 &&
+  		(GET_MODE_BITSIZE(innermode) != GET_MODE_BITSIZE(outermode)));
+#endif
+*/
   if (outermode == innermode && !byte)
     return op;
 
@@ -4947,9 +5098,37 @@ simplify_subreg (enum machine_mode outermode, rtx op,
       int final_offset = byte + SUBREG_BYTE (op);
       rtx newx;
 
+#ifdef __PDP10_H__
+/* Successive QnI subregs don't make a lot of sense and are not generally simplifiable into a single subreg
+    -mtc 5/15/2008
+*/
+	if (GET_MODE_SIZE(outermode) == 1 && GET_MODE_SIZE(innermode) == 1 && outermode != innermode)
+		return NULL_RTX;
+#endif
+
+/* This is a completely general fix.  To optimize out the SUBREGs entirely, they must
+     refer to the lowpart of their operand, not necessarily have offsets of zero.  ie. the
+     gcc base code is correct only for little endian machines.
+     -mtc 12/8/2006
+     Add test that the innermode at least as big as the outermode and innermostmode
+     since otherwise there's an implied truncation
+     -mtc 5/14/2008
+     But if SUBREG_PROMOTED_VAR_P(op) the truncation has already been done so the 
+     optimization is safe
+     -mtc 4/28/2010
+*/
+#ifdef __PDP10_H__
+      if (outermode == innermostmode &&
+	  subreg_lowpart_offset(outermode, innermode) == byte &&
+	  subreg_lowpart_offset(innermode, innermostmode) == SUBREG_BYTE(op) &&
+	  (GET_MODE_PRECISION(innermode) >= GET_MODE_PRECISION(outermode) ||
+	   SUBREG_PROMOTED_VAR_P(op)))
+	  return SUBREG_REG(op);
+#else
       if (outermode == innermostmode
 	  && byte == 0 && SUBREG_BYTE (op) == 0)
 	return SUBREG_REG (op);
+#endif
 
       /* The SUBREG_BYTE represents offset, as if the value were stored
 	 in memory.  Irritating exception is paradoxical subreg, where
@@ -4983,6 +5162,17 @@ simplify_subreg (enum machine_mode outermode, rtx op,
 	  if (final_offset % GET_MODE_SIZE (outermode)
 	      || (unsigned) final_offset >= GET_MODE_SIZE (innermostmode))
 	    return NULL_RTX;
+#ifdef __PDP10_H__
+/* When the mode size is a byte a lowpart offset involves a special byte position adjustment
+     so we have to be careful to not eliminate or create such a reference
+     -mtc 7/1/2010
+*/
+	  if (GET_MODE_SIZE(outermode) == 1 && 
+		(subreg_lowpart_offset(outermode, innermode) == byte) != 
+		(subreg_lowpart_offset(outermode, innermostmode) == final_offset))
+	    return NULL_RTX;
+#endif
+
 	}
       else
 	{
@@ -5004,11 +5194,30 @@ simplify_subreg (enum machine_mode outermode, rtx op,
       /* Recurse for further possible simplifications.  */
       newx = simplify_subreg (outermode, SUBREG_REG (op), innermostmode,
 			      final_offset);
+#ifdef __PDP10_H__
+/* We have a need to handle narrow innermodes more carefully because they represent
+    a truncation that factoring out the inner subreg eliminates.  It seems this is really a
+    general fix.
+    But if SUBREG_PROMOTED_VAR_P(op) is true, the truncation has already been done.
+    -mtc 4/28/2010
+*/
+      if (!newx && validate_subreg(outermode, innermostmode,
+			   SUBREG_REG (op), final_offset))
+		newx = gen_rtx_SUBREG (outermode, SUBREG_REG (op), final_offset);
+      if (newx && (GET_MODE_PRECISION(innermode) < GET_MODE_PRECISION(innermostmode))
+	  	&& (GET_MODE_PRECISION(innermode) < GET_MODE_PRECISION(outermode))
+	  	&& !SUBREG_PROMOTED_VAR_P(op))
+	  	newx = gen_rtx_AND(outermode, newx, GEN_INT((1 << GET_MODE_PRECISION(innermode)) - 1));
+      if (newx)
+	return newx;
+#else
       if (newx)
 	return newx;
       if (validate_subreg (outermode, innermostmode,
 			   SUBREG_REG (op), final_offset))
         return gen_rtx_SUBREG (outermode, SUBREG_REG (op), final_offset);
+#endif
+
       return NULL_RTX;
     }
 
@@ -5077,9 +5286,27 @@ simplify_subreg (enum machine_mode outermode, rtx op,
 	     The information is used only by alias analysis that can not
 	     grog partial register anyway.  */
 
+/* Just because the subreg offset is representable, it isn't necessarily representable
+    without a SUBREG!  Also, the substitution of the original regno in the base gcc
+    code is always an error on the PDP10 whenever it does something.  I suspect its
+    an error on any big endian machine.
+    -mtc 7/31/2007
+    It turns out SUBREG(REG ..) means zero extension to the unused part of the register
+    so we can't just eliminate sub word size subregs even when they're representable.
+    -mtc 4/16/2010
+*/
+#ifdef __PDP10_H__
+	  byte -= subreg_regno_offset (regno, innermode, byte, outermode) * UNITS_PER_WORD;
+	  if (GET_MODE_SIZE(outermode) >= UNITS_PER_WORD)
+	  	return x;
+	 /* if (subreg_lowpart_offset (outermode, SImode) == byte)
+	  	return x;*/
+	  return 0;
+#else
 	  if (subreg_lowpart_offset (outermode, innermode) == byte)
 	    ORIGINAL_REGNO (x) = ORIGINAL_REGNO (op);
 	  return x;
+#endif
 	}
     }
 
@@ -5095,7 +5322,46 @@ simplify_subreg (enum machine_mode outermode, rtx op,
       && (! MEM_VOLATILE_P (op)
 	  || ! have_insn_for (SET, innermode))
       && GET_MODE_SIZE (outermode) <= GET_MODE_SIZE (GET_MODE (op)))
+    {
+/*TODO: We actually should be able to handle byte and half word references, but 
+   for now leave this in.  adjust_address_nv should handle byte offsets, but the code generators
+   need to be improved to handle any offset of 0,1,2 or 3 and not look for the SUBREG and ZERO_EXTRACT
+   nonsense
+   -mtc 5/26/2006
+   Modified the adjust_address_nv() and ZERO_EXTRACT offset to do address adjustment for the word
+   portion of byte and reference within the word with an offset < 36 bits
+   Would be nice to be able to get rid of the PDP10 code completely here
+   -mtc 10/24/2006
+   Get the subreg number in the gen_rtx_SUBREG() correct for being big endian
+   -mtc 1/15/2008
+*/
+
+#ifdef __PDP10_H__
+    if (GET_MODE_SIZE (outermode) < UNITS_PER_WORD)
+	{
+	/* put the anamalous cases of converting subword to subword mode and
+	    trying to adjust a pointer to a a word address, which will generate illegal references
+	    -mtc 1/23/2008
+	*/
+	if ((GET_MODE_SIZE (innermode) < UNITS_PER_WORD)
+		||(GET_MODE(XEXP(op, 0)) != word_mode))
+		return 0;
+
+	  /* PDP-10 can't address data smaller than a word, so handle
+	     this like a bit field.  */
+	  rtx extr
+	    = gen_rtx_ZERO_EXTRACT (word_mode,
+				    adjust_address_nv (op,
+						       word_mode,
+						       byte - byte % UNITS_PER_WORD),
+				    GEN_INT (GET_MODE_BITSIZE (outermode)),
+				    GEN_INT (BITS_PER_UNIT * (byte % UNITS_PER_WORD)));
+	  return gen_rtx_SUBREG (outermode, extr, UNITS_PER_WORD - GET_MODE_SIZE(outermode));
+	}
+    else
+#endif
     return adjust_address_nv (op, outermode, byte);
+    }
 
   /* Handle complex values represented as CONCAT
      of real and imaginary part.  */
@@ -5146,7 +5412,14 @@ simplify_subreg (enum machine_mode outermode, rtx op,
 	  enum machine_mode origmode = GET_MODE (XEXP (op, 0));
 	  if (outermode == origmode)
 	    return XEXP (op, 0);
+#ifdef __PDP10_H__
+/* PDP10 needs to distinguish between sizes of different single byte modes
+    -mtc 5/14/2008
+*/
+	  if (GET_MODE_PRECISION (outermode) <= GET_MODE_PRECISION (origmode))
+#else
 	  if (GET_MODE_BITSIZE (outermode) <= GET_MODE_BITSIZE (origmode))
+#endif
 	    return simplify_gen_subreg (outermode, XEXP (op, 0), origmode,
 					subreg_lowpart_offset (outermode,
 							       origmode));
@@ -5232,7 +5505,27 @@ simplify_gen_subreg (enum machine_mode outermode, rtx op,
     return NULL_RTX;
 
   if (validate_subreg (outermode, innermode, op, byte))
+#ifdef __PDP10_H__
+    {
+    /* only attempt this optimization for subword modes */
+    /* not only is it not productive, the mask calculation doesn't work for precisions >= 32 */
+    /* -mtc 10/23/2012 */
+    if ((GET_MODE_SIZE(outermode) < UNITS_PER_WORD)  && 
+		subreg_lowpart_offset(outermode, innermode) == byte && 
+		GET_CODE(op) == AND && 
+		GET_CODE(XEXP(op, 1)) == CONST_INT)
+    	{
+    	int val = INTVAL(XEXP(op, 1));
+	int mask = (1 << GET_MODE_PRECISION(outermode)) - 1;
+
+	if ((mask & val) == mask)
+		return gen_rtx_SUBREG(outermode, XEXP(op, 0), byte);
+    	}
     return gen_rtx_SUBREG (outermode, op, byte);
+    }
+#else
+    return gen_rtx_SUBREG (outermode, op, byte);
+#endif
 
   return NULL_RTX;
 }

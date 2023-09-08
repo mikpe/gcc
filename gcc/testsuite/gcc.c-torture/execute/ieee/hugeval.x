@@ -1,11 +1,9 @@
-# This test fails under hpux 9.X and 10.X because HUGE_VAL is DBL_MAX
-# instead of +Infinity.
-
-global target_triplet
-if { [istarget "hppa*-*-hpux9*"] || [istarget "hppa*-*-hpux10*"] } {
-      set torture_execute_xfail "$target_triplet"
-}
-
+# this test requires run time library string support which pdp10 doesn't
+# support yet
+# marking this as an expected compile failure leaves the run-time test
+# as unresolved, but there doesn't seem to be any way of marking that
+# the execution test is expected to be unrunable
+set torture_compile_xfail "*-*-*"
 # VxWorks kernel mode has the same problem.
 if {[istarget "*-*-vxworks*"]} {
     set torture_eval_before_execute {
@@ -20,4 +18,3 @@ if {[istarget "*-*-vxworks*"]} {
 }
 
 return 0
-

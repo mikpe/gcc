@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: optabs.c 2fe7b21606c1 2011/06/20 19:50:02 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1468,6 +1478,16 @@ expand_binop_directly (enum machine_mode mode, optab binoptab,
      Even better, try to make it the same as the target.
      Also try to make the last operand a constant.  */
   if (commutative_p
+
+/* if the modes dont match, swapping xop0, xop1 will leave them mismatched with mode0, mode1
+    This can happen with pointer addition, which perhaps needs its own optab now that there's a
+    POINTER_PLUS_EXPR for the expression tree.
+    But for now just prevent erroneous swapping.
+    -mtc 12/7/2007
+*/
+#ifdef __PDP10_H__
+      && (mode0 == mode1)
+#endif
       && swap_commutative_operands_with_target (target, xop0, xop1))
     {
       swap = xop1;
@@ -1606,11 +1626,22 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
   /* If this is a multiply, see if we can do a widening operation that
      takes operands of this mode and makes a wider mode.  */
 
+#ifdef __PDP10_H__
+/* We need to check umul as well as smul
+    -mtc 6/17/2011
+*/
+  if ((binoptab == smul_optab || binoptab == umul_optab)
+      && GET_MODE_WIDER_MODE (mode) != VOIDmode
+      && ((optab_handler ((unsignedp ? umul_widen_optab : smul_widen_optab),
+			  GET_MODE_WIDER_MODE (mode))->insn_code)
+	  != CODE_FOR_nothing))
+#else
   if (binoptab == smul_optab
       && GET_MODE_WIDER_MODE (mode) != VOIDmode
       && ((optab_handler ((unsignedp ? umul_widen_optab : smul_widen_optab),
 			  GET_MODE_WIDER_MODE (mode))->insn_code)
 	  != CODE_FOR_nothing))
+#endif
     {
       temp = expand_binop (GET_MODE_WIDER_MODE (mode),
 			   unsignedp ? umul_widen_optab : smul_widen_optab,
@@ -1637,6 +1668,18 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
 	 wider_mode != VOIDmode;
 	 wider_mode = GET_MODE_WIDER_MODE (wider_mode))
       {
+#ifdef __PDP10_H__
+/* We need to check umul as well as smul
+    -mtc 6/17/2011
+*/
+	if (optab_handler (binoptab, wider_mode)->insn_code != CODE_FOR_nothing
+	    || ((binoptab == smul_optab || binoptab == umul_optab) 
+		&& GET_MODE_WIDER_MODE (wider_mode) != VOIDmode
+		&& ((optab_handler ((unsignedp ? umul_widen_optab
+				     : smul_widen_optab),
+				     GET_MODE_WIDER_MODE (wider_mode))->insn_code)
+		    != CODE_FOR_nothing)))
+#else
 	if (optab_handler (binoptab, wider_mode)->insn_code != CODE_FOR_nothing
 	    || (binoptab == smul_optab
 		&& GET_MODE_WIDER_MODE (wider_mode) != VOIDmode
@@ -1644,6 +1687,7 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
 				     : smul_widen_optab),
 				     GET_MODE_WIDER_MODE (wider_mode))->insn_code)
 		    != CODE_FOR_nothing)))
+#endif
 	  {
 	    rtx xop0 = op0, xop1 = op1;
 	    int no_extend = 0;
@@ -1655,6 +1699,9 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
 	    if ((binoptab == ior_optab || binoptab == and_optab
 		 || binoptab == xor_optab
 		 || binoptab == add_optab || binoptab == sub_optab
+#ifdef __PDP10_H__
+		 || binoptab == umul_optab 
+#endif
 		 || binoptab == smul_optab || binoptab == ashl_optab)
 		&& class == MODE_INT)
 	      {
@@ -2072,11 +2119,22 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
      more efficient unsigned widening multiply, and if that fails we then
      try using a signed widening multiply.  */
 
+#ifdef __PDP10_H__
+/* We need to check umul as well as smul
+    -mtc 6/17/2011
+*/
+  if (((binoptab == smul_optab && optab_handler (smul_optab, word_mode)->insn_code != CODE_FOR_nothing)
+	||(binoptab == umul_optab && optab_handler (umul_optab, word_mode)->insn_code != CODE_FOR_nothing) )
+      && class == MODE_INT
+      && GET_MODE_SIZE (mode) == 2 * UNITS_PER_WORD
+      && optab_handler (add_optab, word_mode)->insn_code != CODE_FOR_nothing)
+#else
   if (binoptab == smul_optab
       && class == MODE_INT
       && GET_MODE_SIZE (mode) == 2 * UNITS_PER_WORD
       && optab_handler (smul_optab, word_mode)->insn_code != CODE_FOR_nothing
       && optab_handler (add_optab, word_mode)->insn_code != CODE_FOR_nothing)
+#endif
     {
       rtx product = NULL_RTX;
 
@@ -2197,6 +2255,9 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
 	      if ((binoptab == ior_optab || binoptab == and_optab
 		   || binoptab == xor_optab
 		   || binoptab == add_optab || binoptab == sub_optab
+#ifdef __PDP10_H__
+		   || binoptab == umul_optab 
+#endif
 		   || binoptab == smul_optab || binoptab == ashl_optab)
 		  && class == MODE_INT)
 		no_extend = 1;
@@ -2233,7 +2294,7 @@ expand_binop (enum machine_mode mode, optab binoptab, rtx op0, rtx op1,
   delete_insns_since (entry_last);
   return 0;
 }
-
+
 /* Expand a binary operator which has both signed and unsigned forms.
    UOPTAB is the optab for unsigned operations, and SOPTAB is for
    signed operations.
@@ -4133,6 +4194,14 @@ int
 can_compare_p (enum rtx_code code, enum machine_mode mode,
 	       enum can_compare_purpose purpose)
 {
+#ifdef __PDP10_H__
+  /* non-integer pointer mode comparisons will eventually be done in Pmode
+      so use that when checking instruction availability
+      -mtc 8/21/2006 
+  */
+  if (PTR_MODE_P(mode)  && (GET_MODE_CLASS(mode) != MODE_INT) )
+  	mode = Pmode;
+#endif
   do
     {
       if (optab_handler (cmp_optab, mode)->insn_code != CODE_FOR_nothing)
@@ -4473,9 +4542,61 @@ emit_cmp_and_jump_insns (rtx x, rtx y, enum rtx_code comparison, rtx size,
 
   prepare_cmp_insn (&op0, &op1, &comparison, size, &mode, &unsignedp,
 		    ccp_jump);
-  emit_cmp_and_jump_insn_1 (op0, op1, mode, comparison, unsignedp, label);
-}
 
+#ifdef __PDP10_H__
+  /* handle byte pointer comparisons explicitly */
+  if ((GET_MODE_CLASS(mode) == MODE_INT) || !PTR_MODE_P(mode) )
+#endif
+    emit_cmp_and_jump_insn_1 (op0, op1, mode, comparison, unsignedp, label);
+#ifdef __PDP10_H__
+  else
+    {
+/*	HAVE_CMPBP should not be true, so don't worry about making this work yet
+	-mtc 7/26/2006
+*/
+      if (HAVE_CMPBP)
+	{
+	  rtx comparison_rtx = gen_rtx_fmt_ee (comparison, VOIDmode, 0, 0);
+	  if (!register_operand (op0, Pmode))
+	    op0 = force_reg (Pmode, op0);
+	  if (!reg_or_mem_operand (op1, Pmode))
+	    op1 = force_reg (Pmode, op1);
+	  emit_jump_insn (gen_CMPBP (comparison_rtx, op0, op1, label));
+	}
+      else
+	{
+	  rtx temp0 = gen_reg_rtx (Pmode);
+	  rtx temp1 = gen_reg_rtx (Pmode);
+	  rtx temp0a, temp1a;
+	  
+	  if (TARGET_EXTENDED)
+	    {
+	      temp0a = force_reg(Pmode, simplify_gen_subreg(Pmode, op0, mode, 0));
+	      temp1a = force_reg(Pmode, simplify_gen_subreg(Pmode, op1, mode, 0));
+	    }
+/*
+	TARGET_EXTENDED should always be true, so don't worry about this else
+	block for now
+	-mtc 7/26/2006
+*/
+	  else
+	    {
+	      /* strip the high order address bits on an unextended machine */
+	      temp0a = gen_reg_rtx (Pmode);
+	      temp1a = gen_reg_rtx (Pmode);
+	      emit_insn (gen_xorsi3 (temp0a, op0,
+				     GEN_INT (trunc_int_for_mode (((HOST_WIDE_INT) 077) << 30, SImode))));
+	      emit_insn (gen_xorsi3 (temp1a, op1,
+				     GEN_INT (trunc_int_for_mode (((HOST_WIDE_INT) 077) << 30, SImode))));
+	    }
+	  emit_insn (gen_rotlsi3 (temp0, temp0a, GEN_INT (6)));
+	  emit_insn (gen_rotlsi3 (temp1, temp1a, GEN_INT (6)));
+	  emit_cmp_and_jump_insn_1 (temp0, temp1, Pmode, comparison, unsignedp,
+				    label);
+	}
+    }
+#endif
+}
 /* Like emit_cmp_and_jump_insns, but generate only the comparison.  */
 
 void
@@ -6279,6 +6400,13 @@ init_optabs (void)
   init_optab (sssub_optab, SS_MINUS);
   init_optab (ussub_optab, US_MINUS);
   init_optab (smul_optab, MULT);
+#ifdef __PDP10_H__
+  /* Can this be moved into pdp10_init_libfuncs() and eliminate the
+      customization here?
+      -mtc 11/20/2007
+  */
+  init_optab (umul_optab, UMUL);
+#endif
   init_optab (ssmul_optab, SS_MULT);
   init_optab (usmul_optab, US_MULT);
   init_optabv (smulv_optab, MULT);

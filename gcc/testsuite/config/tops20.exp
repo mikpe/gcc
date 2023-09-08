@@ -1,0 +1,5 @@
+# Config file for XKL tops20 systems
+
+exec mkdir -p gcc.c-torture/compile gcc.c-torture/execute/ieee gcc.c-torture/execute/pdp10 gcc.c-torture/compat gcc.c-torture/unsorted gcc.c-torture/ssh gcc.misc-tests config gcc.dg/asm gcc.dg/cpp gcc.dg/debug gcc.dg/special gcc.dg/format gcc.dg/noncompile consistency.vlad/layout
+
+load_lib "standard.exp"

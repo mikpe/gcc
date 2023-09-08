@@ -6,6 +6,10 @@
 /* { dg-skip-if "No 64-bit registers" { m32c-*-* } { "*" } { "" } } */
 /* { dg-xfail-if "" { m6811-*-* m6812-*-* h8300-*-* } { "*" } { "" } } */
 
+/* PDP10 customization to mark as expected failure */
+/* mtc 12/10/2007 */
+/* { dg-xfail-if "" { pdp10-*-* } { "*" } { "" } } */
+
 /* Copyright (C) 2000, 2003 Free Software Foundation */
 __complex__ long long f ()
 {

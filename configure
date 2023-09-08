@@ -1864,6 +1864,7 @@ libgcj="target-libffi \
 # the host libraries and the host tools (which may be a cross compiler)
 #
 target_libraries="target-libgcc \
+		target-libxkl \
 		target-libiberty \
 		target-libgloss \
 		target-newlib \
@@ -2608,6 +2609,9 @@ case "${target}" in
     ;;
   *-*-lynxos*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    ;;
+  pdp10-*-*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libiberty ${libgcj}"
     ;;
   *-*-*)
     noconfigdirs="$noconfigdirs ${libgcj}"
@@ -3491,13 +3495,13 @@ if test "$ac_test_CFLAGS" = set; then
   CFLAGS=$ac_save_CFLAGS
 elif test $ac_cv_prog_cc_g = yes; then
   if test "$GCC" = yes; then
-    CFLAGS="-g -O2"
+    CFLAGS="-g -O0"
   else
     CFLAGS="-g"
   fi
 else
   if test "$GCC" = yes; then
-    CFLAGS="-O2"
+    CFLAGS="-O0"
   else
     CFLAGS=
   fi

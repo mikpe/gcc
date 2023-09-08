@@ -29,6 +29,16 @@ along with GCC; see the file COPYING3.  If not see
    It is intended to be language-independent, but occasionally
    calls language-dependent routines defined (for C) in typecheck.c.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: tree.c f6b89fb459d7 2011/12/14 20:59:08 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1334,7 +1344,18 @@ integer_zerop (const_tree expr)
 int
 integer_onep (const_tree expr)
 {
+/* One would think checking for NULL would be a general not PDP10 specific issue */
+/* mtc- 12/12/2011 */
+#ifdef __PDP10_H__
+  if (!expr)
+  	return 0;
   STRIP_NOPS (expr);
+  if (!expr)
+  	return 0;
+#else
+
+  STRIP_NOPS (expr);
+#endif
 
   return ((TREE_CODE (expr) == INTEGER_CST
 	   && TREE_INT_CST_LOW (expr) == 1
@@ -3113,7 +3134,14 @@ build2_stat (enum tree_code code, tree tt, tree arg0, tree arg1 MEM_STAT_DECL)
   if (code == POINTER_PLUS_EXPR && arg0 && arg1 && tt)
     gcc_assert (POINTER_TYPE_P (tt) && POINTER_TYPE_P (TREE_TYPE (arg0))
 		&& INTEGRAL_TYPE_P (TREE_TYPE (arg1))
+/* any integer type is fine
+    -mtc 1/4/2008
+*/
+#ifdef __PDP10_H__
+		);
+#else
 		&& useless_type_conversion_p (sizetype, TREE_TYPE (arg1)));
+#endif
 
   t = make_node_stat (code PASS_MEM_STAT);
   TREE_TYPE (t) = tt;
@@ -5349,6 +5377,18 @@ iterative_hash_expr (const_tree t, hashval_t val)
 	}
       else
 	{
+
+#ifdef __PDP10_H__
+	/* blocks in parentheses which contain declarations can cause all sorts of interesting nodes to come
+	    thru here, TARGET_EXPR, BIND_EXPR, BLOCK, STATEMENT_LIST, ...
+	    we handle by treating as unique values
+	    this should be ok since operand_equal_p doesn't handle these and will treat as unequal
+	    it would seem this would be a problem in the general gcc code also.
+	    -mtc 6/5/2008
+	*/
+	if (!IS_EXPR_CODE_CLASS (class))
+		return iterative_hash_pointer (t, val);
+#endif
 	  gcc_assert (IS_EXPR_CODE_CLASS (class));
 	  
 	  val = iterative_hash_object (code, val);
@@ -5453,7 +5493,11 @@ build_pointer_type_for_mode (tree to_type, enum machine_mode mode,
 tree
 build_pointer_type (tree to_type)
 {
+#ifdef __PDP10_H__
+  return build_pointer_type_for_mode (to_type, ptr_mode_for_type(to_type), false);
+#else
   return build_pointer_type_for_mode (to_type, ptr_mode, false);
+#endif
 }
 
 /* Same as build_pointer_type_for_mode, but for REFERENCE_TYPE.  */
@@ -7233,6 +7277,29 @@ build_common_tree_nodes (bool signed_char, bool signed_sizetype)
   long_long_integer_type_node = make_signed_type (LONG_LONG_TYPE_SIZE);
   long_long_unsigned_type_node = make_unsigned_type (LONG_LONG_TYPE_SIZE);
 
+/*
+	extra QnI modes
+	-mtc 9/26/2006
+*/
+#ifdef __PDP10_H__
+  intQ6I_type_node = make_signed_type (6);
+	TYPE_MODE(intQ6I_type_node) = Q6Imode;
+  unsigned_intQ6I_type_node = make_unsigned_type (6);
+	TYPE_MODE(unsigned_intQ6I_type_node) = Q6Imode;
+  intQ7I_type_node = make_signed_type (7);
+	TYPE_MODE(intQ7I_type_node) = Q7Imode;
+  unsigned_intQ7I_type_node = make_unsigned_type (7);
+	TYPE_MODE(unsigned_intQ7I_type_node) = Q7Imode;
+  intQ8I_type_node = make_signed_type (8);
+	TYPE_MODE(intQ8I_type_node) = Q8Imode;
+  unsigned_intQ8I_type_node = make_unsigned_type (8);
+	TYPE_MODE(unsigned_intQ8I_type_node) = Q8Imode;
+  intQ9I_type_node = make_signed_type (9);
+	TYPE_MODE(intQ9I_type_node) = Q9Imode;
+  unsigned_intQ9I_type_node = make_unsigned_type (9);
+	TYPE_MODE(unsigned_intQ9I_type_node) = Q9Imode;
+#endif
+
   /* Define a boolean type.  This type only represents boolean values but
      may be larger than char depending on the value of BOOL_TYPE_SIZE.
      Front ends which want to override this size (i.e. Java) can redefine
@@ -8077,8 +8144,15 @@ tree
 signed_or_unsigned_type_for (int unsignedp, tree type)
 {
   tree t = type;
+
+/* size_type is not equivalent to pointer types
+    -mtc 2/20/2008
+*/
+#ifdef __PDP10_H__
+#else
   if (POINTER_TYPE_P (type))
     t = size_type_node;
+#endif
 
   if (!INTEGRAL_TYPE_P (t) || TYPE_UNSIGNED (t) == unsignedp)
     return t;

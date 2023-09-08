@@ -449,6 +449,14 @@ DEF_RTL_EXPR(NEG, "neg", "e", RTX_UNARY)
 
 DEF_RTL_EXPR(MULT, "mult", "ee", RTX_COMM_ARITH)
 
+/* We can't flag this as PDP10 specific because some utilities (eg gengenrtl.c) */
+/* don't pick up tm.h which includes pdp10.h which sets __PDP10_H__ */
+/* mtc 3/15/2011 */
+/* #ifdef __PDP10_H__ */
+/* Unsigned multiply. */
+DEF_RTL_EXPR(UMUL, "umul", "ee", 'c')
+/* #endif */
+
 /* Multiplication with signed saturation */
 DEF_RTL_EXPR(SS_MULT, "ss_mult", "ee", RTX_COMM_ARITH)
 /* Multiplication with unsigned saturation */
@@ -481,6 +489,7 @@ DEF_RTL_EXPR(ASHIFT, "ashift", "ee", RTX_BIN_ARITH) /* shift left */
 DEF_RTL_EXPR(ROTATE, "rotate", "ee", RTX_BIN_ARITH) /* rotate left */
 DEF_RTL_EXPR(ASHIFTRT, "ashiftrt", "ee", RTX_BIN_ARITH) /* arithmetic shift right */
 DEF_RTL_EXPR(LSHIFTRT, "lshiftrt", "ee", RTX_BIN_ARITH) /* logical shift right */
+DEF_RTL_EXPR(LSHIFTRT72, "lshiftrt72", "ee", RTX_BIN_ARITH) /* pdp10 72 bit logical shift right */
 DEF_RTL_EXPR(ROTATERT, "rotatert", "ee", RTX_BIN_ARITH) /* rotate right */
 
 /* Minimum and maximum values of two operands.  We need both signed and

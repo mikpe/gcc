@@ -1073,6 +1073,17 @@ useless_type_conversion_p_1 (tree outer_type, tree inner_type)
 bool
 useless_type_conversion_p (tree outer_type, tree inner_type)
 {
+
+/* We need to check modes first, because we can have void * conversions that
+    change the mode of an expression and they are not useless
+    -mtc 12/10/2007
+*/
+#ifdef __PDP10_H__
+  /* Changes in machine mode are never useless conversions.  */
+  if (TYPE_MODE (inner_type) != TYPE_MODE (outer_type))
+    return false;
+#endif
+
   /* If the outer type is (void *), then the conversion is not
      necessary.  We have to make sure to not apply this while
      recursing though.  */

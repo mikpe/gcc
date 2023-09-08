@@ -9,7 +9,7 @@
  * factor of two increase in speed on a Power PC G4 (PPC7455) using gcc -O3.
  */
 
-/* @(#) $Id: crc32.c,v 1.1.1.2 2002/03/11 21:53:23 tromey Exp $ */
+/* @(#) $Id: crc32.c f3ded7179433 2007/04/26 21:47:09 Martin Chaney <chaney@xkl.com> $ */
 
 /*
   Note on the use of DYNAMIC_CRC_TABLE: there is no mutex or semaphore

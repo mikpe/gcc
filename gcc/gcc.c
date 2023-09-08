@@ -70,6 +70,16 @@ compilation is specified by a string called a "spec".  */
    read.  For example, use a debugger to investigate the value of
    "specs_file" in main().  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: gcc.c dfe2778cbc5a 2008/03/04 21:11:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2709,14 +2719,29 @@ find_a_file (const struct path_prefix *pprefix, const char *name, int mode,
 {
   struct file_at_path_info info;
 
+  /* pdp10 - if looking for "as" or "ld", we will instead look for
+     "macro" or "link" per DEFAULT.  We don't specify the full path
+     name in the defaults, so that -B paths will find the tools 
+     on a compiler release specific basis */
+
 #ifdef DEFAULT_ASSEMBLER
-  if (! strcmp (name, "as") && access (DEFAULT_ASSEMBLER, mode) == 0)
-    return xstrdup (DEFAULT_ASSEMBLER);
+  if (! strcmp (name, "as"))
+#ifdef __PDP10_H__
+    return find_a_file (&exec_prefixes, DEFAULT_ASSEMBLER, mode, do_multi);
+#else
+    if (access (DEFAULT_ASSEMBLER, mode) == 0)
+      return xstrdup (DEFAULT_ASSEMBLER);
+#endif
 #endif
 
 #ifdef DEFAULT_LINKER
-  if (! strcmp(name, "ld") && access (DEFAULT_LINKER, mode) == 0)
-    return xstrdup (DEFAULT_LINKER);
+  if (! strcmp(name, "ld"))
+#ifdef __PDP10_H__
+    return find_a_file (&exec_prefixes, DEFAULT_LINKER, mode, do_multi);
+#else
+    if (access (DEFAULT_LINKER, mode) == 0)
+      return xstrdup (DEFAULT_LINKER);
+#endif
 #endif
 
   /* Determine the filename to execute (special case for absolute paths).  */

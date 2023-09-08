@@ -10,7 +10,11 @@ extern void exit (int);
 int
 f (int n)
 {
+#ifdef __PDP10__
+  return (n << 28) / (1 << 27);
+#else
   return (n << 24) / (1 << 23);
+#endif
 }
 
 volatile int x = 128;

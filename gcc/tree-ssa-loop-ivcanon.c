@@ -346,6 +346,17 @@ tree_unroll_loops_completely (bool may_increase_size)
   bool changed = false;
   enum unroll_level ul;
 
+/* When the total number of loops is big, unrolling them is just too computationally expsensive
+    -mtc 8/24/2007
+    With 430 update loops parameter is no longer passed, but number_of_loops() seems to be
+    equivalent to loops->num
+    -mtc 11/30/2007
+*/
+#ifdef __PDP10_H__
+  if (number_of_loops() > PARAM_VALUE (PARAM_MAX_LOOPS))
+  	return;
+#endif
+
   FOR_EACH_LOOP (li, loop, 0)
     {
       if (may_increase_size && maybe_hot_bb_p (loop->header))

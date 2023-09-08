@@ -581,7 +581,14 @@ struct tree_opt_pass pass_ud_rtl_dce =
   0,                                    /* todo_flags_start */
   TODO_dump_func |
   TODO_df_finish | TODO_verify_rtl_sharing |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 3/14/2011
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'w'                                   /* letter */
 };
 
@@ -866,6 +873,13 @@ struct tree_opt_pass pass_fast_rtl_dce =
   0,                                    /* todo_flags_start */
   TODO_dump_func |
   TODO_df_finish | TODO_verify_rtl_sharing |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 3/14/2011
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'w'                                   /* letter */
 };

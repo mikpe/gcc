@@ -338,6 +338,27 @@ chrec_fold_plus (tree type,
 		 tree op1)
 {
   enum tree_code code;
+
+/* to avoid bogus conversions to pointer type, we introduce the use of
+    passing in NULL to indicate that the plus should be done in the natural type
+    this simplifies the code where this is called
+    -mtc 5/16/2007
+    there are actually some cases where type was already passed as NULL
+    try to detect those by testing TYPE_SIZE(), one of which I think is NULL in
+    that situation.
+
+    With the 430 update, gcc has added POINTER_PLUS_EXPR which may
+    obviate the need for my pointer arithmetic fixes
+    -mtc 11/21/2007
+*/
+#ifdef __PDP10_H__
+  tree type0 = TREE_TYPE(op0);
+  tree type1 = TREE_TYPE(op1);
+
+  if (!type && TYPE_SIZE(type0) && TYPE_SIZE(type1))
+	type = (tree_int_cst_lt (TYPE_SIZE(type0), TYPE_SIZE(type1)) ? type1 : type0);
+#endif
+
   if (automatically_generated_chrec_p (op0)
       || automatically_generated_chrec_p (op1))
     return chrec_fold_automatically_generated_operands (op0, op1);
@@ -1111,6 +1132,23 @@ avoid_arithmetics_in_type_p (const_tree type)
   if (TREE_CODE (type) == INTEGER_TYPE && TREE_TYPE (type) != NULL_TREE)
     return true;
 
+/* This is a slightly speculative customization with the 4.2.2 upgrade.
+    On the pdp10 it is not valid to do ordinary arithmetic on pointers.  We had a customization to avoid
+    converting loop steps into pointer types, but the call to convert_step we were avoiding was replaced
+    somewhat loosely by a call to convert_affine_scev which makes makes a preliminary check of 
+    avoid_arithmetics_in_type_p.
+    Assuming the name of this routine is properly descriptive and the header comment is right, this change
+    should be correct.
+    -mtc 9/25/2007
+    With the 430 improvements to handling pointer arithmetic, this customization may be entirely unnecessary
+    -mtc 11/21/2007
+*/
+#ifdef __PDP10_H__
+  if (POINTER_TYPE_P(type))
+    return true;
+#endif
+
+
   return false;
 }
 
@@ -1294,6 +1332,23 @@ chrec_convert_1 (tree type, tree chrec, tree at_stmt,
   if (!evolution_function_is_affine_p (chrec))
     goto keep_cast;
 
+/* Converting between pointers and non-pointers and converting between pointers which reference different size objects
+    introduce issues involving adjusting the step value which are best avoided.
+    -mtc 10/19/2007
+    Also avoid conversion involving void pointers.  Offsetting these is sure to cause errors.
+    -mtc 10/23/2007
+    todo: Need to verify that convert_affine_scev() doesn't introduce conversion of the step from integer to a pointer when
+    doing a pointer conversion.  A change to prevent those changes in the 411 port was lost because of restructuring here.
+*/
+#ifdef __PDP10_H__
+  if ((POINTER_TYPE_P(type) && !POINTER_TYPE_P(ct))
+       ||(!POINTER_TYPE_P(type) && POINTER_TYPE_P(ct))
+       || (POINTER_TYPE_P(type) && TREE_CODE(TREE_TYPE(type)) == VOID_TYPE)
+       || (POINTER_TYPE_P(ct) && TREE_CODE(TREE_TYPE(ct)) == VOID_TYPE)
+       ||(POINTER_TYPE_P(type) && (tree_low_cst(TYPE_SIZE(TREE_TYPE(type)), 1) != tree_low_cst(TYPE_SIZE(TREE_TYPE(ct)), 1))))
+       goto keep_cast;
+#endif
+
   loop = get_chrec_loop (chrec);
   base = CHREC_LEFT (chrec);
   step = CHREC_RIGHT (chrec);
@@ -1341,6 +1396,18 @@ chrec_convert_aggressive (tree type, tree chrec)
   if (TYPE_PRECISION (type) > TYPE_PRECISION (inner_type))
     return NULL_TREE;
 
+/* Don't allow conversion between pointers to different size objects.
+   -mtc 10/22/2007
+*/
+#ifdef __PDP10_H__
+      if (POINTER_TYPE_P(type))
+      	{
+      	if (!POINTER_TYPE_P(inner_type)
+	    ||(tree_low_cst(TYPE_SIZE(TREE_TYPE(type)), 1) != tree_low_cst(TYPE_SIZE(TREE_TYPE(inner_type)), 1)))
+	  	return NULL_TREE;
+      	}
+#endif
+
   /* If we cannot perform arithmetic in TYPE, avoid creating an scev.  */
   if (avoid_arithmetics_in_type_p (type))
     return NULL_TREE;
@@ -1355,7 +1422,7 @@ chrec_convert_aggressive (tree type, tree chrec)
   rc = chrec_convert_aggressive (rtype, right);
   if (!rc)
     rc = chrec_convert (rtype, right, NULL_TREE);
- 
+
   return build_polynomial_chrec (CHREC_VARIABLE (chrec), lc, rc);
 }
 

@@ -623,8 +623,8 @@ along with GCC; see the file COPYING3.  If not see
    PREFERRED_DEBUGGING_TYPE to choose the default.  */
 
 #if 1 < (defined (DBX_DEBUGGING_INFO) + defined (SDB_DEBUGGING_INFO) \
-         + defined (DWARF2_DEBUGGING_INFO) + defined (XCOFF_DEBUGGING_INFO) \
-         + defined (VMS_DEBUGGING_INFO))
+	+ defined (DWARF2_DEBUGGING_INFO) + defined (XCOFF_DEBUGGING_INFO) \
+	+ defined (VMS_DEBUGGING_INFO) + defined (TOPS20_DEBUGGING_INFO))
 #ifndef PREFERRED_DEBUGGING_TYPE
 #error You must define PREFERRED_DEBUGGING_TYPE
 #endif /* no PREFERRED_DEBUGGING_TYPE */
@@ -646,6 +646,9 @@ along with GCC; see the file COPYING3.  If not see
 #elif defined XCOFF_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE XCOFF_DEBUG
 
+#elif TOPS20_DEBUGGING_INFO
+#define PREFERRED_DEBUGGING_TYPE TOPS20_DEBUG
+
 #else
 /* No debugging format is supported by this target.  */
 #define PREFERRED_DEBUGGING_TYPE NO_DEBUG
@@ -655,6 +658,7 @@ along with GCC; see the file COPYING3.  If not see
 #define UNKNOWN_FLOAT_FORMAT 0
 #define IEEE_FLOAT_FORMAT 1
 #define VAX_FLOAT_FORMAT 2
+#define PDP10_FLOAT_FORMAT 5
 
 /* Default to IEEE float if not specified.  Nearly all machines use it.  */
 #ifndef TARGET_FLOAT_FORMAT

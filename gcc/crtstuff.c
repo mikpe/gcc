@@ -57,6 +57,16 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 /* FIXME: Including auto-host is incorrect, but until we have
    identified the set of defines that need to go into auto-target.h,
    this will have to do.  */
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: crtstuff.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "auto-host.h"
 #undef gid_t
 #undef pid_t

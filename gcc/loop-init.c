@@ -153,8 +153,15 @@ struct tree_opt_pass pass_loop2 =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+  TODO_dump_func,
+#else
   TODO_dump_func |
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'L'                                   /* letter */
 };
 

@@ -1089,9 +1089,22 @@ fold_const_aggregate_ref (tree t)
 	          == MODE_INT)
 	      && GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (TREE_TYPE (ctor)))) == 1
 	      && compare_tree_int (idx, TREE_STRING_LENGTH (ctor)) < 0)
+
+/* use of signed chars causes incorrect sign bit extension into our 9-bit chars whether or not
+    the user declares them signed or unsigned.  use of the internal type unsigned gives correct
+    behavior for both, except that the user can't actually input a value with the high order bit set.
+    it might be more appropriate to check whether TREE_TYPE(t) is signed or unsigned.
+    -mtc 1/17/2008
+*/
+#ifdef __PDP10_H__
+	    return build_int_cst_type (TREE_TYPE (t),
+				       (TREE_UNSIGNED_STRING_POINTER (ctor)
+					[TREE_INT_CST_LOW (idx)]));
+#else
 	    return build_int_cst_type (TREE_TYPE (t),
 				       (TREE_STRING_POINTER (ctor)
 					[TREE_INT_CST_LOW (idx)]));
+#endif
 	  return NULL_TREE;
 	}
 
@@ -1634,6 +1647,13 @@ maybe_fold_offset_to_array_ref (tree base, tree offset, tree orig_type)
       idx = build_int_cst (idx_type, 0);
     }
   else
+
+/* OFFSET is in elements, not bytes, so we shouldn't do any conversions here
+    -mtc 7/9/2007
+*/
+#ifdef __PDP10_H__
+    idx = offset;
+#else
     {
       unsigned HOST_WIDE_INT lquo, lrem;
       HOST_WIDE_INT hquo, hrem;
@@ -1655,6 +1675,7 @@ maybe_fold_offset_to_array_ref (tree base, tree offset, tree orig_type)
 
       idx = build_int_cst_wide (idx_type, lquo, hquo);
     }
+#endif
 
   /* Assume the low bound is zero.  If there is a domain type, get the
      low bound, if any, convert the index into that type, and add the
@@ -2048,9 +2069,17 @@ maybe_fold_stmt_addition (tree expr)
 	    }
 	}
 
+/* Arbitrarily converting to byte offset makes no sense.  conversion if any should be between the array
+    element size and the addr_expr reference size, but I think those are guaranteed to match.
+    Also note that we've made a similar reverse change in maybe_fold_offset_to_array_ref()
+    -mtc 9/10/2007
+*/
+#ifdef __PDP10_H__
+#else
       /* Convert the index to a byte offset.  */
       array_idx = fold_convert (sizetype, array_idx);
       array_idx = int_const_binop (MULT_EXPR, array_idx, elt_size, 0);
+#endif
 
       /* Update the operands for the next round, or for folding.  */
       op1 = int_const_binop (PLUS_EXPR,

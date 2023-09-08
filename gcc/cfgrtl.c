@@ -37,6 +37,16 @@ along with GCC; see the file COPYING3.  If not see
      - Edge redirection with updating and optimizing of insn chain
 	 block_label, tidy_fallthru_edge, force_nonfallthru  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: cfgrtl.c 1c13986a2af8 2007/12/21 22:37:34 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1773,6 +1783,13 @@ rtl_verify_flow_info_1 (void)
 	  && (note = find_reg_note (BB_END (bb), REG_BR_PROB, NULL_RTX))
 	  && EDGE_COUNT (bb->succs) >= 2
 	  && any_condjump_p (BB_END (bb)))
+	  /* PDP-10: A condjump may only have one edge if the branch
+	     destination is the same as the fallthrough destination.
+	  && BRANCH_EDGE (bb))
+	  Deleted this PDP10 customization -- I think its redundant with test that
+	  EDGE_COUNT() >=2
+	  -mtc 12/19/2007
+	  */
 	{
 	  if (INTVAL (XEXP (note, 0)) != BRANCH_EDGE (bb)->probability
 	      && profile_status != PROFILE_ABSENT)
@@ -1828,12 +1845,29 @@ rtl_verify_flow_info_1 (void)
 	  error ("too many outgoing branch edges from bb %i", bb->index);
 	  err = 1;
 	}
+
+/* fallthru after unconditional jump is OK if its the target of the jump
+    -mtc 12/19/2007
+*/
+#ifdef __PDP10_H__
+      if (n_fallthru && any_uncondjump_p (BB_END (bb))
+	    && (JUMP_LABEL(BB_END(bb)) != BB_HEAD (fallthru->dest)))
+#else
       if (n_fallthru && any_uncondjump_p (BB_END (bb)))
+#endif
 	{
 	  error ("fallthru edge after unconditional jump %i", bb->index);
 	  err = 1;
 	}
+
+/* fallthrus are also branches
+    -mtc 12/19/2007
+*/
+#ifdef __PDP10_H__
+      if ((n_branch + n_fallthru) != 1 && any_uncondjump_p (BB_END (bb)))
+#else
       if (n_branch != 1 && any_uncondjump_p (BB_END (bb)))
+#endif
 	{
 	  error ("wrong amount of branch edges after unconditional jump %i", bb->index);
 	  err = 1;

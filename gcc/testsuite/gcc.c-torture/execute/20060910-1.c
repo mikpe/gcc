@@ -14,7 +14,15 @@ int input_getc_complicated (struct input_ty *x) { return 0; }
 int check_header (struct input_ty *deeper)
 {
   unsigned len;
+/*
+  On PDP10 the buffer size is actually 8, so need to loop at least
+  that far.  Setting the loop to run longer is OK because
+  input_getc_complicated() just returns zero and buffer_position
+  is not modified further.
+  -mtc 3/29/2010
   for (len = 0; len < 6; len++)
+*/
+  for (len = 0; len < 10; len++)
     if (((deeper)->buffer_position < (deeper)->buffer_end
          ? *((deeper)->buffer_position)++
          : input_getc_complicated((deeper))) < 0)

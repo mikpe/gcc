@@ -27,10 +27,17 @@ int main(void)
   st a;
   next = &a;
   f();
+#ifdef __PDP10__
+  if (next->iIndex != 0xFFFFEFEFE)
+    __builtin_abort ();
+  if (next->iIndex1 != 0xFFFFEFEFE)
+    __builtin_abort ();
+#else
   if (next->iIndex != 0xFFFEFEFE)
     __builtin_abort ();
   if (next->iIndex1 != 0xFFFEFEFE)
     __builtin_abort ();
+#endif
   return 0;
 }
 

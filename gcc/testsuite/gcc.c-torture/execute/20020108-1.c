@@ -14,6 +14,17 @@ REPEAT_FN ( 5)		\
 REPEAT_FN ( 6)		\
 REPEAT_FN ( 7)
 
+#define REPEAT_9	\
+REPEAT_FN ( 0)		\
+REPEAT_FN ( 1)		\
+REPEAT_FN ( 2)		\
+REPEAT_FN ( 3)		\
+REPEAT_FN ( 4)		\
+REPEAT_FN ( 5)		\
+REPEAT_FN ( 6)          \
+REPEAT_FN ( 7)          \
+REPEAT_FN ( 8)
+
 #define REPEAT_16	\
 REPEAT_8		\
 REPEAT_FN ( 8)		\
@@ -64,6 +75,27 @@ s8 CAT (ashiftrt_qi_, COUNT) (s8 n) { return n >> COUNT; }
 REPEAT_8
 #undef REPEAT_FN
 #endif /* CHAR_BIT == 8 */
+
+/* Define 9-bit shifts.  */
+#if CHAR_BIT == 9
+typedef unsigned int u9 __attribute__((mode(QI)));
+typedef signed int s9 __attribute__((mode(QI)));
+
+#define REPEAT_FN(COUNT) \
+u9 CAT (ashift_qi_, COUNT) (u9 n) { return n << COUNT; }
+REPEAT_9
+#undef REPEAT_FN
+
+#define REPEAT_FN(COUNT) \
+u9 CAT (lshiftrt_qi_, COUNT) (u9 n) { return n >> COUNT; }
+REPEAT_9
+#undef REPEAT_FN
+
+#define REPEAT_FN(COUNT) \
+s9 CAT (ashiftrt_qi_, COUNT) (s9 n) { return n >> COUNT; }
+REPEAT_9
+#undef REPEAT_FN
+#endif /* CHAR_BIT == 9 */
 
 /* Define 16-bit shifts.  */
 #if CHAR_BIT == 8 || CHAR_BIT == 16
@@ -148,6 +180,29 @@ main ()
   REPEAT_8;
 # undef REPEAT_FN
 #endif /* CHAR_BIT == 8 */
+
+  /* Test 9-bit shifts.  */
+#if CHAR_BIT == 9
+# define REPEAT_FN(COUNT) \
+  if (CAT (ashift_qi_, COUNT) (0x1ff) != (u9) ((u9)0x1ff << COUNT)) abort ();
+  REPEAT_9;
+# undef REPEAT_FN
+
+# define REPEAT_FN(COUNT) \
+  if (CAT (lshiftrt_qi_, COUNT) (0x1ff) != (u9) ((u9)0x1ff >> COUNT)) abort ();
+  REPEAT_9;
+# undef REPEAT_FN
+
+# define REPEAT_FN(COUNT) \
+  if (CAT (ashiftrt_qi_, COUNT) (-1) != -1) abort ();
+  REPEAT_9;
+# undef REPEAT_FN
+
+# define REPEAT_FN(COUNT) \
+  if (CAT (ashiftrt_qi_, COUNT) (0) != 0) abort ();
+  REPEAT_9;
+# undef REPEAT_FN
+#endif /* CHAR_BIT == 9 */
 
   /* Test 16-bit shifts.  */
 #if CHAR_BIT == 8 || CHAR_BIT == 16

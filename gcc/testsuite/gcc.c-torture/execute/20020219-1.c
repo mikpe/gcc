@@ -5,6 +5,23 @@
 extern void abort (void);
 extern void exit (int);
 
+#ifdef __PDP10__
+long long foo (void)
+{
+  long long C = 1ULL << 70, X;
+  int Y = 64;
+  X = C >> (Y & 63);
+  return X;
+}
+
+int main (void)
+{
+  if (foo () != 1ULL << 70)
+    abort ();
+  exit (0);
+}
+
+#else
 long long foo (void)
 {
   long long C = 1ULL << 63, X;
@@ -19,3 +36,4 @@ int main (void)
     abort ();
   exit (0);
 }
+#endif

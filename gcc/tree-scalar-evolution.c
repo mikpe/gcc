@@ -664,10 +664,28 @@ add_to_evolution_1 (unsigned loop_nb, tree chrec_before, tree to_add,
 	      right = CHREC_RIGHT (chrec_before);
 	    }
 
+/* avoid converting the index calculation to pointer type
+    -mtc 5/16/2007
+    with 4.2.1 upgrade gcc added conversions of both operands of the
+    plus to 'type' as well as specifying 'type' for the plus.
+    I can't imagine when that would have an effect which is not an error
+    so I'm leaving the PDP10 variant as is for both pointers and other types
+    -mtc 9/25/2007
+    with gcc430 gcc has added chrec_convert_rhs() which avoids conversion
+    to pointer type, so use their model.  But in this spot note that to_add is a rhs
+    -mtc 11/20/2007
+*/
+#ifdef __PDP10_H__
+	  to_add = chrec_convert_rhs (type, to_add, at_stmt);
+	  right = chrec_convert_rhs (type, right, at_stmt);
+	  right = chrec_fold_plus (chrec_type (right), right, to_add);
+	  return build_polynomial_chrec (var, left, right);
+#else
 	  to_add = chrec_convert (type, to_add, at_stmt);
 	  right = chrec_convert_rhs (type, right, at_stmt);
 	  right = chrec_fold_plus (chrec_type (right), right, to_add);
 	  return build_polynomial_chrec (var, left, right);
+#endif
 	}
       else
 	{
@@ -842,6 +860,14 @@ add_to_evolution (unsigned loop_nb, tree chrec_before, enum tree_code code,
   if (TREE_CODE (to_add) == POLYNOMIAL_CHREC)
     /* This should not happen.  */
     return chrec_dont_know;
+  
+/* Adding pointers to an evolution makes no sense, as that would be creating value n*pointer
+    -mtc 3/12/2008
+*/
+#ifdef __PDP10_H__
+  if (POINTER_TYPE_P(type))
+    return chrec_dont_know;
+#endif
   
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
@@ -1630,8 +1656,19 @@ interpret_rhs_modify_stmt (struct loop *loop, tree at_stmt,
       opnd11 = TREE_OPERAND (opnd1, 1);
       chrec10 = analyze_scalar_evolution (loop, opnd10);
       chrec11 = analyze_scalar_evolution (loop, opnd11);
+/* Don't insert algebraically wrong pointer conversions
+    If this causes too many problems we need to just disable the optimization pass
+    -mtc 5/11/2007
+    With 430 switch to using gcc's new chrec_convert_rhs
+    -mtc 11/20/2007
+*/
+#ifdef __PDP10_H__
+      chrec10 = chrec_convert (type, chrec10, at_stmt);
+      chrec11 = chrec_convert_rhs (type, chrec11, at_stmt);
+#else
       chrec10 = chrec_convert (type, chrec10, at_stmt);
       chrec11 = chrec_convert (type, chrec11, at_stmt);
+#endif
       res = chrec_fold_plus (type, chrec10, chrec11);
       break;
       
@@ -1640,8 +1677,19 @@ interpret_rhs_modify_stmt (struct loop *loop, tree at_stmt,
       opnd11 = TREE_OPERAND (opnd1, 1);
       chrec10 = analyze_scalar_evolution (loop, opnd10);
       chrec11 = analyze_scalar_evolution (loop, opnd11);
+/* Don't insert algebraically wrong pointer conversions
+    If this causes too many problems we need to just disable the optimization pass
+    -mtc 5/11/2007
+    With 430 switch to using gcc's new chrec_convert_rhs
+    -mtc 11/20/2007
+*/
+#ifdef __PDP10_H__
+      chrec10 = chrec_convert (type, chrec10, at_stmt);
+      chrec11 = chrec_convert_rhs (type, chrec11, at_stmt);
+#else
       chrec10 = chrec_convert (type, chrec10, at_stmt);
       chrec11 = chrec_convert (type, chrec11, at_stmt);
+#endif
       res = chrec_fold_minus (type, chrec10, chrec11);
       break;
 

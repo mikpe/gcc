@@ -25,6 +25,16 @@ along with GCC; see the file COPYING3.  If not see
    including computing the types of the result, C-specific error checks,
    and some optimization.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: c-typeck.c 36cf82db8bc5 2011/04/15 02:31:39 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1014,6 +1024,22 @@ comptypes_internal (const_tree type1, const_tree type2)
 	    && comptypes_internal (TREE_TYPE (t1), TREE_TYPE (t2));
       break;
 
+#ifdef __PDP10_H__
+/* Not sure why this is not a more general issue.
+    type 'char' is equivalent to either 'unsigned char' or 'signed char' but distinct.
+    It needs to returned as campatible with whichever it is equivalent to.
+    -mtc 7/24/2008
+*/
+    case INTEGER_TYPE:
+	/* if the size and signedness match, we want to set val=1 */
+	/* TYPE_SIZE() is a node, but I think small values are all cached so that comparing
+	    the node is safe as long as all we care about is whether the values are the same */
+	if ((TYPE_SIZE(t1) == TYPE_SIZE(t2))
+		&& (TYPE_UNSIGNED(t1) == TYPE_UNSIGNED(t2)))
+		val = 1;
+	break;
+#endif
+
     default:
       break;
     }
@@ -1527,9 +1553,20 @@ c_size_in_bytes (const_tree type)
     }
 
   /* Convert in case a char is more than one unit.  */
+ /*
+ 	On the PDP10, char is sometimes a fraction of a unit, so we have to be more
+ 	careful about how we do division
+ 	-mtc 9/20/2006
+ */
+#ifdef __PDP10_H__
+  return size_binop (CEIL_DIV_EXPR, TYPE_SIZE_UNIT (type),
+		     size_int ((TYPE_PRECISION (char_type_node) + BITS_PER_UNIT -1)
+			       / BITS_PER_UNIT));
+#else
   return size_binop (CEIL_DIV_EXPR, TYPE_SIZE_UNIT (type),
 		     size_int (TYPE_PRECISION (char_type_node)
 			       / BITS_PER_UNIT));
+#endif
 }
 
 /* Return either DECL or its known constant value (if it has one).  */
@@ -1720,6 +1757,15 @@ perform_integral_promotions (tree exp)
       return convert (type, exp);
     }
 
+/*  This is a general fix and probably addressed in newer gcc versions
+      Inserting an implied conversion at this point doesn't work because it's
+      too late and will end up overriding an explicit user supplied conversion.
+      It's better to just set the type correctly when the COMPONENT_REF node
+      is built in build_component_ref()
+      -mtc 10/30/2006
+*/
+#ifdef __PDP10_H__
+#else
   /* ??? This should no longer be needed now bit-fields have their
      proper types.  */
   if (TREE_CODE (exp) == COMPONENT_REF
@@ -1729,6 +1775,7 @@ perform_integral_promotions (tree exp)
       && 0 > compare_tree_int (DECL_SIZE (TREE_OPERAND (exp, 1)),
 			       TYPE_PRECISION (integer_type_node)))
     return convert (integer_type_node, exp);
+#endif
 
   if (c_promoting_integer_type_p (type))
     {
@@ -1931,6 +1978,9 @@ build_component_ref (tree datum, tree component)
       do
 	{
 	  tree subdatum = TREE_VALUE (field);
+#ifdef __PDP10_H__
+	  tree reftype;
+#endif
 	  int quals;
 	  tree subtype;
 
@@ -1941,8 +1991,29 @@ build_component_ref (tree datum, tree component)
 	  quals |= TYPE_QUALS (TREE_TYPE (datum));
 	  subtype = c_build_qualified_type (TREE_TYPE (subdatum), quals);
 
+/*	This fixes a general bug which is probably also made in newer versions of gcc.
+	Component refs to bitfields should be signed ints regardless of whether the field is signed or unsigned
+	unless the field is a full word wide.  Previously gcc tried to fix this up by inserting a conversion in default_conversion,
+	but that's really too late and has the affect of overriding explicit user conversions.
+	-mtc 10/30/2006
+	In the 4.1.1 update, gcc changed to calling build3 instead of build and to passing an additional parameter, but
+	I don't see any sign that they'veset the type properly, so I'm retaining the PDP10 customization.  Should verify whether
+	this change is still necessary or not.
+	In the 4.2.1 update, gcc added propagation of quals and use of c_build_qualified_type, but that doesn't appear to address
+	the bitfield issue, so I've tried to combine the changes.
+	-mtc 9/25/2007
+*/
+#ifdef __PDP10_H__
+	  if (DECL_C_BIT_FIELD(subdatum) && compare_tree_int(DECL_SIZE(subdatum), TYPE_PRECISION(integer_type_node)) < 0)
+	  	reftype = integer_type_node;
+	  else
+	  	reftype = subtype;
+	  ref = build3 (COMPONENT_REF, reftype, datum, subdatum, NULL_TREE);
+#else
+
 	  ref = build3 (COMPONENT_REF, subtype, datum, subdatum,
 			NULL_TREE);
+#endif
 	  if (TREE_READONLY (datum) || TREE_READONLY (subdatum))
 	    TREE_READONLY (ref) = 1;
 	  if (TREE_THIS_VOLATILE (datum) || TREE_THIS_VOLATILE (subdatum))
@@ -2799,6 +2870,14 @@ pointer_diff (tree op0, tree op1)
   tree target_type = TREE_TYPE (TREE_TYPE (op0));
   tree con0, con1, lit0, lit1;
   tree orig_op1 = op1;
+/*
+	needed to keep track of the pointer conversion that common term elimination
+	might ignore
+	-mtc 9/27/2006
+*/
+#ifdef __PDP10_H__
+  tree opn = 0;
+#endif
 
   if (pedantic || warn_pointer_arith)
     {
@@ -2847,6 +2926,23 @@ pointer_diff (tree op0, tree op1)
 
   if (operand_equal_p (con0, con1, 0))
     {
+/*
+	If we skipped a conversion to byte or half-word, we will need to multiply the
+	result by either UNITS_PER_WORD to get it back to a byte value.
+	-mtc 9/27/2006
+	We now try to keep the offsets consistently in the size of the things pointed at.
+	So we need to set opn to adjust to the size of the current thing, which then gets
+	adjusted to the size of the target type.
+	-mtc 7/10/2007
+	Add check for VOID_TYPE to avoid illegal size_in_bytes() call.
+	Since the difference is going to be zero, we don't need to worry about any adjustments
+	-mtc 7/24/2007
+*/
+#ifdef __PDP10_H__
+      tree type = TREE_TYPE(TREE_TYPE(con0));
+      if (TREE_CODE(type) != VOID_TYPE)
+        opn = size_in_bytes(TREE_TYPE(TREE_TYPE(con0)));
+#endif
       op0 = lit0;
       op1 = lit1;
     }
@@ -2857,8 +2953,25 @@ pointer_diff (tree op0, tree op1)
      Do not do default conversions on the minus operator
      in case restype is a short type.  */
 
+/* Converting pointer operands of MINUS_EXPR to int or pointerdiff is just plain wrong, 
+     but apparently its not a problem for anyone other than the PDP10
+     -mtc 12/19/2006
+*/
+#ifdef __PDP10_H__
+  op0 = build2(MINUS_EXPR, restype, op0, op1);
+
+/*
+	If we skipped a conversion to byte or half-word, we will need to multiply the
+	result by either UNITS_PER_WORD to get it back to a byte value.
+	-mtc 9/27/2006
+*/
+  if (opn)
+	  op0 = build_binary_op(MULT_EXPR, op0, convert(restype, opn), 0);
+#else
   op0 = build_binary_op (MINUS_EXPR, convert (restype, op0),
 			 convert (restype, op1), 0);
+#endif
+
   /* This generates an error if op1 is pointer to incomplete type.  */
   if (!COMPLETE_OR_VOID_TYPE_P (TREE_TYPE (TREE_TYPE (orig_op1))))
     error ("arithmetic on pointer to an incomplete type");
@@ -2866,8 +2979,40 @@ pointer_diff (tree op0, tree op1)
   /* This generates an error if op0 is pointer to incomplete type.  */
   op1 = c_size_in_bytes (target_type);
 
+/*
+	PDP10 addressing is in words for things word size or bigger and in bytes for things
+	smaller than words.
+	There may be issues with unaligned or non-word multiple things bigger than words
+	and with things that are variable size.
+	We'll deal with that when it comes up.
+	This code ought to match similar code in ponter_int_sum()
+	-mtc 6/30/2006
+	Even though the actual addressing is done in words, the meaning of pointer difference
+	is always in units of the things pointed at, so this adjustment isn't correct
+	-mtc 7/10/2007
+*/
+#if 0
+	{
+	HOST_WIDE_INT size = int_size_in_bytes (target_type);
+	if ( (size >= UNITS_PER_WORD) && (size % UNITS_PER_WORD == 0) )
+		op1 = size_int(size / UNITS_PER_WORD);
+	}
+#endif
+
   /* Divide by the size, in easiest possible way.  */
+/* On the PDP10 the pointer type of a MINUS_EXPR implies apprpriate conversion to 
+    number of objects.  We only need to divide when the pointers share a common base which
+    has been eliminated.  This condition is recognizable because we've set opn
+    -mtc 7/19/2007
+*/
+#ifdef __PDP10_H__
+  if (opn)
+    return fold_build2 (EXACT_DIV_EXPR, restype, op0, convert (restype, op1));
+  else
+    return op0;
+#else
   return fold_build2 (EXACT_DIV_EXPR, restype, op0, convert (restype, op1));
+#endif
 }
 
 /* Construct and perhaps optimize a tree representation
@@ -3077,7 +3222,14 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 		  pedwarn ("wrong type argument to decrement");
 	      }
 
+/* the parse tree needs to represent pointer operations in objects, not bytes
+    -mtc 10/17/2007
+*/
+#ifdef __PDP10_H__
+	    inc = size_one_node;
+#else
 	    inc = c_size_in_bytes (TREE_TYPE (result_type));
+#endif
 	    inc = fold_convert (sizetype, inc);
 	  }
 	else if (FRACT_MODE_P (TYPE_MODE (result_type)))
@@ -3136,6 +3288,34 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
     case ADDR_EXPR:
       /* Note that this operation never does default_conversion.  */
 
+#ifdef __PDP10_H__
+/* Decided that this is not a valid check.  Address of byte variables
+     should result in valid byte pointers.
+     -mtc 4/14/2011
+*/#if 0
+      /* PDP-10: can't take the address of scalar 7- or 8-bit bytes.
+	 Also warn for address taken of 9-bit bytes.  */
+      /* The calls we make to tree_low_cst to decide on these warnings only work
+	  when the size is fixed, so don't bother if its not.
+	  I'm not convinced this is a valid check anyhow.  I would expect that taking
+	  the address of a 7 or 8 bit byte ought to result in an appropriate byte
+	  pointer regardless of the size of the byte involve. */
+      if (TREE_TYPE(arg) && TYPE_SIZE(TREE_TYPE(arg)) && host_integerp(TYPE_SIZE(TREE_TYPE(arg)), 1))
+	{
+          if (TREE_CODE (arg) == VAR_DECL
+	      /* TODO: signal error when TYPE_SIZE() is NULL?  This
+	         happens when the type isn't completely defined.  */
+	      && TYPE_SIZE (TREE_TYPE (arg)) != NULL_TREE
+	      && (tree_low_cst (TYPE_SIZE (TREE_TYPE (arg)), 1) == 7
+	          || tree_low_cst (TYPE_SIZE (TREE_TYPE (arg)), 1) == 8
+	          || tree_low_cst (TYPE_SIZE (TREE_TYPE (arg)), 1) == 9
+	          || tree_low_cst (TYPE_SIZE (TREE_TYPE (arg)), 1) == 18))
+	    warning (0, "address of scalar %d-bit byte taken",
+		     (int) tree_low_cst (TYPE_SIZE (TREE_TYPE (arg)), 1));
+	}
+#endif
+#endif
+
       /* Let &* cancel out to simplify resulting code.  */
       if (TREE_CODE (arg) == INDIRECT_REF)
 	{
@@ -3185,6 +3365,15 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 
       argtype = build_pointer_type (argtype);
 
+/* To get this optimization right, we would need to handle the size of the pointer
+    target correctly.  I think what would be needed would be to divide by the object size
+    when it's less than a word and by 4 when it's more than a word, but the sub-byte
+    size modes are unclear.  Anyhow, this seems to just be an optimization whose only
+    savings is to get the constant folded before instruction generation intead of afterwards.
+    -mtc 10/16/2007
+*/
+#ifdef __PDP10_H__
+#else
       /* ??? Cope with user tricks that amount to offsetof.  Delete this
 	 when we have proper support for integer constant expressions.  */
       val = get_base_address (arg);
@@ -3196,6 +3385,14 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 	  op1 = fold_convert (argtype, TREE_OPERAND (val, 0));
 	  return fold_build2 (POINTER_PLUS_EXPR, argtype, op1, op0);
 	}
+#endif
+
+/* Prior to 4.1.1 update, there was code somewhere around here to handle different
+    PDP10 pointer types and to address the user trick of coercing a zero to a structure
+    pointer and dereferencing it to get byte offsets.  Some of that probably needs to be
+    done somewhere, but seems largely wrong, so I'm leaving it out for later debugging
+    -mtc 2/26/2007
+*/
 
       val = build1 (ADDR_EXPR, argtype, arg);
 
@@ -3614,7 +3811,18 @@ build_c_cast (tree type, tree expr)
 	return error_mark_node;
     }
 
+/* A prior user error shouldn't cause the compiler to abort
+    -mtc 8/20/2007
+    In 430 update gcc added the preceeding if block, but I think it's still possible
+    for value's type to be error_mark_node when VOID_TYPE_P(type), so this check
+    is still required
+    -mtc 11/29/2007
+*/
+#ifdef __PDP10_H__
+  if ((TREE_TYPE(value) != error_mark_node) && (type == TYPE_MAIN_VARIANT (TREE_TYPE (value))))
+#else
   if (type == TYPE_MAIN_VARIANT (TREE_TYPE (value)))
+#endif
     {
       if (pedantic)
 	{
@@ -4701,9 +4909,17 @@ digest_init (tree type, tree init, bool strict_string, int require_constant)
       /* Note that an array could be both an array of character type
 	 and an array of wchar_t if wchar_t is signed char or unsigned
 	 char.  */
+#ifdef __PDP10_H__
+	   /* PDP-10: Account for other PDP-10 char types.  */
+      bool char_array = (typ1 == char_type_node
+			 || typ1 == signed_char_type_node
+			 || typ1 == unsigned_char_type_node
+	   		 || TYPE_PRECISION (typ1) <= 9 );
+#else
       bool char_array = (typ1 == char_type_node
 			 || typ1 == signed_char_type_node
 			 || typ1 == unsigned_char_type_node);
+#endif
       bool wchar_array = !!comptypes (typ1, wchar_type_node);
       if (char_array || wchar_array)
 	{

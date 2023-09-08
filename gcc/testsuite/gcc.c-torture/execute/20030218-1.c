@@ -18,8 +18,13 @@ foo (short *p)
 int
 main ()
 {
+#ifdef __PDP10__
+  short a = 0x3ff00;
+  if (foo (&a) != (long) (short) 0x3ff00)
+#else
   short a = 0xff00;
   if (foo (&a) != (long) (short) 0xff00)
+#endif
     abort ();
   exit (0);
 }

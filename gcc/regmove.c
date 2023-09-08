@@ -25,6 +25,16 @@ along with GCC; see the file COPYING3.  If not see
    to register move.  It then attempts to change the registers used by the
    instruction to avoid the move instruction.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: regmove.c 3a4e7553a389 2012/10/11 22:29:10 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1310,6 +1320,11 @@ regmove_optimize (rtx f, int nregs)
 	      if (!REG_P (dst)
 		  || REGNO (dst) < FIRST_PSEUDO_REGISTER
 		  || REG_LIVE_LENGTH (REGNO (dst)) < 0
+#ifdef __PDP10_H__
+/* Can't mix and match pointers and non-pointers on the PDP10 */
+/* -mtc 10/8/2012 */
+		  || REG_POINTER(src) != REG_POINTER(dst)
+#endif
 		  || GET_MODE (src) != GET_MODE (dst))
 		continue;
 
@@ -1701,6 +1716,15 @@ fixup_match_1 (rtx insn, rtx set, rtx src, rtx src_subreg, rtx dst,
   rtx overlap = 0; /* need to move insn ? */
   rtx src_note = find_reg_note (insn, REG_DEAD, src), dst_note = NULL_RTX;
   int length, s_length;
+
+#ifdef __PDP10_H__
+/* We don't want to replace an address register with a non-address register and vice-versa.
+    -mtc 4/29/2009
+*/
+
+  if (src->frame_related != dst->frame_related)
+  	return 1;
+#endif
 
   if (! src_note)
     {
@@ -2150,7 +2174,14 @@ struct tree_opt_pass pass_regmove =
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 3/1/2010
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'N'                                   /* letter */
 };
 

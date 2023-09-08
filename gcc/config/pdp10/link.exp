@@ -1,0 +1,135 @@
+#!/usr/bin/expect
+
+set ProgName "link.exp"
+set tops20_login 0
+set Host ""
+set User ""
+set Passwd ""
+set Rcmd ""
+set telnet_lib [file dirname $argv0]
+append telnet_lib "/" "telnet_tops20.exp"
+source $telnet_lib
+set timeout 120
+
+proc RemoteLink { rcmd } {
+    global timeout ProgName
+
+#exp_internal 1
+    set tries 0
+    set result -1
+    exp_send "\n"
+    expect {
+        -regex "\[\r\n\]expect@ $" {
+            set ssec [exec date +%s]
+            exp_send "$rcmd"
+            set result 0
+        }
+        timeout {
+            puts "$ProgName: Expect timed out while invoking link"
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+        }
+    }
+    if { $result < 0 } {
+        puts "$ProgName: Too many timeouts ($tries) invoking link"
+#exp_internal 0
+        return 0
+    }
+
+    set tries 0
+    expect {
+        -regex "\[\r\n\]\\?" {
+            # (Link) error messages(s).
+            # Any output with '?' at the start of a line
+            # Send Ctrl-C to vanquish the link'er.
+            # Actually don't.  Let it finish so we can see the error message.
+            # exp_send "\003"
+            set result 1
+            exp_continue
+        }
+        -regex "\[\r\n\]\\\[.*\\]" {
+            # Link is progressing.
+            # This is expected.
+            exp_continue
+        }
+        -regex "\[\r\n\]expect@ $" {
+            # Link success == anything ending with an exec prompt
+            if { $result == 0 } {
+                set esec [exec date +%s]
+                set sec [expr $esec - $ssec]
+                puts "\n$ProgName: took $sec seconds to finish"
+                set result 2
+            }
+        }
+        timeout {
+            set esec [exec date +%s]
+            set sec [expr $esec - $ssec]
+            puts "$ProgName: Expect timed out after waiting $sec seconds for link"
+        }
+    }
+    
+    if { $result == 1 } {
+        # Link errors
+        puts stderr "$ProgName: link errors"
+#exp_internal 0
+        return 0
+    }
+    if { $result < 1 } {
+        # timed out, kill whatever is running with ^c
+        exp_send "\003"
+#exp_internal 0
+        return 0
+    }
+#exp_internal 0
+    return 1
+}
+
+
+proc Usage { } {
+    global ProgName
+    puts stderr "usage: $ProgName host username password remote_command"
+}
+
+
+if { $argc < 4 || $argc > 5 } {
+    puts stderr "$ProgName: wrong number of command line arguments"
+    Usage
+    exit 2
+}
+
+set ii 0
+foreach arg $argv {
+    set ii [expr $ii + 1]
+    switch -exact -- $ii {
+        1 { set Host $arg }
+        2 { set User $arg }
+        3 { set Passwd $arg }
+        4 { set Rcmd $arg }
+        5 { set timeout $arg }
+        default {
+            puts stderr "$ProgName: error parsing command line arguments"
+            exit 3
+        }
+    }
+}
+
+log_user 0
+if { [login_tops20 "" $Host $User $Passwd] < 1 } {
+    puts stderr "$ProgName: login to $Host as $User failed"
+    exit 1
+}
+
+log_user 1
+if ![RemoteLink $Rcmd] {
+    puts stderr "$ProgName: link failed"
+    log_user 0
+    logout_tops20
+    exit 1
+}
+
+log_user 0
+logout_tops20
+
+exit 0

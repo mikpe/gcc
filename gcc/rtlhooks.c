@@ -45,9 +45,22 @@ gen_lowpart_general (enum machine_mode mode, rtx x)
     return result;
   /* If it's a REG, it must be a hard reg that's not valid in MODE.  */
   else if (REG_P (x)
+#ifdef __PDP10_H__
+/* test 960117-1.c gets here with a SYMBOL_REF:Q9P
+    copying to a register seems like it should handle most anything.
+    for the PDP10 copying a SYMBOL_REF:Q9P to a register should create
+    the PS field bits appropriately.
+    -mtc 1/4/2008
+    Handle any SUBREG by copying to reg and extracting the lowpart.
+    -mtc 5/15/2008
+*/
+	   || (GET_CODE (x) == SYMBOL_REF)
+	   || (GET_CODE (x) == SUBREG))
+#else
 	   /* Or we could have a subreg of a floating point value.  */
 	   || (GET_CODE (x) == SUBREG
 	       && FLOAT_MODE_P (GET_MODE (SUBREG_REG (x)))))
+#endif
     {
       result = gen_lowpart_common (mode, copy_to_reg (x));
       gcc_assert (result != 0);

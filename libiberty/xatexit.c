@@ -22,6 +22,16 @@ failure.  If you use @code{xatexit} to register functions, you must use
 /* Adapted from newlib/libc/stdlib/{,at}exit.[ch].
    If you use xatexit, you must call xexit instead of exit.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: xatexit.c f3ded7179433 2007/04/26 21:47:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

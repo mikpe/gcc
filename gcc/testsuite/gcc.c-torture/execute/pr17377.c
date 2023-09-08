@@ -37,7 +37,11 @@ y (int i)
      catches otherwise unidentified multiple returns (e.g. through the
      return-address register and then this epilogue popping the address
      stored on stack in "f").  */
+#ifdef __PDP10__
+  return (int *) f (i) + x++;
+#else
   return (char *) f (i) + x++;
+#endif
 }
 
 int

@@ -1,0 +1,380 @@
+#!/bin/bash
+set -f
+
+#
+# TODO:  add a means to include specific library modules "/include:(module,...)"
+#
+
+lopts="$*"
+usage()
+{
+    echo -e "
+usage: $0 [ -vg ] [ -s name:origin] [ -e name ] [ -u symbol ][ -d symbol:value ] \\
+          [ -L path ] [ -l archive ] [ -M map ] [ -o output ] files ...
+ 
+       -v                print version and exit
+       -g                write a debuggable executable (ignored)
+       -c cclfile        send cclfile to link as link command
+       -s name:origin    set the origin of a named program section
+       -r hiname:loname specify a section redirection
+       -e name           specify entry point of executable
+       -u symbol         declare an arbitrary undefined symbol
+       -d symbol:value   define a symbol
+       -L path           specify path to object libraries and library names
+       -l archive        specify path to object libraries and library names
+       -M map            write a map file
+       -o output         output file (default is a.out)
+       -O text output    generally xxx.glb
+       -T expect timeout Expect will timeout after 6* this number of seconds
+       -x                don't cleanup
+       -b binary output	additional binary output file
+
+NOTE: The file ~/.netrc MUST contain appropriate login information for host ${TOPS20_BUILD_HOST}
+
+An entry such as 'machine ${TOPS20_BUILD_HOST} login <name> password <string>' suffices, where
+<name> is the login name to use, and <string> is the password string.  Don't forget
+to 'chmod 600 ~/.netrc' so only you can read it.
+
+The current command line is: \"$0 ${lopts}\"" 1>&2
+    exit 1
+}
+
+#
+# determine TOPS20_BUILD_HOST login.
+# Without this, there is no reason to proceed.
+source `dirname $0`/gcc-netrc
+getaccount
+
+#
+# helper function to track down library files
+#
+dirs=""
+findlib()
+{
+    local D
+    for D in ${dirs}
+    do
+        if [ -f $D/lib${1}.a ]
+        then
+            echo "${D}/lib${1}.a"
+            return 0
+        fi
+    done
+    echo "$0: Library lib${1}.a not found in ${dirs}" 1>&2
+    return 1;
+}
+
+#
+# parse command line and set variables appropriately
+#
+args=""
+libs=""
+out="a.out"
+xout=""
+files=""
+entry=""
+defs=""
+undefs=""
+psects=""
+map=""
+cclfil=""
+glb=""
+del=1
+timeout=""
+
+#
+# some extra arguments that really should come from the compiler.
+# TODO:  add a miscellaneous argument switch for this sort of stuff
+#
+extras=/SYMSEG:PSECT:symb$'\n'
+
+declare -i OPTIND
+
+while [ $# -ge 1 ]
+do
+    OPTIND=1
+  
+    while getopts "c:vL:l:e:u:d:M:ngr:s:T:o:O:xb:" opt
+        do
+        case $opt in
+            v)   echo "Linux Tops20 Link emulator 1.0.0" 1>&2; exit 0;;
+            L)   dirs="${dirs} ${OPTARG}";;
+            l)   libs="${libs} `findlib ${OPTARG}`" || exit 1;;
+            e)   entry="/start:"${OPTARG}$'\n';;
+                 # last one wins if multiple -e options
+            u)   undefs=${undefs}"/require:"${OPTARG}$'\n';;
+            d)   defs=${defs}"/define:"${OPTARG}$'\n';;
+            M)   map=${OPTARG};;
+            g)   ;;
+            r)   psects=${psects}"/redirect:"${OPTARG}$'\n';;
+            s)   psects=${psects}"/set:"${OPTARG}$'\n';;
+            o)   out=${OPTARG};;
+            O)   glb=${glb}${OPTARG}" ";;
+            T)   timeout=${OPTARG};;
+            c)   cclfil=${OPTARG};;
+            x)   del=0;;
+            b)   xout=${xout}${OPTARG}" ";;
+            ?|:) usage; exit 1;;
+        esac
+    done
+    shift `expr ${OPTIND} - 1`
+
+    if [ $# -ge 1 ]
+    then
+        if [ ! -f "$1" ]
+        then
+            echo "$0: File not found - $1"
+            exit 1
+        fi
+        files="${files} $1"
+        shift 1
+    fi
+done
+
+#
+# We must have seen either at least one input file, 
+# or an entry point or undefined symbol seeding a library search..
+#
+if [ -z "${files}" ] &&  \
+   ( [ -z "${libs}" ] || [ -z "${undefs}" -a  -z "${entry}" ] )
+then
+    usage; exit 1;
+fi
+
+###############################################################################
+#
+# Send all input files to Tops20
+#
+# Search contents of ~/.netrc for an appropriate username/password
+# for TOPS20_BUILD_HOST.
+#
+# capture the first and last files in case they are crtini, crtfin
+#
+
+# This call to getftpoptions will set ftpoptions
+getftpoptions
+
+rfiles=""
+crtini=""
+crtfin=""
+ftpcmd=""
+
+if [ -n "${cclfil}" ]
+then
+    RL=`basename ${cclfil}`
+    ftpcmd=${ftpcmd}"put "${cclfil}" "${RL}$'\n'
+fi
+
+if [ -n "${files}" ]
+then
+    ftpcmd=${ftpcmd}binary$'\n'
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"put "${F}" "${RF}$'\n'
+        if [ -z "${crtini}" ]
+        then
+            crtini=${RF}
+        else
+            if [ -n "${crtfin}" ]
+                then
+                rfiles=${rfiles}${crtfin}$'\n'
+            fi
+            crtfin=${RF}
+        fi
+    done
+fi
+
+#
+# Check for the presence of crtini, crtfin.  If present they
+# must be the first and last object file in the list of files.
+#
+# The reason for this is to establish starting .PSECT load addresses,
+# and determine at the end of the link how large the .PSECTs are.
+#
+
+if [ -n "${crtini}" ]
+then
+    case ${crtini} in
+        crtini*) ;;
+        *) rfiles=${crtini}$'\n'${rfiles}
+           crtini=""
+           ;;
+    esac
+fi
+crtini=${crtini}$'\n'
+
+if [ -n "${crtfin}" ]
+then
+    case ${crtfin} in
+        crtfin*) ;;
+        *) rfiles=${rfiles}${crtfin}$'\n'
+           crtfin=""
+           ;;
+    esac
+fi
+crtfin=${crtfin}$'\n'
+
+rlibs=""
+if [ -n "${libs}" ]
+then
+    ftpcmd=${ftpcmd}binary$'\n'
+    for L in ${libs}
+    do
+        RL=`basename ${L}`
+        ftpcmd="${ftpcmd}put "${L}" "${RL}$'\n'
+        rlibs=${rlibs}${RL}/search$'\n'
+    done
+fi
+
+echo -e -n "\nTransferring files to ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo "$sec seconds"
+
+###############################################################################
+#
+# build the remote link command line
+#
+
+rout="`basename ${out}`"          # there is always an output file
+if [ -z "${cclfil}" ]
+then
+    lnkcmd="link"$'\n'${psects}${crtini}${extras}${rfiles}${undefs}${rlibs}${crtfin}${defs}${entry}
+
+    if [ -n "${map}" ]
+    then
+        rmap="`basename ${map}`"
+        lnkcmd=${lnkcmd}${rmap}"/map"$'\n'
+    else
+        rmap=""
+    fi
+    rout="`basename ${out}`"          # there is always an output file
+    if [ ${rout} == ${rout%.*} ]
+    then
+	rout=${rout}$'.exe'
+    fi
+    lnkcmd=${lnkcmd}${rout}"/save/go"$'\n'
+else
+    lnkcmd="link"$'\n'@${cclfil}$'\n'
+fi
+
+#
+# Fire up the linker, using the above remote command
+#
+# we will get a link status value from the expect script
+# We will exit immediately if the link failed, leaving all files
+# behind for manual examinination
+#
+
+echo -e "\nLinking ... $lnkcmd "
+
+`dirname $0`/link.exp ${TOPS20_BUILD_HOST} $username $password "$lnkcmd" $timeout
+
+[ $? -eq 0 ] || exit $?
+
+###############################################################################
+#
+# get return files and clean up debris
+#
+
+ftpcmd=""
+
+rm -f "${out}"
+ftpcmd=${ftpcmd}"binary"$'\n'"get "${rout}" "${out}$'\n'
+if [ ${del} -eq 1 ]
+then
+    ftpcmd=${ftpcmd}"delete "${rout}$'\n'
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${cclfil}" ]
+then
+    ftpcmd=${ftpcmd}"delete "${cclfil}$'\n'
+fi
+
+if [ -n "${rmap}" ]
+then
+    rm -f "${map}"
+    ftpcmd=${ftpcmd}"ascii"$'\n'"get "${rmap}" "${map}$'\n'
+    if [ ${del} -eq 1 ]
+    then
+        ftpcmd=${ftpcmd}"delete "${rmap}$'\n'
+    fi
+
+fi
+
+if [ -n "${glb}" ]
+then
+    for F in ${glb}
+    do
+        RF=`basename ${F}`
+
+        rm -f ${F}
+
+        ftpcmd=${ftpcmd}ascii$'\n'"get "${RF}" "${F}$'\n'
+        if [ ${del} -eq 1 ]
+        then
+            ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+        fi
+    done
+fi
+
+if [ -n "${xout}" ]
+then
+    for F in ${xout}
+    do
+        RF=`basename ${F}`
+
+        rm -f ${F}
+
+        ftpcmd=${ftpcmd}binary$'\n'"get "${RF}" "${F}$'\n'
+        if [ ${del} -eq 1 ]
+        then
+            ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+        fi
+    done
+fi
+
+if [ ${del} -eq 1 ] && [ -n "${files}" ]
+then
+    for F in ${files}
+    do
+        RF=`basename ${F}`
+        ftpcmd=${ftpcmd}"delete "${RF}$'\n'
+    done
+fi
+
+rlibs=""
+if [ ${del} -eq 1 ] && [ -n "${libs}" ]
+then
+    for L in ${libs}
+    do
+        RL=`basename ${L}`
+        ftpcmd=${ftpcmd}"delete "${RL}$'\n'
+    done
+fi
+
+echo -e -n "\nRetrieving files from ${TOPS20_BUILD_HOST} ... "
+startSec=`date +%s`
+
+doftp
+[ $? -eq 0 ] || exit $?
+
+endSec=`date +%s`
+sec=$(($endSec - $startSec))
+echo -e "$sec seconds\n"
+
+#
+# Double check: did we recieve a non-zero output file?
+#
+if [ -s "$out" ]
+then
+    exit 0
+else
+    exit 1
+fi

@@ -1,0 +1,649 @@
+#!/usr/bin/perl -w
+
+# topstale -- TOPS20-resident gcc test slave.
+# tale == test assemble, link, and execution
+# topstale accepts commands and macro assembler source on standard input,
+# and attemps to assemble, link, and execute tests.  topstale is driven
+# by Linux-resident expect scripts, primarily gcc/gcc/testsuite/lib/gcc.exp.
+# 
+#
+# The Linux-resident gcc test harness searches for error notification
+# on standard out with the following text pattern:  ': ERROR: ' .
+#
+# TODO: Incorporate arguments to link command if necessary, detect and
+#       terminate wayward processes if possible, eliminate machine
+#       specifics.
+#
+# QUESTION: Will we ever need to assemble and link multiple mac/rel
+#           files into a single exe file?
+#
+# NOTE: In practice, the SIGALRM timeout mechanism has not been useful,
+#       i.e. topstale has not timed out in 3+ weeks of usage.
+#
+# NOTE: The Perl implementation on XKL TOPS20 is V4.0.1.
+#
+
+$ProgName = "topstale";
+$PerlExe = "/sys/perl.exe";
+$ExecExe = "/sys/exec.exe";
+$MacroExe = "/sys/macro.exe";
+$LinkExe = "/sys/link.exe";
+
+# Expunge before first Createf, just in case...
+$ExpungeCount = 99;
+$ExpungeInterval = 100;
+
+sub Init
+{
+    $| = 1;  # Force flush following write or print 
+
+    # Initial default settings
+    # Variables with MiXeD cAsE names are used globally
+    $Alarmed = "NO";      # Haven't caught SIGALRM, yet...
+    $TestDir = "";        # Supplied in SETPARAMS arg, no default value
+    $TOPSMacPath = "";    # Composite $TestDir + CREATEF arg, no default value
+    $TOPSRelPath = "";    # Relocatable file, output from macro
+    $TOPSExePath = "";    # Linked executable, output from link
+    $UnixMacPath = "";    # Unix'ified filepath
+    $UnixRelPath = "";    # Unix'ified filepath
+    $UnixExePath = "";    # Unix'ified filepath
+    $Cleanup = "YES";     # Supplied in SETPARAMS arg
+    $FileSz = 0;          # Supplied in CREATEF arg, no default value
+    $BlockSz = 128;       # Supplied in SETPARAMS arg
+    $MinBlockSz = 8;      # Hard-coded xfer block size minimum
+    $MaxBlockSz = 8192;   # Hard-coded xfer block size maximum
+    $TOEvents = 0;        # Count of timeout events
+    $MaxTimeouts = 5;     # Max number of timeout events tolerated
+    $Timeout = 30;        # Seconds
+    $State = "FileNone";  # Also: FileOpen, FileComplete, TestComplete, Clean;
+                          # ERR appended to current state on error;
+                          # TIMEDOUT appended to current state on SIGALRM.
+    $ExpungeCmd = "";     # Expunge command is initialized in the SetParams
+                          # function
+    # Get another filehandle for STDIN, used for "binary" reads
+    if (!open (BIN_STDIN, "<-")) {
+        printf("%s: ERROR: Cannot open STDIN for binary input\n", $ProgName);
+        $State = "FileNoneERR";
+        return;
+    }
+    # Appears binmode makes no difference since all input
+    # from STDIN is buffered, and buffer is flushed on \n char.
+    binmode(BIN_STDIN);
+    printf("%s: Startup\n", $ProgName);
+    &Showtime;
+    return;
+}
+
+
+sub AlrmTimeout
+{
+    # AlrmTimeout should only be called inside an eval block.
+    # "die" is called at the end.
+    $SIG{'ALRM'} = 'IGNORE';
+    printf("\n%s: ERROR: %d second timeout\n", $ProgName, $Timeout);
+    $TOEvents = $TOEvents + 1;
+    if ($TOEvents > $MaxTimeouts) {
+        printf("%s: ERROR: Too many timeout events ", $ProgName);
+        printf("(max = %s)\n", $MaxTimeouts);
+        &Exit;
+    }
+    # Set error state upon getting a timeout
+    $Alarmed = "YES";
+    die ("Caught SIGALRM signal.\n");
+}
+
+
+sub GetCmd
+{
+    local($ii);
+    #
+    # Command input scanner.
+    # Read input until line seperator character seen.
+    # Commands and arguments are delimited by space & tab characters.
+    # 
+    printf("COMMAND READY:\n");
+    @Cmd = "";
+    $input = "";
+    $wsp = "TRUE";  # Initialized to TRUE to handle leading whitespace
+    $ii = 0;
+    $c = " ";
+    do {
+        eval {
+            $SIG{'ALRM'} = 'AlrmTimeout';  # Handle SIGALRM in AlrmTimeout
+            alarm($Timeout);
+            $c = getc(STDIN);
+            alarm(0);
+        };
+        if ($Alarmed eq "YES") {
+            if ($State !~ /TIMEDOUT/ ) {
+                $State = $State . "TIMEDOUT";
+            }
+            $Alarmed = "NO";
+            return;
+        }
+        if ($c eq " " || $c eq "\t") {
+            if ($wsp ne "TRUE") {
+                $wsp = "TRUE";
+                $Cmd[$ii] = $input;
+                $ii = $ii + 1;
+                $input = "";
+            }
+        } else {
+            $input = $input . $c;
+            $wsp = "FALSE";
+        }
+    } until ($c eq $/);  # Assumes default input record seperator
+    # Remove CR and NL characters
+    # Can't use chomp on TOPS20.  Alas...
+    $input =~ s/[\n\r]+//g;
+    if ($input =~ /[^ \t]+/) {
+        $Cmd[$ii] = $input;
+    }
+    return;
+}
+
+
+sub SetParams
+{
+    # Parameters are expected in the following order
+    # (text precedes numbers):
+    #
+    #   0) File Transfer Block size   ( >=Min, <=Max, 0 == no change )
+    #   1) Timeout value  ( 0 == no change )
+    #   2) Max timeouts  ( 0 == no change )
+    #   3) YES | NO  (future default to YES cleanup)
+    #   4) Test Directory  (optional, default to "" path prefix)
+
+    if (scalar(@_) != 5 && scalar(@_) != 4) {
+        printf("%s: ERROR: need 4 or 5 arguments for SETPARAMS, ", $ProgName);
+        printf("received %s\n", scalar(@_));
+        return;
+    }
+
+    # Check for existence of executables.  Print error, don't set persistent
+    # error state. 
+    if (! -x $PerlExe) {
+        printf("%s: ERROR: ", $ProgName);
+        printf("Perl executable not found: %s\n", $PerlExe);
+    }
+    if (! -x $ExecExe) {
+        printf("%s: ERROR: ", $ProgName);
+        printf("Exec executable not found: %s\n", $ExecExe);
+    }
+    if (! -x $MacroExe) {
+        printf("%s: ERROR: ", $ProgName);
+        printf("Macro executable not found: %s\n", $MacroExe);
+    }
+    if (! -x $LinkExe) {
+        printf("%s: ERROR: ", $ProgName);
+        printf("Link executable not found: %s\n", $LinkExe);
+    }
+   
+    if ($_[0] != 0) {
+        if ($_[0] >= $MinBlockSz && $_[0] <= $MaxBlockSz) {
+            $BlockSz = $_[0];
+        } else {
+            printf("%s: ERROR: Setparams blocksize arg: %s\n",$ProgName,$_[0]);
+        }
+    }
+
+    if ($_[1] != 0) {
+        $Timeout = $_[1];
+    }
+
+    if ($_[2] != 0) {
+        $MaxTimeouts = $_[2];
+    }
+
+    if ($_[3] !~ /^YES$/i && $_[3] !~ /^NO$/i) {
+        printf("%s: ERROR: Setparams cleanup arg: %s\n", $ProgName, $_[3]);
+    } else {
+        $Cleanup = $_[3];
+    }
+    # Test for existence of directory parameter and TOPS20 absolute path
+    # format
+    if (scalar(@_) == 5) {
+        if (-d $_[4] && $_[4] =~ /.+:<.*>/) {
+            $TestDir = $_[4];
+            $ExpungeCmd = "expunge " . $TestDir . "\npop\n";
+            # Create Unix'ified paths from TOPS20 prefix path.
+            # Support absolute paths only, for now.
+            $UnixMacroPlPath = $TestDir . "macro.pl";
+            if ($UnixMacroPlPath =~ /.+:<.*>.+/) {
+                $mdirs = $UnixMacroPlPath;
+                $mdirs =~ s/(.+)<(.+)>(.+)/$2/;
+                $mdirs =~ s/\./\//g;
+                $UnixMacroPlPath =~ s/(.+):<(.+)>(.+)/\/$1\/$mdirs\/$3/;
+            }
+            $UnixLinkPlPath = $TestDir . "link.pl";
+            if ($UnixLinkPlPath =~ /.+:<.*>.+/) {
+                $mdirs = $UnixLinkPlPath;
+                $mdirs =~ s/(.+)<(.+)>(.+)/$2/;
+                $mdirs =~ s/\./\//g;
+                $UnixLinkPlPath =~ s/(.+):<(.+)>(.+)/\/$1\/$mdirs\/$3/;
+            }
+        } else {
+            printf("%s: ERROR: ", $ProgName);
+            printf("Setparams directory arg: %s\n", $_[4]);
+        }
+    } else {
+        $TestDir = "";
+        $UnixMacroPlPath = "macro.pl";
+        $UnixLinkPlPath = "link.pl";
+        $ExpungeCmd = "expunge\npop\n";
+    }
+    return;
+}
+
+
+sub CreateFile
+{
+    # TODO: ensure incoming file name has .[Mm][Aa][Cc] suffix
+    if ($State ne "FileNone") {
+        printf("%s: ERROR: CREATEF requires FileNone state, \n", $ProgName);
+        printf("not %s\n", $State);
+        return;
+    }
+    if (scalar(@_) != 2) {
+        printf("%s: ERROR: need 2 arguments for CREATEF, ", $ProgName);
+        printf("received %s\n", scalar(@_));
+        $State = "FileNoneERR";
+        return;
+    }
+    $TOPSMacPath = $TestDir . $_[0];
+    if ($TOPSMacPath !~ /\.mac$/i) {
+        printf("%s: ERROR: invalid CREATEF file argument ", $ProgName);
+        printf("%s\n", $_[0]);
+        $State = "FileNoneERR";
+        return;
+    }
+    if (!open (TEST_SRC, ">" . $TOPSMacPath)) {
+        printf("%s: ERROR: Cannot open ", $ProgName);
+        printf("%s\n", $TestDir . $_[0]);
+        $State = "FileNoneERR";
+        return;
+    }
+    binmode(TEST_SRC);
+    $State = "FileOpen";
+    # Create Unix'ified paths from TOPS20 .mac path.
+    # Absolute path or filename only required, for now.
+    $UnixMacPath = $TOPSMacPath;
+    if ($UnixMacPath =~ /.+:<.*>.+/) {
+	$mdirs = $UnixMacPath;
+	$mdirs =~ s/(.+)<(.+)>(.+)/$2/;
+	$mdirs =~ s/\./\//g;
+	$UnixMacPath =~ s/(.+):<(.+)>(.+)/\/$1\/$mdirs\/$3/;
+    }
+    # Create other paths needed elsewhere
+    $UnixRelPath = $UnixMacPath;
+    $UnixExePath = $UnixMacPath;
+    $UnixRelPath =~ s/\.mac$/.rel/i;
+    $UnixExePath =~ s/\.mac$/.exe/i;
+    $TOPSRelPath = $TOPSMacPath;
+    $TOPSExePath = $TOPSMacPath;
+    $TOPSRelPath =~ s/\.mac$/.rel/i;
+    $TOPSExePath =~ s/\.mac$/.exe/i;
+
+    # TODO: Could check for valid file size (0 < filesize < reasonablemax)
+    $FileSz = $_[1];
+    return;
+}
+
+
+sub WriteFile
+{
+    # Parameters, if any, are ignored
+    if ($State ne "FileOpen") {
+        printf("%s: ERROR: WRITEF requires FileOpen state, ", $ProgName);
+        printf("not %s\n", $State);
+        return;
+    }
+    $writetot = 0;
+    $readret = 0;
+    $writeret = 0;
+    $readexp = 0;
+    $writeexp = 0;
+
+    # Transfer file data from STDIN to TEST_SRC file.
+    printf(STDOUT "WRITEF %s READY:\n", $FileSz);
+
+    do {
+        # One timeout period per BlockSz of IO
+        # Read filedata from standard input
+        # Determine how much filedata to expect from read calls
+        if ($FileSz - $writetot < $BlockSz) {
+            $readexp = $FileSz - $writetot;
+        } else {
+            $readexp = $BlockSz;
+        }
+        $iobuf = "";
+        # Perform read() call inside an eval block.  Treat SIGALRM
+        # as an exception
+        eval {
+            $SIG{'ALRM'} = 'AlrmTimeout';  # Handle SIGALRM in AlrmTimeout
+            alarm($Timeout);
+            $! = 0;                        # Ensure errno is pristine
+            $readret = read(BIN_STDIN, $iobuf, $readexp);
+            alarm(0);
+        };
+        if ($Alarmed eq "YES") {
+            $State = "FileOpenTIMEDOUT";
+            $Alarmed = "NO";
+            return;
+        }
+        if ($readret != $readexp) {
+            # Never expect to encounter this error using read().
+            printf("%s: ERROR: received ", $ProgName);
+            printf("%s chars, expected %s\n", $readret, $readexp);
+            $state = "FileOpenERR";
+            return;
+        }
+        $writeexp = $readexp;
+        $writeret = syswrite(TEST_SRC, $iobuf, $writeexp);
+        if ($writeret != $writeexp) {
+            printf("%s: ERROR: Expected ", $ProgName);
+            printf("%s chars, wrote %s\n", $writeexp, $writeret);
+            $state = "FileOpenERR";
+            return;
+        }
+        $writetot = $writetot + $writeret;
+    } until ($writetot >= $FileSz);
+    $lastchar = chop($iobuf);
+    close(TEST_SRC);
+    $State = "FileComplete";
+    # If last character read was not a \n, read one more char, (it's
+    # supposed to be a \n to force input buffer flushing), and discard.
+    # This is a weak point in the handshaking -- if the final character
+    # is not \n, we will timeout.  The file, however, is successfully
+    # populated.
+    if ($lastchar ne "\n") {
+        # This code requires that read() return upon \n
+        # (input buffer flush) before read length is reached.
+        $iobuf = "";
+        eval {
+            $SIG{'ALRM'} = 'AlrmTimeout';  # Handle SIGALRM in AlrmTimeout
+            alarm($Timeout);
+            $! = 0;                        # Ensure errno is pristine
+            read(BIN_STDIN, $iobuf, 1);
+            alarm(0);
+        };
+        if ($Alarmed eq "YES") {
+            $State = "FileCompleteTIMEDOUT";
+            $Alarmed = "NO";
+            return;
+        }
+        read(BIN_STDIN, $iobuf, 1);
+    }
+    $iobuf = "";
+    $State = "FileComplete";
+    return;
+}
+
+# It became apparent that passing certain characters
+# as arguments to an exec'd sub-process causes trouble.  Through
+# trial and error, discovered the following list of taboo characters:
+# 
+#   ', ", <, >, (, ), {, }, ~, %, [, ], ?, ;, *, &, $, and \
+#
+# OK chars are A-Z, a-z, 0-9, :, -, _, ., =, +, !, ;, #, @, ^, and comma
+# (Watch out for collisions within existing filenames.  At least
+# one gcc testsuite source file includes '+' in its name.)
+#
+# In order to pass newlines and TOPS20 file paths as arguments, the
+# following encoding scheme is used in Assemble and Macro subroutines.
+# link.pl and macro.pl decode these characters.
+# 
+#   ':<' is encoded as '^'
+#   '>' is encoded as '@'
+#   newline is encoded as '#'  (Used for link only)
+
+
+sub Assemble
+{
+    if ($State ne "FileComplete") {
+        printf("%s: ERROR: ASSEMBLE requires FileComplete state, ", $ProgName);
+        printf("not %s\n", $State);
+        return;
+    }
+
+    $macropl = $PerlExe . " " . $UnixMacroPlPath;
+    $protocmd = sprintf("%s=%s", $TOPSRelPath, $TOPSMacPath);
+    $protocmd =~ s/:</^/g;
+    $protocmd =~ s/>/@/g;
+
+    # Invoke 'macro' via 'macro.pl'
+    $macro_out = `$macropl $protocmd`;
+    if ($macro_out =~ /NO ERRORS DETECTED/) {
+        $State = "FileAssembled";
+    } else {
+        printf ("%s: ASSEMBLE %s failed\n", $ProgName, $TOPSMacPath);
+        $macro_out =~ s/%/\%/g;  # Escape '%' chars before printf'ing
+        printf ("%s\n", "$macro_out");
+        $State = "FileAssembledERR";   # Ensures cleanup
+        # The test harness must respond to ERROR printout above, else
+        # subsequent attempts to link will fail on $State value.
+        &Reset;
+    }
+    return;
+}
+
+
+sub Link
+{
+    if ($State ne "FileAssembled") {
+        printf("%s: ERROR: LINK requires FileAssembled state, ", $ProgName);
+        printf("not %s\n", $State);
+        return;
+    }
+# TODO: Finish link linkage.  Arguments???
+    $linkpl = $PerlExe . " " . $UnixLinkPlPath;
+    $protocmd = sprintf("\n%scrtini.o\n/PVBLOCK:PSECT:rdat\n/SYMSEG:PSECT:symb\n%s\n%slibgcc.a/search\n%slibgcc.a/search\n%scrtfin.o\n%s/save/go\n", $TestDir, $TOPSRelPath, $TestDir, $TestDir, $TestDir, $TOPSExePath);
+    $protocmd =~ s/:</^/g;
+    $protocmd =~ s/>/@/g;
+    $protocmd =~ s/\n/\#/g;
+
+    # Invoke 'link' via 'link.pl'
+#	printf ("%s: about to LINK %s \n", $ProgName, $TOPSRelPath);
+    $link_out = `$linkpl $protocmd`;
+    if ($link_out =~ /\*\*$/) {
+        $State = "FileLinked";
+#		printf ("%s: LINK %s succeeded\n", $ProgName, $TOPSRelPath);
+    } else {
+        printf ("%s: LINK %s failed\n", $ProgName, $TOPSRelPath);
+        $link_out =~ s/%/\%/g;  # Escape '%' chars before printf'ing
+        printf ("%s\n", "$link_out");
+        $State = "FileLinkedERR";   # Ensure cleanup
+        # The test harness must respond to ERROR printout above, else
+        # subsequent attempts to execute will fail on $State value.
+        &Reset;
+    }
+
+    # link.pl opens a pipe to run /sys/link.exe, which somehow corrupts our STDIN stream
+    # opening and closing another pipe seems to clean things up
+    # doing it here instead of in link.pl is better because it doesn't foul the output buffer tht we check to decide if the link succeeded
+    open(BOGUS_PIPE, "|/sys/exec.exe");
+    printf(BOGUS_PIPE "pop\n");
+    close(BOGUS_PIPE);
+
+#	printf ("%s: returning from sub link\n", $ProgName);
+    return;
+}
+
+
+sub Execute
+{
+    if ($State ne "FileLinked") {
+        printf("%s: ERROR: EXECUTE requires FileLinked state, ", $ProgName);
+        printf("not %s\n", $State);
+        &Reset;
+        return;
+    }
+    eval {
+        $SIG{'ALRM'} = 'AlrmTimeout';  # Handle SIGALRM in AlrmTimeout
+        alarm($Timeout);
+        $exe_out = `$UnixExePath`;
+        alarm(0);
+    };
+    if ($Alarmed eq "YES") {
+        if ($State !~ /TIMEDOUT/ ) {
+            $State = $State . "TIMEDOUT";
+        }
+        printf("%s: ", $ProgName);
+        printf("EXECUTE %s timed out\n", $UnixExePath);
+        # Exit here to help eliminate a wayward test fork,
+        # The Linux-hosted test harness must 'reset *'
+        # and restart topstale.
+        &Exit;
+    }
+#	printf ("%s:execute result is:\n%s\n", $ProgName, $exe_out);
+    if ($exe_out !~ /^$/) {
+        printf ("%s: EXECUTE %s failed:\n", $ProgName, $UnixExePath);
+        $exe_out =~ s/%/\%/g;  # Escape '%' chars before printf'ing
+        printf ("%s\n", $exe_out);
+    }
+    # Return to initial state following execute, ready for next
+    # macro file create/transfer. Test result is irrelevant to topstale,
+    &Reset;
+    return;
+}
+
+
+sub Cleanup
+{
+    # Cleanup our mess of files.  Kinda want to know if expected
+    # files don't exist when in certain states, or if we can't cleanup
+    # our mess, hence this ugly cascade of conditionals.  Errors removing
+    # files generate warnings only, no persistent error condition.
+    if ($State =~ /FileLinked.*/ || $State =~ /TestComplete.*/) {
+        # Unlink executable file
+        if ((unlink $TOPSExePath) != 1) {
+            printf("%s: WARN: Cannot unlink %s\n", $ProgName, $TOPSExePath);
+        }
+        $State = "FileAssembled";  # Cheap and easy fall through...
+        # Anything to unlink following successful link???
+    }
+    if ($State =~ /FileAssembled.*/) {
+        # Unlink relocatable file
+        if ((unlink $TOPSRelPath) != 1) {
+            printf("%s: WARN: Cannot unlink %s\n", $ProgName, $TOPSRelPath);
+        }
+        $State = "FileComplete";  # Cheap and easy fall through...
+    }
+    if ($State =~ /FileComplete.*/ || $State =~ /FileOpen.*/) {
+        if ((unlink $TOPSMacPath) != 1) {
+            printf("%s: WARN: Cannot unlink %s\n", $ProgName, $TOPSMacPath);
+        }
+    }
+    return;
+}
+
+
+sub Reset
+{
+    # Reset takes no parameters.
+    # Parameters set with SETPARAMS command are unchanged
+    # during RESET operation.
+    if ($State =~ /FileOpen.*/) {
+        close(TEST_SRC);
+    }
+    if ($Cleanup =~ /^YES$/i) {
+        &Cleanup;
+    }
+    $TOEvents = 0;
+    $State = "FileNone";
+    return;
+}
+
+
+sub Showtime
+{
+    ($sec,$min,$hour,$mday,$mon,$year,$junk,$junk,$junk) = localtime(time);
+    $mon += 1;
+    $year += 1900;
+    printf("%s: timestamp %02d/%02d/%04d ", $ProgName, $mon, $mday, $year);
+    printf("%02d:%02d:%02d PST\n", $hour, $min, $sec);
+    return(0);
+}
+
+
+sub Expunge
+{
+    if (open(EXEC_PIPE, "|" . $ExecExe)) {
+        printf("%s: begin expunge\n", $ProgName);
+        printf(EXEC_PIPE "$ExpungeCmd");
+        close(EXEC_PIPE);
+        printf("%s: end expunge\n", $ProgName);
+    } else {
+        printf("%s: ERROR: Failed to open pipe to %s\n", $ProgName, $ExecExe);
+        return(1);
+    }
+    return(0);
+}
+
+
+sub Exit
+{
+    &Reset;
+    printf("%s: Terminated\n", $ProgName);
+    exit(0);
+}
+
+
+#
+# Main block of code begins here.
+#
+
+&Init();
+
+do {
+    &GetCmd();
+    $cmd0 = $Cmd[0];
+    shift(@Cmd);
+    if ($cmd0 ne "") {
+SWITCH: {
+        if ($cmd0 =~ /^SETPARAMS$/i) {
+            &SetParams(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^CREATEF$/i) {
+            $ExpungeCount += 1;
+            if ($ExpungeCount >= $ExpungeInterval) {
+                &Expunge;
+                $ExpungeCount = 0;
+            }
+            &Showtime;
+            &CreateFile(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^WRITEF$/i) {
+            &WriteFile(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^ASSEMBLE$/i) {
+            &Assemble(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^LINK$/i) {
+            &Link(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^EXECUTE$/i) {
+            &Execute(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^RESET$/i) {
+            &Reset(@Cmd);
+            last SWITCH;
+        }
+        if ($cmd0 =~ /^EXIT$/i) {
+            # One final expunge to clean up (most of) our mess
+            if ($ExpungeCmd ne "") {
+                &Expunge;
+            }
+            &Exit(@Cmd);
+            last SWITCH;
+        }
+        printf("%s: ERROR: no such command %s\n", $ProgName, $cmd0);
+    } # SWITCH block
+    } # if ($cmd0 ne "")
+} until (0 == 1);

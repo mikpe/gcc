@@ -91,6 +91,7 @@ extern char sizeof_long_long_must_be_8[sizeof(long long) == 8 ? 1 : -1];
 #define HOST_WIDE_INT_PRINT_DEC_C HOST_WIDE_INT_PRINT_DEC HOST_WIDE_INT_PRINT_C
 #define HOST_WIDE_INT_PRINT_UNSIGNED "%" HOST_WIDE_INT_PRINT "u"
 #define HOST_WIDE_INT_PRINT_HEX "0x%" HOST_WIDE_INT_PRINT "x"
+#define HOST_WIDE_INT_PRINT_OCT "%" HOST_WIDE_INT_PRINT "o"
 
 /* Set HOST_WIDEST_INT.  This is a 64-bit type unless the compiler
    in use has no 64-bit type at all; in that case it's 32 bits.  */

@@ -9,7 +9,11 @@ int test(int n)
 
 int main()
 {
+#ifdef __PDP10__
+  if (test(123) != 124)
+#else
   if (test(123) != 123)
+#endif
     abort ();
   return 0;
 }

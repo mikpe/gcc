@@ -160,7 +160,8 @@ typedef struct dwarf_fde fde;
 static inline const struct dwarf_cie *
 get_cie (const struct dwarf_fde *f)
 {
-  return (const void *)&f->CIE_delta - f->CIE_delta;
+/*  return (const void *)&f->CIE_delta - f->CIE_delta;*/
+  return (const struct dwarf_cie *)((sword)&f->CIE_delta - f->CIE_delta);
 }
 
 static inline const fde *

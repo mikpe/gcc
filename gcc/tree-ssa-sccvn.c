@@ -1251,6 +1251,18 @@ visit_reference_op_store (tree lhs, tree op, tree stmt)
 	  changed |= set_ssa_val_to (vdef, vdef);
 	}
 
+/* There's a problem with this analysis that it doesn't take into account the modifying
+    affect of storing into bitfields and maybe other stuff.
+    pr31136.c demonstrates this at -O1, etc.
+    There's undoubtedly better checks, but for now for PDP10 just avoid setting value of
+    component refs.  There are some issues with not having value numbers, so if this doesn't
+    work try instead setting lhs's value to itself.
+    -mtc 1/15/2008
+*/
+#ifdef __PDP10_H__
+      if (TREE_CODE(lhs) != COMPONENT_REF)
+#endif
+
       vn_reference_insert (lhs, op, vdefs);
     }
   else

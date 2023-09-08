@@ -97,7 +97,20 @@ doloop_condition_get (rtx doloop_pat)
 	                         (label_ref (label))
 			         (pc))).  */
 
+/* it looks like gcc plain messed up here
+    doloop_pat can be passed in as a raw pattern.
+    hopefully in that case it will always be a PARALLEL, since the
+    code following assumes !PARALLEL => INSN
+    -mtc 12/14/2007
+*/
+#ifdef __PDP10_H__
+  if (INSN_P(doloop_pat))
+  	pattern = PATTERN(doloop_pat);
+  else
+  	pattern = doloop_pat;
+#else
   pattern = PATTERN (doloop_pat);
+#endif
 
   if (GET_CODE (pattern) != PARALLEL)
     {
@@ -237,6 +250,25 @@ doloop_valid_p (struct loop *loop, struct niter_desc *desc)
       result = false;
       goto cleanup;
     }
+
+/* PDP10 loop pattern only works for positive integers, so avoid using it
+    unless the number of iterations is known to be less than MAXINT
+    -mtc 8/14/2007
+*/
+#ifdef __PDP10_H__
+	{
+	unsigned HOST_WIDEST_INT wordmask = ((HOST_WIDEST_INT) 1 << (BITS_PER_WORD -1)) - 1;
+	unsigned HOST_WIDEST_INT representable_niter_max = desc->niter_max & wordmask;
+	
+	if (desc->niter_max != representable_niter_max)
+		{
+		if (dump_file)
+			fprintf (dump_file, "Doloop: Possible infinite iteration case.\n");
+		result = false;
+		goto cleanup;
+		}
+	}
+#endif
 
   for (i = 0; i < loop->num_nodes; i++)
     {
@@ -570,6 +602,14 @@ doloop_optimize (struct loop *loop)
     }
   mode = desc->mode;
 
+/* loop pattern does not work for modes smaller than a word
+   -mtc 1/9/2008
+*/
+#ifdef __PDP10_H__
+  if (GET_MODE_BITSIZE(mode) < BITS_PER_WORD)
+  	mode = word_mode;
+#endif
+ 
   est_niter = 3;
   if (desc->const_iter)
     est_niter = desc->niter;

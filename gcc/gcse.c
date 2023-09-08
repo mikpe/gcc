@@ -142,6 +142,16 @@ along with GCC; see the file COPYING3.  If not see
    in the above papers and elsewhere.
 */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: gcse.c 45d32bbf5940 2010/01/26 01:45:17 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -5353,6 +5363,20 @@ compute_ld_motion_mems (void)
 		      else
 			ptr->invalid = 1;
 		    }
+
+#ifdef __PDP10_H__
+/* This is really a general fix, not PDP10 specific
+     I'm not sure what the comment above about we only care about this exact pattern means,
+     but it's possible for the dest to be a ZERO_EXTRACT or something similar that reference
+     the same memory as the src of a different insn, in which case it needs to get marked invalid.
+     -mtc 1/25/2010
+*/
+		  else
+		    {
+		      /* Make sure there isn't a buried store somewhere.  */
+		      invalidate_any_buried_refs (dest);
+		    }
+#endif		  
 		}
 	      else
 		invalidate_any_buried_refs (PATTERN (insn));
@@ -6697,7 +6721,14 @@ struct tree_opt_pass pass_jump_bypass =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+  TODO_verify_flow,  /* todo_flags_finish */
+#else
   TODO_ggc_collect | TODO_verify_flow,  /* todo_flags_finish */
+#endif
   'G'                                   /* letter */
 };
 
@@ -6766,7 +6797,14 @@ struct tree_opt_pass pass_gcse =
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 5/16/2008
+*/
+  TODO_verify_flow,  /* todo_flags_finish */
+#else
   TODO_verify_flow | TODO_ggc_collect,  /* todo_flags_finish */
+#endif
   'G'                                   /* letter */
 };
 

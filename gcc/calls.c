@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: calls.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -827,7 +837,13 @@ store_unaligned_arguments_into_pseudos (struct arg_data *args, int num_actuals)
 	&& (TYPE_ALIGN (TREE_TYPE (args[i].tree_value))
 	    < (unsigned int) MIN (BIGGEST_ALIGNMENT, BITS_PER_WORD)))
       {
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+	unsigned int bytes = int_size_in_bytes (TREE_TYPE (args[i].tree_value));
+#else
 	int bytes = int_size_in_bytes (TREE_TYPE (args[i].tree_value));
+#endif
 	int endian_correction = 0;
 
 	if (args[i].partial)
@@ -1064,6 +1080,7 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 		  /* This is a variable-sized object.  Make space on the stack
 		     for it.  */
 		  rtx size_rtx = expr_size (args[i].tree_value);
+		  rtx address;
 
 		  if (*old_stack_level == 0)
 		    {
@@ -1072,9 +1089,14 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 		      pending_stack_adjust = 0;
 		    }
 
-		  copy = gen_rtx_MEM (BLKmode,
-				      allocate_dynamic_stack_space
-				      (size_rtx, NULL_RTX, TYPE_ALIGN (type)));
+		  address = allocate_dynamic_stack_space (size_rtx, NULL_RTX,
+							  TYPE_ALIGN (type));
+#ifdef __PDP10_H__
+		  /* PDP-10: convert to the right kind of pointer.  */
+		  address = pdp10_convert_ptr (NULL_TREE, address, NULL_RTX,
+					       36, pdp10_bytesize (type), 1);
+#endif
+		  copy = gen_rtx_MEM (BLKmode, address);
 		  set_mem_attributes (copy, type, 1);
 		}
 	      else
@@ -1576,7 +1598,13 @@ load_register_parameters (struct arg_data *args, int num_actuals,
 	{
 	  int partial = args[i].partial;
 	  int nregs;
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+	  unsigned int size = 0;
+#else
 	  int size = 0;
+#endif
 	  rtx before_arg = get_last_insn ();
 	  /* Set non-negative if we must move a word at a time, even if
 	     just one word (e.g, partial == 4 && mode == DFmode).  Set
@@ -2471,8 +2499,16 @@ expand_call (tree exp, rtx target, int ignore)
 		    needed += reg_parm_stack_space;
 
 #ifdef ARGS_GROW_DOWNWARD
+/* pdp10 allocates in words, but needed is in bytes
+    -mtc 7/3/2007
+*/
+#ifdef __PDP10_H__
+		  highest_outgoing_arg_in_use = MAX (initial_highest_arg_in_use,
+						     needed + UNITS_PER_WORD);
+#else
 		  highest_outgoing_arg_in_use = MAX (initial_highest_arg_in_use,
 						     needed + 1);
+#endif
 #else
 		  highest_outgoing_arg_in_use = MAX (initial_highest_arg_in_use,
 						     needed);
@@ -2745,12 +2781,27 @@ expand_call (tree exp, rtx target, int ignore)
 	 structure value.  */
       if (pass != 0 && structure_value_addr && ! structure_value_addr_parm)
 	{
-	  structure_value_addr
+#ifdef __PDP10_H__
+	  rtx addr;
+
+	  structure_value_addr 
 	    = convert_memory_address (Pmode, structure_value_addr);
+
+	  addr = structure_value_addr;
+
+	  /* PDP-10: convert to byte pointer if necessary.  */
+	  if (pdp10_bytesize (TREE_TYPE (exp)) < 32)
+	    addr = pdp10_convert_ptr (NULL_TREE, addr, NULL_RTX, 36,
+				      pdp10_bytesize (TREE_TYPE (exp)), 1);
 	  emit_move_insn (struct_value,
-			  force_reg (Pmode,
-				     force_operand (structure_value_addr,
-						    NULL_RTX)));
+			  force_reg (Pmode, force_operand (addr, NULL_RTX)));
+#else
+	  structure_value_addr 
+	    = convert_memory_address (Pmode, structure_value_addr);
+
+	  emit_move_insn (struct_value,
+			  force_reg (Pmode, force_operand (structure_value_addr, NULL_RTX)));
+#endif
 
 	  if (REG_P (struct_value))
 	    use_reg (&call_fusage, struct_value);
@@ -4100,9 +4151,23 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 	  /* stack_slot is negative, but we want to index stack_usage_map
 	     with positive values.  */
 	  if (GET_CODE (XEXP (arg->stack_slot, 0)) == PLUS)
-	    upper_bound = -INTVAL (XEXP (XEXP (arg->stack_slot, 0), 1)) + 1;
+#ifdef __PDP10_H__
+	    /* PDP-10: bounds are in number of storage units, not words.  */
+	    /*  Fix bounds calculation.  Setting upper_bound to 0 is plain wrong -- should be 1
+	         for non-PDP10 case.  For PDP10 need to compensate for slots being in words plus
+	         also compensate for being big-endian.
+	    */
+	    upper_bound =
+	      -INTVAL (XEXP (XEXP (arg->stack_slot, 0), 1)) * UNITS_PER_WORD
+	      + 4;
+	  else
+	    upper_bound = 4;
+#else
+	    upper_bound =
+	      -INTVAL (XEXP (XEXP (arg->stack_slot, 0), 1)) + 1;
 	  else
 	    upper_bound = 0;
+#endif
 
 	  lower_bound = upper_bound - arg->locate.size.constant;
 #else
@@ -4112,6 +4177,14 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 	    lower_bound = 0;
 
 	  upper_bound = lower_bound + arg->locate.size.constant;
+#endif
+
+/* I've had two bugs where a bad value caused us to trash memory
+    better to catch it here.
+    -mtc 6/27/2007
+*/
+#ifdef __PDP10_H__
+	  gcc_assert(lower_bound >= 0);
 #endif
 
 	  i = lower_bound;

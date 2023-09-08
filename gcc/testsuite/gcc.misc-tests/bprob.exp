@@ -59,3 +59,7 @@ foreach profile_option $profile_options feedback_option $feedback_options {
         profopt-execute $src
     }
 }
+
+if { $target_triplet == "pdp10-xkl-tops20" } {
+    gcctale_finish
+}

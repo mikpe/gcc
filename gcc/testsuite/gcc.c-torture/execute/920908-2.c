@@ -13,21 +13,35 @@ OPTIONS:-O
 */
 struct T
 {
-unsigned i:8;
-unsigned c:24;
+#ifdef __PDP10__
+    unsigned i:9;
+    unsigned c:27;
+#else
+    unsigned i:8;
+    unsigned c:24;
+#endif
 };
+
 f(struct T t)
 {
-struct T s[1];
-s[0]=t;
-return(char)s->c;
+    struct T s[1];
+    s[0]=t;
+    return(char)s->c;
 }
+
 main()
 {
-struct T t;
-t.i=0xff;
-t.c=0xffff11;
-if(f(t)!=0x11)abort();
-exit(0);
+    struct T t;
+#ifdef __PDP10__
+    t.i=0x1ff;
+    t.c=0x7ffff11;
+    if(f(t)!=0x111)
+#else
+    t.i=0xff;
+    t.c=0xffff11;
+    if(f(t)!=0x11)
+#endif
+        abort();
+    exit(0);
 }
 #endif

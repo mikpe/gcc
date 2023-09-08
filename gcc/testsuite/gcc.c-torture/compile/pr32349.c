@@ -1,4 +1,7 @@
-/* { dg-options "-O2 -fmodulo-sched" } */
+/* PDP10 removed -O2 from following line because as a compile test
+   it runs at each optimization level
+   -mtc 12/11/2007 */
+/* { dg-options "-fmodulo-sched" } */
 
 
 extern long *x1, *x2, *x3;

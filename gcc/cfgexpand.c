@@ -529,7 +529,16 @@ expand_one_stack_var_at (tree decl, HOST_WIDE_INT offset)
   /* If this fails, we've overflowed the stack frame.  Error nicely?  */
   gcc_assert (offset == trunc_int_for_mode (offset, Pmode));
 
+/* stack frame addresses are in words, not bytes
+    -mtc 6/28/2007
+*/
+#ifdef __PDP10_H__
+  gcc_assert (offset % UNITS_PER_WORD == 0);
+  x = plus_constant (virtual_stack_vars_rtx, offset / UNITS_PER_WORD);
+#else
   x = plus_constant (virtual_stack_vars_rtx, offset);
+#endif
+
   x = gen_rtx_MEM (DECL_MODE (decl), x);
 
   /* Set alignment we actually gave this decl.  */
@@ -1861,7 +1870,18 @@ tree_expand_cfg (void)
   currently_expanding_to_rtl = 1;
 
   insn_locators_alloc ();
+  
+/* If the user declares a function with the same name as a builtin, this check prevents initialization of
+    curr_location, and causes an abort when we try to look up a line number.
+    If there's some harm from initializing it, we either need a different way of recognizing that case, or
+    perhaps we need to not mark a user declaration of a builtin name as a builtin, or declaring a routine
+    of the same name as a builtin needs to be an error.
+    -mtc 2/4/2008
+*/
+#ifdef __PDP10_H__
+#else
   if (!DECL_BUILT_IN (current_function_decl))
+#endif
     set_curr_insn_source_location (DECL_SOURCE_LOCATION (current_function_decl));
   set_curr_insn_block (DECL_INITIAL (current_function_decl));
   prologue_locator = curr_insn_locator ();

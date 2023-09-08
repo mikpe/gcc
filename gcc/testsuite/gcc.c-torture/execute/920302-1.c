@@ -11,13 +11,25 @@ execute (ip)
     {
       int i;
       for (i = 0; i < 3; ++i)
-	optab[i] = (short)(tab[i] - base);
+#ifdef __PDP10__
+		optab[i] = (short)((int *)tab[i] - (int *)base);
+#else
+		optab[i] = (short)(tab[i] - base);
+#endif
       return;
     }
 x:  *bp++='x';
-    goto *(base + *ip++);
+#ifdef __PDP10__
+  goto *(void *)((int *)base + *ip++);
+#else
+  goto *(base + *ip++);
+#endif
 y:  *bp++='y';
-    goto *(base + *ip++);
+#ifdef __PDP10__
+  goto *(void *)((int *)base + *ip++);
+#else
+  goto *(base + *ip++);
+#endif
 z:  *bp++='z';
     *bp=0;
     return;

@@ -97,6 +97,9 @@ enum optab_index
   /* Signed and fp multiply */
   OTI_smul,
   OTI_smulv,
+#ifdef __PDP10_H__
+  OTI_umul,
+#endif
   /* Signed multiply, return high word */
   OTI_smul_highpart,
   OTI_umul_highpart,
@@ -378,6 +381,9 @@ extern struct optab optab_table[OTI_MAX];
 #define add_optab (&optab_table[OTI_add])
 #define sub_optab (&optab_table[OTI_sub])
 #define smul_optab (&optab_table[OTI_smul])
+#ifdef __PDP10_H__
+#define umul_optab (&optab_table[OTI_umul])
+#endif
 #define addv_optab (&optab_table[OTI_addv])
 #define subv_optab (&optab_table[OTI_subv])
 #define smul_highpart_optab (&optab_table[OTI_smul_highpart])

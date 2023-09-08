@@ -3333,6 +3333,17 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 	}
       /* Check to make sure the second operand is an integer with type of
 	 sizetype.  */
+/* Second operand can be any type of integer
+    -mtc 1/7/2007
+*/
+#ifdef __PDP10_H__
+      if (!INTEGRAL_TYPE_P (TREE_TYPE (TREE_OPERAND (t, 1))))
+	{
+	  error ("invalid operand to pointer plus, second operand is not an "
+		 "integer.");
+	  return t;
+	}
+#else
       if (!useless_type_conversion_p (sizetype,
 				     TREE_TYPE (TREE_OPERAND (t, 1))))
 	{
@@ -3340,6 +3351,7 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 		 "integer with type of sizetype.");
 	  return t;
 	}
+#endif
       /* FALLTHROUGH */
     case LT_EXPR:
     case LE_EXPR:
@@ -3413,6 +3425,14 @@ verify_gimple_unary_expr (const_tree expr)
      to that type.  */
   if (!useless_type_conversion_p (type, TREE_TYPE (op)))
     {
+#ifdef __PDP10_H__
+/* conversion between different integer types is fine
+    -mtc 3/27/2008
+*/
+	  if (INTEGRAL_TYPE_P(type)
+	  	&& INTEGRAL_TYPE_P(TREE_TYPE(op)))
+	  	return false;
+#endif
       error ("type mismatch in unary expression");
       debug_generic_expr (type);
       debug_generic_expr (TREE_TYPE (op));
@@ -3553,6 +3573,15 @@ verify_gimple_reference (tree expr)
 	  && !useless_type_conversion_p (TREE_TYPE (expr),
 					 TREE_TYPE (TREE_OPERAND (expr, 1))))
 	{
+#ifdef __PDP10_H__
+/* COMPONENT_REFs get built with a different type than the field type
+    until we understand better why, just permit it here
+    -mtc 3/27/2008
+*/
+	  if (INTEGRAL_TYPE_P(TREE_TYPE(expr))
+	  	&& INTEGRAL_TYPE_P(TREE_TYPE(TREE_OPERAND(expr, 1))))
+	  	return false;
+#endif
 	  error ("type mismatch in component reference");
 	  debug_generic_stmt (TREE_TYPE (expr));
 	  debug_generic_stmt (TREE_TYPE (TREE_OPERAND (expr, 1)));
@@ -3747,6 +3776,66 @@ verify_gimple_expr (tree expr)
 	return false;
       }
 
+#ifdef __PDP10_H__
+/* allow appropriate cases of pointer arithmetic
+    -mtc 3/27/2008
+*/
+    case PLUS_EXPR:
+      {
+	tree op0 = TREE_OPERAND (expr, 0);
+	tree op1 = TREE_OPERAND (expr, 1);
+      	if (!is_gimple_val (op0) || !is_gimple_val (op1))
+	  {
+	    error ("invalid operands in plus expression");
+	    return true;
+	  }
+	if (POINTER_TYPE_P (type))
+		{
+		if (POINTER_TYPE_P(TREE_TYPE(op0)) == POINTER_TYPE_P(TREE_TYPE(op1)))
+			{
+			error ("invalid operands to (pointer) plus");
+			return true;
+			}
+		}
+	else
+		{
+		if (POINTER_TYPE_P(TREE_TYPE(op0)) || POINTER_TYPE_P(TREE_TYPE(op1)))
+			{
+			error ("invalid (pointer) operands to plus");
+			return true;
+			}
+		}
+	return false;
+      }
+    case MINUS_EXPR:
+      {
+	tree op0 = TREE_OPERAND (expr, 0);
+	tree op1 = TREE_OPERAND (expr, 1);
+      	if (!is_gimple_val (op0) || !is_gimple_val (op1))
+	  {
+	    error ("invalid operands in minus expression");
+	    return true;
+	  }
+	if (POINTER_TYPE_P (type))
+		{
+		if (!POINTER_TYPE_P(TREE_TYPE(op0)) || POINTER_TYPE_P(TREE_TYPE(op1)))
+			{
+			error ("invalid operands to (pointer) minus");
+			return true;
+			}
+		}
+	else
+		{
+		if (POINTER_TYPE_P(TREE_TYPE(op0)) != POINTER_TYPE_P(TREE_TYPE(op1)))
+			{
+			error ("invalid (pointer) operands to minus");
+			return true;
+			}
+		}
+	return false;
+      }
+
+#else
     case PLUS_EXPR:
     case MINUS_EXPR:
       {
@@ -3762,6 +3851,7 @@ verify_gimple_expr (tree expr)
 	/* Continue with generic binary expression handling.  */
 	break;
       }
+#endif
 
     case POINTER_PLUS_EXPR:
       {
@@ -3774,7 +3864,14 @@ verify_gimple_expr (tree expr)
 	  }
 	if (!POINTER_TYPE_P (TREE_TYPE (op0))
 	    || !useless_type_conversion_p (type, TREE_TYPE (op0))
+#ifdef __PDP10_H__
+/* allow any type of integer
+    -mtc 3/27/2008
+*/
+	    || !INTEGRAL_TYPE_P(TREE_TYPE (op1)))
+#else
 	    || !useless_type_conversion_p (sizetype, TREE_TYPE (op1)))
+#endif
 	  {
 	    error ("type mismatch in pointer plus expression");
 	    debug_generic_stmt (type);

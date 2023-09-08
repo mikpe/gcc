@@ -1,0 +1,219 @@
+# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+# 2001, 2002, 2003 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+
+
+proc login_tops20 { nodetype hostname username password } {
+    global spawn_id timeout tops20_login ProgName
+
+    verbose "DEBUG: CALLPROC login_tops20 $nodetype $hostname $username password\n" 1
+    set tries 0
+    set result -1
+    set need_respawn 1
+    while { $result < 0 && $tries <= 3 } {
+        if { $need_respawn } {
+            spawn /usr/bin/telnet $hostname
+            set need_respawn 0
+        }
+        expect {
+            -exact "Trying " {
+                exp_continue
+            }
+            -regexp "Press RETURN to attach to.*\]$" {
+		# logged in, but have a detached job.
+		# send ^z to bypass it and get a fresh exec
+                set tops20_login 1
+                sleep 1
+                exp_send "\032"
+                exp_continue
+            }
+            -regexp "@$" {
+		# a prompt for the login name and password
+                exp_send "$username $password\n"
+                exp_continue
+            }
+            -regexp ".*\[@!\] $" {
+                # an exec prompt, ends with "@ " for a nonpriviledged user, "! " for a priviledged user
+		# the leading characters are the hostname, stripped of domain.  It's insignificant.
+		# set the terminal to no pause as end of page.
+		# Otherwise, expect will later get stuck when tops pauses, waiting for a ^Q to resume output
+                set result 0
+		exp_send "set term no pause end-of-page\r"
+		sleep 1
+                break
+            }
+            -exact "?Incorrect password" {
+                puts stderr "$ProgName: Cannot login to $hostname: password incorrect\n"
+                logout_tops20
+                break
+            }
+            -exact "?Unrecognized command - Does not match switch or keyword" {
+                logout_tops20
+                break
+            }
+            -regexp " Job .* on TTY.*M" {
+		# successful login to Tops20 chit chat
+                set tops20_login 1
+                exp_continue
+            }
+            -exact "Connected to" {
+		# telnet connected successfully
+                exp_continue
+            }
+            -exact "unknown host" {
+		# telnet cannot resolve host, kill it with ^c
+                exp_send "\003"
+                puts stderr "$ProgName: telnet reports unknown host"
+                break
+            }
+            -regexp "Escape character is.*\\.\[\r\n\]" {
+		# telnet success chit chat
+                exp_continue
+            }
+            -exact "has logged on from" {
+                exp_continue
+            }
+            -regexp "Connection refused.*$" {
+		# telnet failed to connect
+                catch "exp_send \"\003\"" foo
+                sleep 5
+                puts stderr "$ProgName: telnet: connection refused."
+            }
+            -regexp "Connection closed by foreign host.*$" {
+		# Tops declined the telnet connection
+                puts stderr "$ProgName: telnet: connection closed by foreign host."
+                break
+            }
+            -regexp "\[\r\n\]+" {
+                exp_continue
+            }
+            timeout {
+                exp_send "\r"
+            }
+            eof {
+                puts stderr "$ProgName: telnet: got unexpected EOF from telnet."
+                catch close
+                catch wait
+                set need_respawn 1
+                sleep 5
+            }
+        }
+        incr tries
+    }
+    if { $result < 0 } {
+        catch close
+        catch wait
+        set spawn_id -1
+        puts stderr "$ProgName: TOPS20 login attempt unsuccessful.\n"
+    }
+    return $spawn_id
+}
+
+
+proc cd_tops20 { directory } {
+    global timeout tops20_login ProgName
+
+    if { $tops20_login != 1 } {
+        return 0
+    }
+
+    set tries 0
+    set result -1
+    exp_send "\n"
+    while { $result == -1 && $tries <= 3 } {
+        expect {
+            -regexp ".*\[@!\] $" {
+                 exp_send "cd $directory\n"
+                set result 0
+            }
+            -regexp "\[\r\n\]+" {
+                exp_continue
+            }
+            -exact "?Does not match directory or user name" {
+                puts stderr "$ProgName: bad TOPS20 directory path: $directory\n"
+                break
+            }
+            timeout {
+                exp_send "\n"
+            }
+        }
+        incr tries
+    }
+    if { $result == -1 } {
+        puts stderr "$ProgName: Failure attempting cd to $directory\n"
+        return 0
+    }
+
+    set tries 0
+    exp_send "pwd\n"
+    while { $result == 0 && $tries <= 3 } {
+        expect {
+            -regexp "cd $directory\(\r|\n\)+" {
+                exp_continue
+            }
+            # TODO: generalize for TOPS20 and Unix style directory path
+            -nocase -regexp ".*$directory\(\r|\n\)+" {
+                set result 1
+            }
+            timeout {
+                exp_send "\n"
+            }
+        }
+        incr tries
+    }
+    if { $result < 1 } {
+        puts stderr "$ProgName: Failure verifying TOPS20 CWD as $directory\n"
+        return 0
+    }
+    return 1
+}
+
+
+proc logout_tops20 { } {
+    global spawn_id tops20_login ProgName
+
+    if { $tops20_login != 1 } {
+        return 0
+    }
+    set result -1
+    set tries 0
+    exp_send "logout\r"
+    expect {
+        -ex "Killed Job " {
+            exp_continue
+        }
+        -ex "Connection closed by foreign host" {
+            set tops20_login 0
+            set spawn_id -1
+            set result 1
+        }
+        timeout {
+            if {[incr tries] < 5} {
+                puts "$ProgName: Expect timed out during TOPS20 logout.\n"
+                exp_send "\n"
+                exp_continue
+            }
+        }
+        eof {
+            puts stderr "$ProgName: unexpected EOF from telnet in logout_tops20."
+        }
+    }
+    catch close
+    catch wait
+    if { $result < 1 } {
+        puts stderr "$ProgName: TOPS20 logout failed\n"
+    }
+    return $result
+}

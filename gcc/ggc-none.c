@@ -22,6 +22,16 @@
    targets (such as java), where we don't really need GC at all.
    This prevents problems with pulling in all the tree stuff.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: ggc-none.c 64aaeca1eb6f 2007/11/19 21:57:52 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #ifdef GENERATOR_FILE
 #include "bconfig.h"
 #else

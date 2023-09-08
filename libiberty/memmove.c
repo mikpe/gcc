@@ -12,6 +12,16 @@ Copies @var{count} bytes from memory area @var{from} to memory area
 
 */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: memmove.c f3ded7179433 2007/04/26 21:47:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include <ansidecl.h>
 #include <stddef.h>
 

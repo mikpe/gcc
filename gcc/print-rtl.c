@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: print-rtl.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 /* This file is compiled twice: once for the generator programs,
    once for the compiler.  */
 #ifdef GENERATOR_FILE
@@ -116,6 +126,22 @@ print_mem_expr (FILE *outfile, const_tree expr)
     }
   else if (TREE_CODE (expr) == RESULT_DECL)
     fputs (" <result>", outfile);
+
+/* The base gcc code is missing some codes, which causes the print_decl_name
+    function to die
+    -mtc 5/16/2007
+*/
+#ifdef __PDP10_H__
+  else if (TREE_CODE (expr) == PLUS_EXPR)
+    {
+      fputs ("(", outfile);
+      print_mem_expr (outfile, TREE_OPERAND (expr, 0));
+      fputs ("+", outfile);
+      fprintf (outfile, HOST_WIDE_INT_PRINT, TREE_INT_CST_LOW (TREE_OPERAND (expr, 1)));
+      fputs (")", outfile);
+    }
+#endif
+
   else
     {
       fputc (' ', outfile);

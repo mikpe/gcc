@@ -7,13 +7,21 @@ typedef struct
 unsigned char
 f (void)
 {
+#ifdef __PDP10__
+  return 0x157;
+#else
   return 0xab;
+#endif
 }
 
 unsigned short
 g (void)
 {
+#ifdef __PDP10__
+  return 0x21234;
+#else
   return 0x1234;
+#endif
 }
 
 main ()
@@ -22,7 +30,11 @@ main ()
 
   three_byte.a = f ();
   three_byte.b = g ();
+#ifdef __PDP10__
+  if (three_byte.a != 0x157 || three_byte.b != 0x21234)
+#else
   if (three_byte.a != 0xab || three_byte.b != 0x1234)
+#endif
     abort ();
   exit (0);
 }

@@ -1,0 +1,255 @@
+#! /bin/bash
+
+# Verify that we are in a directory of the form /home/$USER/<builddir>/srcdir
+currentdir=`pwd`
+
+srcdircheck=`basename $currentdir`
+builddir=`dirname $currentdir`
+
+if [ $srcdircheck != "srcdir" ]
+then
+    echo directory must be named \"srcdir\"
+    exit 1
+else
+    echo srcdir check passes
+fi
+
+buildlocation=`basename $builddir`
+builddir=`dirname $builddir`
+
+if [ $builddir != /home/$USER ]
+then
+    echo build directory tree is not at the top level of your home directory
+fi
+echo building in $builddir/$buildlocation
+
+echo checking that ~/.netrc exists
+if test -a ~/.netrc
+then
+    echo ~/.netrc exists
+else
+    echo ~/.netrc is missing
+    exit 1
+fi
+
+echo
+echo verifying presence of necessary tools
+if test -a gcc/config/pdp10/maklib
+then
+    echo maklib
+else
+    echo maklib is missing
+    exit 1
+fi
+if test -a gcc/config/pdp10/link
+then
+    echo link
+else
+    echo link is missing
+    exit 1
+fi
+if test -a gcc/config/pdp10/macro
+then
+    echo macro
+else
+    echo macro is missing
+    exit 1
+fi
+if test -a gcc/config/pdp10/gcc-netrc
+then
+    echo gcc-netrc
+else
+    echo gcc-netrc is missing
+    exit 1
+fi
+if test -a gcc/config/pdp10/maklib.exp
+then
+    echo maklib.exp
+else
+    echo maklib.exp is missing
+    exit 1
+fi
+if test -a gcc/config/pdp10/telnet_tops20.exp
+then
+    echo telnet_tops20.exp
+else
+    echo telnet_tops20.exp is missing
+    exit 1
+fi
+
+if test -d ../tooldir
+then
+    echo deleting old tooldir
+    rm -rf ../tooldir
+fi
+
+if test -d ../objdir
+then
+    echo deleting old objdir
+    rm -rf ../objdir
+fi
+
+if test -d ../installdir
+then
+    echo deleting old installdir
+    rm -rf ../installdir
+fi
+
+echo determining install directory
+installloc=$1
+if [ "$installloc" = "" ]
+then
+    prefixdir=$builddir/$buildlocation/installdir
+else
+if [ "$installloc" = "public" ]
+then
+    versiontest=`echo \`hg identify -i\` | cut -b13`
+    if [ "$versiontest" = "" ]
+    then
+        prefixdir=`echo -n /opt/gcctoad-4.3.0/REV\`hg parent --template "{date | shortdate}"\`-\`hg identify -i\``
+    else
+	echo modified or mixed revision -- aborting
+	exit 1
+    fi
+    if test -d $prefixdir
+    then
+	echo directory $prefixdir already exists
+	exit 1
+    fi
+else
+    prefixdir=$builddir/$buildlocation/$installloc
+    if test -d $prefixdir
+    then
+	echo directory $prefixdir already exists
+	exit 1
+    fi
+fi
+fi
+echo install directory is $prefixdir
+
+echo
+echo creating directories
+mkdir ../tooldir
+mkdir ../objdir
+mkdir ../objdir/gcc
+mkdir ../objdir/gcc/testsuite
+mkdir ../objdir/gcc/testsuite/gcc
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/compat
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/compile
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/execute
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/execute/ieee
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/execute/pdp10
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/execute/builtins
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/execute/builtins/lib
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/unsorted
+mkdir ../objdir/gcc/testsuite/gcc/gcc.c-torture/ssh
+mkdir ../objdir/gcc/testsuite/gcc/config
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/asm
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/cpp
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/debug
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/special
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/format
+mkdir ../objdir/gcc/testsuite/gcc/gcc.dg/noncompile
+mkdir ../objdir/gcc/testsuite/gcc/gcc.misc-tests
+mkdir ../objdir/gcc/testsuite/gcc/gcc.target
+mkdir ../objdir/gcc/testsuite/gcc/gcc.target/pdp10
+mkdir ../objdir/gcc/testsuite/gcc/gcc.test-framework
+mkdir ../objdir/gcc/testsuite/gcc/consistency.vlad
+mkdir ../objdir/gcc/testsuite/gcc/consistency.vlad/layout
+
+
+echo
+echo copying files to ../objdir/gcc
+cp gcc/config/pdp10/maklib ../objdir/gcc/maklib
+cp gcc/config/pdp10/link ../objdir/gcc/link
+cp gcc/config/pdp10/macro ../objdir/gcc/macro
+
+
+echo copying files to ../tooldir
+cp gcc/config/pdp10/maklib ../tooldir/maklib
+cp gcc/config/pdp10/link ../tooldir/link
+cp gcc/config/pdp10/macro ../tooldir/macro
+cp gcc/config/pdp10/gcc-netrc ../tooldir/gcc-netrc
+cp gcc/config/pdp10/maklib.exp ../tooldir/maklib.exp
+cp gcc/config/pdp10/telnet_tops20.exp ../tooldir/telnet_tops20.exp
+cp gcc/config/pdp10/maklib ../tooldir/pdp10-xkl-tops20-nm
+cp gcc/config/pdp10/maklib ../tooldir/pdp10-xkl-tops20-ar
+cp gcc/config/pdp10/maklib ../tooldir/pdp10-xkl-tops20-ranlib
+
+
+#
+# Apparently setting PATH is not really necessary for running configure
+#
+#toolpath=/home/$USER/$buildlocation/tooldir
+#foundpathelem=0
+#for pathelem in `echo $PATH | sed 's/:/ /g'`
+#do
+#    if [ $pathelem = $toolpath ]
+#    then
+#	echo found desired PATH element $toolpath
+#	foundpathelem=1
+#    fi
+#done
+#
+#if [ $foundpathelem = 1 ]
+#then
+#    echo PATH is already set up
+#else
+#    echo setting PATH
+#    PATH=$toolpath:$PATH
+#    export PATH
+#fi
+
+if [ $TOPS20_BUILD_HOST ]
+then
+    defaultbuildhost=$TOPS20_BUILD_HOST
+else
+    defaultbuildhost=toed.xkl.com
+fi
+
+echo
+echo creating ../objdir/setbuildpath
+cat << EOF > ../objdir/setbuildpath
+#! /bin/sh
+toolpath=$builddir/$buildlocation/tooldir
+foundpathelem=0
+for pathelem in \`echo \$PATH | sed 's/:/ /g'\`
+do
+    if [ \$pathelem = \$toolpath ]
+    then
+	echo found desired PATH element \$toolpath
+	foundpathelem=1
+    fi
+done
+
+if [ \$foundpathelem = 1 ]
+then
+    echo PATH is already set up
+else
+    echo setting PATH
+    PATH=\$toolpath:\$PATH
+    export PATH
+fi
+
+if [ \$TOPS20_BUILD_HOST ]
+then
+    echo TOPS20_BUILD_HOST is \$TOPS20_BUILD_HOST
+else
+    echo setting TOPS20_BUILD_HOST
+    TOPS20_BUILD_HOST=$defaultbuildhost
+    export TOPS20_BUILD_HOST
+fi
+
+EOF
+chmod 755 ../objdir/setbuildpath
+
+echo
+echo doing compiler configuration
+echo
+cd ..
+cd objdir
+../srcdir/configure --host=i386-pc-linux --target=pdp10-xkl-tops20 --build=i386-pc-linux --enable-languages=c --with-as=macro --with-ld=link --prefix=$prefixdir --enable-checking --disable-libmudflap --disable-libssp --disable-libgomp
+cd ..
+cd srcdir

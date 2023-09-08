@@ -23,6 +23,16 @@ along with GCC; see the file COPYING3.  If not see
 /* These routines are somewhat language-independent utility function
    intended to be called by the language-specific convert () functions.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: convert.c a096120fa6fa 2009/12/05 00:23:17 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -46,7 +56,15 @@ convert_to_pointer (tree type, tree expr)
     return expr;
 
   /* Propagate overflow to the NULL pointer.  */
+
+/* Don't optimize out conversion from pointer to pointer of zero
+    -mtc 11/12/2007
+*/
+#ifdef __PDP10_H__
+  if (integer_zerop (expr) && (TREE_CODE(TREE_TYPE(expr)) != POINTER_TYPE))
+#else
   if (integer_zerop (expr))
+#endif
     return force_fit_type_double (type, 0, 0, 0, TREE_OVERFLOW (expr));
 
   switch (TREE_CODE (TREE_TYPE (expr)))
@@ -510,12 +528,23 @@ convert_to_integer (tree type, tree expr)
 	 than the number of bits in its mode, do the conversion to the
 	 type corresponding to its mode, then do a nop conversion
 	 to TYPE.  */
+#ifdef __PDP10_H__
+      else
+		{
+		tree temptype = (*lang_hooks.types.type_for_mode)
+						(TYPE_MODE(type), TYPE_UNSIGNED (type));
+	  	if (TREE_CODE (type) == ENUMERAL_TYPE
+			|| outprec < TYPE_PRECISION (temptype))
+			return build1 (NOP_EXPR, type, convert (temptype, expr));
+	      	}
+#else
       else if (TREE_CODE (type) == ENUMERAL_TYPE
 	       || outprec != GET_MODE_BITSIZE (TYPE_MODE (type)))
 	return build1 (NOP_EXPR, type,
 		       convert (lang_hooks.types.type_for_mode
 				(TYPE_MODE (type), TYPE_UNSIGNED (type)),
 				expr));
+#endif
 
       /* Here detect when we can distribute the truncation down past some
 	 arithmetic.  For example, if adding two longs and converting to an
@@ -612,7 +641,16 @@ convert_to_integer (tree type, tree expr)
 	    tree arg1 = get_unwidened (TREE_OPERAND (expr, 1), type);
 
 	    if (outprec >= BITS_PER_WORD
+#ifdef __PDP10_H__
+/* On the PDP10 propagating type conversions down into arithmetic is wrong if any of the types are
+    pointer types.  It also doesn't make sense to do arithmetic in types smaller than a word because thats
+    our most efficient type.  Omitting the TRULY_NOOP_TRUNCATION test should prevent falling into this
+    code because pointers are 36-bit and the result of pointer arithmetic is 36-bit.
+    -mtc 11/24/2009
+*/
+#else
 		|| TRULY_NOOP_TRUNCATION (outprec, inprec)
+#endif
 		|| inprec > TYPE_PRECISION (TREE_TYPE (arg0))
 		|| inprec > TYPE_PRECISION (TREE_TYPE (arg1)))
 	      {

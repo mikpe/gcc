@@ -13,7 +13,11 @@ void test(unsigned int a, unsigned int b)
 
 int main(int argc, char *argv[])
 {
+#ifdef __PDP10__
+  unsigned int x = 0x800000000;
+#else
   unsigned int x = 0x80000000;
+#endif
   test(x, x);
   exit (0);
 }

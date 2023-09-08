@@ -24,6 +24,16 @@ along with GCC; see the file COPYING3.  If not see
    in the proper order, and counts the time used by each.
    Error messages and low-level interface to malloc also handled here.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: toplev.c a476c7097f58 2008/02/08 23:20:23 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #undef FLOAT /* This is for hpux. They should change hpux.  */
 #undef FFS  /* Some systems define this in param.h.  */
@@ -1166,6 +1176,9 @@ decode_d_option (const char *arg)
 const char *const debug_type_names[] =
 {
   "none", "stabs", "coff", "dwarf-2", "xcoff", "vms"
+#ifdef __PDP10_H__
+	,"vms-dwarf", "tops20"
+#endif
 };
 
 /* Print version information to FILE.
@@ -1862,7 +1875,7 @@ process_options (void)
 #endif
 
   if (write_symbols == NO_DEBUG)
-    ;
+    {}
 #if defined(DBX_DEBUGGING_INFO)
   else if (write_symbols == DBX_DEBUG)
     debug_hooks = &dbx_debug_hooks;
@@ -1882,6 +1895,10 @@ process_options (void)
 #ifdef VMS_DEBUGGING_INFO
   else if (write_symbols == VMS_DEBUG || write_symbols == VMS_AND_DWARF2_DEBUG)
     debug_hooks = &vmsdbg_debug_hooks;
+#endif
+#ifdef __PDP10_H__
+  else if (write_symbols == TOPS20_DEBUG)
+    debug_hooks = &tops20_debug_hooks;
 #endif
   else
     error ("target system does not support the \"%s\" debug format",
@@ -2075,6 +2092,9 @@ backend_init (void)
 		  || debug_info_level == DINFO_LEVEL_VERBOSE
 #ifdef VMS_DEBUGGING_INFO
 		    /* Enable line number info for traceback.  */
+		    || debug_info_level > DINFO_LEVEL_NONE
+#endif
+#ifdef __PDP10_H__
 		    || debug_info_level > DINFO_LEVEL_NONE
 #endif
 		    || flag_test_coverage);

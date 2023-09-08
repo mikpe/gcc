@@ -26,6 +26,16 @@
 
 /* Locate the FDE entry for a given address, using Darwin's keymgr support.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: unwind-dw2-fde-darwin.c fde0d2dd2e14 2007/10/15 18:35:18 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "tconfig.h"
 #include "tsystem.h"
 #include <string.h>

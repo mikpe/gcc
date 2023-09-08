@@ -48,6 +48,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "optabs.h"
 #include "pointer-set.h"
+#ifdef __PDP10_H__
+#include "tm_p.h"
+#endif
 #include "splay-tree.h"
 
 
@@ -1644,7 +1647,11 @@ gimplify_conversion (tree *expr_p)
 	      || TREE_CODE (*expr_p) == CONVERT_EXPR);
   
   /* Then strip away all but the outermost conversion.  */
+#ifdef  __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (TREE_OPERAND (*expr_p, 0));
+#else
   STRIP_SIGN_NOPS (TREE_OPERAND (*expr_p, 0));
+#endif
 
   /* And remove the outermost conversion if it's useless.  */
   if (tree_ssa_useless_type_conversion (*expr_p))
@@ -1948,6 +1955,13 @@ gimplify_self_mod_expr (tree *expr_p, tree *pre_p, tree *post_p,
 
   gcc_assert (code == POSTINCREMENT_EXPR || code == POSTDECREMENT_EXPR
 	      || code == PREINCREMENT_EXPR || code == PREDECREMENT_EXPR);
+
+/* PDP10 - formerly expand_expr() call expand_increment() for pre and post increment and decrement
+    and when the operand type was a pointer would set the instruction code to CODE_FOR_ADJBP
+    Something like that probably needs to happen here or somewhere not long after here, but the
+    whole gimplify thing is new, so it will require some study.
+    -mtc 3/2/2007
+*/
 
   /* Prefix or postfix?  */
   if (code == POSTINCREMENT_EXPR || code == POSTDECREMENT_EXPR)
@@ -6045,6 +6059,13 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	      && TREE_CODE (TREE_OPERAND (*expr_p, 1)) == INTEGER_CST
 	      && POINTER_TYPE_P (TREE_TYPE (TREE_OPERAND (TREE_OPERAND (*expr_p,
 									0),0)))
+#ifdef __PDP10_H__
+		/* To move offsets past a pointer conversion, the pointers must reference same size objects
+		    -mtc 5/6/2008
+		*/
+	      && TYPE_SIZE(TREE_TYPE(TREE_TYPE (TREE_OPERAND (*expr_p, 0))))
+	      		==  TYPE_SIZE(TREE_TYPE(TREE_TYPE (TREE_OPERAND(TREE_OPERAND (*expr_p, 0), 0))))
+#endif
 	      && (tmp = maybe_fold_offset_to_reference
 			 (TREE_OPERAND (TREE_OPERAND (*expr_p, 0), 0),
 			  TREE_OPERAND (*expr_p, 1),

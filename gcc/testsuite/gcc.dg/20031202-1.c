@@ -42,3 +42,6 @@ main (void)
     abort ();
   exit (0);
 }
+
+/* { dg-warning "address of scalar 9" "bit byte taken" { target pdp10-xkl-tops20 } 25 } */
+/* { dg-warning "address of scalar 9" "bit byte taken" { target pdp10-xkl-tops20 } 41 } */

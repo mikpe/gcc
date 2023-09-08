@@ -68,6 +68,16 @@ along with GCC; see the file COPYING3.  If not see
 
    For more on data type definitions, see `dbxout_type'.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: dbxout.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -994,7 +1004,11 @@ dbxout_init (const char *input_file_name)
   /* Convert Ltext into the appropriate format for local labels in case
      the system doesn't insert underscores in front of user generated
      labels.  */
+#ifdef __PDP10_H__
+  ASM_GENERATE_INTERNAL_LABEL (ltext_label_name, "Lt", 0);
+#else
   ASM_GENERATE_INTERNAL_LABEL (ltext_label_name, "Ltext", 0);
+#endif
 
   /* Put the current working directory in an N_SO symbol.  */
   if (use_gnu_debug_info_extensions && !NO_DBX_MAIN_SOURCE_DIRECTORY)
@@ -1235,7 +1249,11 @@ dbxout_source_file (const char *filename)
 	switch_to_section (text_section);
 
       dbxout_begin_simple_stabs (remap_debug_filename (filename), N_SOL);
+#ifdef __PDP10_H__
+      dbxout_stab_value_internal_label ("Lt", &source_label_number);
+#else
       dbxout_stab_value_internal_label ("Ltext", &source_label_number);
+#endif
       lastfile = filename;
     }
 }
@@ -1293,7 +1311,11 @@ static void
 dbxout_begin_block (unsigned int line ATTRIBUTE_UNUSED, unsigned int n)
 {
   emit_pending_bincls_if_required ();
+#ifdef __PDP10_H__
+  targetm.asm_out.internal_label (asm_out_file, "LB", n);
+#else
   targetm.asm_out.internal_label (asm_out_file, "LBB", n);
+#endif
 }
 
 /* Describe the end line-number of an internal block within a function.  */
@@ -1302,7 +1324,11 @@ static void
 dbxout_end_block (unsigned int line ATTRIBUTE_UNUSED, unsigned int n)
 {
   emit_pending_bincls_if_required ();
+#ifdef __PDP10_H__
+  targetm.asm_out.internal_label (asm_out_file, "LE", n);
+#else
   targetm.asm_out.internal_label (asm_out_file, "LBE", n);
+#endif
 }
 
 /* Output dbx data for a function definition.
@@ -2816,6 +2842,17 @@ dbxout_symbol_location (tree decl, tree type, const char *suffix, rtx home)
   int number = 0;
   int regno = -1;
 
+  /* PDP-10: Convert bitfield back to MEM + byte offset.  */
+  if (GET_CODE (home) == SUBREG
+      && GET_CODE (SUBREG_REG (home)) == ZERO_EXTRACT)
+    {
+      int bitpos = INTVAL (XEXP (SUBREG_REG (home), 2));
+      home = gen_rtx_MEM (GET_MODE (home),
+			  plus_constant (XEXP (SUBREG_REG (home), 0),
+					 bitpos * BITS_PER_UNIT));
+
+    }
+
   /* Don't mention a variable at all
      if it was completely optimized into nothingness.
 
@@ -3434,7 +3471,11 @@ dbxout_block (tree block, int depth, tree args)
 		scope_start = begin_label;
 	      else
 		{
+#ifdef __PDP10_H__
+		  ASM_GENERATE_INTERNAL_LABEL (buf, "LB", blocknum);
+#else
 		  ASM_GENERATE_INTERNAL_LABEL (buf, "LBB", blocknum);
+#endif
 		  scope_start = buf;
 		}
 
@@ -3466,9 +3507,15 @@ dbxout_block (tree block, int depth, tree args)
 		/* The outermost block doesn't get LBE labels;
 		   use the "scope" label which will be emitted
 		   by dbxout_function_end.  */
+#ifdef __PDP10_H__
+		ASM_GENERATE_INTERNAL_LABEL (buf, "LS", scope_labelno);
+	      else
+		ASM_GENERATE_INTERNAL_LABEL (buf, "LE", blocknum);
+#else
 		ASM_GENERATE_INTERNAL_LABEL (buf, "Lscope", scope_labelno);
 	      else
 		ASM_GENERATE_INTERNAL_LABEL (buf, "LBE", blocknum);
+#endif
 
 	      dbx_output_rbrac (buf, begin_label);
 	    }

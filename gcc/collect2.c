@@ -25,6 +25,16 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Build tables of static constructors and destructors and run ld.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: collect2.c 08a4fc55bb47 2008/01/02 21:20:47 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -932,8 +942,12 @@ main (int argc, char **argv)
   /* Maybe we know the right file to use (if not cross).  */
   ld_file_name = 0;
 #ifdef DEFAULT_LINKER
+#ifdef __PDP10_H__
+  ld_file_name = find_a_file (&cpath, DEFAULT_LINKER);
+#else
   if (access (DEFAULT_LINKER, X_OK) == 0)
     ld_file_name = DEFAULT_LINKER;
+#endif
   if (ld_file_name == 0)
 #endif
 #ifdef REAL_LD_FILE_NAME

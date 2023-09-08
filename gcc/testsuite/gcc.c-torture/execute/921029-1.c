@@ -2,6 +2,50 @@ typedef unsigned long long ULL;
 ULL back;
 ULL hpart, lpart;
 ULL
+
+#ifdef __PDP10__
+build(long h, long l)
+{
+  /* hpart uses 35 bits, lpart uses 36 bits */
+  hpart = h;
+  hpart <<= 36;  /* Lop off high order bit in h */
+  lpart = l;
+  lpart &= 0xFFFFFFFFFLL;
+  back = hpart | lpart;
+  return back;
+}
+
+main()
+{
+  if (build(0, 1) != 0x000000000000000001LL)
+    abort();
+  if (build(0, 0) != 0x000000000000000000LL)
+    abort();
+  if (build(0, 0xFFFFFFFFF) != 0x000000000FFFFFFFFFLL)
+    abort();
+  if (build(0, 0xFFFFFFFFE) != 0x000000000FFFFFFFFELL)
+    abort();
+  if (build(1, 1) != 0x000000001000000001LL)
+    abort();
+  if (build(1, 0) != 0x000000001000000000LL)
+    abort();
+  if (build(1, 0xFFFFFFFFF) != 0x000000001FFFFFFFFFLL)
+    abort();
+  if (build(1, 0xFFFFFFFFE) != 0x000000001FFFFFFFFELL)
+    abort();
+  if (build(0x7FFFFFFFF, 1) != 0x7FFFFFFFF000000001LL)
+    abort();
+  if (build(0x7FFFFFFFF, 0) != 0x7FFFFFFFF000000000LL)
+    abort();
+  if (build(0x7FFFFFFFF, 0xFFFFFFFFF) != 0x7FFFFFFFFFFFFFFFFFLL)
+    abort();
+  if (build(0x7FFFFFFFF, 0xFFFFFFFFE) != 0x7FFFFFFFFFFFFFFFFELL)
+    abort();
+  exit(0);
+}
+
+#else
+
 build(long h, long l)
 {
   hpart = h;
@@ -40,3 +84,5 @@ main()
     abort();
   exit(0);
 }
+
+#endif

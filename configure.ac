@@ -174,6 +174,7 @@ libgcj="target-libffi \
 # the host libraries and the host tools (which may be a cross compiler)
 #
 target_libraries="target-libgcc \
+		target-libxkl \
 		target-libiberty \
 		target-libgloss \
 		target-newlib \
@@ -885,6 +886,9 @@ case "${target}" in
     ;;
   *-*-lynxos*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    ;; 
+  pdp10-*-*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libiberty ${libgcj}"
     ;; 
   *-*-*)
     noconfigdirs="$noconfigdirs ${libgcj}"

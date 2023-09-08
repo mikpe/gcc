@@ -11,6 +11,16 @@ Causes function @var{f} to be called at exit.  Returns 0.
 
 */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: atexit.c f3ded7179433 2007/04/26 21:47:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 
 #ifdef HAVE_ON_EXIT

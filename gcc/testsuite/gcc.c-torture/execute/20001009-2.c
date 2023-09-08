@@ -3,7 +3,11 @@ int foo()
 {
   int a;
   int c;
+#ifdef __PDP10__
+  a=0x1ff;
+#else
   a=0xff;
+#endif
   for (;b;b--)
   {
     c=1;

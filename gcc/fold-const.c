@@ -47,6 +47,16 @@ along with GCC; see the file COPYING3.  If not see
    gimple code, we need to handle GIMPLE tuples as well as their
    corresponding tree equivalents.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: fold-const.c ca857259c478 2012/11/15 02:10:17 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -216,6 +226,20 @@ fit_double_type (unsigned HOST_WIDE_INT l1, HOST_WIDE_INT h1,
 			|| (TREE_CODE (type) == INTEGER_TYPE
 			    && TYPE_IS_SIZETYPE (type)));
 
+/* Mark this customization detected in 430 update
+    -mtc 11/30/2007
+*/
+#ifdef __PDP10_H__
+  /* PDP-10: Truncate long long to 71 bits.  (Perhaps the correct
+     solution is to set LONG_LONG_TYPE_SIZE in pdp10.h to 71?)  */
+  if (TARGET_71BIT
+      && ((TYPE_MAIN_VARIANT (type)
+	   == long_long_integer_type_node)
+	  || (TYPE_MAIN_VARIANT (type)
+	      == long_long_unsigned_type_node)))
+    prec = 71;
+#endif
+
   /* First clear all bits that are beyond the type's precision.  */
   if (prec >= 2 * HOST_BITS_PER_WIDE_INT)
     ;
@@ -338,6 +362,40 @@ add_double_with_sign (unsigned HOST_WIDE_INT l1, HOST_WIDE_INT h1,
   else
     return OVERFLOW_SUM_SIGN (h1, h2, h);
 }
+
+/* machine dependent version for when we're dealing with target machine format numbers
+    -mtc 1/17/2007
+*/
+#ifdef __PDP10_H__
+int
+pdp10_add_double (unsigned HOST_WIDE_INT l1, HOST_WIDE_INT h1, 
+						unsigned HOST_WIDE_INT l2, HOST_WIDE_INT h2, 
+						unsigned HOST_WIDE_INT *lv, HOST_WIDE_INT *hv)
+{
+  unsigned HOST_WIDE_INT l;
+  HOST_WIDE_INT h;
+  HOST_WIDE_INT signbit = (HOST_WIDE_INT) 1 << 35;
+
+  /* when we're in 71bit mode, we need to pay attention to the redundant sign bit */
+  if (TARGET_71BIT)
+  	{
+  	/* squeeze out the sign bit in the low half before doing arithmetic */
+	l1 = ((HOST_WIDE_INT) l1 << (HOST_BITS_PER_WIDE_INT - 35)) >> (HOST_BITS_PER_WIDE_INT - 35);
+	l2 = ((HOST_WIDE_INT) l2 << (HOST_BITS_PER_WIDE_INT - 35)) >> (HOST_BITS_PER_WIDE_INT - 35);
+        l = l1 + l2;
+        h = h1 + h2 + (l < l1);
+
+	/* copy the sign bit from the high half into the low half */
+	l = (l & (~signbit))  | (h & signbit);
+
+       *lv = l;
+       *hv = h;
+        return OVERFLOW_SUM_SIGN (h1, h2, h);
+  	}
+  /* when we're in 72 bit mode, the normal add works fine */
+  return add_double(l1, h1, l2, h2, lv, hv);
+}
+#endif
 
 /* Negate a doubleword integer with doubleword result.
    Return nonzero if the operation overflows, assuming it's signed.
@@ -872,6 +930,11 @@ div_and_round_double (enum tree_code code, int uns,
   return overflow;
 }
 
+#ifdef __PDP10_H__
+/* We don't call this, so don't compile it
+    -mtc 7/22/2010
+*/
+#else
 /* If ARG2 divides ARG1 with zero remainder, carries out the division
    of type CODE and returns the quotient.
    Otherwise returns NULL_TREE.  */
@@ -909,6 +972,8 @@ div_if_zero_remainder (enum tree_code code, const_tree arg1, const_tree arg2)
 
   return build_int_cst_wide (type, quol, quoh);
 }
+#endif
+
 
 /* This is nonzero if we should defer warnings about undefined
    overflow.  This facility exists because these warnings are a
@@ -1012,7 +1077,11 @@ fold_deferring_overflow_warnings_p (void)
 /* This is called when we fold something based on the fact that signed
    overflow is undefined.  */
 
+#ifdef __PDP10_H__
+void
+#else
 static void
+#endif
 fold_overflow_warning (const char* gmsgid, enum warn_strict_overflow_code wc)
 {
   gcc_assert (!flag_wrapv && !flag_trapv);
@@ -1118,7 +1187,15 @@ negate_expr_p (tree t)
 
   type = TREE_TYPE (t);
 
+/* Avoid stripping conversions to/from pointer.
+-mtc 10/30/2007
+*/
+#ifdef __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (t);
+#else
   STRIP_SIGN_NOPS (t);
+#endif
+
   switch (TREE_CODE (t))
     {
     case INTEGER_CST:
@@ -1238,6 +1315,12 @@ fold_negate_expr (tree t)
 {
   tree type = TREE_TYPE (t);
   tree tem;
+
+/* Negating a pointer is illegal and on the PDP10 it causes serious problems.
+    -mtc 12/19/2006
+*/
+  if (POINTER_TYPE_P(type))
+  	abort();
 
   switch (TREE_CODE (t))
     {
@@ -1447,7 +1530,15 @@ negate_expr (tree t)
     return NULL_TREE;
 
   type = TREE_TYPE (t);
+
+/* pointers can't be negated, so avoid creating such an expression
+   -mtc 10/16/2007
+*/
+#ifdef __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (t);
+#else
   STRIP_SIGN_NOPS (t);
+#endif
 
   tem = fold_negate_expr (t);
   if (!tem)
@@ -1486,7 +1577,31 @@ split_tree (tree in, enum tree_code code, tree *conp, tree *litp,
   *minus_litp = 0;
 
   /* Strip any conversions that don't change the machine mode or signedness.  */
+/* Don't change between pointer and non-pointer modes either
+    -mtc 8/23/2007
+*/
+#ifdef __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (in);
+#else
   STRIP_SIGN_NOPS (in);
+#endif
+
+/* negating a pointer is illegal and on the PDP10 is causes problems
+    associating pointer differences is illegal, so just return the input expression
+    -mtc 12/20/2006
+    make check for pointer difference more robust than simply looking for ptrdiff_type_node
+    -mtc 2/28/2008
+*/
+#ifdef __PDP10_H__
+  if (negate_p && POINTER_TYPE_P(TREE_TYPE(in)))
+  	abort();
+
+  if (TREE_CODE(in)==MINUS_EXPR
+  	&&  ((TREE_TYPE(in) == ptrdiff_type_node)
+  			|| (POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(in, 0)))
+  			      && POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(in, 1))))))
+  	return in;
+#endif
 
   if (TREE_CODE (in) == INTEGER_CST || TREE_CODE (in) == REAL_CST
       || TREE_CODE (in) == FIXED_CST)
@@ -1517,7 +1632,15 @@ split_tree (tree in, enum tree_code code, tree *conp, tree *litp,
       if (op0 != 0 && TREE_CONSTANT (op0))
 	*conp = op0, op0 = 0;
       else if (op1 != 0 && TREE_CONSTANT (op1))
+/* negating a pointer is illegal and on the PDP10 is causes problems
+    -mtc 12/19/2006
+*/
+#ifdef __PDP10_H__
+		if (!POINTER_TYPE_P(TREE_TYPE(op1)) || !neg1_p)
+			*conp = op1, neg_conp_p = neg1_p, op1 = 0;
+#else
 	*conp = op1, neg_conp_p = neg1_p, op1 = 0;
+#endif
 
       /* If we haven't dealt with either operand, this is not a case we can
 	 decompose.  Otherwise, VAR is either of the ones remaining, if any.  */
@@ -2116,6 +2239,14 @@ static tree
 fold_convert_const_int_from_int (tree type, const_tree arg1)
 {
   tree t;
+
+/* Don't fold conversion between pointer types
+    -mtc 11/9/2007
+*/
+#ifdef __PDP10_H__
+	if (POINTER_TYPE_P(TREE_TYPE(arg1)) && POINTER_TYPE_P(type))
+		return NULL_TREE;
+#endif
 
   /* Given an integer constant, make new constant with new type,
      appropriately sign-extended or truncated.  */
@@ -3034,8 +3165,21 @@ operand_equal_p (const_tree arg0, const_tree arg1, unsigned int flags)
   if (TYPE_PRECISION (TREE_TYPE (arg0)) != TYPE_PRECISION (TREE_TYPE (arg1)))
     return 0;
 
+/*	Pointer diff initialization requires slightly relaxed STRIP_NOPS or it can fail to
+	recognize addresses of different fields of a record as having same base.
+	see 930326-1.c
+	-mtc 7/25/2006
+	But with our pointer conversion definitions, we really need to treat all pointers as different.
+	So handling equivalence of the base addresses will need to happen elsewhere.
+	-mtc 2/14/2011
+*/
+#ifdef __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (arg0);
+  STRIP_SIGN_NONPTR_NOPS (arg1);
+#else
   STRIP_NOPS (arg0);
   STRIP_NOPS (arg1);
+#endif
 
   /* In case both args are comparisons but with different comparison
      code, try to swap the comparison operands of one arg to produce
@@ -3228,7 +3372,11 @@ operand_equal_p (const_tree arg0, const_tree arg1, unsigned int flags)
     case tcc_expression:
       switch (TREE_CODE (arg0))
 	{
-	case ADDR_EXPR:
+/* on the PDP10, address expressions of different types are not really the same, but I think that
+    an actual comparison would require converting them to the same type, so that they will be equal
+    iff the objects are equal and there's no need to also compare the types
+    -mtc 2/15/2007
+*/	case ADDR_EXPR:
 	case TRUTH_NOT_EXPR:
 	  return OP_SAME (0);
 
@@ -3954,7 +4102,12 @@ optimize_bit_field_compare (enum tree_code code, tree compare_type,
      within it. If the new reference is the same size as the original, we
      won't optimize anything, so return zero.  */
   nbitsize = GET_MODE_BITSIZE (nmode);
+#ifdef __PDP10_H__
+  /* integer mode bit sizes are NOT necessarily a power of 2 on the PDP10 */
+  nbitpos = lbitpos / nbitsize * nbitsize;
+#else
   nbitpos = lbitpos & ~ (nbitsize - 1);
+#endif
   lbitpos -= nbitpos;
   if (nbitsize == lbitsize)
     return 0;
@@ -4454,6 +4607,39 @@ make_range (tree exp, int *pin_p, tree *plow, tree *phigh,
 	  exp = arg0;
 	  continue;
 
+#ifdef __PDP10_H__
+/* add a case to handle narrowing ranges to match actual range of bit fields */
+/* -mtc 11/2/2012 */
+	case COMPONENT_REF:
+	  {
+	  HOST_WIDE_INT bitsize, bitpos, b_low, b_high;
+	  int unsignedp, volatilep;
+	  tree offset;
+	  enum machine_mode mode;
+	  
+	  get_inner_reference(exp,&bitsize, &bitpos, &offset, &mode, &unsignedp, &volatilep, true);
+	  if (bitsize < BITS_PER_WORD)
+	  	{
+	  	b_low = 0;
+		b_high = (1LL << bitsize) - 1;
+		if (!unsignedp)
+			{
+			b_low -= (1LL << (bitsize - 1));
+			b_high -= (1LL << (bitsize - 1));
+			}
+		if (merge_ranges (&n_in_p, &n_low, &n_high,
+	  					in_p, low, high,
+	  					1, build_int_cst(NULL, b_low), build_int_cst(NULL, b_high)))
+			{
+			in_p = n_in_p;
+			low = n_low;
+			high = n_high;
+			}
+	  	}
+	  break;
+	  }
+#endif
+
 	case NEGATE_EXPR:
 	  /* (-x) IN [a,b] -> x in [-b, -a]  */
 	  n_low = range_binop (MINUS_EXPR, exp_type,
@@ -4797,6 +4983,13 @@ range_predecessor (tree val)
   if (INTEGRAL_TYPE_P (type)
       && operand_equal_p (val, TYPE_MIN_VALUE (type), 0))
     return 0;
+#ifdef __PDP10_H__
+/* constant arithmetic on pointers doesn't work properly, so don't try
+    - mtc 7/22/2010
+*/
+  else if (!INTEGRAL_TYPE_P (type))
+  	return 0;
+#endif
   else
     return range_binop (MINUS_EXPR, NULL_TREE, val, 0, integer_one_node, 0);
 }
@@ -4811,6 +5004,13 @@ range_successor (tree val)
   if (INTEGRAL_TYPE_P (type)
       && operand_equal_p (val, TYPE_MAX_VALUE (type), 0))
     return 0;
+#ifdef __PDP10_H__
+/* constant arithmetic on pointers doesn't work properly, so don't try
+    - mtc 7/22/2010
+*/
+  else if (!INTEGRAL_TYPE_P (type))
+  	return 0;
+#endif
   else
     return range_binop (PLUS_EXPR, NULL_TREE, val, 0, integer_one_node, 0);
 }
@@ -4908,6 +5108,12 @@ merge_ranges (int *pin_p, tree *plow, tree *phigh, int in0_p, tree low0,
 	      return 0;
 	    }
 	}
+#ifdef __PDP10_H__
+/* actually a gcc bug */
+/* -mtc 11/2/2012 */
+      else if (low0 == 0 && high0 == 0)
+	in_p = 0, low = low1, high = high1;
+#endif
       else
 	return 0;
     }
@@ -4965,11 +5171,17 @@ merge_ranges (int *pin_p, tree *plow, tree *phigh, int in0_p, tree low0,
 					    TYPE_MIN_VALUE (TREE_TYPE (low0))))
 		      low0 = 0;
 		    break;
+#ifdef __PDP10_H__
+/* ranges of pointer constants isn't meaningful
+    -mtc 7/22/2010
+*/
+#else
 		  case POINTER_TYPE:
 		    if (TYPE_UNSIGNED (TREE_TYPE (low0))
 			&& integer_zerop (low0))
 		      low0 = 0;
 		    break;
+#endif
 		  default:
 		    break;
 		  }
@@ -4988,6 +5200,11 @@ merge_ranges (int *pin_p, tree *plow, tree *phigh, int in0_p, tree low0,
 					    TYPE_MAX_VALUE (TREE_TYPE (high1))))
 		      high1 = 0;
 		    break;
+#ifdef __PDP10_H__
+/* ranges of pointer constants isn't meaningful
+    -mtc 7/22/2010
+*/
+#else
 		  case POINTER_TYPE:
 		    if (TYPE_UNSIGNED (TREE_TYPE (high1))
 			&& integer_zerop (range_binop (PLUS_EXPR, NULL_TREE,
@@ -4995,6 +5212,7 @@ merge_ranges (int *pin_p, tree *plow, tree *phigh, int in0_p, tree low0,
 						       integer_one_node, 1)))
 		      high1 = 0;
 		    break;
+#endif
 		  default:
 		    break;
 		  }
@@ -5677,7 +5895,12 @@ fold_truthop (enum tree_code code, tree truth_type, tree lhs, tree rhs)
     return 0;
 
   lnbitsize = GET_MODE_BITSIZE (lnmode);
+#ifdef __PDP10_H__
+  /* integer mode bit sizes are NOT necessarily a power of 2 on the PDP10 */
+  lnbitpos = first_bit / lnbitsize * lnbitsize;
+#else
   lnbitpos = first_bit & ~ (lnbitsize - 1);
+#endif
   lntype = lang_hooks.types.type_for_size (lnbitsize, 1);
   xll_bitpos = ll_bitpos - lnbitpos, xrl_bitpos = rl_bitpos - lnbitpos;
 
@@ -5744,7 +5967,12 @@ fold_truthop (enum tree_code code, tree truth_type, tree lhs, tree rhs)
 	return 0;
 
       rnbitsize = GET_MODE_BITSIZE (rnmode);
+#ifdef __PDP10_H__
+      /* integer mode bit sizes are NOT necessarily a power of 2 on the PDP10 */
+      rnbitpos = first_bit / rnbitsize * rnbitsize;
+#else
       rnbitpos = first_bit & ~ (rnbitsize - 1);
+#endif
       rntype = lang_hooks.types.type_for_size (rnbitsize, 1);
       xlr_bitpos = lr_bitpos - rnbitpos, xrr_bitpos = rr_bitpos - rnbitpos;
 
@@ -6072,6 +6300,13 @@ extract_muldiv_1 (tree t, tree c, enum tree_code code, tree wide_type,
 		  < GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (op0))))
 	      /* ... or signedness changes for division or modulus,
 		 then we cannot pass through this conversion.  */
+/* on pdp10 we don't want to pass through sign changes on multiplies either
+    -mtc 11/2/2007
+*/
+#ifdef __PDP10_H__
+	      || ((TYPE_UNSIGNED (ctype)
+		      != TYPE_UNSIGNED (TREE_TYPE (op0))))))
+#else
 	      || (code != MULT_EXPR
 		  && (TYPE_UNSIGNED (ctype)
 		      != TYPE_UNSIGNED (TREE_TYPE (op0))))
@@ -6080,6 +6315,7 @@ extract_muldiv_1 (tree t, tree c, enum tree_code code, tree wide_type,
 		 as that would introduce undefined overflow.  */
 	      || (TYPE_OVERFLOW_UNDEFINED (TREE_TYPE (op0))
 		  && !TYPE_OVERFLOW_UNDEFINED (type))))
+#endif
 	break;
 
       /* Pass the constant down and see if we can make a simplification.  If
@@ -6185,6 +6421,14 @@ extract_muldiv_1 (tree t, tree c, enum tree_code code, tree wide_type,
 	  return fold_build2 (tcode, ctype, fold_convert (ctype, t1),
 			      fold_convert (ctype, t2));
 	}
+
+/* avoid negating a pointer expression
+    -mtc 12/19/2006
+*/
+#ifdef __PDP10_H__
+	if (tcode == MINUS_EXPR && POINTER_TYPE_P(TREE_TYPE(op1)))
+		break;
+#endif
 
       /* If this was a subtraction, negate OP1 and set it to be an addition.
 	 This simplifies the logic below.  */
@@ -6916,6 +7160,14 @@ fold_single_bit_test (enum tree_code code, tree arg0, tree arg1,
       intermediate_type = ops_unsigned ? unsigned_type : signed_type;
       inner = fold_convert (intermediate_type, inner);
 
+/* The analogous place in 3.6.6 contained conditional PDP10 code to convert the mode
+    to mode if the mode of intermediate_type was a sub-word mode.
+    The value mode is no longer available here, but since we now always convert to either
+    unsigned_type or signed_type, I think that is no longer necessary.
+    I believe the issues is that we can only shift words and double words.
+    -mtc 3/2/2007
+*/
+
       if (bitnum != 0)
 	inner = build2 (RSHIFT_EXPR, intermediate_type,
 			inner, size_int (bitnum));
@@ -7160,6 +7412,11 @@ fold_sign_changed_comparison (enum tree_code code, tree type,
   return fold_build2 (code, type, arg0_inner, arg1);
 }
 
+#ifdef __PDP10_H__
+/* We don't call this, so don't compile it
+    -mtc 7/22/2010
+*/
+#else
 /* Tries to replace &a[idx] p+ s * delta with &a[idx + delta], if s is
    step of the array.  Reconstructs s and delta in the case of s * delta
    being an integer constant (and thus already folded).
@@ -7295,6 +7552,42 @@ try_move_mult_to_index (tree addr, tree op1)
 
   return fold_build1 (ADDR_EXPR, TREE_TYPE (addr), ret);
 }
+#endif
+
+
+#ifdef __PDP10_H__
+/* Change &a[idx] + delta to &a[idx + delta]
+   On the PDP10 this should always work because we leave pointer arithmetic as the user
+   writes it.  IE the offset is always in units of the referenced objects.
+   -mtc 2/1/2008
+  TYPE_DOMAIN can be null for arrays of records, so add some fallback checks.
+  -mtc 3/18/2008
+*/
+
+static tree
+move_offset_to_index (tree addr, tree offset)
+{
+  tree ref = TREE_OPERAND (addr, 0);
+  tree ret;
+  tree itype;
+
+  gcc_assert(TREE_CODE(addr) == ADDR_EXPR);
+  if  (TREE_CODE(ref) != ARRAY_REF)
+  	return NULL_TREE;
+  itype = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (ref, 0)));
+  if (!itype)
+  	itype = TREE_TYPE(TREE_OPERAND(ref, 1));
+  if (!itype)
+  	itype = sizetype;
+
+  ret = copy_node(ref);
+  TREE_OPERAND(ret, 1) = fold_build2(PLUS_EXPR, itype, 
+  										  fold_convert(itype, TREE_OPERAND(ret, 1)),
+  										  fold_convert(itype, offset));
+  
+  return fold_build1(ADDR_EXPR, TREE_TYPE(addr), ret);
+}
+#endif
 
 
 /* Fold A < X && A + 1 > Y to A < X && A >= Y.  Normally A + 1 > Y
@@ -7942,7 +8235,14 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	{
 	  /* Don't use STRIP_NOPS, because signedness of argument type
 	     matters.  */
+	/* Avoid stripping conversions to/from pointer.
+	-mtc 10/30/2007
+	*/
+#ifdef __PDP10_H__
+	  STRIP_SIGN_NONPTR_NOPS (arg0);
+#else
 	  STRIP_SIGN_NOPS (arg0);
+#endif
 	}
       else
 	{
@@ -7957,7 +8257,14 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	     studied.  In any cases, the appropriate type conversions
 	     should be put back in the tree that will get out of the
 	     constant folder.  */
+	/* Avoid stripping conversions to/from pointer.
+	-mtc 10/30/2007
+	*/
+#ifdef __PDP10_H__
+	  STRIP_NONPTR_NOPS (arg0);
+#else
 	  STRIP_NOPS (arg0);
+#endif
 	}
     }
 
@@ -8071,7 +8378,14 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	     type via an object of identical or wider precision, neither
 	     conversion is needed.  */
 	  if (TYPE_MAIN_VARIANT (inside_type) == TYPE_MAIN_VARIANT (type)
+/* avoid changing pointer conversions here too
+    -mtc 9/27/2007
+*/
+#ifdef __PDP10_H__
+	      && ((inter_int && final_int)
+#else
 	      && (((inter_int || inter_ptr) && final_int)
+#endif
 		  || (inter_float && final_float))
 	      && inter_prec >= final_prec)
 	    return fold_build1 (code, type, TREE_OPERAND (op0, 0));
@@ -8126,6 +8440,23 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	      && ! (final_ptr && inside_prec != inter_prec)
 	      && ! (final_prec != GET_MODE_BITSIZE (TYPE_MODE (type))
 		    && TYPE_MODE (type) == TYPE_MODE (inter_type))
+/* gcc430 eliminated this test, but it's needed on the PDP10 to avoid
+    eliminating necessary pointer conversions
+    -mtc 12/18/2007
+    in addition to requireing that inside and final types match as far as whether they're pointers
+    also require that if we begin and end with a pointer the intermediate type be a pointer of the same
+    mode as either the inside or final type
+    -mtc 3/30/2009
+    checking the type mode isn't sufficient, instead check the main variant, as casts between pointers
+    can almost always be active and in particular casts from void* to int* are active
+    -mtc 9/14/2012
+*/
+#ifdef __PDP10_H__
+	      && final_ptr == inside_ptr
+	      && !(inside_ptr && final_ptr 
+	      		&& (!inter_ptr || (TYPE_MAIN_VARIANT(inside_type) != TYPE_MAIN_VARIANT(inter_type)
+	      			&& TYPE_MAIN_VARIANT(inter_type) != TYPE_MAIN_VARIANT(type))))
+#endif
 	      && ! (inside_ptr && final_ptr
 		    && TREE_CODE (TREE_TYPE (inside_type)) == ARRAY_TYPE
 		    && TREE_CODE (TREE_TYPE (type)) != ARRAY_TYPE))
@@ -8233,6 +8564,19 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	  tree arg00 = TREE_OPERAND (arg0, 0);
 	  tree arg01 = TREE_OPERAND (arg0, 1);
 
+#ifdef __PDP10_H__
+/* It is also necessary that type and X be pointers to types of the same size
+    -mtc 4/9/2008
+*/
+	  tree t0=type;
+	  tree t1 = TREE_TYPE(arg00);
+	  tree tt0 = TREE_TYPE(t0);
+	  tree tt1 = TREE_TYPE(t1);
+	  tree s0 = TYPE_SIZE(tt0);
+	  tree s1 = TYPE_SIZE(tt1);
+	  if (s0 && s1 && operand_equal_p(s0, s1, OEP_ONLY_CONST))
+#endif
+
 	  return fold_build2 (TREE_CODE (arg0), type, fold_convert (type, arg00),
 			      fold_convert (sizetype, arg01));
 	}
@@ -8273,6 +8617,10 @@ fold_unary (enum tree_code code, tree type, tree op0)
       return fold_view_convert_expr (type, op0);
 
     case NEGATE_EXPR:
+#ifdef __PDP10_H__
+      if (POINTER_TYPE_P(type))
+	return NULL_TREE;
+#endif
       tem = fold_negate_expr (arg0);
       if (tem)
 	return fold_convert (type, tem);
@@ -8685,8 +9033,13 @@ fold_comparison (enum tree_code code, tree type, tree op0, tree op1)
   arg0 = op0;
   arg1 = op1;
 
-  STRIP_SIGN_NOPS (arg0);
+#ifdef __PDP10_H__
+  STRIP_SIGN_NONPTR_NOPS (arg0);
+  STRIP_SIGN_NONPTR_NOPS (arg1);
+#else
+  STRIP_SIGN_NOPS(EXP) (arg0);
   STRIP_SIGN_NOPS (arg1);
+#endif
 
   tem = fold_relational_const (code, type, arg0, arg1);
   if (tem != NULL_TREE)
@@ -9443,13 +9796,26 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 
   if (kind == tcc_comparison)
     {
-      STRIP_SIGN_NOPS (arg0);
-      STRIP_SIGN_NOPS (arg1);
+      STRIP_SIGN_NONPTR_NOPS (arg0);
+      STRIP_SIGN_NONPTR_NOPS (arg1);
     }
   else
     {
+
+/* Avoid stripping conversions to/from pointer.
+    We could avoid this customization if pointers were never SImode
+    -mtc 8/22/2007
+    Some restructuring with the 4.2.2 update, arg0 and arg1 now handled to together
+    instead of in separate blocks.
+    -mtc 9/26/2007
+*/
+#ifdef __PDP10_H__
+      STRIP_SIGN_NONPTR_NOPS (arg0);
+      STRIP_SIGN_NONPTR_NOPS (arg1);
+#else
       STRIP_NOPS (arg0);
       STRIP_NOPS (arg1);
+#endif
     }
 
   /* Note that TREE_CONSTANT isn't enough: static var addresses are
@@ -9609,7 +9975,15 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	expressions.  */
       if (TREE_CODE (arg0) == ADDR_EXPR)
 	{
+/* PDP10 doesn't have the index multiplication issue, so just move the offset into the index
+    -mtc 2/1/2008
+*/
+#ifdef __PDP10_H__
+	  tem = move_offset_to_index (arg0, fold_convert (sizetype, arg1));
+#else
 	  tem = try_move_mult_to_index (arg0, fold_convert (sizetype, arg1));
+#endif
+
 	  if (tem)
 	    return fold_convert (type, tem);
 	}
@@ -9955,8 +10329,28 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	 -fassociative-math.
 	 And, we need to make sure type is not saturating.  */
 
+/* can't associate pointer difference operations
+    it may be necessary to also check whether the two operands have
+    POINTER_TYPE_P() types, depending on how reliably the parent
+    node is marked with ptrdiff_type_node
+    -mtc 12/20/2006
+    Also avoid associating pointer expressions.  The code here is very
+    wrong and fixing it will require much more attention to the types of all the
+    various expression parts.
+    -mtc 12/20/2006
+    Some reordering because of 4.2.1 update
+*/
+#ifdef __PDP10_H__
+      if ((! FLOAT_TYPE_P (type) || flag_associative_math)
+	  && !TYPE_SATURATING (type)
+	  && (code !=MINUS_EXPR || type != ptrdiff_type_node)
+	  && !POINTER_TYPE_P(type)
+	  && !POINTER_TYPE_P(TREE_TYPE(arg0))
+	  && !POINTER_TYPE_P(TREE_TYPE(arg1))  )
+#else
       if ((! FLOAT_TYPE_P (type) || flag_associative_math)
 	  && !TYPE_SATURATING (type))
+#endif
 	{
 	  tree var0, con0, lit0, minus_lit0;
 	  tree var1, con1, lit1, minus_lit1;
@@ -12592,6 +12986,13 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	 optimizations involving comparisons with non-negative constants.  */
       if (TREE_CODE (arg1) == INTEGER_CST
 	  && TREE_CODE (arg0) != INTEGER_CST
+/*
+	Arithmetic is not valid on PDP10 pointers, so avoid this transform on them
+	-mtc 9/6/2006
+*/
+#ifdef __PDP10_H__
+	  && TREE_CODE(TREE_TYPE(arg0)) != POINTER_TYPE
+#endif
 	  && tree_int_cst_sgn (arg1) > 0)
 	{
 	  if (code == GE_EXPR)
@@ -15286,6 +15687,14 @@ ptr_difference_const (tree e1, tree e2, HOST_WIDE_INT *diff)
     *diff = 0;
 
   *diff += (bitpos1 - bitpos2) / BITS_PER_UNIT;
+
+/* pointer difference should be in elements, not bytes
+    -mtc 9/10/2007
+*/
+#ifdef __PDP10_H__
+  *diff /= int_cst_value(TYPE_SIZE_UNIT(TREE_TYPE(TREE_TYPE(e1))));
+#endif
+  
   return true;
 }
 

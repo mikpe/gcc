@@ -1,0 +1,142 @@
+#!/usr/bin/expect
+
+set ProgName "macro.exp"
+set tops20_login 0
+set Host ""
+set User ""
+set Passwd ""
+set Rcmd ""
+set telnet_lib [file dirname $argv0]
+append telnet_lib "/" "telnet_tops20.exp"
+source $telnet_lib
+set timeout 120
+
+proc RemoteMacro { rcmd } {
+    global timeout ProgName
+
+#exp_internal 1
+    set tries 0
+    set result -1
+    exp_send "\n"
+    expect {
+        -regex ".*\[@!\] $" {
+            set ssec [exec date +%s]
+            exp_send "$rcmd"
+            set result 0
+        }
+        timeout {
+            puts "$ProgName: Expect timed out while invoking macro"
+            if {[incr tries] < 3} {
+                exp_send "\n"
+                exp_continue
+            }
+	}
+    }
+    if { $result < 0 } {
+        puts "$ProgName: Too many timeouts ($tries) invoking macro"
+#exp_internal 0
+        return 0
+    }
+
+    # Increase our patience substantially, the assembler is very, very slow
+    set timeout [expr $timeout * 6]
+    set tries 0
+    expect {
+        -exact "NO ERRORS DETECTED" {
+	    # the assembly completed normally.
+	    # Wait for a prompt, cref may still be running to produce a listing.
+            set result 2
+	    exp_continue
+        }
+        -regex ".*\[@!\] $" {
+            if { $result  < 2 } {
+	        puts "\n$ProgName: prompt seen, but result is $result so continuing"
+                exp_continue
+            }
+            set esec [exec date +%s]
+            set sec [expr $esec - $ssec]
+            puts "\n$ProgName: took $sec seconds to finish"
+            # Else TOPS exec prompt following macro invocation.
+            # We are done.
+        }
+        -regex "\[?\].*ERRORS DETECTED" {
+	    # the assembly completed abnormally.
+	    # give up immediately
+            set result 1
+        }
+        -regex "\[?\]MCR.*" {
+	    # the assembly completed abnormally.
+	    # give up immediately
+            set result 1
+        }
+        timeout {
+            set esec [exec date +%s]
+            set sec [expr $esec - $ssec]
+            puts "$ProgName: Expect timed out after waiting $sec seconds for macro"
+            if {[incr tries] < 4} {
+                exp_continue
+            }
+	}
+    }
+#exp_internal 0
+    if { $result == 1 } {
+	# Assemble errors, kill whatever is running with ^c
+        puts stderr "$ProgName: macro assembler errors"
+	exp_send "\003"
+        return 0
+    }
+    if { $result < 1 } {
+	# timed out or error, kill whatever is running with ^c
+        puts stderr "$ProgName: Too many timeouts ($tries) waiting for macro"
+	exp_send "\003"
+        return 0
+    }
+    return 1
+}
+
+
+proc Usage { } {
+    global ProgName
+    puts stderr "usage: $ProgName host username password remote_command"
+}
+
+
+if { $argc != 4 } {
+    puts stderr "$ProgName: wrong number of command line arguments"
+    Usage
+    exit 2
+}
+
+set ii 0
+foreach arg $argv {
+    set ii [expr $ii + 1]
+    switch -exact -- $ii {
+        1 { set Host $arg }
+        2 { set User $arg }
+        3 { set Passwd $arg }
+        4 { set Rcmd $arg }
+        default {
+            puts stderr "$ProgName: error parsing command line arguments"
+            exit 3
+        }
+    }
+}
+
+log_user 0
+if { [login_tops20 "" $Host $User $Passwd] < 1 } {
+    puts stderr "$ProgName: login to $Host as $User failed"
+    exit 1
+}
+
+log_user 1
+if ![RemoteMacro $Rcmd] {
+    puts stderr "$ProgName: macro failed"
+    log_user 0
+    logout_tops20
+    exit 1
+}
+
+log_user 0
+logout_tops20
+
+exit 0

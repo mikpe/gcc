@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: recog.c 0ef5942e7f69 2008/01/05 00:33:01 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -882,9 +892,15 @@ general_operand (rtx op, enum machine_mode mode)
 	 might be called from cleanup_subreg_operands.
 
 	 ??? This is a kludge.  */
+/* on the PDP10 subregs are often the preferred way of describing memory
+    -mtc 9/5/2007
+*/
+#ifdef __PDP10_H__
+#else
       if (!reload_completed && SUBREG_BYTE (op) != 0
 	  && MEM_P (sub))
 	return 0;
+#endif
 
       /* FLOAT_MODE subregs can't be paradoxical.  Combine will occasionally
 	 create such rtl, and we must reject it.  */
@@ -912,6 +928,14 @@ general_operand (rtx op, enum machine_mode mode)
       if (memory_address_p (GET_MODE (op), y))
 	return 1;
     }
+
+/* Allow SUBREG(SYMBOL_REF)
+    -mtc 1/4/2008
+*/
+#ifdef __PDP10_H__
+  if (code == SYMBOL_REF)
+  	return 1;
+#endif
 
   return 0;
 }
@@ -1855,7 +1879,8 @@ offsettable_address_p (int strictp, enum machine_mode mode, rtx y)
 
   /* Use QImode because an odd displacement may be automatically invalid
      for any wider mode.  But it should be valid for a single byte.  */
-  return (*addressp) (QImode, z);
+  /* PDP-10: use the original mode, not QImode.  */
+  return (*addressp) (mode, z);
 }
 
 /* Return 1 if ADDR is an address-expression whose effect depends
@@ -2480,6 +2505,14 @@ constrain_operands (int strict)
 			      && REG_P (op)
 			      && REGNO (op) >= FIRST_PSEUDO_REGISTER)
 			  || (strict == 0 && GET_CODE (op) == SCRATCH)
+/* reg_fits_class_p() will fail when the register is <fp> or <ap>
+    its possible this may result in those registers not being eliminated.
+    -mtc 4/17/2007
+*/
+#ifdef __PDP10_H__
+			  || (REG_P (op)
+			      && GENERAL_REGS==ALL_REGS)
+#endif
 			  || (REG_P (op)
 			      && reg_fits_class_p (op, cl, offset, mode)))
 		        win = 1;
@@ -2970,6 +3003,18 @@ peephole2_optimize (void)
 		     REG_FRAME_RELATED_EXPR that is attached.  */
 		  peep2_current_count = 0;
 		  try = NULL;
+
+		/* We need to reinitialize a bit, otherwise just clearing peep2_current_count effectively disables
+		peephole2 optimizations for the rest of the current basic block.
+		GCC addresses this in 4.5.4, although with a bit of additional restructuring.  
+		-mtc 5/21/2013
+		*/
+		  for (i = 0; i < MAX_INSNS_PER_PEEP2; ++i)
+			peep2_insn_data[i].insn = NULL_RTX;
+	          peep2_insn_data[MAX_INSNS_PER_PEEP2].insn = PEEP2_EOB;
+	          peep2_current = MAX_INSNS_PER_PEEP2;
+	          COPY_REG_SET (peep2_insn_data[peep2_current].live_before, live);
+
 		}
 	      else
 		/* Match the peephole.  */

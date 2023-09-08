@@ -484,6 +484,15 @@ get_value_range (const_tree var)
 
   /* If VAR is a default definition, the variable can take any value
      in VAR's type.  */
+#ifdef __PDP10_H__
+/* It's not a good idea to create anti-ranges for pointers.  The "nonnull"
+     attribute is supposed to help with calls, but within the procedure we
+     still want to validate our parameters and the effect of creating
+     anti-ranges is to optimize out the validation code.
+     -mtc 6/30/2011
+*/
+	set_value_range_to_varying (vr);
+#else
   sym = SSA_NAME_VAR (var);
   if (SSA_NAME_IS_DEFAULT_DEF (var))
     {
@@ -497,7 +506,7 @@ get_value_range (const_tree var)
       else
 	set_value_range_to_varying (vr);
     }
-
+#endif
   return vr;
 }
 
@@ -1789,6 +1798,18 @@ extract_range_from_binary_expr (value_range_t *vr, tree expr)
 
 	  return;
 	}
+/* reorganization for 430 seems to have simply omitted this case
+    -mtc 12/20/2007
+*/
+#ifdef __PDP10_H__
+      else if (code == MINUS_EXPR
+	  		&& POINTER_TYPE_P (TREE_TYPE (op0))
+	  		&& POINTER_TYPE_P (TREE_TYPE (op1)))
+	{
+	  set_value_range_to_varying (vr);
+	  return;
+	}
+#endif
       gcc_assert (code == POINTER_PLUS_EXPR);
       /* For pointer types, we are really only interested in asserting
 	 whether the expression evaluates to non-NULL.  */
@@ -5730,7 +5751,21 @@ test_for_singularity (enum tree_code cond_code, tree op0,
 	 then there is only one value which can satisfy the condition,
 	 return that value.  */
       if (operand_equal_p (min, max, 0) && is_gimple_min_invariant (min))
+#ifdef __PDP10_H__
+	{
+	if (!is_overflow_infinity(vr->min) && !is_overflow_infinity(vr->max))
+		return min;
+
+	if (TYPE_OVERFLOW_UNDEFINED(TREE_TYPE(op0)))
+		{
+		fold_overflow_warning (("assuming signed overflow does not occur when mergning ranges"), 
+			WARN_STRICT_OVERFLOW_COMPARISON);
+		return min;
+		}
+	}
+#else
 	return min;
+#endif
     }
   return NULL;
 }

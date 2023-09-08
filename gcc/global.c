@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: global.c 9d92e0dd6523 2008/06/18 22:14:22 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1829,8 +1839,15 @@ struct tree_opt_pass pass_global_alloc =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 6/18/2008
+*/
+  TODO_dump_func | TODO_verify_rtl_sharing,                   /* todo_flags_finish */
+#else
   TODO_dump_func | TODO_verify_rtl_sharing
   | TODO_ggc_collect,                   /* todo_flags_finish */
+#endif
   'g'                                   /* letter */
 };
 

@@ -19,6 +19,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: c-lex.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -961,7 +971,44 @@ lex_string (const cpp_token *tok, tree *valp, bool objc_string, bool translate)
 	value = build_string (1, "");
     }
 
+/* This handling for PDP10 char variants edited as part of merge to gcc 3.4.4 and 4.1.1
+    The subsequent call to fix_string_type() may be undoing our careful work, so that may need
+    similar PDP10 customization.
+    We might also consider enhancing the type enumeration in cpp.h so that moe than CPP_CHAR
+    and CPP_WCHAR are available.
+    -mtc 2/8/2007
+*/
+#ifdef __PDP10_H__
+	{
+	if (wide)
+		TREE_TYPE(value) = wchar_array_type_node;
+	else
+		{
+		tree char_type;
+		switch(pdp10_char_bytesize)
+			{
+			case 6:
+			  char_type = char6_unsigned_type_node;
+			  break;
+			case 7:
+			  char_type = char7_unsigned_type_node;
+			  break;
+			case 8:
+			  char_type = char8_unsigned_type_node;
+			  break;
+			case 9:
+			  char_type = char9_unsigned_type_node;
+			  break;
+			default:
+			  abort ();
+			}
+		TREE_TYPE(value) = build_array_type(char_type, integer_type_node);
+		}
+	}
+#else
   TREE_TYPE (value) = wide ? wchar_array_type_node : char_array_type_node;
+#endif
+
   *valp = fix_string_type (value);
 
   if (concats)

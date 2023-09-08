@@ -23,6 +23,16 @@ Boston, MA 02110-1301, USA.  */
 
      Lewis, Harry R. and Denenberg, Larry.  Data Structures and Their
      Algorithms.  Harper-Collins, Inc.  1991.  */
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: splay-tree.c 536224ee82d6 2008/01/30 19:17:44 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -24,6 +24,16 @@ along with GCC; see the file COPYING3.  If not see
    It also defines some tables of information about the hardware registers
    and a function init_reg_sets to initialize the tables.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: regclass.c 9566ada92d46 2007/12/22 01:56:12 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2425,6 +2435,18 @@ reg_scan_mark_refs (rtx x, rtx insn)
 
       /* If this is setting a register from a register or from a simple
 	 conversion of a register, propagate REG_EXPR.  */
+/* propogating REG_EXPR is incorrect unless src and dest do not involve
+    SUBREG, EXTEND, or TRUNCATE
+    -mtc 5/23/2007
+*/
+#ifdef __PDP10_H__
+      if (REG_P (dest) && dest == SET_DEST (x) && !REG_ATTRS (dest))
+	{
+	  rtx src = SET_SRC (x);
+
+	  set_reg_attrs_from_value (dest, src);
+	}
+#else
       if (REG_P (dest) && !REG_ATTRS (dest))
 	{
 	  rtx src = SET_SRC (x);
@@ -2437,6 +2459,7 @@ reg_scan_mark_refs (rtx x, rtx insn)
 
 	  set_reg_attrs_from_value (dest, src);
 	}
+#endif
 
       /* ... fall through ...  */
 

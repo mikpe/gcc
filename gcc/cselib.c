@@ -18,6 +18,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: cselib.c 34cc8511e100 2007/11/30 19:16:06 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -809,6 +819,7 @@ cselib_lookup_mem (rtx x, int create)
   cselib_val *addr;
   cselib_val *mem_elt;
   struct elt_list *l;
+  struct elt_loc_list *ll;
 
   if (MEM_VOLATILE_P (x) || mode == BLKmode
       || !cselib_record_memory
@@ -823,6 +834,15 @@ cselib_lookup_mem (rtx x, int create)
   /* Find a value that describes a value of our mode at that address.  */
   for (l = addr->addr_list; l; l = l->next)
     if (GET_MODE (l->elt->val_rtx) == mode)
+/* An extra PDP10 test to ensure that the mem offset value matches before we declare values equal
+    -mtc 1/2/2007
+*/
+#ifdef __PDP10_H__
+		for (ll=l->elt->locs; ll; ll=ll->next)
+			if (GET_CODE(ll->loc) == MEM  && 
+				((MEM_OFFSET(ll->loc) == 0 && MEM_OFFSET(x) == 0) ||
+				 (MEM_OFFSET(ll->loc) && MEM_OFFSET(x) && INTVAL(MEM_OFFSET(ll->loc)) == INTVAL(MEM_OFFSET(x)))))
+#endif
       return l->elt;
 
   if (! create)

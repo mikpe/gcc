@@ -36,6 +36,15 @@ and a path ending in @code{/} returns the empty string after it.
 @end deftypefn
 
 */
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: lbasename.c f3ded7179433 2007/04/26 21:47:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -1,7 +1,13 @@
 extern void abort();
 
 #define HOST_WIDE_INT long
+
+#ifdef __PDP10__
+#define HOST_BITS_PER_WIDE_INT (sizeof(long)*9)
+#else
 #define HOST_BITS_PER_WIDE_INT (sizeof(long)*8)
+#endif
+
 
 struct tree_type
 {

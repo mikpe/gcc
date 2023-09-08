@@ -621,6 +621,12 @@ execute_optimize_stdarg (void)
 
   va_list_simple_ptr = POINTER_TYPE_P (va_list_type_node)
 		       && (TREE_TYPE (va_list_type_node) == void_type_node
+/* for PDP10 va_list_type_node is a pointer to integer but should be still 'simple'
+    -mtc 5/16/2007
+*/
+#ifdef __PDP10_H__
+			   || TREE_TYPE (va_list_type_node) == integer_type_node
+#endif
 			   || TREE_TYPE (va_list_type_node) == char_type_node);
   gcc_assert (is_gimple_reg_type (va_list_type_node) == va_list_simple_ptr);
 

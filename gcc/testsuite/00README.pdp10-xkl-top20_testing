@@ -1,0 +1,369 @@
+
+gcc Cross Compiler Testing for pdp10-xkl-tops20 Targets
+-------------------------------------------------------
+
+  GCC Testsuite Quick Start Guide
+  -------------------------------
+
+  0) Create or confirm ~/.netrc settings.
+
+     $ emacs ~/.netrc
+
+     # Verify machine/login/password settings for
+     # host selected in steps 6 & 8 .
+
+  1) Checkout gcc.
+
+     $ svn co svn://shetland.xkl.com/gcc/trunk ~/sandbox/gcc
+
+  2) Checkout DejaGnu.
+
+     $ svn co svn://shetland.xkl.com/sat/trunk/tools/dg ~/sandbox/dejagnu
+
+  3) Configure DejaGnu.
+
+     $ ~/sandbox/dejagnu/bld/configure.sh
+     Creating the global config file. (~/.my_dejagnu.exp)
+     Creating the personal config file. (~/.dejagnurc)
+     Please add the following lines to your ~/.bash_profile sript.
+
+       export PATH=~/sandbox/dejagnu/bin:$PATH
+       export DEJAGNU=~/.mydejagnu.exp
+
+     $ export PATH=~/sandbox/dejagnu/bin:$PATH
+     $ which runtest
+     ~/sandbox/dejagnu/bin/runtest
+
+  4) The GCC build is versioned automatically.
+
+     By way of explanation, versioning is handled automatically by the
+     GCC compiler Makefile.  This is accomplished by using the
+     subversion command "svnversion" to create the file versionid.h
+     which is included by version.c.  The version string also contains
+     information on where, when and by whom the build was done.
+
+     Two caveats:
+     1) svnversion creates a version description indicating whether
+        the working directory contains a mixed, modified or switched
+        archive copy, so when building a 'release' version of the
+        compiler, it is necessary to make sure that you are working
+        with a clean update with no modified files.
+
+     2) The makefile has some dependencies on the version string
+        "3.3.5" in version.c, even though this is in a comment.  Both
+        version.c and the makefile will need to be modified when we
+        advance to a newer base version.
+
+  5) Configure build.
+
+     $ cd ~/sandbox/gcc
+     $ ./configure  --build=i386-pc-linux --host=i386-pc-linux \
+     --target=pdp10-xkl-tops20 --with-as=macro --with-ld=link \
+     --enable-languages=c --prefix=~/sandbox/local \
+     --with-gcc-version-trigger=~/sandbox/gcc/gcc/version.c
+
+  6) Execute build.
+
+     $ pwd
+     ~/sandbox/gcc   # A contrived example :)
+     $ export PATH=~/sandbox/gcc/gcc:$PATH
+     $ export TOPS20_BUILD_HOST=hope  # Or toed, or ...
+     $ make CFLAGS=" -g -DENABLE_SVNID_TAG "
+     $ make install CFLAGS=" -g -DENABLE_SVNID_TAG "
+
+  7) Configure test environment, part 1.
+
+     Create site.exp files in *two* locations ( gcc/gcc/site.exp and
+     gcc/gcc/testsuite/site.exp ).  The following make command creates
+     site.exp files, which are necessary for subsequent test runs.  This
+     make command does a whole lot more, but all we want is the site.exp
+     files, so issue a Ctrl-C roughly two seconds afterwards.
+
+     $ make -k check
+     ...
+     make[2]: Entering directory `~/sandbox/gcc/gcc'
+     Making a new config file...
+     test -d testsuite || mkdir testsuite
+     rm -f testsuite/site.exp
+     sed '/set tmpdir/ s|testsuite|testsuite|' < site.exp > testsuite/site.exp
+     (rootme=`${PWDCMD-pwd}`; export rootme; \
+     srcdir=`cd .; ${PWDCMD-pwd}` ; export srcdir ; \
+     cd testsuite; \
+     EXPECT=expect ; export EXPECT ; \
+     ...
+     make[2]: [check-gcc] Error 130 (ignored)
+     make[1]: *** [check-gcc] Interrupt
+     make: *** [check] Interrupt
+
+     # Issue Ctrl-C after ~2 seconds, or let it run to execute
+     # the complete suite of tests in all their glory.  Your results
+     # will be ready in ~3 days if all goes according to plan.
+
+  8) Configure test environment, part 2.
+
+     $ emacs gcc/site.exp gcc/testsuite/site.exp
+
+     # Modify testsuite settings to your liking.
+     # At a minimum, confirm the settings for
+     # "topstaleHost", and "topstaleWorkDir".
+     # BOTH site.exp files should be IDENTICAL.
+
+  9) Configure test environment, part 3.
+
+     # Select compile-time optimization levels for execution tests
+     # by editing gcc/gcc/testsuite/lib/c-torture.exp , which is a
+     # test harness file.  Please remember to issue
+     #   "svn revert ~/sandbox/gcc/gcc/testsuite/lib/c-torture.exp"
+     # before "svn commit"'ing your other modifications.
+
+     $ emacs ~/sandbox/gcc/gcc/testsuite/lib/c-torture.exp
+
+  10) Execute tests
+
+     $ cd ~/sandbox/gcc/gcc/testsuite
+     $ runtest --tool gcc
+     # ^ Runs ALL gcc compiler tests, ~3 days duration
+
+     $ runtest --tool gcc execute.exp
+     # ^ Runs gcc execution tests, ~3 days duration
+
+     $ runtest --tool gcc compile.exp
+     # ^ Runs gcc compile-only tests, ~5 minutes duration
+
+     $ runtest --tool gcc dg.exp="specific_test.c"
+     # ^ Runs a specific test
+
+     $ runtest --tool gcc dg.exp="/h*/gcc.dg/c99*.c"
+     # ^ Runs all C99 tests under ~/sandbox/gcc/gcc/testsuite/gcc.dg
+     # Note the fancy "glob" pattern.  This is more-or-less
+     # required because the test harness compares absolute file
+     # paths to the glob pattern.  So, if you wanted to run only
+     # tests starting with 'h', the following pattern (or similar)
+     # is REQUIRED
+     #   "*/gcc.dg/h*.c"
+     # whereas the next pattern will run ALL tests (assuming the absolute
+     # paths begin with '/home').
+     #   "h*.c"
+
+  11) Evaluate results
+
+     $ emacs ~/sandbox/gcc/gcc/testsuite/gcc.log
+     $ emacs ~/sandbox/gcc/gcc/testsuite/gcc.sum
+
+  12) Fix bugs, repeat as appropriate.
+
+
+  GCC Testsuite Overview
+  ----------------------
+
+  gcc and related components (such as gdb) can be tested using
+  the DejaGnu (dg) test harness.  dg is implemented primarily as
+  a collection of Expect libraries, and is supported by GNU autotools
+  by way of the 'check' target in makefiles.  A properly configured
+  and built gcc object tree can be tested by issuing 'make
+  check'.  dg can also be invoked standalone by issuing 'runtest --tool
+  gcc'.  Additional options can be used with 'make check' and 'runtest'
+  to select tests and modify test execution.  'make check' should
+  be issued with current working directory as <objdir> where
+  <objdir> is the object directory configured as part of the gcc
+  build configuration.  'runtest' should be issued with current
+  working directory as <objdir>/testsuite.  Testing is confined to C-
+  language proper and the C-preprocessor.  Some tests require
+  standard library support.
+
+  Additional GCC testsuite information can be found in
+  the gcc internals info file - gcc/gcc/doc/gccint.info .
+
+  Test Harness Runtime Examples
+  -----------------------------
+
+  With current working directory set at <objdir>, the following
+  'make check' examples have been run successfully as compile-only
+  tests using a modified test harness:
+
+    $ make check-gcc
+    $ make check-gcc RUNTESTFLAGS="compile.exp"
+    $ make check-gcc RUNTESTFLAGS="compile.exp=920501-18.c"
+
+  If gcc/site.exp and gcc/testsuite/site.exp are absent,
+  first run:
+
+    $ cd <objdir>
+    $ make -k check
+
+  With current working directory set at <objdir>/testsuite, the following
+  'runtest' examples have been run successfully:
+
+    $ runtest --tool gcc
+    $ runtest --tool gcc compile.exp
+    $ runtest --tool gcc execute.exp="20011113-1.c 20011114-1.c"
+    $ runtest --tool gcc noncompile.exp="[9,i]*-?.c"
+
+
+  GCC Test Source
+  ---------------
+
+  The testsuite source is located under the gcc source tree in
+  <srcdir>/gcc/testsuite.  The test suite consists of several
+  Expect libraries, expect scripts, and C-language source files
+  used as input to the C-compiler and preprocessor.  The build and
+  test 'target triplet' for PDP10 TOPS20 systems is
+  'pdp10-xkl-tops20', case-sensitive.
+
+  Many tests call standard C library routines.  Some tests are
+  architecture-specific and are excluded from PDP10 test runs.
+
+  Test source is located in the following directory tree:
+
+  * src/gcc/testsuite/gcc.c-torture/compile
+    Compile-only tests, each compiled multiple with varying
+    compiler options.
+
+  * src/gcc/testsuite/gcc.c-torture/unsorted
+    Compile-only tests, each compiled multiple with varying
+    compiler options.
+
+  * src/gcc/testsuite/gcc.c-torture/execute
+    Compile-and-execute tests, each compiled multiple with varying
+    compiler options.
+    
+  * src/gcc/testsuite/gcc.c-torture/execute/ieee
+    Compile-and-execute tests, floating point operations
+
+  * src/gcc/testsuite/gcc.c-torture/execute/pdp10
+    Compile-and-execute tests, presumably PDP10-specific,
+    incomplete.
+
+  * src/gcc/testsuite/gcc.c-torture/compat
+    Uncertain what these tests are.  7 C source files, all testing
+    structure types and operations against multiple compilers,
+    obscurely ifdef'd using small integers.
+
+  * src/gcc/testsuite/gcc.misc-tests
+    A small collection of performance tests, some are
+    architecture-specific.
+
+  * src/gcc/testsuite/gcc.dg
+    A collection of compile-only and compile-and-execute tests
+    targeting various C language features, including some C90
+    and C99 tests.  Source files supply dg (DejaGnu) directives
+    parsed by test harness library routines to invoke specific test
+    activities.
+
+  * src/gcc/testsuite/gcc.dg/cpp
+    C preprocessor tests.
+
+  * src/gcc/testsuite/gcc.dg/debug
+    Compiler debug option tests.  Mostly compile-only tests, some
+    link tests and some execute tests.  Some tests search assembly
+    output for expected results.
+
+  * src/gcc/testsuite/gcc.dg/special
+    Compiler __attribute__ tests, mainly weak and alias symbol
+    handling.
+
+  * src/gcc/testsuite/gcc.dg/format
+    Tests for printf/scanf family of calls, lots of format string
+    issues.
+
+  * src/gcc/testsuite/gcc.dg/noncompile
+    Compile error tests.  Lots of syntax errors and lots of compiler
+    error messages.
+
+  * src/gcc/testsuite/consistency.vlad
+    Parent directory for consistency layout (?) tests.  Vlad is the
+    test author's name.
+
+  * src/gcc/testsuite/consistency.vlad/layout
+    Compile-and-execute tests for alignment issues.
+
+
+  Test Harness Modifications for gcc Cross-Compiler Testing
+  -----------------------------------------------------------
+
+  In addition to compile-only modifications for the Linux build
+  host, the gcc test suite must support test results gathered
+  from test execution on a TOPS20 test target.
+
+  To satisfy link and execute testing, assembly source must be
+  transferred to a TOPS20 box to be assembled, linked, and executed.
+  Results of this activity must be merged into the compile results
+  on a Linux host for complete test result analysis.  DejaGnu provides
+  a large compliment of Expect (Tcl) routines for support of remote
+  target test execution.  The gcc compiler test model for cross-
+  compilers assumes object files are created on the compiler host,
+  and attempts to launch each cross-built executible remotely
+  following each successful compiler result, presumably with
+  significant overhead.
+
+  At present, two methods of remote test execution are being considered
+  for TOPS20 systems.  The first is to manually batch-transfer assembly
+  source to TOPS20 via FTP, then write a simple script to assemble, link,
+  and execute the tests.  Results would be manually merged with Linux-
+  hosted compile results.  The second is to automate the FTP batch-
+  transfer, remote build, and execute in Expect scripts.  While
+  Expect is well-suited to this task, test development would be
+  somewhat time consuming due in part to unavoidable trial-and-error
+  required with Expect development.
+
+  Additionally, a couple of minor PDP10-specific modifications to
+  DejaGnu were required to successfully compile certain groups
+  of test source.  With more experience, perhaps these changes
+  can be backed out in favor of changes to the gcc test suite.
+  For now, we must assume a customized DejaGnu test harness for
+  gcc testing.  The modified DejaGnu files are:
+
+    share/dejagnu/dg.exp
+    share/dejagnu/target.exp
+
+  The testsuite Expect scripts inherited with the gcc source
+  tree contained a few PDP10-specific changes.  These changes
+  were grossly inadequate for comprehensive test runs.  No
+  PDP10-specific C source changes have been encountered.
+
+
+  Test Source Modifications for gcc Cross-Compiler Testing
+  --------------------------------------------------------
+
+  The test suite I inherited from the gcc source tree included
+  the following PDP10-specific modifications:
+
+    * Additional compiler options:
+       -DNO_TRAMPOLINES -DNO_VARARGS -mlong-long-71bit
+    * Tests with "long long" types disabled.
+    * Tests with floating point types disabled.
+
+  A quick look at the source reveals porting effort in tests
+  with inline assembly, expected results in assembly output,
+  perhaps some hard-coded typesizes, and relative type size
+  assumptions (i.e. LPI32).  Additional trouble arises from
+  standard C library calls (malloc(), abort(), printf(), etc.)
+  and standard include files.  Further C test source exploration
+  is warranted with an eye for known portability issues.  Additional
+  issues will surface when assembly output is assembled and executed
+  on TOPS20.
+
+  TODO: Describe topstale and test harness issues for automated
+        cross-compiler testing.
+
+  For now, this section should be considered incomplete.
+
+
+  Resources
+  ---------
+
+  http://gcc.gnu.org/install/test.html
+
+  http://expect.nist.gov
+
+  http://www.gnu.org/software/dejagnu
+
+  http://www.gnu.org/software/dejagnu/manual
+
+  "Exploring Expect"
+    by Don Libes
+
+  "Practical Programming in Tcl and TK"
+    by Brent B. Welch & Ken Jones
+
+  DECSystem-20 Assembly Language

@@ -8,6 +8,10 @@ void f(long i)
 
 main()
 {
+#ifdef __PDP10__
+  f(0xffffffe01);
+#else
   f(0xffffff01);
+#endif
 }
 

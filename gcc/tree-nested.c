@@ -202,6 +202,14 @@ get_frame_type (struct nesting_info *info)
 
       type = make_node (RECORD_TYPE);
 
+/* Set the alignment of this specially created variable so that we generate a correct
+    type of pointer to it.
+    -mtc 7/16/2007
+*/
+#ifdef __PDP10_H__
+	TYPE_ALIGN(type) = BITS_PER_WORD;
+#endif
+
       name = concat ("FRAME.",
 		     IDENTIFIER_POINTER (DECL_NAME (info->context)),
 		     NULL);

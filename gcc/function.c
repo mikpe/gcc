@@ -33,6 +33,16 @@ along with GCC; see the file COPYING3.  If not see
    but it can also be done in the reload pass when a pseudo-register does
    not get a hard register.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: function.c 1f67059c771b 2009/11/04 03:08:46 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -323,6 +333,9 @@ free_after_compilation (struct function *f)
   f->machine = NULL;
   f->cfg = NULL;
 
+  /* PDP-10: gross hack */
+  max_regno = 0;
+
   f->x_avail_temp_slots = NULL;
   f->x_used_temp_slots = NULL;
   f->arg_offset_rtx = NULL;
@@ -397,25 +410,32 @@ frame_offset_overflow (HOST_WIDE_INT offset, tree func)
 
    FUNCTION specifies the function to allocate in.  */
 
+/* PDP-10: ugly hack: global variable to signal that an array is to be
+   allocated.  */
+int pdp10_array_stack_slot = 0;
+
 static rtx
 assign_stack_local_1 (enum machine_mode mode, HOST_WIDE_INT size, int align,
 		      struct function *function)
 {
+#ifdef __PDP10_H__
+  rtx x;
+#else
   rtx x, addr;
+#endif
   int bigend_correction = 0;
   unsigned int alignment;
   int frame_off, frame_alignment, frame_phase;
+  tree type;
 
   if (align == 0)
     {
-      tree type;
-
       if (mode == BLKmode)
 	alignment = BIGGEST_ALIGNMENT;
       else
 	alignment = GET_MODE_ALIGNMENT (mode);
 
-      /* Allow the target to (possibly) increase the alignment of this
+      /* PDP10 - Allow the target to (possibly) increase the alignment of this
 	 stack slot.  */
       type = lang_hooks.types.type_for_mode (mode, 0);
       if (type)
@@ -432,6 +452,17 @@ assign_stack_local_1 (enum machine_mode mode, HOST_WIDE_INT size, int align,
     alignment = 1; /* BITS_PER_UNIT / BITS_PER_UNIT */
   else
     alignment = align / BITS_PER_UNIT;
+
+  /* PDP10 - Allow the target to (possibly) increase the size of this stack
+     slot.  */
+  type = (*lang_hooks.types.type_for_mode) (mode, 0);
+  if (type)
+    size = LOCAL_SIZE (type, size);
+
+  /* Temporary PDP-10 check.  No stack slots smaller than a word
+     should be allocated.  */
+  if (mode != BLKmode && size < 4)
+    abort ();
 
   if (FRAME_GROWS_DOWNWARD)
     function->x_frame_offset -= size;
@@ -477,6 +508,65 @@ assign_stack_local_1 (enum machine_mode mode, HOST_WIDE_INT size, int align,
   if (BYTES_BIG_ENDIAN && mode != BLKmode && GET_MODE_SIZE (mode) < size)
     bigend_correction = size - GET_MODE_SIZE (mode);
 
+  /* PDP-10.  */
+  /* As part of 4.1.1. update, mark this PDP10 customization with appropriate #ifdef
+      -mtc 2/20/2007
+  */
+#ifdef __PDP10_H__
+  {
+    rtx base;
+    HOST_WIDE_INT offset;
+
+    /* If we have already instantiated virtual registers, return the actual
+       address relative to the frame pointer.  */
+    if (function == cfun && virtuals_instantiated)
+      {
+	base = frame_pointer_rtx;
+	offset = frame_offset + bigend_correction + STARTING_FRAME_OFFSET;
+      }
+    else
+      {
+	base = virtual_stack_vars_rtx;
+	offset = function->x_frame_offset + bigend_correction;
+      }
+
+    offset = trunc_int_for_mode (offset / 4, Pmode);
+    x = gen_rtx_MEM (mode, plus_constant (base, offset));
+    MEM_NOTRAP_P (x) = 1;
+
+    if (UNITS_PER_WORD != REAL_UNITS_PER_WORD
+	&& mode != BLKmode && GET_MODE_SIZE (mode) < UNITS_PER_WORD)
+      {
+	/*
+		retain old code for comparison, unfortunately, I can't tell what precisely of the code
+		near here is PDP10 specific and how it varies from the base
+		-mtc 9/26/2006
+		use GET_MODE_PRECISION() instead of GET_MODE_BITSIZE()  so QnI modes work
+		-mtc 10/9/2007
+	*/
+	/*int pos = BITS_PER_UNIT * (offset % 4);
+	   int byte = GET_MODE_SIZE (word_mode) - GET_MODE_SIZE (mode); */
+	int pos = BITS_PER_WORD - GET_MODE_PRECISION(mode);
+	int byte = UNITS_PER_WORD - GET_MODE_SIZE (mode);
+
+	/* ugly hack to recognize the layout of arrays is different from scalars */
+	if (pdp10_array_stack_slot)
+	  {
+	    pos = 0;
+	    byte = 0;
+	  }
+
+	PUT_MODE (x, word_mode);
+	x = gen_rtx_ZERO_EXTRACT (word_mode, x,
+				  GEN_INT (GET_MODE_PRECISION (mode)),
+				  GEN_INT (pos));
+	x = gen_rtx_SUBREG (mode, x, byte);
+      }
+
+  if (!FRAME_GROWS_DOWNWARD)
+    function->x_frame_offset += size;
+  }
+#else
   /* If we have already instantiated virtual registers, return the actual
      address relative to the frame pointer.  */
   if (function == cfun && virtuals_instantiated)
@@ -495,6 +585,8 @@ assign_stack_local_1 (enum machine_mode mode, HOST_WIDE_INT size, int align,
 
   x = gen_rtx_MEM (mode, addr);
   MEM_NOTRAP_P (x) = 1;
+#endif
+
 
   function->x_stack_slot_list
     = gen_rtx_EXPR_LIST (VOIDmode, x, function->x_stack_slot_list);
@@ -707,11 +799,16 @@ assign_stack_temp_for_type (enum machine_mode mode, HOST_WIDE_INT size,
 	 and round it now.  We also make sure ALIGNMENT is at least
 	 BIGGEST_ALIGNMENT.  */
       gcc_assert (mode != BLKmode || align == BIGGEST_ALIGNMENT);
+      /* PDP-10: special hack for arrays, type is not passed to assign_stack_local */
+      if (TREE_CODE (type) == ARRAY_TYPE)
+	pdp10_array_stack_slot = 1;
       p->slot = assign_stack_local (mode,
 				    (mode == BLKmode
 				     ? CEIL_ROUND (size, (int) align / BITS_PER_UNIT)
 				     : size),
 				    align);
+      /* PDP-10.  */
+      pdp10_array_stack_slot = 0;
 
       p->align = align;
 
@@ -754,7 +851,21 @@ assign_stack_temp_for_type (enum machine_mode mode, HOST_WIDE_INT size,
   insert_slot_to_list (p, pp);
 
   /* Create a new MEM rtx to avoid clobbering MEM flags of old slots.  */
-  slot = gen_rtx_MEM (mode, XEXP (p->slot, 0));
+
+/* mark PDP10 customization as part of 4.1.1 update
+    -mtc 2/20/2007
+*/
+#ifdef __PDP10_H__
+  /* Due to the word-oriented nature of the PDP-10, slots may be
+     generated as SUBREG of ZERO_EXTRACT.  */
+
+  if (GET_CODE (p->slot) == SUBREG)
+    slot = gen_rtx_MEM (mode, XEXP (XEXP (SUBREG_REG (p->slot), 0), 0));
+  else
+#endif
+
+    slot = gen_rtx_MEM (mode, XEXP (p->slot, 0));
+  
   stack_slot_list = gen_rtx_EXPR_LIST (VOIDmode, slot, stack_slot_list);
 
   /* If we know the alias set for the memory that will be used, use
@@ -809,7 +920,16 @@ assign_temp (tree type_or_decl, int keep, int memory_required,
   else
     decl = NULL, type = type_or_decl;
 
+/*
+	PDP10 has a bunch of QI variants to deal with
+	-mtc 9/26/2006
+*/
+#ifdef __PDP10_H__
+  mode = pdp10_mode_for_type(type);
+#else
   mode = TYPE_MODE (type);
+#endif
+
 #ifdef PROMOTE_MODE
   unsignedp = TYPE_UNSIGNED (type);
 #endif
@@ -1457,6 +1577,42 @@ instantiate_virtual_regs_in_insn (rtx insn)
       x = recog_data.operand[i];
       switch (GET_CODE (x))
 	{
+#ifdef __PDP10_H__
+/* RHS of a SET can be a plain address value, which can be a PLUS
+    -mtc 9/10/2009
+*/
+	case PLUS:
+	  {
+	    rtx addr = x;
+	    bool changed = false;
+
+	    for_each_rtx (&addr, instantiate_virtual_regs_in_rtx, &changed);
+	    if (!changed)
+	      continue;
+
+	    start_sequence ();
+	    x = addr;  
+
+		
+	    /* On the PDP10, this should never be an issue, but let's try to do
+	       something in the spirit of the way MEM is handled.
+	       First check that the predicate for the operand we've just changed
+	       still passes.  If not force the operand into a register in the hopes
+	       that that will be better.
+	       */
+	    if (!safe_insn_predicate (insn_code, i, x))
+	      {
+		addr = force_reg (GET_MODE (addr), addr);
+		x =addr;
+	      }
+	    seq = get_insns ();
+	    end_sequence ();
+	    if (seq)
+	      emit_insn_before (seq, insn);
+	  }
+	  break;
+
+#endif
 	case MEM:
 	  {
 	    rtx addr = XEXP (x, 0);
@@ -1689,7 +1845,19 @@ instantiate_virtual_regs (void)
   in_arg_offset = FIRST_PARM_OFFSET (current_function_decl);
   var_offset = STARTING_FRAME_OFFSET;
   dynamic_offset = STACK_DYNAMIC_OFFSET (current_function_decl);
+
+/* STACK_POINTER_OFFSET is used inconsistently for different things
+    out_arg_offset is in words and the use here affects referencing stack
+    parameters when making a call.  We need to adjust for the fact that
+    the return address has not yet bee pushed.
+    -mtc 6/27/2007
+*/
+#ifdef __PDP10_H__
+  out_arg_offset = 1;
+#else
   out_arg_offset = STACK_POINTER_OFFSET;
+#endif
+
 #ifdef FRAME_POINTER_CFA_OFFSET
   cfa_offset = FRAME_POINTER_CFA_OFFSET (current_function_decl);
 #else
@@ -1754,7 +1922,7 @@ struct tree_opt_pass pass_instantiate_virtual_regs =
   0                                     /* letter */
 };
 
-
+
 /* Return 1 if EXP is an aggregate type (or a value with aggregate type).
    This means a type for which function calls must pass an address to the
    function or get an address back from the function.
@@ -5638,11 +5806,21 @@ struct tree_opt_pass pass_thread_prologue_and_epilogue =
   0,                                    /* properties_required */
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 6/18/2008
+*/
+  TODO_verify_flow,                     /* todo_flags_start */
+  TODO_dump_func |
+  TODO_df_verify |
+  TODO_df_finish | TODO_verify_rtl_sharing,                     /* todo_flags_finish */
+#else
   TODO_verify_flow,                     /* todo_flags_start */
   TODO_dump_func |
   TODO_df_verify |
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'w'                                   /* letter */
 };
 

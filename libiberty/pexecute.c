@@ -22,6 +22,16 @@ Boston, MA 02110-1301, USA.  */
    pex_init/pex_run/pex_get_status/pex_free routines.  Don't use
    pexecute in new code.  Use the newer routines instead.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: pexecute.c fde0d2dd2e14 2007/10/15 18:35:18 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "libiberty.h"
 

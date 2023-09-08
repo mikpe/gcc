@@ -59,6 +59,16 @@ along with GCC; see the file COPYING3.  If not see
    is used as a spill register.  Currently we don't allocate such pseudos
    here if their preferred class is likely to be used by spills.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: local-alloc.c 46ca73a922ae 2008/09/09 19:17:49 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2645,8 +2655,15 @@ struct tree_opt_pass pass_local_alloc =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 9/9/2008
+*/
+  TODO_dump_func,                   /* todo_flags_finish */
+#else
   TODO_dump_func |
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'l'                                   /* letter */
 };
 

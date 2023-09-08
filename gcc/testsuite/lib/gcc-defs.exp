@@ -21,9 +21,10 @@ load_lib wrapper.exp
 #
 
 proc ${tool}_check_compile {testcase option objname gcc_output} {
-    global tool
+    global tool target_triplet
+    verbose "CALLPROC ${tool}_check_compile" 1
     set fatal_signal "*cc: Internal compiler error: program*got fatal signal"
- 
+
     if [string match "$fatal_signal 6" $gcc_output] then {
 	${tool}_fail $testcase "Got Signal 6, $option"
 	return 0
@@ -64,10 +65,17 @@ proc ${tool}_check_compile {testcase option objname gcc_output} {
 	return 0
     }
 
+    if { $target_triplet != "pdp10-xkl-tops20" } {
+        if ![file exists $objname] {
+            ${tool}_fail $testcase "$option missing object file $objname"
+            return 0
+        }
+    }
+
     # fail if the desired object file doesn't exist.
     # FIXME: there's no way of checking for existence on a remote host.
     if {$objname != "" && ![is3way] && ![file exists $objname]} {
-	${tool}_fail $testcase $option
+	${tool}_fail $testcase "$option missing object file $objname"
 	return 0
     }
 

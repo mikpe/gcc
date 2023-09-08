@@ -75,6 +75,16 @@ along with GCC; see the file COPYING3.  If not see
    also use the condition code; but in practice such insns would not
    combine anyway.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: combine.c f3a0d63fd103 2011/04/22 18:34:51 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -303,6 +313,13 @@ static basic_block this_basic_block;
 
 static int max_uid_known;
 
+/* Instructions we know we've added but which we know are 'safe'
+    -mtc 12/14/2007
+*/
+#ifdef __PDP10_H__
+static int extra_insns;
+#endif
+
 /* The following array records the insn_rtx_cost for every insn
    in the instruction stream.  */
 
@@ -368,6 +385,13 @@ static struct undobuf undobuf;
    was found and replaced.  */
 
 static int n_occurrences;
+
+/* We need to track when combine is running because we need can_create_pseudo_p() to be false
+    -mtc 12/13/2007
+*/
+#ifdef __PDP10_H__
+int combine_in_progress = 0;
+#endif
 
 static rtx reg_nonzero_bits_for_combine (const_rtx, enum machine_mode, const_rtx,
 					 enum machine_mode,
@@ -1007,6 +1031,15 @@ clear_log_links (void)
 {
   rtx insn;
 
+/* If get_max_uid() has changed by anything other than extra_insns, 
+    we've overflowed the uid_log_links and uid_insn_cost array
+    and bad things have and will happen
+    -mtc 12/14/2007
+*/
+#ifdef __PDP10_H__
+  gcc_assert(max_uid_known + extra_insns == get_max_uid());
+#endif
+
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     if (INSN_P (insn))
       free_INSN_LIST_list (&LOG_LINKS (insn));
@@ -1037,6 +1070,13 @@ combine_instructions (rtx f, unsigned int nregs)
   if (!first)
     return 0;
 
+/* need to track whether we're in combine
+    -mtc 12/13/2007
+*/
+#ifdef __PDP10_H__
+  combine_in_progress = 1;
+#endif
+
   combine_attempts = 0;
   combine_merges = 0;
   combine_extras = 0;
@@ -1050,6 +1090,14 @@ combine_instructions (rtx f, unsigned int nregs)
 
   /* Allocate array for insn info.  */
   max_uid_known = get_max_uid ();
+
+/* Keep track of 'safe' instructions that get added
+    -mtc 12/14/2007
+*/
+#ifdef __PDP10_H__
+  extra_insns = 0;
+#endif
+
   uid_log_links = XCNEWVEC (rtx, max_uid_known + 1);
   uid_insn_cost = XCNEWVEC (int, max_uid_known + 1);
 
@@ -1299,6 +1347,13 @@ combine_instructions (rtx f, unsigned int nregs)
 
   /* Make recognizer allow volatile MEMs again.  */
   init_recog ();
+
+/* need to track whether we're in combine
+    -mtc 12/13/2007
+*/
+#ifdef __PDP10_H__
+  combine_in_progress = 0;
+#endif
 
   return new_direct_jump_p;
 }
@@ -1639,6 +1694,17 @@ can_combine_p (rtx insn, rtx i3, rtx pred ATTRIBUTE_UNUSED, rtx succ,
 
   set = expand_field_assignment (set);
   src = SET_SRC (set), dest = SET_DEST (set);
+
+/*	The PDP10 ADJBP pattern can be used in a set where the src and dest
+	modes don't match.  This confuses try_combine().  Until this is corrected
+	just fail combining these.  Note that the combination won't be matchable
+	in any case!so this could be viewed as an optimization.
+	-mtc 8/1/2006
+*/
+#ifdef __PDP10_H__
+	if (GET_MODE(src) != GET_MODE(dest))
+		return 0;
+#endif
 
   /* Don't eliminate a store in the stack pointer.  */
   if (dest == stack_pointer_rtx
@@ -2332,6 +2398,11 @@ try_combine (rtx i3, rtx i2, rtx i1, int *new_direct_jump_p)
 	    }
     }
 
+#if !(defined(__PDP10_H__) || (HOST_BITS_PER_WIDE_INT < BITS_PER_WORD))
+  /* This optimization disabled for pdp10 cross compilations
+     in which case the target word is larger than the host word
+     and is a case which is explicitly not handled. */
+
   /* If I2 is setting a pseudo to a constant and I3 is setting some
      sub-part of it to another constant, merge them by making a new
      constant.  */
@@ -2467,6 +2538,8 @@ try_combine (rtx i3, rtx i2, rtx i1, int *new_direct_jump_p)
 	  goto validate_replacement;
 	}
     }
+
+#endif
 
 #ifndef HAVE_cc0
   /* If we have no I1 and I2 looks like:
@@ -3739,7 +3812,24 @@ try_combine (rtx i3, rtx i2, rtx i1, int *new_direct_jump_p)
 
 	if ((temp = next_nonnote_insn (i3)) == NULL_RTX
 	    || !BARRIER_P (temp))
+
+/* We track number of instructions so we can verify uid_log_links[] doesn't overflow
+    -mtc 12/14/2007
+    pr28776-2.c demonstrates that the edge information needs to be updated for consistency
+    when adding barriers
+    -mtc 12/19/2007
+*/
+#ifdef __PDP10_H__
+	  {
+	  edge e = find_edge (this_basic_block, this_basic_block->next_bb);
 	  emit_barrier_after (i3);
+	  extra_insns++;
+	  if (e) remove_edge(e);
+	  }
+#else
+	  emit_barrier_after (i3);
+#endif
+
       }
 
     if (undobuf.other_insn != NULL_RTX
@@ -3750,7 +3840,23 @@ try_combine (rtx i3, rtx i2, rtx i1, int *new_direct_jump_p)
 
 	if ((temp = next_nonnote_insn (undobuf.other_insn)) == NULL_RTX
 	    || !BARRIER_P (temp))
+
+/* We track number of instructions so we can verify uid_log_links[] doesn't overflow
+    -mtc 12/14/2007
+    pr28776-2.c demonstrates that the edge information needs to be updated for consistency
+    when adding barriers
+    -mtc 12/19/2007
+*/
+#ifdef __PDP10_H__
+	  {
+	  edge e = find_edge (this_basic_block, this_basic_block->next_bb);
 	  emit_barrier_after (undobuf.other_insn);
+	  extra_insns++;
+	  if (e) remove_edge(e);
+	  }
+#else
+	  emit_barrier_after (undobuf.other_insn);
+#endif
       }
 
     /* An NOOP jump does not need barrier, but it does need cleaning up
@@ -5802,6 +5908,13 @@ simplify_set (rtx x)
      be undefined.  On machine where it is defined, this transformation is safe
      as long as M1 and M2 have the same number of words.  */
 
+#ifdef __PDP10_H__
+/*  This never makes sense for the PDP10.  Eliminating the src subreg means
+    losing the implicit zero extension.  We also really don't want to ever
+    have the LHS of a set be a subreg.
+    -mtc 4/15/2010
+*/
+#else
   if (GET_CODE (src) == SUBREG && subreg_lowpart_p (src)
       && !OBJECT_P (SUBREG_REG (src))
       && (((GET_MODE_SIZE (GET_MODE (src)) + (UNITS_PER_WORD - 1))
@@ -5829,6 +5942,7 @@ simplify_set (rtx x)
 
       src = SET_SRC (x), dest = SET_DEST (x);
     }
+#endif
 
 #ifdef HAVE_cc0
   /* If we have (set (cc0) (subreg ...)), we try to remove the subreg
@@ -6067,7 +6181,14 @@ expand_compound_operation (rtx x)
       if (! SCALAR_INT_MODE_P (GET_MODE (XEXP (x, 0))))
 	return x;
 
+#ifdef __PDP10_H__
+/* What really matters is the precision.
+    -mtc 4/21/2011
+*/
+      len = GET_MODE_PRECISION (GET_MODE (XEXP (x, 0)));
+#else
       len = GET_MODE_BITSIZE (GET_MODE (XEXP (x, 0)));
+#endif
       /* If the inner object has VOIDmode (the only way this can happen
 	 is if it is an ASM_OPERANDS), we can't do anything since we don't
 	 know how much masking to do.  */
@@ -6199,7 +6320,15 @@ expand_compound_operation (rtx x)
      a such a position.  */
 
   modewidth = GET_MODE_BITSIZE (GET_MODE (x));
+
+/* The test in the gcc code is just plain wrong
+    -mtc 11/12/2007
+*/
+#ifdef __PDP10_H__
+  if (modewidth - len >= pos)
+#else
   if (modewidth + len >= pos)
+#endif
     {
       enum machine_mode mode = GET_MODE (x);
       tem = gen_lowpart (mode, XEXP (x, 0));
@@ -6459,7 +6588,19 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	      && GET_MODE_BITSIZE (inner_mode) >= GET_MODE_BITSIZE (tmode)
 	      && (inner_mode == tmode
 		  || (! mode_dependent_address_p (XEXP (inner, 0))
+#ifdef __PDP10_H__
+		      && (GET_MODE(XEXP(inner, 0)) == SImode)	
+#endif
 		      && ! MEM_VOLATILE_P (inner))))))
+/* There were some tests inserted above to try to avoid optimizing extracts for the PDP10
+     but I believe we should be able to do half word loads for half word values and byte address
+     conversions and load bytes for byte values, so I think its reasonable to leave this alone
+     -mtc 5/26/2006
+     Add in check for PDP10 that source pointer mode is SImode rather than a specific byte pointer
+     type.  Conversion from a byte pointer doesn't make sense just to extract bits and often doesn't work
+     -mtc 6/29/2007
+*/
+  
     {
       /* If INNER is a MEM, make a new MEM that encompasses just the desired
 	 field.  If the original and current mode are the same, we need not
@@ -6623,6 +6764,14 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
   if (!MEM_P (inner))
     wanted_inner_mode = wanted_inner_reg_mode;
   else
+
+/* Converting to sub-word sizes doesn't make sense on the PDP 10, and the
+    calculations of byte positions are all wrong anyhow, so just avoid it.
+    -mtc 3/24/2008
+*/
+#ifdef __PDP10_H__
+    wanted_inner_mode = extraction_mode;
+#else
     {
       /* Be careful not to go beyond the extracted object and maintain the
 	 natural alignment of the memory.  */
@@ -6642,6 +6791,7 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	      || pos_rtx))
 	wanted_inner_mode = extraction_mode;
     }
+#endif
 
   orig_pos = pos;
 
@@ -6765,6 +6915,30 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 
   else if (pos_rtx == 0)
     pos_rtx = GEN_INT (pos);
+
+/* contrary to comment above, pos_rtx hasn't been checked for < 0
+    also, if it's an expression, it can prevent recognition of the generated instruction
+    So do a little work to simplify it, pull the value back out, and if necessary adjust
+    pos and len
+    if the position is a constant fail.  The instruction won't be recognized anyhow and
+    if we bothered to create a working pattern, it won't be any more efficient than the
+    code generated by the shift and mask instructions.
+    -mtc 5/22/2007
+*/
+#ifdef __PDP10_H__
+  pos_rtx = combine_simplify_rtx(pos_rtx, GET_MODE(pos_rtx), 0);
+  if (!CONSTANT_P(pos_rtx))
+  	return 0;
+
+  pos = INTVAL(pos_rtx);
+  if (pos < 0)
+  	{
+	gcc_assert (pos+len > 0);
+	len = pos+len;
+	pos = 0;
+	pos_rtx = GEN_INT (pos);
+  	}
+#endif
 
   /* Make the required operation.  See if we can use existing rtx.  */
   new = gen_rtx_fmt_eee (unsignedp ? ZERO_EXTRACT : SIGN_EXTRACT,
@@ -9921,6 +10095,15 @@ gen_lowpart_for_combine (enum machine_mode omode, rtx x)
       if (MEM_VOLATILE_P (x) || mode_dependent_address_p (XEXP (x, 0)))
 	goto fail;
 
+#ifdef __PDP10_H__
+      /* On the PDP10 referencing memory for quantities smaller than a word is incredibly inefficient
+          and just plain doesn't work for loading the low order bits when the byte size is 8 bits or less.
+          -mtc 12/3/2009
+      */
+      if (osize < UNITS_PER_WORD)
+	goto fail;
+#endif
+
       /* If we want to refer to something bigger than the original memref,
 	 generate a paradoxical subreg instead.  That will force a reload
 	 of the original memref X.  */
@@ -9935,7 +10118,7 @@ gen_lowpart_for_combine (enum machine_mode omode, rtx x)
       if (BYTES_BIG_ENDIAN)
 	offset -= MIN (UNITS_PER_WORD, osize) - MIN (UNITS_PER_WORD, isize);
 
-      return adjust_address_nv (x, omode, offset);
+       return adjust_address_nv (x, omode, offset);
     }
 
   /* If X is a comparison operator, rewrite it in a new mode.  This
@@ -9965,7 +10148,16 @@ gen_lowpart_for_combine (enum machine_mode omode, rtx x)
     }
 
  fail:
+#ifdef __PDP10_H__
+/* omode is safer as that's the mode of a good return and its possible to
+    ICE on a bad structure before combine gets around to failing to recognize
+    the containing insn.
+    -mtc 3/18/2011
+*/
+  return gen_rtx_CLOBBER (omode, const0_rtx);
+#else
   return gen_rtx_CLOBBER (imode, const0_rtx);
+#endif
 }
 
 /* Simplify a comparison between *POP0 and *POP1 where CODE is the
@@ -11141,6 +11333,20 @@ simplify_comparison (enum rtx_code code, rtx *pop0, rtx *pop1)
 				|| (nonzero_bits (op1, tmode)
 				    & ~GET_MODE_MASK (mode)) == 0)));
 
+/*  I think this is really a general, not PDP10 problem.
+     The above computation of zero_extended is wrong because nonzero_bits() only checks within
+     the mode size, and we're assuming that the remaining bits are all zero which is a false assumption.
+     It also doesn't work the other way either, because the SUBREG operation doesn't do anything to set
+     the bits outside the mode of op0, so even though op0 has no non-zero bits outside is size, the register
+     its a part of might have non-zero bits and simply doing a wider comparison without doing a sign
+     or zero extend will produce incorrect results.
+     -mtc 11-20-2006
+*/
+#ifdef __PDP10_H__
+	if (GET_MODE_BITSIZE(tmode) != GET_MODE_BITSIZE(mode))
+		zero_extended = 0;
+#endif
+ 
 	  if (zero_extended
 	      || ((num_sign_bit_copies (op0, tmode)
 		   > (unsigned int) (GET_MODE_BITSIZE (tmode)
@@ -13050,7 +13256,14 @@ struct tree_opt_pass pass_combine =
   0,                                    /* todo_flags_start */
   TODO_dump_func |
   TODO_df_finish | TODO_verify_rtl_sharing |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 3/1/2010
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'c'                                   /* letter */
 };
 

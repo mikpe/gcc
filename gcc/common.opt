@@ -623,7 +623,7 @@ Perform structure layout optimizations based
 on profiling information.
 
 fivopts
-Common Report Var(flag_ivopts) Init(1) Optimization
+Common Report Var(flag_ivopts) Init(0) Optimization
 Optimize induction variables on trees
 
 fjump-tables
@@ -1262,6 +1262,10 @@ Generate debug information in STABS format
 gstabs+
 Common JoinedOrMissing Negative(gvms)
 Generate debug information in extended STABS format
+
+gtops
+Common JoinedOrMissing
+Generate debug information in TOPS20 format
 
 gvms
 Common JoinedOrMissing Negative(gxcoff)

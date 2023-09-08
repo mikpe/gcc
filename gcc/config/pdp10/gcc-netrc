@@ -1,0 +1,155 @@
+#!/do/not/run/standalone
+
+#
+# The getaccount function requires that a 'usage' be defined.
+# The caller is responsible for picking up values in username and
+# password parameters.
+#
+# The build host name is retrieved from
+# the TOPS20_BUILD_HOST env var.
+
+getaccount()
+{
+    netrc=${HOME}/.netrc
+    export username=
+    export password=
+    export ftpinit=
+    declare -i ii=-1
+    token=none
+    # Grab host from env, default to toed.xkl.com
+    export TOPS20_BUILD_HOST=${TOPS20_BUILD_HOST:-toed.xkl.com}
+    if [ -f ${netrc} ]
+    then
+        for word in $(cat ${netrc})
+        do
+            case $token in
+                machine)  host[ii]=$word; token=none; continue;;
+                login)    lg[ii]=$word; token=none; continue;;
+                password) pw[ii]=$word; token=none; continue;;
+                macdef0) md0[ii]=$word; token=macdef1;;
+                macdef1) md1[ii]=$word; token=macdef2;;
+                macdef2) ;; 
+                none)     ;; # NO-OP
+                *)        ;;
+            esac
+            case $word in
+                [Dd]efault)   (( i += 1 )); host[ii]="<default>";;
+                [Mm]achine)   token=machine; (( ii += 1 )) ;;
+                [Ll]ogin)     token=login;;
+                [Pp]assword)  token=password;;
+                [Mm]acdef)  token=macdef0;;
+                *)         ;;
+            esac
+        done
+    else
+        usage
+        exit 1
+    fi
+
+    # Chomp network domain off of hostname
+    build_host="${TOPS20_BUILD_HOST//%.*}"
+    # Construct a case-insensitive glob pattern from hostname.
+    # "shopt -s nocaseglob" appears to only work for filename pattern
+    # matching.  Alas...
+    ptrn=""
+    declare -i host_namelen=${#build_host} offset=0
+    while [ $offset -lt $host_namelen ]
+    do
+        bh_char=${build_host:offset:1}
+        ptrn=${ptrn}'['$(echo ${bh_char}|tr '[:lower:]' '[:upper:]')
+        ptrn=${ptrn}$(echo ${bh_char}|tr '[:upper:]' '[:lower:]')']'
+        ((offset += 1))
+    done
+
+    ii=0
+    while [ $ii -lt ${#host[*]} ]
+    do
+        case "${host[ii]}" in
+            ${ptrn}*) username=${lg[ii]}; password=${pw[ii]};  if [ ${md0[ii]}'x' == "initx" ]; then ftpinit=${md1[ii]}; fi; break;;
+            *) ;; # NO-OP
+        esac
+        (( ii += 1 ))
+    done
+
+    if [ -z "${username}" -o -z "${password}" ]
+    then
+        echo "Machine ${TOPS20_BUILD_HOST} login information not found in ~/.netrc" 1>&2
+        usage
+        exit 1
+    fi
+    return
+}
+
+getftpoptions()
+{
+    export ftpoptions=
+    #
+    # Check what kind of ftp we have
+    #
+    # if it supports -V we must use -V
+    # if it doesnt then me mustnt
+    #
+    # removed use of -n so that ftp will auto login
+    # -mtc 4/28/2008
+    #
+    #ftp -V </dev/null >/dev/null 2>&1
+    #if test $? = 0
+    #then
+    #    ftpoptions='-Vi'
+    #else
+    #    ftpoptions='-i'
+    #fi
+	#
+	# new strategy
+	# use verbose mode instead of nonverbose mode so we
+	# can capture ftp output and analyze output for
+	# success or failure
+	# -mtc 3/22/2010
+	#
+
+	ftpoptions='-iv'
+
+    return
+}
+
+doftphelper()
+{
+	ftp $ftpoptions ${TOPS20_BUILD_HOST} <<-EOF
+	${ftpcmd}
+	EOF
+}
+
+doftp()
+{
+	ftpstatus=0
+	ftpretries=0
+# This can be adjusted based on experience.  With delay doubling 6 retries
+# provides a total of just over 1 minute of delay.
+	ftpmaxretries=6
+	ftpdelay=1
+	while [ $ftpstatus -eq 0 ]
+	do
+		if [ $ftpretries -gt 0 ]
+		then
+			echo pausing $ftpdelay seconds
+			sleep $ftpdelay
+			ftpdelay=$(( $ftpdelay+$ftpdelay ))
+			echo ftp retry number $ftpretries
+		fi
+	
+		ftpcnt=`doftphelper | grep "^226" | wc -l`
+
+		if [ $ftpcnt -gt 0 ]
+		then
+			echo ftp successfully transferred $ftpcnt files
+			ftpstatus=1
+		else
+			ftpretries=$(( $ftpretries+1 ))
+			echo ftp failure number $ftpretries
+			if [ $ftpretries -gt $ftpmaxretries ]
+			then
+				exit $ftpretries
+			fi
+		fi
+	done
+}

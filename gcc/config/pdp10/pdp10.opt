@@ -1,0 +1,139 @@
+; Options for the pdp10 port of the compiler
+;
+; Copyright (C) 2007 Free Software Foundation, Inc.
+; Contributed by Aldy Hernandez <aldy@quesejoda.com>.
+;
+; This file is part of GCC.
+;
+; GCC is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 2, or (at your option) any later
+; version.
+;
+; GCC is distributed in the hope that it will be useful, but WITHOUT
+; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+; or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+; License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with GCC; see the file COPYING.  If not, write to the Free
+; Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
+; 02110-1301, USA.
+
+mextended
+Target Report RejectNegative Mask(EXTENDED)
+Use extended addressing
+
+munextended
+Target Report RejectNegative InverseMask(EXTENDED)
+Don't use extended addressing
+
+mgfloat
+Target Report Mask(GFLOAT)
+Use giant-format doubles
+
+mdfloat
+Target Report InverseMask(GFLOAT)
+Use double-format doubles
+
+mstring
+Target Report Mask(STRING)
+Use string instructions
+
+mlong-long-71bit
+Target Report Mask(71BIT)
+Use 71-bit long long
+
+mlong-long-72bit
+Target Report InverseMask(71BIT)
+Use 72-bit long long
+
+mtab
+Target Report Mask(ASM_TAB)
+Tab between opcode and operands
+
+mupper
+Target Report Mask(ASM_UPPER)
+Upper-case opcodes
+
+mindent-skipped
+Target Report Mask(ASM_INDENT_SKIPPED)
+Indent skipped instructions
+
+mac0
+Target Report Mask(ASM_AC0)
+Output AC0 even if it's not used
+
+mdual-stack
+Target Report Mask(DUALSTACK)
+Separate call from user data
+
+mbuild-library
+Target Report Mask(BUILDLIB)
+Compiling a libarary so use ENTRY
+
+mpurge-labels
+Target Report Mask(PURGELABELS)
+Output PURGE statements at end of compilation
+
+mcpu
+Target Report Joined Var(pdp10_cpu)
+Specify the name of the target CPU
+
+march
+Target Report Joined Var(pdp10_arch)
+Specify the name of the target CPU to generate code for
+
+mtune
+Target Report Joined Var(pdp10_tune)
+Specify the name of the target CPU to tune code generation for
+
+mtext-psect
+Target Report Joined Var(pdp10_text_psect)
+Specify the name of the PSECT to put code in
+
+mrodata-psect
+Target Report Joined Var(pdp10_rodata_psect)
+Specify the name of the PSECT to put read-only data in
+
+mdata-psect
+Target Report Joined Var(pdp10_data_psect)
+Specify the name of the PSECT to put read-write data in
+
+mbss-psect
+Target Report Joined Var(pdp10_bss_psect)
+Specify the name of the PSECT to put uninitialized data in
+
+mmodel
+Target Report Joined Var(pdp10_model)
+Specify program model (small, medium, large or huge)
+
+mregparm
+Target Report Joined UInteger Var(opt_pdp10_regparm) Init(-1)
+Number of registers used to pass arguments
+
+mreturn-regs
+Target Report Joined UInteger Var(opt_pdp10_retregs) Init(-1)
+Number of registers used to return a value
+
+mcall-clobbered
+Target Report Joined UInteger Var(opt_pdp10_clobberedregs) Init(-1)
+Number of registers that are call clobbered)
+    
+mchar-bytesize
+Target Report Joined UInteger Var(pdp10_char_bytesize) Init(9)
+What byte size to use for the char type and string literals
+
+mmacro-file-start
+Target Report Joined Var(pdp10_macro_file_start_text)
+Specify some text to insert at start of macro_file_start text
+
+mmacro-file-include
+Target Report Joined Var(pdp10_macro_file_start_include)
+Specify the name of a file to insert at start of macro_file_start text
+
+mmodule-title-prefix
+Target Joined Var(pdp10_module_title_prefix)
+Specify a name to prefix the module title with
+
+; This comment is to ensure we retain the blank line above.

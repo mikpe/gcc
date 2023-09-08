@@ -32,6 +32,16 @@ along with Gcov; see the file COPYING3.  If not see
 /* Need an option to show individual block counts, and show
    probabilities of fall through arcs.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: gcov.c dfe2778cbc5a 2008/03/04 21:11:09 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

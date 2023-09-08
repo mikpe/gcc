@@ -18,6 +18,16 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: ifcvt.c 61867f30d91c 2011/03/02 23:01:56 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -3755,6 +3765,21 @@ dead_or_predicable (basic_block test_bb, basic_block merge_bb,
 
   if (JUMP_P (end))
     {
+/* if the final pattern is a parallel, it's wrong to declare the body empty
+    this is a general, not PDP10 specific fix
+    Previously included this test with the head==end test to simply avoid the
+    jump to no_body.
+    Execution test 20050124-1.c, added with release 3.3.6 also revealed that
+    in that circumstance, we can end up crossing the begin and end pointers
+    and get a NULL dereference abort later on.  This code obviously wasn't written
+    with the possibility of a PARALLEL in mind, so the safest thing seems to be to
+    return FALSE.
+*/
+#ifdef __PDP10_H__
+      if (GET_CODE(PATTERN(end)) == PARALLEL)
+	  	return FALSE;
+#endif
+
       if (head == end)
 	{
 	  head = end = NULL_RTX;
@@ -4177,7 +4202,14 @@ struct tree_opt_pass pass_if_after_combine =
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
   TODO_dump_func |
+#ifdef __PDP10_H__
+/* ggc_collect() is faulty and frees memory that's in use, so avoid calling it here
+    -mtc 3/1/2010
+*/
+  0,
+#else
   TODO_ggc_collect,                     /* todo_flags_finish */
+#endif
   'C'                                   /* letter */
 };
 

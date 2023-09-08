@@ -412,6 +412,9 @@ extern void no_asm_to_stream (FILE *);
 #define SECTION_STYLE_MASK 0x600000	/* bits used for SECTION_STYLE */
 #define SECTION_COMMON   0x800000	/* contains common data */
 #define SECTION_MACH_DEP 0x1000000	/* subsequent bits reserved for target */
+#ifdef __PDP10_H__
+#define SECTION_PALIGNED 0x2000000	/* section is page aligned */
+#endif
 
 /* This SECTION_STYLE is used for unnamed sections that we can switch
    to using a special assembler directive.  */

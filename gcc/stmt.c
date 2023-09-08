@@ -24,6 +24,16 @@ along with GCC; see the file COPYING3.  If not see
    The functions whose names start with `expand_' are called by the
    expander to generate RTL instructions for various kinds of constructs.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: stmt.c d1ef1f310cb0 2011/06/03 20:14:28 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -184,6 +194,10 @@ expand_computed_goto (tree exp)
   rtx x = expand_normal (exp);
 
   x = convert_memory_address (Pmode, x);
+#ifdef __PDP10_H__
+  if (GET_MODE (x) != Pmode)
+	x = pdp10_convert_ptr(NULL, x, NULL, ptr_mode_target_size(GET_MODE(x)), BITS_PER_WORD, 1);
+#endif
 
   do_pending_stack_adjust ();
   emit_indirect_jump (x);
@@ -1529,6 +1543,18 @@ expand_value_return (rtx val)
   if (return_reg != val)
     {
       tree type = TREE_TYPE (DECL_RESULT (current_function_decl));
+
+#ifdef __PDP10_H__
+/* If val isn't in the proper mode for the function convert we're in trouble.  We can't convert it
+     here because we don't know whether to promote unsigned or signed, so the fix lies upstream.
+     This happened when when returning a bitfield which might be in a sub-word mode in an int function.
+     Fixed that call from expand_return, but there are other calls and the logic is too convoluted to
+     easily see if there might be problems.
+     -mtc 6/2/2011
+*/
+	gcc_assert(GET_MODE(val) == VOIDmode || GET_MODE(val) == GET_MODE(return_reg));
+#endif
+
       if (targetm.calls.promote_function_return (TREE_TYPE (current_function_decl)))
       {
 	int unsignedp = TYPE_UNSIGNED (type);
@@ -1722,9 +1748,16 @@ expand_return (tree retval)
          reg).  */
       tree ot = TREE_TYPE (DECL_RESULT (current_function_decl));
       tree nt = build_qualified_type (ot, TYPE_QUALS (ot) | TYPE_QUAL_CONST);
-
+#ifdef __PDP10_H__
+      rtx tempval = assign_temp (nt, 0, 0, 1);
+      val = expand_expr (retval_rhs, tempval, GET_MODE (tempval), EXPAND_NORMAL);
+      if (GET_MODE(val) != VOIDmode && GET_MODE(val) != GET_MODE(tempval))
+	  	val = convert_modes(GET_MODE(tempval), GET_MODE(val), val, TYPE_UNSIGNED(TREE_TYPE(retval_rhs)));
+#else
       val = assign_temp (nt, 0, 0, 1);
       val = expand_expr (retval_rhs, val, GET_MODE (val), EXPAND_NORMAL);
+#endif
+
       val = force_not_mem (val);
       /* Return the calculated value.  */
       expand_value_return (val);
@@ -1933,6 +1966,23 @@ expand_decl (tree decl)
       DECL_USER_ALIGN (decl) = 0;
 
       x = assign_temp (decl, 1, 1, 1);
+
+/*  This just seems to generate a spurious conversion of an address to a byte pointer when
+     all we really want is just the address
+     -mtc 6/26/2006
+     In some cases we indeed want a byte address.  Simple char variables in bug715 are an example.
+     Since we had this commented out for a long time, there may be examples where such conversion
+     is undesirable.  We'll find out.
+     -mtc 11/2/2006
+*/
+
+#ifdef __PDP10_H__
+      /* PDP-10: convert to the right kind of pointer.  */
+      x = pdp10_convert_ptr (decl, XEXP (x, 0), NULL_RTX, 36,
+			     pdp10_bytesize (TREE_TYPE (decl)), 1);
+      x = gen_rtx_MEM (DECL_MODE (decl), x);
+#endif
+
       set_mem_attributes (x, decl, 1);
       SET_DECL_RTL (decl, x);
 
@@ -1963,6 +2013,16 @@ expand_decl (tree decl)
 	 the size.  */
       address = allocate_dynamic_stack_space (size, NULL_RTX,
 					      TYPE_ALIGN (TREE_TYPE (decl)));
+
+/*  This just seems to generate a spurious conversion of an address to a byte pointer when
+     all we really want is just the address
+     -mtc 6/26/2006
+*/
+#if 0
+      /* PDP-10: convert to the right kind of pointer.  */
+      address = pdp10_convert_ptr (decl, address, NULL_RTX, 36,
+				   pdp10_bytesize (TREE_TYPE (decl)), 1);
+#endif
 
       /* Reference the variable indirect through that rtx.  */
       x = gen_rtx_MEM (DECL_MODE (decl), address);

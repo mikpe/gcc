@@ -10,7 +10,18 @@ struct dummy { int x __attribute__((aligned)); };
 _Bool foo(void)
 {
   char *p = __builtin_alloca(32);
+
+  /* This test is making an assumption that pointers are integers that
+     reference byte addressable memory in the obvious manner.
+     This is wrong for the PDP10, where interpreting a pointer as an
+     integer and incrementing it by one actually increments the memory
+     reference by 4.
+   */
+#ifdef __PDP10__
+  return ((size_t)p & (BIGGEST_ALIGNMENT/4 - 1)) == 0;
+#else
   return ((size_t)p & (BIGGEST_ALIGNMENT - 1)) == 0;
+#endif
 }
 
 int main()

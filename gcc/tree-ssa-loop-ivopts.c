@@ -2074,6 +2074,16 @@ static void
 add_candidate (struct ivopts_data *data, 
 	       tree base, tree step, bool important, struct iv_use *use)
 {
+/*
+Avoid use of pointers.  It might be possible to fix the pointer algebra to make them work, but for now if we simply
+fixed the type coersions, the actual code will still be wrong because someone somewhere has already done some
+manipulation on the indices assuming, apparently, that the arithmetic will all be byte oriented.
+-mtc 4/19/2007
+*/
+#ifdef __PDP10_H__
+  if ((base && POINTER_TYPE_P(TREE_TYPE(base))) || ( step && POINTER_TYPE_P(TREE_TYPE(step))))
+  	return;
+#endif
   if (ip_normal_pos (data->current_loop))
     add_candidate_1 (data, base, step, important, IP_NORMAL, use, NULL_TREE);
   if (ip_end_pos (data->current_loop)

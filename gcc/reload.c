@@ -87,6 +87,16 @@ a register with any other reload.  */
 
 #define REG_OK_STRICT
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: reload.c 2f1e3a927334 2008/03/11 01:52:58 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 /* We do not enable this with ENABLE_CHECKING, since it is awfully slow.  */
 #undef DEBUG_RELOAD
 
@@ -2954,6 +2964,23 @@ find_reloads (rtx insn, int replace, int ind_levels, int live_known,
 		 it is a hard reg.  This is because it is passed
 		 to reg_fits_class_p if it is a REG and all pseudos
 		 return 0 from that function.  */
+
+/* We don't want to force reloading of subregister expressions when the instruction
+    pattern is designed to handle them already.
+    I'm unclear on how the offset here is used and whether it should be included in the
+    code the PDP10 ifdeffs out.  When subreg_offset_representable_p is false, forcing
+    a reload guarantees we will emit bad code, because the subreg will become part of
+    the reload which will eventually show up in a set insn which will be substituted out.
+    I've enabled an abort() in subreg_hard_regno() which should catch that situation.
+    If this continues to be problematic, a possible alternative would be to make this
+    check dependent on the recognized instruction pattern.
+    -mtc 1/9/2007
+    With 4.1.1 update subreg_hard_regno() is no more, so I've put a similar check in
+    subreg_regno()
+    -mtc 3/5/2007
+*/
+#ifdef __PDP10_H__
+#else
 	      if (REG_P (SUBREG_REG (operand))
 		  && REGNO (SUBREG_REG (operand)) < FIRST_PSEUDO_REGISTER)
 		{
@@ -2968,6 +2995,8 @@ find_reloads (rtx insn, int replace, int ind_levels, int live_known,
 						 SUBREG_BYTE (operand),
 						 GET_MODE (operand));
 		}
+#endif
+
 	      operand = SUBREG_REG (operand);
 	      /* Force reload if this is a constant or PLUS or if there may
 		 be a problem accessing OPERAND in the outer mode.  */
@@ -4130,9 +4159,28 @@ find_reloads (rtx insn, int replace, int ind_levels, int live_known,
 	      && (!JUMP_P (insn)
 		  || !label_is_jump_target_p (XEXP (substitution, 0),
 					      insn)))
+/* replacing an operand with a LABEL_REF means we're changing an indirect_jump into a jump
+    try re-recognizing the insn.
+    -mtc 3/10/2008
+*/
+#ifdef __PDP10_H__
+	    {
 	    REG_NOTES (insn) = gen_rtx_INSN_LIST (REG_LABEL_OPERAND,
 						  XEXP (substitution, 0),
 						  REG_NOTES (insn));
+	    if (JUMP_P(insn))
+	    	{
+		JUMP_LABEL(insn) = XEXP(substitution, 0);
+	    	INSN_CODE(insn) = -1;
+		recog_memoized(insn);
+		extract_insn(insn);
+	    	}
+	    }
+#else
+	    REG_NOTES (insn) = gen_rtx_INSN_LIST (REG_LABEL_OPERAND,
+						  XEXP (substitution, 0),
+						  REG_NOTES (insn));
+#endif
 	}
       else
 	retval |= (substed_operand[i] != *recog_data.operand_loc[i]);
@@ -5023,6 +5071,29 @@ find_reloads_address (enum machine_mode mode, rtx *memrefloc, rtx ad,
       return ! removed_and;
     }
 
+/* The most complex PLUS that's a legitimate address on the PDP10 is PLUS(REG, CONST_INT)
+    -mtc 5/25/2007
+*/
+#ifdef __PDP10_H__
+  else if (GET_CODE(ad) == PLUS
+		&& (!REG_P (XEXP (ad, 0)) || GET_CODE (XEXP (ad, 1)) != CONST_INT))
+  	{
+	/* Unshare the MEM rtx so we can safely alter it.  */
+	if (memrefloc)
+		{
+		*memrefloc = copy_rtx (*memrefloc);
+		loc = &XEXP (*memrefloc, 0);
+		if (removed_and)
+			loc = &XEXP (*loc, 0);
+		}
+
+	find_reloads_address_part (ad, loc, base_reg_class (mode, MEM, SCRATCH),
+					GET_MODE (ad), opnum, type, ind_levels);
+
+	return !removed_and;
+	}
+#endif
+
   /* If we have an indexed stack slot, there are three possible reasons why
      it might be invalid: The index might need to be reloaded, the address
      might have been made by frame pointer elimination and hence have a
@@ -5053,6 +5124,16 @@ find_reloads_address (enum machine_mode mode, rtx *memrefloc, rtx ad,
     {
       rtx operand, addend;
       enum rtx_code inner_code;
+
+/* The PDP10 has no gcc style index registers.  So matching this pattern
+    just causes us to abort when find_reloads_address_1() is called.
+    Continuing permits other possible reloads.
+    -mtc 5/24/2007
+*/
+#ifdef __PDP10_H__
+	if (INDEX_REG_CLASS == NO_REGS)
+		continue;
+#endif
 
       if (GET_CODE (ad) != PLUS)
 	  continue;
@@ -5410,6 +5491,14 @@ find_reloads_address_1 (enum machine_mode mode, rtx x, int context,
     context_reg_class = INDEX_REG_CLASS;
   else
     context_reg_class = base_reg_class (mode, outer_code, index_code);
+
+/* PDP10 doesn't support gcc style indexing
+    -mtc 5/24/2007
+*/
+#ifdef __PDP10_H__
+if (context_reg_class == NO_REGS)
+	return 0;
+#endif
 
   switch (code)
     {

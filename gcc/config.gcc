@@ -1834,6 +1834,47 @@ mt-*-elf)
         tm_file="dbxelf.h elfos.h svr4.h ${tm_file}"
         tmake_file="${tmake_file} mt/t-mt"
         ;;
+pdp10-*-tops20*)
+	extra_programs="telnet_tops20.exp \
+			gcc-netrc \
+                        maklib maklib.exp \
+                        run run.exp \
+                        ${target}-ar ${target}-nm ${target}-ranlib"
+
+	case x$gas:x$DEFAULT_ASSEMBLER in
+	xyes:* | *:xgas)
+		echo "GNU as is not supported on the PDP-10" 1>&2
+		exit 1
+		;;
+	*:xmacro)
+		extra_programs="${extra_programs} macro macro.exp"
+		tm_file="pdp10/xm-tops20.h pdp10/macro.h $tm_file"
+		;;
+	*)
+		echo "Unknown PDP-10 assembler: $DEFAULT_ASSEMBLER" 1>&2
+		exit 1
+		;;
+	esac
+
+	case x$ld:x$DEFAULT_LINKER in
+	xyes:* | *:xld)
+		echo "GNU ld is not supported on the PDP-10" 1>&2
+		;;
+	*:xlink)
+		extra_parts="${extra_parts} crtini.o crtfin.o crtini-dual-stack.o crtfin-dual-stack.o"
+		extra_programs="${extra_programs} link link.exp"
+		;;
+	*)
+		echo "Unknown PDP-10 linker: $DEFAULT_LINKER" 1>&2
+		exit 1
+		;;
+	esac
+
+	use_collect2=no
+	tmake_file=pdp10/t-tops20
+	extra_objs="pdp10.o hash.o"
+	use_fixproto=yes
+	;;
 pdp11-*-bsd)
 	tm_file="${tm_file} pdp11/2bsd.h"
 	use_fixproto=yes
@@ -2784,6 +2825,9 @@ if test x$with_cpu = x ; then
     frv550-*-*linux*)
       with_cpu=fr550
       ;;
+    pdp10-*-*)
+      with_cpu=xkl1
+      ;;
     m680[012]0-*-*)
       with_cpu=`echo ${target} | sed 's/-.*$//'`
       ;;
@@ -3092,6 +3136,10 @@ case "${target}" in
 		esac
 		;;
 
+	pdp10-*-*)
+		supported_defaults=cpu
+		;;
+
 	mt-*-*)
 		supported_defaults="arch"
 
@@ -3300,6 +3348,33 @@ case ${target} in
 		else
 			tmake_file="mips/t-mips $tmake_file"
 		fi
+		;;
+		
+	pdp10-*-*)
+		case "x$with_cpu" in
+			xka10)
+				target_cpu_default=" ";
+				;;
+			xki10)
+				target_cpu_default=" ";
+				;;
+			xks10)
+				target_cpu_default=" ";
+				;;
+			xkl10)
+				target_cpu_default="MASK_EXTENDED";
+				;;
+			xxkl1 | xxkl-1)
+				target_cpu_default="MASK_EXTENDED|MASK_71BIT";
+				;;
+			xxkl2 | xxkl-2)
+				target_cpu_default="MASK_EXTENDED|MASK_71BIT";
+				;;
+			*)
+				echo "Unknown cpu used with --with-cpu=$with_cpu" 1>&2
+				exit 1
+				;;
+		esac
 		;;
 
 	powerpc*-*-* | rs6000-*-*)

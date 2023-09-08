@@ -65,6 +65,16 @@
 
 */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: bb-reorder.c b90b4b256430 2012/09/14 22:11:22 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1097,6 +1107,12 @@ connect_traces (int n_traces, struct trace *traces)
 
 	      if (flag_reorder_blocks_and_partition)
 		try_copy = false;
+
+#ifdef __PDP10_H__
+/* Copying basic blocks to form longer traces does not appear to ever be a win for us.
+*/
+		try_copy = false;
+#endif
 
 	      /* Copy tiny blocks always; copy larger blocks only when the
 		 edge is traversed frequently enough.  */

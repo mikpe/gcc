@@ -18,6 +18,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: cfglayout.c 5baa61e82a56 2007/12/20 02:59:23 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -828,7 +838,16 @@ fixup_reorder_chain (void)
 	      /* Otherwise we have some return, switch or computed
 		 jump.  In the 99% case, there should not have been a
 		 fallthru edge.  */
+/* or we have an unconditional jump that goes to the fallthru destination
+    -mtc 12/19/2007
+*/
+#ifdef __PDP10_H__
+	      gcc_assert (returnjump_p (bb_end_insn) || !e_fall
+	                          || (any_uncondjump_p(bb_end_insn) 
+	                                && (JUMP_LABEL(bb_end_insn) == BB_HEAD(e_fall->dest))));
+#else
 	      gcc_assert (returnjump_p (bb_end_insn) || !e_fall);
+#endif
 	      continue;
 	    }
 	}

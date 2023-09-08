@@ -34,3 +34,7 @@ dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.\[cSi\]]] \
 
 # All done.
 dg-finish
+
+if { $target_triplet == "pdp10-xkl-tops20" } {
+    gcctale_finish
+}

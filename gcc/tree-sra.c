@@ -256,6 +256,15 @@ sra_type_can_be_decomposed_p (tree type)
       || integer_zerop (TYPE_SIZE (type)))
     goto fail;
 
+/* There's no point in decomposing a type that's small enough to be handled by simple instructions
+    and we get incorrect code trying to pretend double words are long longs
+    -mtc 1/14/2007
+*/
+#ifdef __PDP10_H__
+  if (TREE_INT_CST_LOW(TYPE_SIZE(type)) <= 2 * BITS_PER_WORD)
+  	goto fail;
+#endif
+
   /* The type must be a non-union aggregate.  */
   switch (TREE_CODE (type))
     {
@@ -1513,7 +1522,14 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
   alchk = align - 1;
   alchk = ~alchk;
 
+/* align isn't a power of 2, so gcc's bit optimization of checking alignment multiple is invalid
+    -mtc 1/3/2008
+*/
+#ifdef __PDP10_H__
+  if ((bit / align) != ((bit + size - 1) / align))
+#else
   if ((bit & alchk) != ((bit + size - 1) & alchk))
+#endif
     return f;
 
   /* Find adjacent fields in the same alignment word.  */
@@ -1535,12 +1551,20 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 
       if (bit + size == nbit)
 	{
+#ifdef __PDP10_H__
+	  if ((bit / align) != ((nbit + nsize - 1) /align))
+#else
 	  if ((bit & alchk) != ((nbit + nsize - 1) & alchk))
+#endif
 	    {
 	      /* If we're at an alignment boundary, don't bother
 		 growing alignment such that we can include this next
 		 field.  */
+#ifdef __PDP10_H__
+	      if ((nbit / align)
+#else
 	      if ((nbit & alchk)
+#endif
 		  || GET_MODE_BITSIZE (DECL_MODE (f)) <= align)
 		break;
 
@@ -1548,16 +1572,28 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 	      alchk = align - 1;
 	      alchk = ~alchk;
 
+#ifdef __PDP10_H__
+	      if ((bit / align) != ((nbit + nsize - 1) / align))
+#else
 	      if ((bit & alchk) != ((nbit + nsize - 1) & alchk))
+#endif
 		break;
 	    }
 	  size += nsize;
 	}
       else if (nbit + nsize == bit)
 	{
+#ifdef __PDP10_H__
+	  if ((nbit / align) != ((bit + size - 1) / align))
+#else
 	  if ((nbit & alchk) != ((bit + size - 1) & alchk))
+#endif
 	    {
+#ifdef __PDP10_H__
+	      if ((bit / align)
+#else
 	      if ((bit & alchk)
+#endif
 		  || GET_MODE_BITSIZE (DECL_MODE (f)) <= align)
 		break;
 
@@ -1565,7 +1601,11 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 	      alchk = align - 1;
 	      alchk = ~alchk;
 
+#ifdef __PDP10_H__
+	      if ((nbit / align) != ((bit + size - 1) / align))
+#else
 	      if ((nbit & alchk) != ((bit + size - 1) & alchk))
+#endif
 		break;
 	    }
 	  bit = nbit;
@@ -1580,13 +1620,25 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
   if (f == first)
     return f;
 
+#ifdef __PDP10_H__
+  gcc_assert ((bit / align) == ((bit + size - 1) / align));
+#else
   gcc_assert ((bit & alchk) == ((bit + size - 1) & alchk));
+#endif
 
   /* Try to widen the bit range so as to cover padding bits as well.  */
 
+#ifdef __PDP10_H__
+  if ((bit % align) || size != align)
+#else
   if ((bit & ~alchk) || size != align)
+#endif
     {
+#ifdef __PDP10_H__
+      unsigned HOST_WIDE_INT mbit = (bit / align) * align;
+#else
       unsigned HOST_WIDE_INT mbit = bit & alchk;
+#endif
       unsigned HOST_WIDE_INT msize = align;
 
       for (f = TYPE_FIELDS (elt->type);
@@ -1610,7 +1662,11 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 	    + tree_low_cst (DECL_FIELD_BIT_OFFSET (f), 1);
 
 	  /* If we're past the selected word, we're fine.  */
+#ifdef __PDP10_H__
+	  if ((bit / align) < (fbit / align))
+#else
 	  if ((bit & alchk) < (fbit & alchk))
+#endif
 	    continue;
 
 	  if (host_integerp (DECL_SIZE (f), 1))
@@ -1618,9 +1674,21 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 	  else
 	    /* Assume a variable-sized field takes up all space till
 	       the end of the word.  ??? Endianness issues?  */
+/* In addition to the bogus power of 2 assumption, the gcc code here is also wrong
+    because it should be ~alchk instead of alchk
+    -mtc 1/3/2008
+*/
+#ifdef __PDP10_H__
+	    fsize = align - (fbit % align);
+#else
 	    fsize = align - (fbit & alchk);
+#endif
 
+#ifdef __PDP10_H__
+	  if ((fbit / align) < (bit / align))
+#else
 	  if ((fbit & alchk) < (bit & alchk))
+#endif
 	    {
 	      /* A large field might start at a previous word and
 		 extend into the selected word.  Exclude those
@@ -1669,7 +1737,17 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
       alchk = GET_MODE_PRECISION (mode) - 1;
       alchk = ~alchk;
 
+/* small integer modes on the PDP10 follow completely different rules than
+    what gcc assumes
+    -mtc 1/3/2008
+*/
+#ifdef __PDP10_H__
+      if ((size == GET_MODE_PRECISION(mode) && bit % GET_MODE_PRECISION(mode))
+	     || bit + size == align
+	     || GET_MODE_PRECISION(mode) == align)
+#else
       if ((bit & alchk) == ((bit + size - 1) & alchk))
+#endif
 	break;
     }
 
@@ -1689,13 +1767,21 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 
   var = block->replacement;
 
+#ifdef __PDP10_H__
+  if ((bit % GET_MODE_PRECISION(mode))
+#else
   if ((bit & ~alchk)
+#endif
       || (HOST_WIDE_INT)size != tree_low_cst (DECL_SIZE (var), 1))
     {
       block->replacement = build3 (BIT_FIELD_REF,
 				   TREE_TYPE (block->element), var,
 				   bitsize_int (size),
+#ifdef __PDP10_H__
+				   bitsize_int (bit % GET_MODE_PRECISION(mode)));
+#else
 				   bitsize_int (bit & ~alchk));
+#endif
       BIT_FIELD_REF_UNSIGNED (block->replacement) = 1;
     }
 
@@ -1711,6 +1797,16 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 
       gcc_assert (fld && fld->is_scalar && !fld->replacement);
 
+#ifdef __PDP10_H__
+      fld->replacement = build3 (BIT_FIELD_REF, field_type, var,
+				 DECL_SIZE (f),
+				 bitsize_int
+				 ((TREE_INT_CST_LOW (DECL_FIELD_OFFSET (f))
+				   * BITS_PER_UNIT
+				   + (TREE_INT_CST_LOW
+				      (DECL_FIELD_BIT_OFFSET (f))))
+				  % GET_MODE_PRECISION(mode)));
+#else
       fld->replacement = build3 (BIT_FIELD_REF, field_type, var,
 				 DECL_SIZE (f),
 				 bitsize_int
@@ -1719,6 +1815,7 @@ try_instantiate_multiple_fields (struct sra_elt *elt, tree f)
 				   + (TREE_INT_CST_LOW
 				      (DECL_FIELD_BIT_OFFSET (f))))
 				  & ~alchk));
+#endif
       BIT_FIELD_REF_UNSIGNED (fld->replacement) = TYPE_UNSIGNED (field_type);
       fld->in_bitfld_block = 1;
     }
@@ -1878,12 +1975,23 @@ decide_block_copy (struct sra_elt *elt)
 	  /* If the sra-max-structure-size parameter is 0, then the
 	     user has not overridden the parameter and we can choose a
 	     sensible default.  */
+#ifdef __PDP10_H__
+/* fix signed unsigned warning issue
+*/
+	  max_size = SRA_MAX_STRUCTURE_SIZE
+	    ? (unsigned int) SRA_MAX_STRUCTURE_SIZE
+	    : MOVE_RATIO * UNITS_PER_WORD;
+	  max_count = SRA_MAX_STRUCTURE_COUNT
+	    ? SRA_MAX_STRUCTURE_COUNT
+	    : MOVE_RATIO;
+#else
 	  max_size = SRA_MAX_STRUCTURE_SIZE
 	    ? SRA_MAX_STRUCTURE_SIZE
 	    : MOVE_RATIO * UNITS_PER_WORD;
 	  max_count = SRA_MAX_STRUCTURE_COUNT
 	    ? SRA_MAX_STRUCTURE_COUNT
 	    : MOVE_RATIO;
+#endif
 
 	  full_size = tree_low_cst (size_tree, 1);
 	  full_count = count_type_elements (elt->type, false);

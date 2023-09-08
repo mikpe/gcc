@@ -785,8 +785,19 @@ forward_propagate_subreg (struct df_ref *use, rtx def_insn, rtx def_set)
       && GET_MODE (SUBREG_REG (src)) == use_mode
       && subreg_lowpart_p (src)
       && all_uses_available_at (def_insn, use_insn))
+#ifdef __PDP10_H__
+/* What the subregs say is that we're only interested in the low order bits,
+    so if we're going to try to use the inner operand, we better mask off the
+    high order bits.
+    -mtc 4/15/2010
+*/
+    return try_fwprop_subst (use, DF_REF_LOC (use), 
+    			     gen_rtx_AND(use_mode, SUBREG_REG (src), GEN_INT((1 << GET_MODE_PRECISION(GET_MODE(src))) - 1)),
+			     def_insn, false);
+#else
     return try_fwprop_subst (use, DF_REF_LOC (use), SUBREG_REG (src),
 			     def_insn, false);
+#endif
   else
     return false;
 }

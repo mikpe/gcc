@@ -1,5 +1,29 @@
 long long acc;
 
+#ifdef __PDP10__
+addhi (short a)
+{
+  acc += (long long) a << 36;
+}
+
+subhi (short a)
+{
+  acc -= (long long) a << 36;
+}
+
+main ()
+{
+  acc = 0x000000ffff000000000LL;
+  addhi (1);
+  if (acc != 0x0000010000000000000LL)
+    abort ();
+  subhi (1);
+  if (acc != 0x000000ffff000000000LL)
+    abort ();
+  exit (0);
+}
+
+#else
 addhi (short a)
 {
   acc += (long long) a << 32;
@@ -21,3 +45,4 @@ main ()
     abort ();
   exit (0);
 }
+#endif

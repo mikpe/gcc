@@ -464,6 +464,9 @@ mn10300-*-*)
 	;;
 mt-*-elf)
         ;;
+pdp10-*-*)		# Lie
+	tmake_file="pdp10/t-pdp10"
+	;;
 pdp11-*-bsd)
         ;;
 pdp11-*-*)

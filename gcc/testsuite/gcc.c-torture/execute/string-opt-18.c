@@ -8,7 +8,11 @@ extern void abort ();
 typedef __SIZE_TYPE__ size_t;
 
 extern void *memcpy(void*, const void*, size_t);
+#ifdef __PDP10__
+extern char *mempcpy(char*, const char*, size_t);
+#else
 extern void *mempcpy(void*, const void*, size_t);
+#endif
 extern void *memmove(void*, const void*, size_t);
 extern char *strcpy(char*, const char*);
 extern int memcmp(const void*, const void*, size_t);

@@ -1,0 +1,383 @@
+#!/bin/bash
+set -f
+
+#
+# Determine if we were invoked as either "ranlib" or "nm".
+# if so, we immediately start over as "maklib s" or "maklib m".
+#
+
+case $0 in
+    *ranlib) exec `dirname $0`/maklib -s $*;;
+    *nm) exec `dirname $0`/maklib -m $*;;
+    *) ;;
+esac
+
+lopts=$*
+usage()
+{
+    echo -e "
+When invoked as maklib or ar:
+
+usage: [maklib | ar] [-][ smVvcrqltdx ] archive [ files ... ]
+
+       s  write an index, the same as using ranlib.
+       m  list symbols, the same as using nm.
+
+       V  print version and exit immediately
+       v  be verbose (ignored)
+
+       c  create library silently (ignored) (r or q also required)
+       r  function: replace modules (ignored, interpreted as 'q')
+       q  function: quick append one or more files to archive
+
+       l  (accepted but ignored)
+
+       t  function: type module names in archive
+       d  function: delete modules from the archive
+       x  function: extract modules from the archive
+
+CAUTION: maklib modules are NOT file names, they are taken from the
+assembly TITLE directive.  Thus, you must list the module names with 't'ype,
+and specify those names to 'd'elete them.  'r'eplace and 'q'uick append
+simply take files as inputs, which may result in duplicate modules.  Archives
+with duplicate modules must be indexed to function properly, else you
+will later obtain the first occurance of a duplicate, not the last.
+
+
+When invoked as ranlib:
+
+usage: ranlib [ -Vv ] archive
+
+       V  print version and exit immediately
+       v  be verbose (ignored)
+
+
+When invoked as nm:
+
+usage: nm [ -agnopruw ] files ...
+
+       V  print version and exit immediately
+       v  be verbose (ignored)
+       agnopruw (accepted but ignored)
+
+NOTE: The file ~/.netrc MUST contain appropriate login information for host ${TOPS20_BUILD_HOST}
+
+An entry such as 'machine ${TOPS20_BUILD_HOST} login <name> password <string>' suffices, where
+<name> is the login name to use, and <string> is the password string.  Don't forget
+to 'chmod 600 ~/.netrc' so only you can read it.
+
+The current command line is: \"$0 ${lopts}\"" 1>&2
+    exit 1
+}
+
+#
+# determine the TOPS20_BUILD_HOST's login.
+# without this, there is no reason to proceed.
+source `dirname $0`/gcc-netrc
+getaccount
+
+#
+# parse command line and set variables appropriately
+#
+
+if [ $# -lt 1 ]
+then
+    usage; exit 1;
+fi
+
+func=""
+ops=0
+
+#
+# process command line.
+#
+# collect all options arguments
+# There will always be at least one, which may or may
+# not have a leading '-'
+#
+
+key=$1
+while [ "$*" != "" ] ; do
+    shift
+    case $1 in
+	-*) key=${key}$1;;
+	*) break;;
+    esac
+done
+
+while test -n "$key"; do
+    case $key in
+        V*)     echo "Linux Tops20 MAKLIB emulator 1.0.0" 1>&2; exit 0;;
+	d*)	ops=$[$ops+1]; func="/delete";;
+	x*)	ops=$[$ops+1]; func="/extract";;
+	r*|q*)	ops=$[$ops+1]; func="/append";;
+	t*)	ops=$[$ops+1]; func="/list";;
+	s*)     ops=$[$ops+1]; func="/index";;
+        m*)     ops=$[$ops+1]; func="/points";;
+	c*) ;;
+	-*) ;;
+	v*|l*) ;;                   # ignored maklib/ar opts
+	a*|g*|n*|o*|p*|r*|u*|w*) ;; # ignored nm opts
+	?*)	usage; exit 1;;
+      esac
+    key=${key#?}
+  done
+
+#
+# we must have exactly one operation selected
+#
+if [ "$ops" -ne 1 ]
+    then
+    usage; exit 1;
+fi
+
+#
+# check for proper usage
+#
+# /delete, /extract  operations must have a pre-existing  archive and must have one or more files
+# /replace, /append operations may have a pre-existing archive and must have one or more files
+# /index, /list operations require a pre-existing archive only
+# /points operations require only a list of files, either archives or objects, in any order
+#
+
+archive=""
+case $func in
+    /delete|/extract) archive=$1; shift
+	              if [ -z "$*" -o ! -f "${archive}" ]; then 
+		      	      echo "$0: Archive not found - ${archive}"; exit 1
+		      fi;;
+    /append)          archive=$1; shift
+	              if [ -z "$*" -o -z "${archive}" ]; then 
+		      	      echo "$0: Archive not specified - ${archive}"; exit 1
+		      fi;;
+    /index|/list)     archive=$1; shift; if [ -n "$*" -o ! -f "${archive}" ]; then
+		      	      echo "$0: Archive not found - ${archive}"; exit 1
+		      fi;;
+    /points)          if [ -z "$*" ]; then 
+		      	      echo "$0: No input files"; exit 1
+		      fi;;
+esac
+files=$*
+
+#
+# Send all input files to Tops20
+#
+
+# This call to getftpoptions sets ftpoptions.
+getftpoptions
+
+ftpcmd=""
+rarchive=""
+rfiles=""
+ftpcmd="binary"$'\n'
+
+if [ -n "${archive}" ]
+    then
+    rarchive=`basename ${archive}`
+    if [ -f ${archive} ]              # may be a new archive
+	then
+	ftpcmd=${ftpcmd}"put ${archive} ${rarchive}"$'\n'
+    else
+	case $func in
+	    /delete|/extract|/index|/list) echo "$0: File not found - $1"; exit 1;;
+	    *) ;;
+	esac
+    fi
+fi
+
+rfiles=""
+if [ -n "${files}" ]
+    then
+    for F in ${files}
+      do
+      RF=`basename ${F}`
+      rfiles="${rfiles} ${RF}"
+      case ${func} in
+	  /append|/points)  # input files must be sent to remote host
+	      if [ -f ${F} ]
+		  then
+		  ftpcmd=${ftpcmd}"put ${F} ${RF}"$'\n'
+	      else
+		  echo "$0: File not found - ${F}"
+		  exit 1
+	      fi;;
+	  *) ;; # files are outputs, we will fetch them later
+      esac
+    done
+fi
+
+#
+# build up the remote maklib command.
+#
+# delete   --> archive=archive/delete:(file,...)      [existing archive, specific files]
+# extract  --> dsk:=archive/extract:(file,...)        [existing archive, specific files]
+#          or  dsk:=archive/extract                   [existing archive, all files]
+# append   --> archive=archive/append,file/append,... [existing archive, specific files]
+#          or  archive=file/append,file/append,...    [new archive, specific files]
+# list     --> tty:=archive/list                      [existing archive]
+# index    --> archive=archive/index                  [existing archive]
+#
+#
+# nm function:
+#
+# for each file
+#     tty:=file/points | sed clean up script to produce nm-like output
+#
+#
+# /exit exits maklib in all cases
+#
+
+#
+# turn "file file file ..." into ":(file,file,file ...)" for /delete, /extract
+#
+# NOTE: These functions use module names, not files
+#
+
+parenlist=""
+if [ -n "${rfiles}" ]
+    then
+    parenlist=':('`echo ${rfiles} | sed -e "s+ +,+g"`')'
+fi
+
+#
+# generate a string for optional pre-existing archives
+#
+
+optlib=""
+if [ -n "${archive}" -a -f "${archive}" ]
+    then
+    optlib=${rarchive}${func}","
+fi
+
+#mklcmd="maklib"$'\n'
+mklcmd=
+case ${func} in
+    /delete)  mklcmd=${mklcmd}${rarchive}"="${rarchive}${func}${parenlist}$'\n';;
+
+    /extract) mklcmd=${mklcmd}"dsk:="${rarchive}${func}${parenlist}$'\n';;
+
+#
+# maklib can't handle very long command lines, so we do this one file at a time
+# as the list of file replacements can be (and usually is) very large.
+#
+# TODO: do in small chunks of files.  The command buffer appears to be somewhere
+# around 500 bytes, so it should easily manage 10-20 files or so at a time.
+#
+    /append) for RF in ${rfiles}; do
+	       mklcmd=${mklcmd}${rarchive}"="${optlib}${RF}${func}$'\n'
+	       optlib=${rarchive}${func}","  # we definitely have an archive now
+             done;
+# always, always, always index the library, otherwise we risk accessing an outdated
+# duplicate module.
+#	     mklcmd=${mklcmd}${rarchive}"="${rarchive}/index$'\n';;
+              ;;
+    /list)    mklcmd=${mklcmd}"tty:="${rarchive}${func}$'\n';;
+
+    /index)   mklcmd=${mklcmd}${rarchive}"="${rarchive}${func}$'\n';;
+
+    /points)  for RF in ${rfiles}; do 
+	        mklcmd=${mklcmd}"tty:="${RF}${func}$'\n'
+	      done
+esac
+mklcmd=${mklcmd}"/exit"$'\n'
+
+#
+# write the maklib command into a file
+# the command is so large that it will get truncated otherwise
+#
+cmdfil=`mktemp maklib-XXXXXXXX`
+cat >>${cmdfil} <<EOF
+${mklcmd}
+EOF
+
+ftpcmd=${ftpcmd}"ascii"$'\n'"put ${cmdfil}"$'\n'
+
+#
+# transfer all files
+#
+
+echo -e "\nTransferring files to ${TOPS20_BUILD_HOST} ..."
+doftp
+[ $? -eq 0 ] || exit $?
+
+rm ${cmdfil}
+
+#
+# Fire up maklib, using the above remote command (almost)
+# the /points operation will require us to capture terminal output and transform
+# it into something resembling what 'nm' produces
+#
+# TODO: write the necessary sed or awk script to convert the output and stick it
+# in the pipeline
+#
+
+echo -e "\nConstructing archive ..."
+case ${func} in
+    /points) `dirname $0`/maklib.exp ${TOPS20_BUILD_HOST} $username $password "cat ${cmdfil} | maklib" \
+	| sed -e 's/[^ -}]$//' | tr A-Z a-z \
+        | sed -e '1,7d;s/^\([^	][^	]*\)/\
+\1.rel:/;s/^	/00000000 T /;s/	/\
+00000000 T /g'\
+	|| exit $? ;; # output needs sed/awk massaging
+    *) `dirname $0`/maklib.exp ${TOPS20_BUILD_HOST} $username $password "cat ${cmdfil} | maklib" || exit $? ;;
+esac
+
+#
+# Fetch any file results and cleanup debris
+#
+
+ftpcmd="binary"$'\n'
+out=""
+case ${func} in
+
+    /delete)  rm -f ${archive}
+	      ftpcmd=${ftpcmd}"get ${rarchive} ${archive}"$'\n'"delete ${rarchive}"$'\n'
+	      out=${archive};;
+#
+# TODO: if a full extraction without listing any remote files to return, we will extract
+# all the files and leave them on the remote host.  We don't presently know what to fetch.
+# To do this, we will have to list the archive first.
+#
+    /extract) ftpcmd=${ftpcmd}"delete ${rarchive}"$'\n'
+	      for RF in ${rfiles}; do ftpcmd=${ftpcmd}"get ${RF} ${RF}"$'\n'"delete ${RF}"$'\n'; done
+              out=${rfiles};;
+
+    /replace) rm -f ${archive}
+	      ftpcmd=${ftpcmd}"get ${rarchive} ${archive}"$'\n'"delete ${rarchive}"$'\n'
+	      for RF in ${rfiles}; do ftpcmd=${ftpcmd}"delete ${RF}"$'\n'; done
+	      out=${archive};;
+
+    /append)  rm -f ${archive}
+	      ftpcmd=${ftpcmd}"get ${rarchive} ${archive}"$'\n'"delete ${rarchive}"$'\n'
+	      for RF in ${rfiles}; do ftpcmd=${ftpcmd}"delete ${RF}"$'\n'; done
+	      out=${archive};;
+
+    /list)    ftpcmd=${ftpcmd}"delete ${rarchive}"$'\n';;
+
+    /index)   ftpcmd=${ftpcmd}"get ${rarchive} ${archive}"$'\n'"delete ${rarchive}"$'\n'
+	      out=${archive};;
+
+    /points)  for RF in ${rfiles}; do ftpcmd=${ftpcmd}"delete ${RF}"$'\n'; done;;
+esac
+
+ftpcmd=${ftpcmd}"delete ${cmdfil}"$'\n'
+
+echo -e "\nRetrieving files from ${TOPS20_BUILD_HOST} ..."
+doftp
+[ $? -eq 0 ] || exit $?
+
+#
+# Double check: did we recieve any empty output files?
+#
+if [ -n "${out}" ]
+    then
+    for O in ${out}
+    do
+      if [ -s "$O" ]
+	  then
+	  exit 0
+      else
+	  exit 1
+      fi
+    done
+fi

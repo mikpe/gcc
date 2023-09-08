@@ -1069,6 +1069,15 @@ should_break_up_subtract (tree stmt)
   tree immusestmt;
   struct loop *loop = loop_containing_stmt (stmt);
 
+/* Need to avoid algebraically incorrect break ups regardless of whether doing
+    so would be handy for reassociation.
+    -mtc 1/4/2008
+*/
+#ifdef __PDP10_H__
+  if (POINTER_TYPE_P(TREE_TYPE(binrhs)))
+  	return false;
+#endif
+
   if (TREE_CODE (binlhs) == SSA_NAME
       && is_reassociable_op (SSA_NAME_DEF_STMT (binlhs), PLUS_EXPR, loop))
     return true;

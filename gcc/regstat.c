@@ -169,6 +169,21 @@ regstat_bb_compute_ri (unsigned int bb_index,
 	{
 	  if (REG_NOTE_KIND (link) == REG_DEAD)
 	    REG_N_DEATHS(REGNO (XEXP (link, 0)))++;
+
+/* General Fix?
+    Unused registers are really dead.  Perhaps they'll eventually
+    be optimized away entirely, but failing to mark them here means we think
+    they're used in multiple blocks and they get allocated on the stack instead
+    of in a register.
+    We have other problems with allocation of pseudos on the stack, but this
+    avoids much of that.
+    -mtc 12/11/2007
+*/
+#ifdef __PDP10_H__
+	  if (REG_NOTE_KIND (link) == REG_UNUSED)
+	    REG_N_DEATHS(REGNO (XEXP (link, 0)))++;
+#endif
+	  
 	  link = XEXP (link, 1);
 	}
 

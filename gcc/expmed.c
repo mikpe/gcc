@@ -21,6 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: expmed.c 2fe7b21606c1 2011/06/20 19:50:02 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -350,21 +360,83 @@ check_predicate_volatile_ok (enum insn_code icode, int opno,
    no other way of implementing the operation.  If FALLBACK_P is false,
    return false instead.  */
 
+/* FIXME: the comment above apparently comes directly from the gcc base code, but
+    its completely off base.  The size to count bits within should always be the size of the object
+    we're counting within.  For a store operation that's the destination.  We're being passed a bitsize
+    and bitnum that are relative to the destination we're given in str_rtx.  We need to generate rtl that
+    will match the insv pattern with a len (insv op1) and position (insv op2) that are relative to the
+    machine mode of the insv destination (op0).
+    Of course, the machine mode of op0 is probably the same as the machine mode of op2 which
+    is probably a word, so regardless of how confused it gets, this routine probably generates
+    correct code for most machines most of the time -- mtc 5/10/2006
+    With 430 update the old header comment I was commenting on went away.  Retain this comment
+    for now since I don't see any significant change in the actual code.
+    -mtc 11/29/2007
+*/
+
 static bool
 store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 		   unsigned HOST_WIDE_INT bitnum, enum machine_mode fieldmode,
 		   rtx value, bool fallback_p)
 {
+/* For the PDP10, we're going to consistently keep offset in bytes and we will count bits
+    within the natural size of the mode we're extracting into.
+    This actually a general (and simplifying) fix, but we're ifdef-ing it so we can retain all the
+    original gcc bugs
+    -mtc 5/15/2006
+    use GET_MODE_PRECISION() instead of GET_MODE_BITSIZE() to handle sub byte modes correcctly
+    -mtc 2/22/2008
+*/
+#ifdef __PDP10_H__
+  unsigned int unit = (fieldmode == VOIDmode ? BITS_PER_WORD : GET_MODE_PRECISION(fieldmode));
+#else
   unsigned int unit
     = (MEM_P (str_rtx)) ? BITS_PER_UNIT : BITS_PER_WORD;
+#endif
   unsigned HOST_WIDE_INT offset, bitpos;
   rtx op0 = str_rtx;
   int byte_offset;
   rtx orig_value;
 
+#ifdef __PDP10_H__
+  enum machine_mode op_mode = mode_for_extraction (EP_insv, 1);
+#else
   enum machine_mode op_mode = mode_for_extraction (EP_insv, 3);
+#endif
+  
+#ifdef __PDP10_H__
+/* this block is a pdp10 insertion, so I'm marking it with an ifdef
+    FIXME: its not clear what this code is attempting to do, but its clearly wrong
+    nested bitfields might be possible to optimize out by calculating the overlap area
+    but adding the positions together is never right
+    note that the following code totally ignores the subregsize = XEXP(SUBREG_REG(op0, 1))
+    which is a critical restriction on valid bitpos values
+    I think the valid restriction is that bitsize and bitpos must describe a subset of subregsize
+    bits right adjusted in a register of mode GET_MODE(op0).  If so, we can directly map the bits
+    to a subset of the existing SUBREG expresssion in op0.
+    --mtc 5/10/2006
+    With the 4.1.1 merge, we need to be adjusting bitnum here instead of bitpos.  Since this is wrong
+    anyhow, I'm just commenting it out.  If we need to handle ZERO_EXTRACT, the correct thing
+    to do would be to handle them in the following SUBREG elimination loop.  The correct adjustment
+    when op0 is a ZERO_EXTRACT node is
+    XEXP(op0, 1) + XEXP(op0, 2) - GET_MODE_BITSIZE(op0)
+    but that ignores the need to provide zero bits if the ultimate field extends left of the zero extract field.
+    
+  if (GET_CODE (op0) == SUBREG && GET_CODE (SUBREG_REG (op0)) == ZERO_EXTRACT)
+    {
+      if (bitsize > GET_MODE_BITSIZE (GET_MODE (op0)))
+	abort ();
+      if (bitsize + bitpos + INTVAL (XEXP (SUBREG_REG (op0), 2))
+	  > BITS_PER_WORD)
+	abort ();
 
-  while (GET_CODE (op0) == SUBREG)
+      bitpos += INTVAL (XEXP (SUBREG_REG (op0), 2));
+      op0 = str_rtx = XEXP (SUBREG_REG (op0), 0);
+    }
+*/
+#endif
+    
+    while (GET_CODE (op0) == SUBREG)
     {
       /* The following line once was done only if WORDS_BIG_ENDIAN,
 	 but I think that is a mistake.  WORDS_BIG_ENDIAN is
@@ -452,6 +524,81 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
      done with a simple store.  For targets that support fast unaligned
      memory, any naturally sized, unit aligned field can be done directly.  */
 
+#ifdef __PDP10_H__
+/* offset and bitpos need to be calculated differently when unit less than a UNIT
+    -mtc 3/24/2008
+*/
+  if (unit < BITS_PER_UNIT)
+  	{
+  	offset = (bitnum / BITS_PER_WORD) * (BITS_PER_WORD / unit) + ((bitnum % BITS_PER_WORD) / unit);
+	bitpos = (bitnum % BITS_PER_WORD) % unit;
+  	}
+  else
+  	{
+	offset = (bitnum / unit) * (unit / BITS_PER_UNIT);
+	bitpos = bitnum % unit;
+  	}
+
+  if ((bitsize == unit)
+        && (bitpos == 0))
+        {
+        if (MEM_P(op0))
+            {
+            if ((MEM_ALIGN(op0) % unit == 0) ||
+/* On the PDP10 alignment within words works differently than between words
+    -mtc 2/25/2008
+*/
+#ifdef __PDP10_H__
+                ((MEM_ALIGN(op0) >= UNITS_PER_WORD) && (unit <= BITS_PER_WORD)) || 
+#endif
+                (!SLOW_UNALIGNED_ACCESS (fieldmode, MEM_ALIGN(op0))))
+                {
+/* The following adjustment of fieldmode will probably require more changes.
+    test 20040709-2.c fails because we get here with BLKmode describing a single word.
+    It's possible the mode should have been SImode, maybe due to try_instantiate_multiple_fields()
+    or something else marking combined fields as BLKmode?
+    -mtc 1/3/2008
+*/
+                if (GET_MODE(op0) == BLKmode && fieldmode == VOIDmode)
+			fieldmode = op_mode;
+                op0 = adjust_address(op0, fieldmode, offset);
+                emit_move_insn(op0, value);
+                return true;
+                }
+            }
+        else if (REG_P(op0))
+            {
+            /*
+            TODO:  The restriction on overwriting the entire object or storing full or multi-word fields
+            shouldn't be necessary for this subreg optimization.  But it appears that the reload phase
+            treats subreg nodes as nops, regardless of their other content, so either that needs to be
+            fixed, or the expand_insn implementation needs to be enhanced to eliminate all meaningful
+            subregs before we can delete the if test for the following block.  Currently,  execution test
+            20020206-2.c fails if we delete the test.
+            -mtc 10/2/2006
+            */
+            if ((GET_MODE_SIZE(GET_MODE(op0)) == (unit / BITS_PER_UNIT)) ||
+                ((unit / BITS_PER_UNIT) % UNITS_PER_WORD == 0))
+                {
+                op0 = simplify_gen_subreg (fieldmode, op0, GET_MODE (op0), offset);
+                emit_move_insn(op0, value);
+                return true;
+                }
+            }
+        else
+            {
+            /* With the 4.1.1 update the base gcc code is more similar to our changes, testing for MEM
+                explicitly, but they omit the test for REG so uncovered cases for them will be like REG now.
+                They're still way to complicated, but if we can eliminate the above test, we might be able to
+                be more similar.
+                --mtc 2/22/2007
+            */
+            abort();
+            }
+        }
+  
+#else
+
   offset = bitnum / unit;
   bitpos = bitnum % unit;
   byte_offset = (bitnum % BITS_PER_WORD) / BITS_PER_UNIT
@@ -475,6 +622,8 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
       emit_move_insn (op0, value);
       return true;
     }
+  
+#endif
 
   /* Make sure we are playing with integral modes.  Pun with subregs
      if we aren't.  This must come after the entire register case above,
@@ -506,17 +655,33 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
   /* If OP0 is a register, BITPOS must count within a word.
      But as we have it, it counts within whatever size OP0 now has.
      On a bigendian machine, these are not the same, so convert.  */
+#ifdef __PDP10_H__
+ /*  We're counting within unit, which at this point is GET_MODE_BITSIZE(fieldmode)
+      If we end up referencing the data in a register with a larger size we may need to adjust bitpos
+      If we end up referencing the data in a smaller register we may have a problem
+      -mtc 5/11/2006
+*/
+#else
   if (BYTES_BIG_ENDIAN
       && !MEM_P (op0)
       && unit > GET_MODE_BITSIZE (GET_MODE (op0)))
     bitpos += unit - GET_MODE_BITSIZE (GET_MODE (op0));
+#endif
 
   /* Storing an lsb-aligned field in a register
      can be done with a movestrict instruction.  */
-
   if (!MEM_P (op0)
       && (BYTES_BIG_ENDIAN ? bitpos + bitsize == unit : bitpos == 0)
+      
+/* small fix to handle case of fieldmode == VOIDmode
+    -mtc 5/30/2006
+*/
+ #ifdef __PDP10_H__
+      && bitsize == unit
+ #else
       && bitsize == GET_MODE_BITSIZE (fieldmode)
+ #endif
+ 
       && (optab_handler (movstrict_optab, fieldmode)->insn_code
 	  != CODE_FOR_nothing))
     {
@@ -544,11 +709,19 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	  op0 = SUBREG_REG (op0);
 	}
 
+/* since we've calculated offset as the offset within op0 in bytes to the field we can dispense
+    with a bunch of gibberish
+    -mtc 5/11/2006
+*/
+#ifdef __PDP10_H__
+      emit_insn (GEN_FCN (icode) (gen_rtx_SUBREG (fieldmode, op0, offset), value));
+#else
       emit_insn (GEN_FCN (icode)
 		 (gen_rtx_SUBREG (fieldmode, op0,
 				  (bitnum % BITS_PER_WORD) / BITS_PER_UNIT
 				  + (offset * UNITS_PER_WORD)),
 				  value));
+#endif
 
       return true;
     }
@@ -573,9 +746,22 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	 VOIDmode, because that is what store_field uses to indicate that this
 	 is a bit field, but passing VOIDmode to operand_subword_force
 	 is not allowed.  */
+
+/* smallest_mode_for_size will abort if there isn't a mode big enough
+     fieldmode is only used so that operand_subword_force can properly
+     interpret constants
+     hopefully nwords won't be bigger than 2 when we have a constant
+     -mtc 10/19/2006
+*/
+#ifdef __PDP10_H__
       fieldmode = GET_MODE (value);
       if (fieldmode == VOIDmode)
-	fieldmode = smallest_mode_for_size (nwords * BITS_PER_WORD, MODE_INT);
+          fieldmode = smallest_mode_for_size ((nwords <= 2 ? nwords : 2) * BITS_PER_WORD, MODE_INT);
+#else
+      fieldmode = GET_MODE (value);
+      if (fieldmode == VOIDmode)
+          fieldmode = smallest_mode_for_size (nwords * BITS_PER_WORD, MODE_INT);
+#endif
 
       last = get_last_insn ();
       for (i = 0; i < nwords; i++)
@@ -606,12 +792,19 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
      a full-word (whatever type that is), since it is shorter than a word.  */
 
   /* OFFSET is the number of words or bytes (UNIT says which)
-     from STR_RTX to the first word or byte containing part of the field.  */
+     from STR_RTX to the first word or byte containing part of the field.
+     On the PDP10 its the number of bytes from STR_RTX to the unit
+     containing the field.
+  */
 
   if (!MEM_P (op0))
     {
       if (offset != 0
 	  || GET_MODE_SIZE (GET_MODE (op0)) > UNITS_PER_WORD)
+#ifdef __PDP10_H__
+/* for PDP10 offset is always in bytes, but need to round down to a word multiple
+    -mtc 11/21/2006
+*/
 	{
 	  if (!REG_P (op0))
 	    {
@@ -625,9 +818,29 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	      op0 = SUBREG_REG (op0);
 	    }
 	  op0 = gen_rtx_SUBREG (mode_for_size (BITS_PER_WORD, MODE_INT, 0),
+		                op0, (offset / UNITS_PER_WORD) * UNITS_PER_WORD);
+	}
+      offset -= (offset / UNITS_PER_WORD) * UNITS_PER_WORD;
+      bitpos += offset * BITS_PER_UNIT;
+      offset = 0;
+#else
+	{
+	  if (!REG_P (op0))
+	    {
+	      /* Since this is a destination (lvalue), we can't copy
+		 it to a pseudo.  We can remove a SUBREG that does not
+		 change the size of the operand.  Such a SUBREG may
+		 have been added above.  */
+	      gcc_assert (GET_CODE (op0) == SUBREG
+			  && (GET_MODE_SIZE (GET_MODE (op0))
+			      == GET_MODE_SIZE (GET_MODE (SUBREG_REG (op0)))));
+		op0 = SUBREG_REG (op0);
+	    }
+	  op0 = gen_rtx_SUBREG (mode_for_size (BITS_PER_WORD, MODE_INT, 0),
 		                op0, (offset * UNITS_PER_WORD));
 	}
       offset = 0;
+#endif
     }
 
   /* If VALUE has a floating-point or complex mode, access it as an
@@ -664,7 +877,37 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 
       /* Add OFFSET into OP0's address.  */
       if (MEM_P (xop0))
+#ifdef __PDP10_H__
+	{
+	enum machine_mode adjustmode = (fieldmode != VOIDmode ? fieldmode : word_mode);
+/* permit condition of (offset == 0) even though failing the other tests probably means things should have been handled
+    somehow upstream instead
+    -mtc 2/21/2008
+*/
+	gcc_assert (adjustmode == GET_MODE(xop0)
+				|| (GET_MODE_SIZE(adjustmode) >= UNITS_PER_WORD && GET_MODE(xop0) == BLKmode)
+				|| (GET_MODE_SIZE(adjustmode) >= UNITS_PER_WORD && GET_MODE_SIZE(GET_MODE(xop0)) >= UNITS_PER_WORD)
+				|| (offset == 0));
+	xop0 = adjust_address (xop0, adjustmode, offset);
+	/* Temporary 'fix'.  the leftover part of offset is gets added into the offset of the MEM
+	    but is eventually ignored.  We probably really need to pass in fieldmode instead of
+	    word_mode and fix adjust_address to handle all the QnI modes properly.
+	    There are other errors upstream from us in set_mem_attributes_minus_bitpos which
+	    cause the initial MEM we're dealing with to have wrong offsets.
+	    -mtc 10/10/2007
+	    Change to passing in fieldmode.  Also add assert to see if under what circumstances we
+	    we actually change the mode in the adjust_address.  This fixes some issues with 8-char
+	    arrays within structs, but there's a lot more complexity to the pad bits every 4th element
+	    in such arrays.
+	    -mtc 1/21/2008
+	    Add check for fieldmode == VOIDmode and allow xop0 to have unmatching mode as long as its word size or bigger
+	    -mtc 1/24/2008
+	*/
+	}
+	xbitpos += (offset % UNITS_PER_WORD) * BITS_PER_UNIT;
+#else
 	xop0 = adjust_address (xop0, byte_mode, offset);
+#endif
 
       /* If xop0 is a register, we need it in OP_MODE
 	 to make it acceptable to the format of insv.  */
@@ -683,8 +926,20 @@ store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 
       /* We have been counting XBITPOS within UNIT.
 	 Count instead within the size of the register.  */
+/*
+	The gcc base code appears to have the test for this adjustment
+	wrong.  This showed up with execution test 20020206-2.c
+	-mtc 10/2/2006
+	Rereading this while doing 4.1.1 update, I think the issue is that
+	on PDP10 at this point xbitpos is counted within a WORD, so
+	we don't want this test to execute.
+	-mtc 2/23/2007
+*/
+#ifdef __PDP10_H__
+#else
       if (BITS_BIG_ENDIAN && !MEM_P (xop0))
 	xbitpos += GET_MODE_BITSIZE (op_mode) - unit;
+#endif
 
       unit = GET_MODE_BITSIZE (op_mode);
 
@@ -1138,22 +1393,98 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 		     enum machine_mode mode, enum machine_mode tmode,
 		     bool fallback_p)
 {
+#ifdef __PDP10_H__
+/* For the PDP10, we're going to consistently keep offset in bytes and we will count bits
+    within the natural size of the mode we're extracting into.
+    This actually a general (and simplifying) fix, but we're ifdef-ing it so we can retain all the
+    original gcc bugs
+    -mtc 5/15/2006
+*/
+  unsigned int unit = (GET_MODE_BITSIZE(mode) ? GET_MODE_BITSIZE(mode) : BITS_PER_WORD);
+#else
   unsigned int unit
     = (MEM_P (str_rtx)) ? BITS_PER_UNIT : BITS_PER_WORD;
+#endif
   unsigned HOST_WIDE_INT offset, bitpos;
   rtx op0 = str_rtx;
   enum machine_mode int_mode;
   enum machine_mode ext_mode;
+
+#ifdef __PDP10_H__
+#else
   enum machine_mode mode1;
+#endif
+
   enum insn_code icode;
   int byte_offset;
+
+#ifdef __PDP10_H__
+/* this code is wrong!  an extract of an extract should not mean that we index within the nested
+    field.  It should mean that we index within the value that the first extract maps into after being
+    right justified there.  Also need to take SUBREG_BYTE(op0) into account.
+    -mtc 5/12/2006
+
+    With the 4.1.1 merge, we need to be adjusting bitnum here instead of bitpos.  Since this is wrong
+    anyhow, I'm just commenting it out.  If we need to handle ZERO_EXTRACT, the correct thing
+    to do would be to handle them in the following SUBREG elimination loop.  The correct adjustment
+    when op0 is a ZERO_EXTRACT node is
+    XEXP(op0, 1) + XEXP(op0, 2) - GET_MODE_BITSIZE(op0)
+    but that ignores the need to provide zero bits if the ultimate field extends left of the zero extract field.
+
+
+  if (GET_CODE (op0) == SUBREG && GET_CODE (SUBREG_REG (op0)) == ZERO_EXTRACT)
+    {
+      if (bitsize > GET_MODE_BITSIZE (GET_MODE (op0)))
+	abort ();
+      if (bitsize + bitpos + INTVAL (XEXP (SUBREG_REG (op0), 2))
+	  > BITS_PER_WORD)
+	abort ();
+
+      bitpos += INTVAL (XEXP (SUBREG_REG (op0), 2));
+      op0 = str_rtx = XEXP (SUBREG_REG (op0), 0);
+    }
+*/
+#endif
 
   if (tmode == VOIDmode)
     tmode = mode;
 
   while (GET_CODE (op0) == SUBREG)
     {
+/* Lifting code from store_bit_field().  This a general fix.  For some reason, the 4.1.1 gcc code does this in
+    store_bit_field() but not here.  It's clearly needed in both.
+    -mtc 
+*/
+#ifdef __PDP10_H__
+
+
+      /* The following line once was done only if WORDS_BIG_ENDIAN,
+	 but I think that is a mistake.  WORDS_BIG_ENDIAN is
+	 meaningful at a much higher level; when structures are copied
+	 between memory and regs, the higher-numbered regs
+	 always get higher addresses.  */
+      int inner_mode_size = GET_MODE_SIZE (GET_MODE (SUBREG_REG (op0)));
+      int outer_mode_size = GET_MODE_SIZE (GET_MODE (op0));
+      
+      byte_offset = 0;
+
+      /* Paradoxical subregs need special handling on big endian machines.  */
+      if (SUBREG_BYTE (op0) == 0 && inner_mode_size < outer_mode_size)
+	{
+	  int difference = inner_mode_size - outer_mode_size;
+
+	  if (WORDS_BIG_ENDIAN)
+	    byte_offset += (difference / UNITS_PER_WORD) * UNITS_PER_WORD;
+	  if (BYTES_BIG_ENDIAN)
+	    byte_offset += difference % UNITS_PER_WORD;
+	}
+      else
+	byte_offset = SUBREG_BYTE (op0);
+
+      bitnum += byte_offset * BITS_PER_UNIT;
+#else
       bitnum += SUBREG_BYTE (op0) * BITS_PER_UNIT;
+#endif
       op0 = SUBREG_REG (op0);
     }
 
@@ -1294,6 +1625,89 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
      can also be extracted with a SUBREG.  For this, we need the
      byte offset of the value in op0.  */
 
+
+#ifdef __PDP10_H__
+/* The purpose of this block of code is to optimize the case where the bitfield is naturally
+     aligned and occupies a complete object of mode mode
+     The existing code is completely tangled and clearly contains errors.  It's easier to just
+     rewrite it.
+     -mtc 5/12/2005
+
+     With the 4.1.1 update, the gcc code for this section is revised, so if we have problems
+     we can reexamine what they do.  I still find their logic hard to follow, so I'm leaving
+     the PDP-10 code in place for now.
+     -mtc 2/27/2007
+*/
+
+  offset = (bitnum / unit) * (unit / BITS_PER_UNIT);
+  bitpos = bitnum % unit;
+
+/* Contrary to the similar comment in the gcc code, BITPOS counts
+     within unit, not within the size of OP0.  bitpos is based on bitnum which has
+     already been adjusted to be relative to the start of OP0.  The subsequent code
+     should generate code based on that definition and not require further adjustment.
+     -mtc 2/27/2007
+*/
+
+    if ((bitsize == GET_MODE_BITSIZE(mode)) && (bitpos == 0))
+        {
+        if (GET_CODE(op0) == MEM)
+            {
+            if (MEM_ALIGN(op0) % bitsize == 0)
+                {
+                op0 = adjust_address(op0, mode, offset);
+                /* if its convenient, convert to tmode */
+                if (!VECTOR_MODE_P( tmode) && tmode != mode && 
+                    GET_MODE_CLASS (tmode) == GET_MODE_CLASS(mode))
+                    {
+                    convert_to_mode(tmode, op0, unsignedp);
+                    }
+                return op0;
+                }
+            }
+        else if (GET_CODE(op0) == REG)
+            {
+            if (GET_MODE_BITSIZE(GET_MODE(op0)) % bitsize == 0)
+                {
+                op0 = gen_rtx_SUBREG(mode, op0, offset);
+                /* if its convenient, convert to tmode */
+                if (!VECTOR_MODE_P( tmode) && tmode != mode && 
+                    GET_MODE_CLASS (tmode) == GET_MODE_CLASS(mode))
+                    {
+                    convert_to_mode(tmode, op0, unsignedp);
+                    }
+                return op0;
+                }
+            }
+        else if (GET_CODE(op0) == SUBREG)
+            {
+            if (GET_MODE_BITSIZE(GET_MODE(op0)) % bitsize == 0)
+                {
+                /* since we removed all SUBREGs earlier, the only reason we might have one now
+                     would be if we introduced one to change modes, in which case it shouldn't
+                     change size.  We're trying to avoid creating SUBREG(SUBREG(...)) here
+                     -mtc 6/8/2006
+                */
+                if ((GET_MODE_SIZE(GET_MODE(op0)) != GET_MODE_SIZE(GET_MODE(SUBREG_REG(op0)))))
+                    abort();
+                op0 = SUBREG_REG(op0);
+                op0 = gen_rtx_SUBREG(mode, op0, offset);
+                /* if its convenient, convert to tmode */
+                if (!VECTOR_MODE_P( tmode) && tmode != mode && 
+                    GET_MODE_CLASS (tmode) == GET_MODE_CLASS(mode))
+                    {
+                    convert_to_mode(tmode, op0, unsignedp);
+                    }
+                return op0;
+                }
+            }
+        else
+            {
+            /* not sure how this can happen, but its bad */
+            abort();
+            }
+        }
+#else
   bitpos = bitnum % unit;
   offset = bitnum / unit;
   byte_offset = bitpos / BITS_PER_UNIT + offset * UNITS_PER_WORD;
@@ -1356,7 +1770,9 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	return convert_to_mode (tmode, op0, unsignedp);
       return op0;
     }
- no_subreg_mode_swap:
+no_subreg_mode_swap:
+#endif
+
 
   /* Handle fields bigger than a word.  */
 
@@ -1391,12 +1807,23 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 						* (int) BITS_PER_WORD))
 				     : (int) i * BITS_PER_WORD);
 	  rtx target_part = operand_subword (target, wordnum, 1, VOIDmode);
+#ifdef __PDP10_H__
+/* multi-word extracts and extracts into multi-word modes will need rework for the PDP10
+     but for now just fix the mode that's being passed
+     - mtc 5/15/2006
+*/
+	  rtx result_part
+	    = extract_bit_field (op0, MIN (BITS_PER_WORD,
+					   bitsize - i * BITS_PER_WORD),
+				 bitnum + bit_offset, 1, target_part, word_mode,
+				 word_mode);
+#else
 	  rtx result_part
 	    = extract_bit_field (op0, MIN (BITS_PER_WORD,
 					   bitsize - i * BITS_PER_WORD),
 				 bitnum + bit_offset, 1, target_part, mode,
 				 word_mode);
-
+#endif
 	  gcc_assert (target_part);
 
 	  if (result_part != target_part)
@@ -1448,6 +1875,28 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 
   /* OFFSET is the number of words or bytes (UNIT says which)
      from STR_RTX to the first word or byte containing part of the field.  */
+#ifdef __PDP10_H__
+/* customize to compensate for the fact that we calculate offset in bytes and bitpos within
+     the natural unit and fix other errors.  NOTE that we assume SUBREG is OK for any byte
+     alignment within a register
+     -mtc
+     the purpose of this block seems to be to generate a SUBREG if necessary to reduce op0
+     to a word register.  Since we maintain offset as a byte offset, this does not necessarily result
+     in OFFSET ending up zero, which may be a problem further on
+     -mtc 7/2/2007
+*/
+  if (!MEM_P (op0))
+    {
+      if (offset != 0
+	  || GET_MODE_BITSIZE (GET_MODE (op0)) > BITS_PER_WORD)
+	{
+	  if (!REG_P (op0))
+	    op0 = copy_to_reg (op0);
+  	  op0 = gen_rtx_SUBREG (mode_for_size (BITS_PER_WORD, MODE_INT, 0), op0, (offset / UNITS_PER_WORD) * UNITS_PER_WORD);
+	}
+      offset = offset % UNITS_PER_WORD;
+    }
+#else
   if (!MEM_P (op0))
     {
       if (offset != 0
@@ -1460,6 +1909,7 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	}
       offset = 0;
     }
+#endif
 
   /* Now OFFSET is nonzero only for memory operands.  */
   ext_mode = mode_for_extraction (unsignedp ? EP_extzv : EP_extv, 0);
@@ -1489,7 +1939,32 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
 	xop0 = gen_rtx_SUBREG (ext_mode, xop0, 0);
       if (MEM_P (xop0))
 	/* Get ref to first byte containing part of the field.  */
+#ifdef __PDP10_H__
+	/* 430 update changed code so heavily this set of changes was nearly lost
+	    locating it here simply because this seems to be where the line it was customizing
+	    ended up.  Surrounding logic may make it all wrong.  Note that the change from
+	    byte_mode to word_mode is an old PDP10 customization I commented on but retained.
+	    Also, this change used to be in two places.  Feels like there are going to be problems
+	    with bit fields.
+	    -mtc 11/29/2007
+	*/
+	/* This seems questionable to me.  The mode we are setting should match the data
+	     type of the field or be able to contain the field  I wold think bestmode
+	     would be a better choice than either word_mode or byte_mode
+	     -mtc 5/26/2006
+	*/
+	xop0 = adjust_address (xop0, word_mode, xoffset);
+	/* Temporary 'fix'.  the leftover part of offset is gets added into the offset of the MEM
+	    but is eventually ignored.  We probably really need to pass in fieldmode instead of
+	    word_mode and fix adjust_address to handle all the QnI modes properly.
+	    There are other errors upstream from us in set_mem_attributes_minus_bitpos which
+	    cause the initial MEM we're dealing with to have wrong offsets.
+	    -mtc 10/10/2007
+	*/
+	xbitpos += (offset % UNITS_PER_WORD) * BITS_PER_UNIT;
+#else
 	xop0 = adjust_address (xop0, byte_mode, xoffset);
+#endif
 
       /* On big-endian machines, we count bits from the most significant.
 	 If the bit field insn does not, we must invert.  */
@@ -1600,8 +2075,23 @@ extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
   if (!fallback_p)
     return NULL;
 
+/* With 430 update reinsert this fix based on the nearby position of the extract_fixed_bit_field() call
+    -mtc 11/29/2007
+    test strct-pack-3.c failed and analysis shows the 422 compiler goes thru a different extract_fixed_bit_field()
+    call without the pdp10 customization.  The customization is wrong because op0 has mode BLKmode which has
+    a bitsize of 0.  So either it's simply no longer needed or a more complex decision is required.  This is basically
+    an endian correction for sub-word size modes.  Maybe we can't get here with that anymore.
+    -mtc 1/8/2007
+#ifdef __PDP10_H__
+  target = extract_fixed_bit_field (int_mode, op0, offset, bitsize,
+					  bitpos + BITS_PER_WORD - GET_MODE_BITSIZE(GET_MODE(op0)),
+					  target, unsignedp);
+#else
+#endif
+*/
   target = extract_fixed_bit_field (int_mode, op0, offset, bitsize,
 				    bitpos, target, unsignedp);
+
   return convert_extracted_bit_field (target, mode, tmode, unsignedp);
 }
 
@@ -2145,6 +2635,23 @@ expand_shift (enum tree_code code, enum machine_mode mode, rtx shifted,
      and shifted in the other direction; but that does not work
      on all machines.  */
 
+/* Convert non integer pointer expressions to integer before attempting any shifting
+    This generally happens only if we are attempting to store a pointer into an unaligned
+    packed field.
+    Also verify that the expression mode matches mode, since we depend on this assumption.
+    -mtc 8/23/2006
+*/
+#ifdef __PDP10_H__
+    if (PTR_MODE_P(mode) && GET_MODE_CLASS(mode) != MODE_INT)
+  	{
+	if (mode != GET_MODE(shifted))
+		abort();
+	
+	shifted = simplify_gen_subreg(Pmode, shifted, mode, 0);
+	mode = Pmode;
+  	}
+#endif
+
   op1 = expand_normal (amount);
 
   if (SHIFT_COUNT_TRUNCATED)
@@ -2392,7 +2899,10 @@ static rtx expand_mult_const (enum machine_mode, rtx, HOST_WIDE_INT, rtx,
 			      const struct algorithm *, enum mult_variant);
 static unsigned HOST_WIDE_INT choose_multiplier (unsigned HOST_WIDE_INT, int,
 						 int, rtx *, int *, int *);
+#ifdef __PDP10_H__
+#else
 static unsigned HOST_WIDE_INT invert_mod2n (unsigned HOST_WIDE_INT, int);
+#endif
 static rtx extract_high_half (enum machine_mode, rtx);
 static rtx expand_mult_highpart (enum machine_mode, rtx, rtx, rtx, int, int);
 static rtx expand_mult_highpart_optab (enum machine_mode, rtx, rtx, rtx,
@@ -2940,6 +3450,8 @@ expand_mult_const (enum machine_mode mode, rtx op0, HOST_WIDE_INT val,
       switch (alg->op[opno])
 	{
 	case alg_shift:
+	  /* PDP-10: Always using a logical left shift would
+	     be unsuitable for hardware 71-bit arithmetic.  */
 	  accum = expand_shift (LSHIFT_EXPR, mode, accum,
 				build_int_cst (NULL_TREE, log),
 				NULL_RTX, 0);
@@ -3076,7 +3588,15 @@ expand_mult (enum machine_mode mode, rtx op0, rtx op1, rtx target,
   /* These are the operations that are potentially turned into a sequence
      of shifts and additions.  */
   if (SCALAR_INT_MODE_P (mode)
+#ifdef __PDP10_H__
+/* doing multiplying by shifting is  a bad idea on the PDP10
+     but do it for unsigned integers anyhow, because we don't have an unsigned multiply
+    -mtc 1/22/2008
+*/
+      && (unsignedp))
+#else
       && (unsignedp || !flag_trapv))
+#endif
     {
       HOST_WIDE_INT coeff = 0;
       rtx fake_reg = gen_raw_REG (mode, LAST_VIRTUAL_REGISTER + 1);
@@ -3177,15 +3697,33 @@ expand_mult (enum machine_mode mode, rtx op0, rtx op1, rtx target,
 
   /* This used to use umul_optab if unsigned, but for non-widening multiply
      there is no difference between signed and unsigned.  */
+/*
+	On the PDP10 there is a definite difference between signed and unsigned
+	-mtc 10/25/2006
+	The test against SImode is a temporary kludge until we add DI and TI mode
+	library routines.  The open coded inline code is probably wrong, but I haven't
+	encountered any tests or usage where we need it to work yet.
+	-mtc 10/26/2006
+*/
+#ifdef __PDP10_H__
+  op0 = expand_binop (mode,
+		      ! unsignedp
+		      && flag_trapv && (GET_MODE_CLASS(mode) == MODE_INT)
+		      ? smulv_optab : 
+		      		((unsignedp && (mode==SImode)) ? umul_optab : smul_optab),
+		      op0, op1, target, unsignedp, OPTAB_LIB_WIDEN);
+#else
   op0 = expand_binop (mode,
 		      ! unsignedp
 		      && flag_trapv && (GET_MODE_CLASS(mode) == MODE_INT)
 		      ? smulv_optab : smul_optab,
 		      op0, op1, target, unsignedp, OPTAB_LIB_WIDEN);
+#endif
+
   gcc_assert (op0);
   return op0;
 }
-
+
 /* Return the smallest n such that 2**n >= X.  */
 
 int
@@ -3286,7 +3824,14 @@ choose_multiplier (unsigned HOST_WIDE_INT d, int n, int precision,
     {
       unsigned HOST_WIDE_INT mask = ((unsigned HOST_WIDE_INT) 1 << n) - 1;
       *multiplier_ptr = GEN_INT (mhigh_lo & mask);
+#ifdef __PDP10_H__
+/* gcc's return expression is just plain wrong
+    -mtc 6/13/2011
+*/
+      return mhigh_lo > mask;
+#else
       return mhigh_lo >= mask;
+#endif
     }
   else
     {
@@ -3295,6 +3840,8 @@ choose_multiplier (unsigned HOST_WIDE_INT d, int n, int precision,
     }
 }
 
+#ifdef __PDP10_H__
+#else
 /* Compute the inverse of X mod 2**n, i.e., find Y such that X * Y is
    congruent to 1 (mod 2**N).  */
 
@@ -3322,6 +3869,7 @@ invert_mod2n (unsigned HOST_WIDE_INT x, int n)
     }
   return y;
 }
+#endif
 
 /* Emit code to adjust ADJ_OPERAND after multiplication of wrong signedness
    flavor of OP0 and OP1.  ADJ_OPERAND is already the high half of the
@@ -3343,7 +3891,16 @@ expand_mult_highpart_adjust (enum machine_mode mode, rtx adj_operand, rtx op0,
   tem = expand_shift (RSHIFT_EXPR, mode, op0,
 		      build_int_cst (NULL_TREE, GET_MODE_BITSIZE (mode) - 1),
 		      NULL_RTX, 0);
+#ifdef __PDP10_H__
+/* PDP10 adjustment is different because our low order word has only BITS_PER_WORD-1 bits of significance.
+     -mtc 6/14/2011
+*/
+  tem = expand_and (mode, tem, 
+					expand_shift (LSHIFT_EXPR, mode, op1, build_int_cst (NULL_TREE, 1), NULL_RTX, 0),
+					NULL_RTX);
+#else
   tem = expand_and (mode, tem, op1, NULL_RTX);
+#endif
   adj_operand
     = force_operand (gen_rtx_fmt_ee (adj_code, mode, adj_operand, tem),
 		     adj_operand);
@@ -3351,7 +3908,16 @@ expand_mult_highpart_adjust (enum machine_mode mode, rtx adj_operand, rtx op0,
   tem = expand_shift (RSHIFT_EXPR, mode, op1,
 		      build_int_cst (NULL_TREE, GET_MODE_BITSIZE (mode) - 1),
 		      NULL_RTX, 0);
+#ifdef __PDP10_H__
+/* PDP10 adjustment is different because our low order word has only BITS_PER_WORD-1 bits of significance.
+     -mtc 6/14/2011
+*/
+  tem = expand_and (mode, tem, 
+					expand_shift (LSHIFT_EXPR, mode, op0, build_int_cst (NULL_TREE, 1), NULL_RTX, 0),
+					NULL_RTX);
+#else
   tem = expand_and (mode, tem, op0, NULL_RTX);
+#endif
   target = force_operand (gen_rtx_fmt_ee (adj_code, mode, adj_operand, tem),
 			  target);
 
@@ -3365,15 +3931,41 @@ extract_high_half (enum machine_mode mode, rtx op)
 {
   enum machine_mode wider_mode;
 
+/* based on prior PDP10 customization before 4.1.1 update
+    this may need tuning to get things like whether the shift should be arithmetic or logical correct
+    -mtc 2/23/2007
+    when called as part of doing a constant divide by multiplying, see test 950426-1.c, the shift
+    needs to be arithmetic.  This routine is problematic in that it we probably don't have the information
+    we need to choose how and by how much to shift.  It's also misnamed or misused since we're not
+    really extracting the high half, we're dividing by 2^bitsize(mode).
+    In the case of doing constant divide by multiplying it would actually be better to rearrange the logic
+    to combine the two back-to-back shifts into a single shift and to avoid calling this routine altogether.
+    -mtc 7/18/2007
+    Change this back to a pure extract of the high half of op.  Do this even when the mode is not word_mode.
+    Add asserts to make sure that mode is really half of GET_MODE(op) which is the next wider mode
+    and that both are integer modes.  We can do the extract with a SUBREG, no shift required.
+    Note that this is equivalent to dividing by 2^(35*wordsize(mode)) regardless of whether the
+    value is signed/unsigned and regardless of the operand size, because all but the high word of
+    all PDP10 integers have 35 significant bits.
+*/
   if (mode == word_mode)
     return gen_highpart (mode, op);
 
   gcc_assert (!SCALAR_FLOAT_MODE_P (mode));
 
   wider_mode = GET_MODE_WIDER_MODE (mode);
+#ifdef __PDP10_H__
+  gcc_assert (SCALAR_INT_MODE_P(mode));
+  gcc_assert (wider_mode == GET_MODE(op));
+  gcc_assert (SCALAR_INT_MODE_P(wider_mode));
+  gcc_assert (GET_MODE_UNIT_SIZE(mode) * 2 == GET_MODE_UNIT_SIZE(wider_mode));
+  /* we know we're BIG_ENDIAN, so just use byte 0 instead of calling subreg_highpart_offset */
+  return simplify_gen_subreg(mode, op, wider_mode, 0);
+#else
   op = expand_shift (RSHIFT_EXPR, wider_mode, op,
 		     build_int_cst (NULL_TREE, GET_MODE_BITSIZE (mode)), 0, 1);
   return convert_modes (mode, wider_mode, op, 0);
+#endif
 }
 
 /* Like expand_mult_highpart, but only consider using a multiplication
@@ -3432,9 +4024,19 @@ expand_mult_highpart_optab (enum machine_mode mode, rtx op0, rtx op1,
     }
 
   /* Try widening the mode and perform a non-widening multiplication.  */
-  if (optab_handler (smul_optab, wider_mode)->insn_code != CODE_FOR_nothing
-      && size - 1 < BITS_PER_WORD
+#ifdef __PDP10_H__
+/* We need to be careful about whether we use smul or umul
+    -mtc 6/17/2011
+*/
+  moptab = unsignedp ? umul_optab : smul_optab;
+  if (optab_handler (moptab, wider_mode)->insn_code != CODE_FOR_nothing
+&& size - 1 < BITS_PER_WORD
       && mul_cost[wider_mode] + shift_cost[mode][size-1] < max_cost)
+#else
+  if (optab_handler (smul_optab, wider_mode)->insn_code != CODE_FOR_nothing
+&& size - 1 < BITS_PER_WORD
+      && mul_cost[wider_mode] + shift_cost[mode][size-1] < max_cost)
+#endif
     {
       rtx insns, wop0, wop1;
 
@@ -3445,8 +4047,13 @@ expand_mult_highpart_optab (enum machine_mode mode, rtx op0, rtx op1,
       start_sequence ();
       wop0 = convert_modes (wider_mode, mode, op0, unsignedp);
       wop1 = convert_modes (wider_mode, mode, op1, unsignedp);
+#ifdef __PDP10_H__
+      tem = expand_binop (wider_mode, moptab, wop0, wop1, 0,
+			  unsignedp, OPTAB_WIDEN);
+#else
       tem = expand_binop (wider_mode, smul_optab, wop0, wop1, 0,
 			  unsignedp, OPTAB_WIDEN);
+#endif
       insns = get_insns ();
       end_sequence ();
 
@@ -3774,6 +4381,16 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
   rtx tquotient;
   rtx quotient = 0, remainder = 0;
   rtx last;
+  #ifdef __PDP10_H__
+  /* The number of bits we have to represent the magnitude of a number does
+       not match what gcc considers normal.  Basically we have one less bit than the
+       number of bits in a word except for the high word of an unsigned number, where
+       the sign bit can be used as an additional magnitude bit.  But all other words have
+       an unused bit.
+       -mtc 6/16/2011
+  */
+  int precision;
+  #endif
   int size;
   rtx insn, set;
   optab optab1, optab2;
@@ -3900,7 +4517,12 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
   else
     tquotient = gen_reg_rtx (compute_mode);
 
+#ifdef __PDP10_H__
   size = GET_MODE_BITSIZE (compute_mode);
+  precision = (GET_MODE_SIZE(compute_mode) /UNITS_PER_WORD) * (BITS_PER_WORD - 1);
+#else
+  size = GET_MODE_BITSIZE (compute_mode);
+#endif
 #if 0
   /* It should be possible to restrict the precision to GET_MODE_BITSIZE
      (mode), and thereby get better code when OP1 is a constant.  Do that
@@ -4008,8 +4630,16 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 			/* Find a suitable multiplier and right shift count
 			   instead of multiplying with D.  */
 
+#ifdef __PDP10_H__
+/* For us, the low half only contains precision bits of representation
+    - mtc 6/17/2011
+*/
+			mh = choose_multiplier (d, precision, precision,
+						&ml, &post_shift, &dummy);
+#else
 			mh = choose_multiplier (d, size, size,
 						&ml, &post_shift, &dummy);
+#endif
 
 			/* If the suggested multiplier is more than SIZE bits,
 			   we can do better for even divisors, using an
@@ -4017,9 +4647,18 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 			if (mh != 0 && (d & 1) == 0)
 			  {
 			    pre_shift = floor_log2 (d & -d);
+#ifdef __PDP10_H__
+/* For us, the low half only contains precision bits of representation
+    - mtc 6/17/2011
+*/
+			    mh = choose_multiplier (d >> pre_shift, precision,
+						    precision - pre_shift,
+						    &ml, &post_shift, &dummy);
+#else
 			    mh = choose_multiplier (d >> pre_shift, size,
 						    size - pre_shift,
 						    &ml, &post_shift, &dummy);
+#endif
 			    gcc_assert (!mh);
 			  }
 			else
@@ -4097,6 +4736,9 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 	    else		/* TRUNC_DIV, signed */
 	      {
 		unsigned HOST_WIDE_INT ml;
+#ifdef __PDP10_H__
+		unsigned HOST_WIDE_INT mh;
+#endif
 		int lgup, post_shift;
 		rtx mlr;
 		HOST_WIDE_INT d = INTVAL (op1);
@@ -4189,10 +4831,19 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 		  }
 		else if (size <= HOST_BITS_PER_WIDE_INT)
 		  {
+#ifdef __PDP10_H__
+		    choose_multiplier (abs_d, precision, precision,
+				       &mlr, &post_shift, &lgup);
+		    ml = (unsigned HOST_WIDE_INT) INTVAL (mlr);
+
+		    if (mh == 0)
+#else
 		    choose_multiplier (abs_d, size, size - 1,
 				       &mlr, &post_shift, &lgup);
 		    ml = (unsigned HOST_WIDE_INT) INTVAL (mlr);
+
 		    if (ml < (unsigned HOST_WIDE_INT) 1 << (size - 1))
+#endif
 		      {
 			rtx t1, t2, t3;
 
@@ -4230,13 +4881,22 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 		    else
 		      {
 			rtx t1, t2, t3, t4;
+#ifdef __PDP10_H__
+			rtx t5, t6;
+#endif
 
 			if (post_shift >= BITS_PER_WORD
 			    || size - 1 >= BITS_PER_WORD)
 			  goto fail1;
 
+#ifdef __PDP10_H__
+/* for us, the low multiplier is a properly formed positive number and we want it that way
+    -mtc 6/17/2011
+*/
+#else
 			ml |= (~(unsigned HOST_WIDE_INT) 0) << (size - 1);
 			mlr = gen_int_mode (ml, compute_mode);
+#endif
 			extra_cost = (shift_cost[compute_mode][post_shift]
 				      + shift_cost[compute_mode][size - 1]
 				      + 2 * add_cost[compute_mode]);
@@ -4245,6 +4905,20 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 						   max_cost - extra_cost);
 			if (t1 == 0)
 			  goto fail1;
+#ifdef __PDP10_H__
+/* we need to add in op0 to the highpart result, but we need to be careful because of the possibility
+    of overflow
+    -mtc 6/17/2011
+*/
+			t5 = force_operand (gen_rtx_MINUS (compute_mode, t1, op0), NULL_RTX);
+			t6 = expand_shift (RSHIFT_EXPR, compute_mode, t5, build_int_cst(NULL_TREE, 1), NULL_RTX, 0);
+			t2 = force_operand (gen_rtx_PLUS (compute_mode, t6, op0), NULL_RTX);
+			t3 = expand_shift
+			  (RSHIFT_EXPR, compute_mode, t2,
+			   build_int_cst (NULL_TREE, post_shift - 1),
+			   NULL_RTX, 0);
+#else
+
 			t2 = force_operand (gen_rtx_PLUS (compute_mode,
 							  t1, op0),
 					    NULL_RTX);
@@ -4252,6 +4926,7 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 			  (RSHIFT_EXPR, compute_mode, t2,
 			   build_int_cst (NULL_TREE, post_shift),
 			   NULL_RTX, 0);
+#endif
 			t4 = expand_shift
 			  (RSHIFT_EXPR, compute_mode, op0,
 			   build_int_cst (NULL_TREE, size - 1),
@@ -4319,9 +4994,15 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 		  {
 		    rtx t1, t2, t3, t4;
 
+#ifdef __PDP10_H__
+		    rtx t5;
+		    mh = choose_multiplier (d, precision, precision,
+					    &ml, &post_shift, &lgup);
+#else
 		    mh = choose_multiplier (d, size, size - 1,
 					    &ml, &post_shift, &lgup);
 		    gcc_assert (!mh);
+#endif
 
 		    if (post_shift < BITS_PER_WORD
 			&& size - 1 < BITS_PER_WORD)
@@ -4340,10 +5021,21 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 						   max_cost - extra_cost);
 			if (t3 != 0)
 			  {
+#ifdef __PDP10_H__
+			    if (mh != 0)
+				t5 = force_operand (gen_rtx_PLUS (compute_mode, t3, t2), NULL_RTX);		
+			    else
+				t5 = t3;
+			    t4 = expand_shift
+			      (RSHIFT_EXPR, compute_mode, t5,
+			       build_int_cst (NULL_TREE, post_shift),
+			       NULL_RTX, 1);
+#else
 			    t4 = expand_shift
 			      (RSHIFT_EXPR, compute_mode, t3,
 			       build_int_cst (NULL_TREE, post_shift),
 			       NULL_RTX, 1);
+#endif
 			    quotient = expand_binop (compute_mode, xor_optab,
 						     t4, t1, tquotient, 0,
 						     OPTAB_WIDEN);
@@ -4687,6 +5379,29 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
       case EXACT_DIV_EXPR:
 	if (op1_is_constant && HOST_BITS_PER_WIDE_INT >= size)
 	  {
+#ifdef __PDP10_H__
+	    /* PDP-10: can't use multiplication, since the IMUL
+	       instruction doesn't generate the same result as an
+	       unsigned multiplication.  */
+
+	    HOST_WIDE_INT d = INTVAL (op1);
+	    int pre_shift;
+	    rtx t1;
+
+	    pre_shift = floor_log2 (d & -d);
+	    t1 = expand_shift (RSHIFT_EXPR, compute_mode, op0,
+			       size_int (pre_shift), NULL_RTX,
+			       unsignedp);
+	    d >>= pre_shift;
+	    if (d == 1)
+	      quotient = t1;
+	    else
+	      quotient = expand_binop (compute_mode,
+				       unsignedp ? udiv_optab : sdiv_optab,
+				       t1, GEN_INT (trunc_int_for_mode
+						    (d, compute_mode)),
+				       NULL_RTX, unsignedp, 0);
+#else
 	    HOST_WIDE_INT d = INTVAL (op1);
 	    unsigned HOST_WIDE_INT ml;
 	    int pre_shift;
@@ -4700,6 +5415,7 @@ expand_divmod (int rem_flag, enum tree_code code, enum machine_mode mode,
 	    quotient = expand_mult (compute_mode, t1,
 				    gen_int_mode (ml, compute_mode),
 				    NULL_RTX, 1);
+#endif
 
 	    insn = get_last_insn ();
 	    set_unique_reg_note (insn,

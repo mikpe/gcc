@@ -28,6 +28,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA.  */
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: unwind-dw2-fde.c 89405fdc6a9a 2008/03/27 23:51:56 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 
 #ifndef _Unwind_Find_FDE
 #include "tconfig.h"
@@ -87,7 +97,7 @@ __register_frame_info_bases (const void *begin, struct object *ob,
   ob->dbase = dbase;
   ob->u.single = begin;
   ob->s.i = 0;
-  ob->s.b.encoding = DW_EH_PE_omit;
+  ob->s.b.encoding = (int) DW_EH_PE_omit;
 #ifdef DWARF2_OBJECT_END_PTR_EXTENSION
   ob->fde_end = NULL;
 #endif
@@ -450,8 +460,13 @@ fde_split (struct object *ob, fde_compare_t fde_compare,
 	   probe != &marker && fde_compare (ob, linear->array[i], *probe) < 0;
 	   probe = chain_end)
 	{
-	  chain_end = (const fde *const*) erratic->array[probe - linear->array];
-	  erratic->array[probe - linear->array] = NULL;
+/* gcc base code is doing pointer difference between different types of pointers
+    not clear how that can work
+    adjusted because in the 430 port they made changes to the types involved
+    -mtc 11/21/2007
+*/
+	  chain_end = (const fde *const*) erratic->array[probe - (const fde *const*) linear->array];
+	  erratic->array[probe - (const fde *const*) linear->array] = NULL;
 	}
       erratic->array[i] = (const fde *) chain_end;
       chain_end = &linear->array[i];

@@ -18,6 +18,16 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifdef ENABLE_SVNID_TAG
+# ifdef __GNUC__
+#  define _unused_ __attribute__((unused))
+# else
+#  define _unused_  /* define for other platforms here */
+# endif
+  static char const *SVNID _unused_ = "$Id: c-common.c 536224ee82d6 2008/01/30 19:17:44 Martin Chaney <chaney@xkl.com> $";
+# undef ENABLE_SVNID_TAG
+#endif
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -921,7 +931,7 @@ fix_string_type (tree value)
   TREE_STATIC (value) = 1;
   return value;
 }
-
+
 /* Print a warning if a constant expression had overflow in folding.
    Invoke this function on every expression that the language
    requires to be a constant expression.
@@ -2003,6 +2013,23 @@ c_common_type_for_mode (enum machine_mode mode, int unsignedp)
     return unsignedp ? widest_unsigned_literal_type_node
 		     : widest_integer_literal_type_node;
 
+/*
+	PDP10 has extra QnImodes
+*/
+#ifdef __PDP10_H__
+  if (mode == Q6Imode)
+    return unsignedp ? unsigned_intQ6I_type_node : intQ6I_type_node;
+
+  if (mode == Q7Imode)
+    return unsignedp ? unsigned_intQ7I_type_node : intQ7I_type_node;
+
+  if (mode == Q8Imode)
+    return unsignedp ? unsigned_intQ8I_type_node : intQ8I_type_node;
+
+  if (mode == Q9Imode)
+    return unsignedp ? unsigned_intQ9I_type_node : intQ9I_type_node;
+#endif
+
   if (mode == QImode)
     return unsignedp ? unsigned_intQI_type_node : intQI_type_node;
 
@@ -2842,6 +2869,19 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
      they are really pointers.  */
   fold_defer_overflow_warnings ();
 
+  /* On the PDP10 we need to represent pointer arithmetic as the user wrote it:
+      pointer + element offset
+      Eventually we'll convert to units appropriate to the type of pointer used, but if
+      we try to do it here before we know the actual pointer type its impossible to straighten
+      out properly.
+      Fix redone with 430 update because of introduction of POINTER_PLUS_EXPR
+      -mtc 12/5/2007
+      Rearrange location of ifdef because of 430 changes
+      -mtc 1/4/2008
+  */
+#ifdef __PDP10_H__
+#else
+
   /* If what we are about to multiply by the size of the elements
      contains a constant term, apply distributive law
      and multiply that constant term separately.
@@ -2885,6 +2925,8 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
   intop = convert (sizetype,
 		   build_binary_op (MULT_EXPR, intop,
 				    convert (TREE_TYPE (intop), size_exp), 1));
+
+#endif
 
   /* Create the sum or difference.  */
   if (resultcode == MINUS_EXPR)
@@ -3367,9 +3409,19 @@ c_sizeof_or_alignof_type (tree type, bool is_sizeof, int complain)
     {
       if (is_sizeof)
 	/* Convert in case a char is more than one unit.  */
+
+/* because of our sub-unit size chars, we can end up dividing by zero
+    for now just use the unit size of the type
+    when the char size is 7 bits or less, do we want sizeof(word) to be 5 or more?
+    -mtc 9/21/2007
+*/
+#ifdef __PDP10_H__
+	value = TYPE_SIZE_UNIT (type);
+#else
 	value = size_binop (CEIL_DIV_EXPR, TYPE_SIZE_UNIT (type),
 			    size_int (TYPE_PRECISION (char_type_node)
 				      / BITS_PER_UNIT));
+#endif
       else
 	value = size_int (TYPE_ALIGN_UNIT (type));
     }
@@ -3880,8 +3932,44 @@ c_common_nodes_and_builtins (void)
     TREE_TYPE (identifier_global_value (get_identifier (UINTMAX_TYPE)));
 
   default_function_type = build_function_type (integer_type_node, NULL_TREE);
+#if 0
+/* #ifdef __PDP10_H__ */
+  /* Make sure ptrdiff_type_node is a distinct type, otherwise equal
+     in every respect to integer_type_node.
+
+     This is because GCC parses a pointer subtraction like this:
+        T *x, *y;
+        int n = x - y;
+     as:
+	int n = (ptrdiff_t)x - (ptrdiff_t)y;
+     Therefore, ptrdiff_t must be distinct from other integral types,
+     so we can tell a pointer subtraction from an integer subtraction.  */
+
+  ptrdiff_type_node = make_node (INTEGER_TYPE);
+  memcpy (ptrdiff_type_node, integer_type_node, sizeof (union tree_node));
+
+/*
+	This is an incredibly bad idea for too many reasons to list here, plus the way it was
+	done is bug prone and probably the cause of many bugs
+
+	The only reason I'm leaving this here for now is as reference in case there actually
+	are problems with pointer arithmetic.
+
+	If it turns out that GCC really type coerces pointers separately into (ptrdiff_t)s
+	before doing a subtraction, the first thing to consider is removing that coersion so
+	that the subtraction can see the underlying pointer types to be able to do the
+	subtraction properly.
+
+	If that can't be made to work and we really need to have a distinct copy, we should
+	retrieve the template in the standard way so that we handle PTRDIFF_TYPE lookup
+	properly instead of assuming integer_type_node, and then we should copy it using
+	the safe copy_type(type) function in utils.c instead of doing a memcpy.
+*/
+
+#else
   ptrdiff_type_node
     = TREE_TYPE (identifier_global_value (get_identifier (PTRDIFF_TYPE)));
+#endif
   unsigned_ptrdiff_type_node = c_common_unsigned_type (ptrdiff_type_node);
 
   lang_hooks.decls.pushdecl
