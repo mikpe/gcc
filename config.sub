@@ -1190,7 +1190,7 @@ case $cpu-$vendor in
 			| be32 | be64 \
 			| bfin | bpf | bs2000 \
 			| c[123]* | c30 | [cjt]90 | c4x \
-			| c8051 | clipper | craynv | csky | cydra \
+			| c8051 | cdp180[2456]* | clipper | craynv | csky | cydra \
 			| d10v | d30v | dlx | dsp16xx \
 			| e2k | elxsi | epiphany \
 			| f30[01] | f700 | fido | fr30 | frv | ft32 | fx80 \
