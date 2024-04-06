@@ -113,6 +113,9 @@ bfin*-*)
 bpf-*-*)
         cpu_type=bpf
         ;;
+cdp180[2456]*-*-*)
+	cpu_type=cdp1802
+	;;
 csky*-*-*)
 	cpu_type=csky
 	;;
@@ -654,6 +657,10 @@ bfin*-*)
 bpf-*-*)
         tmake_file="$tmake_file ${cpu_type}/t-${cpu_type}"
         extra_parts="crti.o crtn.o"
+	;;
+cdp180[2456]*-*-elf)
+	# no crti.o/crtn.o in extra_parts since we only use .init/fini_array
+	tmake_file="$tmake_file cdp1802/t-cdp1802 t-softfp-sfdf t-softfp"
 	;;
 cris-*-elf)
 	tmake_file="$tmake_file cris/t-cris t-softfp-sfdf t-softfp cris/t-elfmulti"
