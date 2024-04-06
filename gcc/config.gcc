@@ -397,6 +397,10 @@ bpf-*-*)
 	c_target_objs="bpf-c.o"
 	cxx_target_objs="bpf-c.o"
 	;;
+cdp180[2456]*-*-*)
+	cpu_type=cdp1802
+	target_has_targetm_common=no
+	;;
 frv*)	cpu_type=frv
 	extra_options="${extra_options} g.opt"
 	;;
@@ -1667,6 +1671,15 @@ bpf-*-*)
         extra_objs="btfext-out.o core-builtins.o"
         target_gtfiles="$target_gtfiles \$(srcdir)/config/bpf/btfext-out.cc \$(srcdir)/config/bpf/core-builtins.cc"
         ;;
+cdp180[2456]*-*-elf)
+	tm_file="${tm_file} elfos.h newlib-stdint.h"
+	use_gcc_stdint=provide
+	gas=yes
+	gnu_ld=yes
+	# Force .init_array support.  The configure script cannot always
+	# automatically detect that GAS supports it, yet we require it.
+	gcc_cv_initfini_array=yes
+	;;
 cris-*-elf | cris-*-none)
 	tm_file="elfos.h newlib-stdint.h ${tm_file}"
 	tmake_file="cris/t-cris cris/t-elfmulti"
