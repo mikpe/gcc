@@ -1,0 +1,67 @@
+# Makefile fragment for building LIBGCC for the RCA CDP1802 processor.
+# Copyright (C) 2024 Free Software Foundation, Inc.
+# Contributed by Mikael Pettersson <mikpelinux@gmail.com>.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 3, or (at your
+# option) any later version.
+#
+# GCC is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+# the GNU General Public License for more details.
+#
+# You should have received a copy of the  GNU General Public
+# License along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+LIB1ASMSRC = cdp1802/lib1funcs.S
+LIB1ASMFUNCS = \
+	__addvhi3 \
+	__ashlhi3 \
+	__ashlsi3 \
+	__ashrhi3 \
+	__ashrsi3 \
+	__call_reg \
+	__clrsbhi2 \
+	__clzhi2 \
+	__ctzhi2 \
+	__cmphi_eq \
+	__cmphi_ge \
+	__cmphi_geu \
+	__cmphi_gt \
+	__cmphi_gtu \
+	__cmphi_le \
+	__cmphi_leu \
+	__cmphi_lt \
+	__cmphi_ltu \
+	__cmphi_ne \
+	__divhi3 \
+	__divsi3 \
+	__ffshi2 \
+	__lshrhi3 \
+	__lshrsi3 \
+	__modhi3 \
+	__modsi3 \
+	__mulhi3 \
+	__mulsi3 \
+	__mulvhi3 \
+	__negvhi2 \
+	__parityhi2 \
+	__popcounthi2 \
+	__subvhi3 \
+	__ucmpsi2 \
+	__udivmodhi4 \
+	__udivmodsi4 \
+	__udivhi3 \
+	__udivsi3 \
+	__umodhi3 \
+	__umodsi3
+
+LIB2ADD += $(srcdir)/config/cdp1802/tramp.c
+
+# Small machine, optimize for size
+HOST_LIBGCC2_CFLAGS += -Os -ffunction-sections -fdata-sections
