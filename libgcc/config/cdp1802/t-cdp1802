@@ -1,0 +1,35 @@
+# Makefile fragment for building LIBGCC for the RCA CDP1802 processor.
+# Copyright (C) 2024 Free Software Foundation, Inc.
+# Contributed by Mikael Pettersson <mikpelinux@gmail.com>.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 3, or (at your
+# option) any later version.
+#
+# GCC is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+# the GNU General Public License for more details.
+#
+# You should have received a copy of the  GNU General Public
+# License along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+LIB1ASMSRC = cdp1802/lib1funcs.S
+LIB1ASMFUNCS = \
+	__ashlhi3 \
+	__ashrhi3 \
+	__call_reg \
+	__cmphi_eq \
+	__cmphi_geu \
+	__cmphi_ltu \
+	__cmphi_ne \
+	__lshrhi3
+
+LIB2ADD += $(srcdir)/config/cdp1802/tramp.c
+
+# Small machine, optimize for size
+HOST_LIBGCC2_CFLAGS += -Os -ffunction-sections -fdata-sections
