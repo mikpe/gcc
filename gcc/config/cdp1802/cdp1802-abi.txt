@@ -1,0 +1,142 @@
+RCA CDP1802 ABI
+===============
+
+Sizes and alignments
+--------------------
+
+Type		Size (bytes)
+
+char		1
+short		2
+int		2
+pointers	2
+long		4
+long long	8
+float		4
+double		8
+
+* char is unsigned by default
+* all types have 1-byte alignment
+* types occupying more than one byte are stored in big-endian order
+
+Floating-point
+--------------
+
+Emulated IEEE using soft-fp.
+
+Registers
+---------
+
+r0	fixed, DMA and PC at boot
+r1	fixed, interrupt handler PC
+r2	fixed, SP (stack pointer)
+r3	fixed, PC (program counter) by software convention
+r4	fixed, call routine PC
+r5	fixed, return routine PC
+r6	caller-save, static chain, indirect call target
+r7	caller-save, argument, return value
+r8	caller-save, argument, return value
+r9	caller-save, argument, return value
+r10	caller-save, argument, return value
+r11	callee-save
+r12	callee-save
+r13	callee-save
+r14	callee-save
+r15	callee-save, optional frame pointer
+D	fixed, 8-bit accumulator
+DF	caller-save, 1-bit carry/borrow flag
+X	fixed, 4-bit register selector for some memory access instructions
+P	fixed, 4-bit register selector for the program counter
+
+Registers r0-r15 are 16 bits wide.
+
+Stack
+-----
+
+The stack grows from high to low addresses.
+
+Pushing to the stack is a post-decrement instruction (STXD) so SP
+always points one byte below the last pushed item.  Code may use
+MEM[SP+0] as a scratch byte.
+
+Memory below SP not allocated to .text, .data, or .bss is volatile.
+There is no red-zone.
+
+Function calls and returns
+--------------------------
+
+A function call must:
+
+1. set X=2 (SP)
+2. push the return address on the stack
+3. jump to the callee
+
+A function return must:
+
+1. set X=2 (SP)
+2. pop the return address off the stack
+3. jump to the return address
+
+These operations are implemented by the NCRT (New Call and Return Technique)
+provided by crt0, via the r4 and r5 registers and the SEP instruction.
+
+To perform a call to a statically known address:
+
+	sep	4
+	.hword	address
+	; return continues here
+
+To perform a call to an address computed at runtime:
+
+	; compute callee into the static chain register
+	sep	4
+	.hword	__call_reg	; provided by libgcc
+	; return continues here
+
+To return:
+
+	sep	5
+
+Apart from the intended effects on SP, PC, and X, the function call
+and return mechanism may clobber D.  It may _not_ clobber DF.
+
+Note: The NCRT differs from the old Standard Call and Return Technique
+(SCRT) published by RCA in that it does not maintain return addresses
+on _both_ the stack and in a LINK register (r6).  Not having the LINK
+register simplifies the call and return sequences, and more importantly
+avoids reserving r6.  SCRT also stored return addresses on the stack in
+little-endian order, making it inconsistent with the the processor's general
+behaviour as well as the new instructions in the CDP1804AC.  For consistency
+NCRT stores return addresses on the stack in big-endian order.
+
+Parameters and return values
+----------------------------
+
+The first 4 words are passed in registers r7-r10.  Parameters beyond that
+are passed on the stack in increasing addresses, starting at SP+1 at the
+time of the function call instruction.
+
+Return values are passed in registers r7-r10.  It is not possible to return
+values in D since the NCRT return sequence may clobber D.
+
+Variadic functions
+------------------
+
+Variadic parameters (those corresponding to the "..." part of the callee's prototype)
+are passed entirely on the stack.
+
+Calling a variadic function without a matching prototype in scope is not supported.
+
+Object file format
+------------------
+
+The cdp1802-elf target uses 32-bit ELF format for object files and executables.
+The e_machine number is 0x1802 (not officially assigned).  Only static linking
+is supported, no PIC, PIE, or shared libraries.  TLS is not supported.
+
+Copyright (C) 2024 Free Software Foundation, Inc.
+Contributed by Mikael Pettersson <mikpelinux@gmail.com>
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
