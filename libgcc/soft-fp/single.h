@@ -64,6 +64,11 @@
 
 typedef float SFtype __attribute__ ((mode (SF)));
 
+/* Allow targets to select the type for the bit-fields containing fractions.  */
+#ifndef _FP_FRAC_TYPE
+#define _FP_FRAC_TYPE unsigned
+#endif
+
 union _FP_UNION_S
 {
   SFtype flt;
@@ -72,9 +77,9 @@ union _FP_UNION_S
 #if __BYTE_ORDER == __BIG_ENDIAN
     unsigned sign : 1;
     unsigned exp  : _FP_EXPBITS_S;
-    unsigned frac : _FP_FRACBITS_S - (_FP_IMPLBIT_S != 0);
+    _FP_FRAC_TYPE frac : _FP_FRACBITS_S - (_FP_IMPLBIT_S != 0);
 #else
-    unsigned frac : _FP_FRACBITS_S - (_FP_IMPLBIT_S != 0);
+    _FP_FRAC_TYPE frac : _FP_FRACBITS_S - (_FP_IMPLBIT_S != 0);
     unsigned exp  : _FP_EXPBITS_S;
     unsigned sign : 1;
 #endif
