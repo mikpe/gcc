@@ -69,6 +69,11 @@ typedef float DFtype __attribute__ ((mode (DF)));
 
 #if _FP_W_TYPE_SIZE < 64
 
+/* Allow targets to select the type for the bit-fields containing fractions.  */
+#ifndef _FP_FRAC_TYPE
+#define _FP_FRAC_TYPE unsigned
+#endif
+
 union _FP_UNION_D
 {
   DFtype flt;
@@ -77,11 +82,11 @@ union _FP_UNION_D
 # if __BYTE_ORDER == __BIG_ENDIAN
     unsigned sign  : 1;
     unsigned exp   : _FP_EXPBITS_D;
-    unsigned frac1 : _FP_FRACBITS_D - (_FP_IMPLBIT_D != 0) - _FP_W_TYPE_SIZE;
-    unsigned frac0 : _FP_W_TYPE_SIZE;
+    _FP_FRAC_TYPE frac1 : _FP_FRACBITS_D - (_FP_IMPLBIT_D != 0) - _FP_W_TYPE_SIZE;
+    _FP_FRAC_TYPE frac0 : _FP_W_TYPE_SIZE;
 # else
-    unsigned frac0 : _FP_W_TYPE_SIZE;
-    unsigned frac1 : _FP_FRACBITS_D - (_FP_IMPLBIT_D != 0) - _FP_W_TYPE_SIZE;
+    _FP_FRAC_TYPE frac0 : _FP_W_TYPE_SIZE;
+    _FP_FRAC_TYPE frac1 : _FP_FRACBITS_D - (_FP_IMPLBIT_D != 0) - _FP_W_TYPE_SIZE;
     unsigned exp   : _FP_EXPBITS_D;
     unsigned sign  : 1;
 # endif
