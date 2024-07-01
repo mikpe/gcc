@@ -5,15 +5,15 @@
 void *malloc (unsigned long);
 
 double *
-unsafe (unsigned long n)
+unsafe (__SIZE_TYPE__ n)
 {
   return (double *) malloc (n * sizeof (double));
 }
 
 double *
-safer (unsigned long n)
+safer (__SIZE_TYPE__ n)
 {
-  unsigned long nbytes;
+  __SIZE_TYPE__ nbytes;
   if (__builtin_mul_overflow (n, sizeof (double), &nbytes))
     return 0;
   return (double *) malloc (nbytes); /* Exceptions enabled cause a leak here. */
