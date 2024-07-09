@@ -1,5 +1,6 @@
 /* { dg-skip-if "too complex for avr" { avr-*-* } } */
 /* { dg-skip-if "no chance for bpf" { bpf-*-* } } */
+/* { dg-skip-if "exceeds object size limit" { cdp1802-*-* } } */
 /* { dg-additional-options -Wa,--no-verify { target { nvptx-*-* && { ! __OPTIMIZE__ } } } }
    For the very long list of formal parameters, the nvptx back end generates
    very much boilerplate code.  Without optimizations enabled, that doesn't get
