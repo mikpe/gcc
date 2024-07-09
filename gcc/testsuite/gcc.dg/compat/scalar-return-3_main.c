@@ -1,6 +1,7 @@
 /* Test function return values.  This test includes _Complex types
    whose real and imaginary parts can be used in variable-length
    argument lists.  */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void scalar_return_3_x (void);
 extern void exit (int);
