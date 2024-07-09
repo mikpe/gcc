@@ -3,6 +3,7 @@
 /* { dg-options "-Wno-old-style-definition" } */
 /* { dg-add-options float64 } */
 /* { dg-require-effective-target float64_runtime } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #define WIDTH 64
 #define EXT 0

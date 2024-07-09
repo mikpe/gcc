@@ -1,6 +1,7 @@
 /* Test passing scalars by value.  This test includes _Complex types
    whose real and imaginary parts can be used in variable-length
    argument lists.  */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void scalar_by_value_3_x (void);
 extern void exit (int);

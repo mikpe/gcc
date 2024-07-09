@@ -1,6 +1,7 @@
 /* PR c/47473 */
 /* { dg-do run } */
 /* { dg-options "-std=c99" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 int
 main (void)
