@@ -4,6 +4,7 @@
 /* { dg-options "-std=gnu99" { target c } } */
 /* { dg-skip-if "ptx can elide zero additions" { "nvptx-*-*" } { "-O0" } { "" } } */
 /* { dg-skip-if "double support is incomplete" { "avr-*-*" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #include "complex-sign.h"
 

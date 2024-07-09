@@ -2,6 +2,7 @@
 /* { dg-do run } */
 /* { dg-options "-O2" } */
 /* { dg-options "-O2 -G0" { target { nios2-*-* } } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #define T(N)					\
 struct S##N { unsigned char i[N]; };		\
