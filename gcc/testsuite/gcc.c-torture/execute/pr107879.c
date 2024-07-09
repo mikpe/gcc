@@ -1,4 +1,5 @@
 /* PR tree-optimization/107879 */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 __attribute__((noipa)) static double
 foo (double *y)

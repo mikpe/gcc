@@ -1,6 +1,6 @@
 /* { dg-require-effective-target alloca }
    See 'struct-by-value-22_y.c'.  */
-/* { dg-skip-if "limited code space" { pdp11-*-* } } */
+/* { dg-skip-if "limited code space" { pdp11-*-* cdp1802-*-* } } */
 
 /* Test variable sized function argument passing.
    GCC 3.2 and earlier is incompatible with GCC 3.3+ on x86-64,
