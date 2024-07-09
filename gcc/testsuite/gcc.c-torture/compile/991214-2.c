@@ -1,4 +1,5 @@
 /* { dg-add-options stack_size } */
+/* { dg-skip-if "exceeds object size limit" { cdp1802-*-* } } */
 
 #if defined(STACK_SIZE) && (STACK_SIZE < 65536)
 # define HISTO_SIZE 9
