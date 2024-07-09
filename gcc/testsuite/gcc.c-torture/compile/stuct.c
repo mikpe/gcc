@@ -1,4 +1,5 @@
 /* { dg-add-options stack_size } */
+/* { dg-skip-if "exceeds object size limit" { cdp1802-*-* } } */
 
 #ifdef STACK_SIZE
 #define SIZE STACK_SIZE / 8
