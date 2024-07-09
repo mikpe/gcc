@@ -1,4 +1,5 @@
 /* PR target/92904 */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #include <stdarg.h>
 
