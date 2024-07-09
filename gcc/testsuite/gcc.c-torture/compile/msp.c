@@ -1,4 +1,5 @@
 /* { dg-add-options stack_size } */
+/* { dg-skip-if "exceeds object size limit" { cdp1802-*-* } } */
 
 void bar (int *);
 

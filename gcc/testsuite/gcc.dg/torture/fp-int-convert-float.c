@@ -2,6 +2,7 @@
 /* Origin: Joseph Myers <joseph@codesourcery.com> */
 /* { dg-do run } */
 /* { dg-options "" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } { "" } } */
 
 #include <float.h>
 #include "fp-int-convert.h"
