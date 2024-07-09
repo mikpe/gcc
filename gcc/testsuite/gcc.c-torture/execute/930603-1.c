@@ -1,4 +1,5 @@
 /* { dg-additional-options "-std=gnu89" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } { "" } } */
 
 float fx (x)
      float x;

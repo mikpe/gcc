@@ -1,5 +1,6 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fno-trapping-math -funsafe-math-optimizations -fdump-tree-recip" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 /* based on the test case in pr23109 */
 
