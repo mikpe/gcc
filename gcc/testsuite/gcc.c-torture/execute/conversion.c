@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test front-end conversions, optimizer conversions, and run-time
    conversions between different arithmetic types.
 
