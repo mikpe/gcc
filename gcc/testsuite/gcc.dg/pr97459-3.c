@@ -2,6 +2,7 @@
 /* { dg-do run } */
 /* { dg-options "-O2" } */
 /* { dg-additional-options "-DEXPENSIVE" { target run_expensive_tests } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #ifdef __SIZEOF_INT128__
 typedef __uint128_t T;

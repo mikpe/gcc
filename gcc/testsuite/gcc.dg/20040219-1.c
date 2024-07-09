@@ -4,6 +4,7 @@
 /* { dg-do run } */
 /* { dg-options "-O2" } */
 /* { dg-options "-O2 -minline-float-divide-max-throughput" { target ia64-*-* } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 /* Testing save/restore of floating point caller-save registers on ia64.  */
 
