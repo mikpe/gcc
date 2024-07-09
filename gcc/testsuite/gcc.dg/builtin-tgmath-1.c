@@ -1,6 +1,7 @@
 /* Test __builtin_tgmath: valid uses, standard floating-point types.  */
 /* { dg-do run } */
 /* { dg-options "" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void abort (void);
 extern void exit (int);
