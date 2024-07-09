@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test structure passing by value, using a test from gcc.dg.
    Each struct that is passed contains an array of unsigned char.  */
 
