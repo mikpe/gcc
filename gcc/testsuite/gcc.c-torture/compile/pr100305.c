@@ -1,4 +1,5 @@
 /* PR target/100305 */
+/* { dg-skip-if "exceeds object size limit" { cdp1802-*-* } } */
 
 typedef double v2df __attribute__((vector_size(16)));
 

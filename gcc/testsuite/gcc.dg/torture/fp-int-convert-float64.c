@@ -4,6 +4,7 @@
 /* { dg-add-options float64 } */
 /* { dg-require-effective-target float64_runtime } */
 /* { dg-skip-if "double support is incomplete" { "avr-*-*" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #define __STDC_WANT_IEC_60559_TYPES_EXT__
 #include <float.h>

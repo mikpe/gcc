@@ -4,6 +4,7 @@
    response to a layout change for such structs for powerpc64-linux,
    but this test only checks similar structs that are not affected by
    that break in compatibility. */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void struct_by_value_19_x (void);
 extern void exit (int);

@@ -1,5 +1,6 @@
 /* { dg-do run } */
 /* { dg-options "-fno-common" { target hppa*-*-hpux* } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 typedef union
 {
