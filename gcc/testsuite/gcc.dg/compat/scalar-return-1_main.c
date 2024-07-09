@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test function return values.  This test includes scalar types that
    are supported by va_arg.  */
 

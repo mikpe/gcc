@@ -3,6 +3,7 @@
 /* { dg-options "-fno-common" { target hppa*-*-hpux* } } */
 /* { dg-skip-if "" { ! run_expensive_tests } { "*" } { "-O2" } } */
 /* { dg-skip-if "" { ! run_expensive_tests } { "-flto" } { "" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 typedef unsigned char V __attribute__((vector_size(64)));
 typedef V VI;

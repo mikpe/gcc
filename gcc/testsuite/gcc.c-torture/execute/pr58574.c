@@ -1,4 +1,5 @@
 /* PR target/58574 */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 __attribute__((noinline, noclone)) double
 foo (double x)

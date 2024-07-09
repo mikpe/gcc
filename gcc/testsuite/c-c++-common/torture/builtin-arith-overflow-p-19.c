@@ -1,6 +1,7 @@
 /* Test __builtin_{add,sub,mul}_overflow_p.  */
 /* { dg-do run } */
 /* { dg-skip-if "" { ! run_expensive_tests }  { "*" } { "-O0" "-O2" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #include "builtin-arith-overflow.h"
 

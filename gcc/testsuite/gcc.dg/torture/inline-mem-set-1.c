@@ -1,5 +1,6 @@
 /* { dg-do compile } */
 /* { dg-options "-finline-stringops -fno-lto" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 void *zero (unsigned long long (*p)[32], int n)
 {

@@ -1,4 +1,5 @@
 /* { dg-options "-O3 -fdump-tree-unrolljam -fno-math-errno" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 void
 f (float *restrict x, float y[100][100])
