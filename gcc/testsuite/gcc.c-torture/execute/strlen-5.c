@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } { "" } } */
+
 /* Test to verify that even strictly undefined strlen() calls with
    unterminated character arrays yield the "expected" results when
    the terminating nul is present in a subsequent suobobject.  */

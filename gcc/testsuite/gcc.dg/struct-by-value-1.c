@@ -1,6 +1,7 @@
 /* Test structure passing by value.  */
 /* { dg-do run } */
 /* { dg-options "-O2" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 #define T(N)					\
 struct S##N { unsigned char i[N]; };		\
