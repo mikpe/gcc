@@ -1,6 +1,7 @@
 /* Test that function args can be passed in various positions to both fixed
    and variable arg functions.  */
 /* { dg-options "-O" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void exit (int);
 extern void longlong_i_doit (void);
