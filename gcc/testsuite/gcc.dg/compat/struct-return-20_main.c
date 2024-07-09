@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test function return values.  Tested structs end with double.  This
    was written in response to a layout change for such structs for
    powerpc64-linux that breaks compatibility between 3.3 and 3.4.  */

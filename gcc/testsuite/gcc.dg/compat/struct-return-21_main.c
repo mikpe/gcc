@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test function return values.  This was written when correcting
    a deviation from the ABI on SPARC64 between 3.3 and 3.4.  */
 

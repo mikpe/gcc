@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test function return values.  For this test, all struct members are
    scalar floating point types.  */
 

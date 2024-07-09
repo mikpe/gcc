@@ -2,6 +2,7 @@
 /* { dg-do run } */
 /* { dg-options "-std=c11 -pedantic-errors" } */
 /* { dg-add-options ieee } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void abort (void);
 extern void exit (int);
