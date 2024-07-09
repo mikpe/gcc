@@ -2,6 +2,7 @@
    and variable arg functions.  */
 /* { dg-options "-O" } */
 /* { dg-options "-O -mlong-double-128" { target powerpc*-*-* } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void exit (int);
 extern void longdouble_i_doit (void);
