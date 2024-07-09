@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O1" } { "" } } */
+
 void abort (void);
 void exit (int);
 
