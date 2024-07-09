@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
+
 /* Test function return values.  For this test, all struct members are
    scalar integral types and the structs are "small": 1, 2, 4, 8, and 12
    bytes for LP64.  */
