@@ -1,3 +1,5 @@
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O1" } { "" } } */
+
 void washQtoM3(double m[9], double q[4]);
 double sqrt(double);
 int f(int samp)
