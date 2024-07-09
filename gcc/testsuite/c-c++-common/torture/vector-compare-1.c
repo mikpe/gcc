@@ -1,4 +1,5 @@
 /* { dg-do run } */
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } { "" } } */
 #define vector(elcount, type)  \
 __attribute__((vector_size((elcount)*sizeof(type)))) type
 

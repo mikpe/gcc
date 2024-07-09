@@ -3,6 +3,7 @@
 /* { dg-do run } */
 /* { dg-options "-std=gnu99" { target c } } */
 /* { dg-skip-if "double support is incomplete" { "avr-*-*" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } { "" } } */
 
 #include "complex-sign.h"
 
