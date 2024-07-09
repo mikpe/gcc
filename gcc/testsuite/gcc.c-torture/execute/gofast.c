@@ -1,4 +1,5 @@
 /* { dg-skip-if "requires io" { freestanding } }  */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 /* Program to test gcc's usage of the gofast library.  */
 

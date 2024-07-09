@@ -2,6 +2,7 @@
    sometimes as struct accesses.  */
 /* { dg-do run } */
 /* { dg-options "-std=c99" { target c } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } { "-O0" } } */
 
 #ifdef __cplusplus
 extern "C" {
