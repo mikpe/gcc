@@ -1062,6 +1062,63 @@ BEGINF	__popcounthi2
 ENDF	__popcounthi2
 #endif
 
+/* Our __clzhi2(0) returns 16.  */
+#ifdef L__clzhi2
+#define N	ARG1
+BEGINF	__clzhi2
+	;; n = 16
+	ldi	16
+	plo	N
+
+	;; if ((y = x >> 8) != 0) { x = y; n -= 8; }
+	ghi	ARG0
+	lbz	1f
+	plo	ARG0
+	ldi	0
+	phi	ARG0	; ensure high byte of ret val is zero
+	ldi	8
+	plo	N
+
+1:	;; if ((y = x >> 4) != 0) { x = y; n -= 4; }
+	glo	ARG0
+	shr
+	shr
+	shr
+	shr
+	lbz	2f
+	plo	ARG0
+	glo	N
+	smi	4
+	plo	N
+
+2:	;; if ((y = x >> 2) != 0) { x = y; n -= 2; }
+	glo	ARG0
+	shr
+	shr
+	lbz	3f
+	plo	ARG0
+	dec	N
+	dec	N
+
+3:	;; if ((x >> 1) != 0) { x = 2; }
+	glo	ARG0
+	shr
+	lbz	4f
+	ldi	2
+	plo	ARG0
+
+4:	;; return n - x
+	glo	N
+	str	SP
+	glo	ARG0
+	sd
+	plo	ARG0
+	RET
+ENDF	__clzhi2
+#undef N
+#undef X
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1093,12 +1150,6 @@ ENDF	__addvhi3
 BEGINF	__clrsbhi2
 	NYI	0xfc
 ENDF	__clrsbhi2
-#endif
-
-#ifdef L__clzhi2
-BEGINF	__clzhi2
-	NYI	0xfb
-ENDF	__clzhi2
 #endif
 
 #ifdef L__ctzhi2
