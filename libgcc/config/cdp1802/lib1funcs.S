@@ -1119,6 +1119,39 @@ ENDF	__clzhi2
 #undef X
 #endif
 
+#ifdef L__ffshi2
+BEGINF	__ffshi2
+	;; -x
+	glo	ARG0
+	sdi	0
+	plo	ARG1
+	ghi	ARG0
+	sdbi	0
+;	phi	ARG1
+
+	;; x & -x
+;	ghi	ARG1
+	str	SP
+	ghi	ARG0
+	and
+	phi	ARG0
+	glo	ARG1
+	str	SP
+	glo	ARG0
+	and
+	plo	ARG0
+
+	;; __clzhi2(x & -x)
+	sep	4
+	.hword	__clzhi2
+
+	;; return 16 - __clzhi2(x & -x)
+	sdi	16
+	plo	ARG0
+	RET
+ENDF	__ffshi2
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1162,12 +1195,6 @@ ENDF	__ctzhi2
 BEGINF	__divsi3
 	NYI	0xf8
 ENDF	__divsi3
-#endif
-
-#ifdef L__ffshi2
-BEGINF	__ffshi2
-	NYI	0xf7
-ENDF	__ffshi2
 #endif
 
 #ifdef L__modsi3
