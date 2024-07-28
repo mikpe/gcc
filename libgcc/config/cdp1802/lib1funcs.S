@@ -718,6 +718,87 @@ ENDF	__udivmodhi4
 #undef NUM
 #endif
 
+#ifdef L__udivhi3
+BEGINF	__udivhi3
+	;; return __udivmodhi4(ARG0, ARG1, 0)
+	ldi	0
+	plo	ARG2
+	lbr	__udivmodhi4
+ENDF	__udivhi3
+#endif
+
+#ifdef L__umodhi3
+BEGINF	__umodhi3
+	;; return __udivmodhi4(ARG0, ARG1, 1)
+	ldi	1
+	plo	ARG2
+	lbr	__udivmodhi4
+ENDF	__umodhi3
+#endif
+
+#ifdef L__divhi3
+BEGINF	__divhi3
+	;; init NEG = 0
+	ldi	0
+	plo	ARG2
+
+	;; check if A < 0
+	ghi	ARG0
+	shl		; copy sign to carry
+	lbnf	0f
+
+	;; A = -A, NEG = !NEG
+	glo	ARG0
+	sdi	0
+	plo	ARG0
+	ghi	ARG0
+	sdbi	0
+	phi	ARG0
+	inc	ARG2	; flip low bit
+
+0:	;; check if B < 0
+	ghi	ARG1
+	shl		; copy sign to carry
+	lbnf	1f
+
+	;; B = -B, NEG = !NEG
+	glo	ARG1
+	sdi	0
+	plo	ARG1
+	ghi	ARG1
+	sdbi	0
+	phi	ARG1
+	inc	ARG2	; flip low bit
+
+1:	;; push NEG & 1
+	glo	ARG2
+	ani	1
+	stxd
+
+	;; RES = __udivmodhi4 (A, B, 0)
+	ldi	0
+	plo	ARG2
+	sep	4
+	.hword	__udivmodhi4
+
+	;; if (NEG) RES = -RES
+	inc	SP
+	ldn	SP
+	lbz	2f
+
+	;; RES = -RES
+	glo	ARG0
+	sdi	0
+	plo	ARG0
+	ghi	ARG0
+	sdbi	0
+	phi	ARG0
+
+2:	;; return RES
+	RET
+ENDF	__divhi3
+#endif
+
 #ifdef L__modhi3
 BEGINF	__modhi3
 	;; check if A < 0
@@ -968,12 +1049,6 @@ BEGINF	__ctzhi2
 ENDF	__ctzhi2
 #endif
 
-#ifdef L__divhi3
-BEGINF	__divhi3
-	NYI	0xf9
-ENDF	__divhi3
-#endif
-
 #ifdef L__divsi3
 BEGINF	__divsi3
 	NYI	0xf8
@@ -1026,16 +1101,4 @@ ENDF	__popcounthi2
 BEGINF	__subvhi3
 	NYI	0xf0
 ENDF	__subvhi3
-#endif
-
-#ifdef L__udivhi3
-BEGINF	__udivhi3
-	NYI	0xef
-ENDF	__udivhi3
-#endif
-
-#ifdef L__umodhi3
-BEGINF	__umodhi3
-	NYI	0xee
-ENDF	__umodhi3
 #endif
