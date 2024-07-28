@@ -1152,6 +1152,31 @@ BEGINF	__ffshi2
 ENDF	__ffshi2
 #endif
 
+#ifdef L__clrsbhi2
+BEGINF	__clrsbhi2
+	;; if ((short)x < 0) x = ~x
+	ghi	ARG0
+	shl
+	lbnf	1f	; jump if no carry i.e. not negative
+
+	;; x = ~x
+	glo	ARG0
+	xri	0xff
+	plo	ARG0
+	ghi	ARG0
+	xri	0xff
+	phi	ARG0
+
+1:	;; __clzhi2(x)
+	sep	4
+	.hword	__clzhi2
+
+	;; return __clzhi2(x) - 1
+	dec	ARG0
+	RET
+ENDF	__clrsbhi2
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1177,12 +1202,6 @@ ENDF	__umodsi3
 BEGINF	__addvhi3
 	NYI	0xfd
 ENDF	__addvhi3
-#endif
-
-#ifdef L__clrsbhi2
-BEGINF	__clrsbhi2
-	NYI	0xfc
-ENDF	__clrsbhi2
 #endif
 
 #ifdef L__ctzhi2
