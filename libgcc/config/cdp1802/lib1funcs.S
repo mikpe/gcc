@@ -1004,6 +1004,64 @@ ENDF	__ucmpsi2
 #undef A_HIGH
 #endif
 
+#ifdef L__popcounthi2
+BEGINF	__popcounthi2
+	;; init sum in ARG1 low
+	ldi	0
+	plo	ARG1
+	lbr	1f
+
+0:	;; [D = ARG0 >> 8] ARG0 >>= 8
+	plo	ARG0
+	ldi	0
+	phi	ARG0
+
+1:	;; compute popcount for ARG0 low into D
+	;; this clobbers ARG0 low, D, DF, and MEM[SP]
+
+	;; x = x - ((x >> 1) & 0x55)
+	glo	ARG0
+	str	SP
+	shr
+	ani	0x55
+	sd
+	plo	ARG0
+
+	;; x = (x & 0x33) + ((x >> 2) & 0x33)
+	ani	0x33
+	str	SP
+	glo	ARG0
+	shr
+	shr
+	ani	0x33
+	add
+
+	;; x = (x + (x >> 4)) & 0x0F
+	str	SP
+	shr
+	shr
+	shr
+	shr
+	add
+	ani	0x0F
+
+	;; add to sum
+	str	SP
+	glo	ARG1
+	add
+	plo	ARG1
+
+	;; if ((ARG0 >> 8) != 0) goto 0b
+	ghi	ARG0
+	lbnz	0b
+
+	;; return sum
+	glo	ARG1
+	plo	ARG0
+	RET
+ENDF	__popcounthi2
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1089,12 +1147,6 @@ ENDF	__negvhi2
 BEGINF	__parityhi2
 	NYI	0xf2
 ENDF	__parityhi2
-#endif
-
-#ifdef L__popcounthi2
-BEGINF	__popcounthi2
-	NYI	0xf1
-ENDF	__popcounthi2
 #endif
 
 #ifdef L__subvhi3
