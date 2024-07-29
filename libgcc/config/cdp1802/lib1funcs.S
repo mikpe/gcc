@@ -1224,6 +1224,53 @@ BEGINF	__addvhi3
 ENDF	__addvhi3
 #endif
 
+/* Perform a HI-mode subtraction, calling abort() on signed overflow.
+   The sign bit of (x ^ y) & ((x - y) ^ x) signals overflow.  */
+#ifdef L__subvhi3
+BEGINF	__subvhi3
+	;; compute ARG0 - ARG1, store result in <ARG1 low, ARG0 low>
+	glo	ARG0
+	str	SP
+	glo	ARG1
+	sd
+	plo	ARG0
+	ghi	ARG0
+	str	SP
+	ghi	ARG1
+	sdb
+	plo	ARG1
+
+	;; compute (ARG0 ^ ARG1) & ((ARG0 - ARG1) ^ ARG0)
+	;; and check the sign bit of the result, only the high bytes
+	;; need to be involved in this
+	ghi	ARG0
+	str	SP
+	ghi	ARG1
+	xor
+	phi	ARG1
+
+	glo	ARG1
+	str	SP
+	ghi	ARG0
+	xor
+
+	str	SP
+	ghi	ARG1
+	and
+
+	shl		; move sign to carry
+	lbnf	1f	; jump if no carry i.e. no overflow
+
+	sep	4
+	.hword	abort
+
+1:	;; return <ARG1 low, ARG0 low>
+	glo	ARG1
+	phi	ARG0
+	RET
+ENDF	__subvhi3
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1285,10 +1332,4 @@ ENDF	__negvhi2
 BEGINF	__parityhi2
 	NYI	0xf2
 ENDF	__parityhi2
-#endif
-
-#ifdef L__subvhi3
-BEGINF	__subvhi3
-	NYI	0xf0
-ENDF	__subvhi3
 #endif
