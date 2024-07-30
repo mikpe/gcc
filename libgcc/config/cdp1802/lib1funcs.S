@@ -981,6 +981,30 @@ BEGINF	__umodhi3
 ENDF	__umodhi3
 #endif
 
+#ifdef L__udivsi3
+BEGINF	__udivsi3
+	;; return __udivmodsi4(ARG0, ARG1, 0)
+	ldi	0
+	stxd
+	sep	4
+	.hword	__udivmodsi4
+	inc	SP
+	RET
+ENDF	__udivsi3
+#endif
+
+#ifdef L__umodsi3
+BEGINF	__umodsi3
+	;; return __udivmodsi4(ARG0, ARG1, 1)
+	ldi	1
+	stxd
+	sep	4
+	.hword	__udivmodsi4
+	inc	SP
+	RET
+ENDF	__umodsi3
+#endif
+
 #ifdef L__divhi3
 BEGINF	__divhi3
 	;; init NEG = 0
@@ -1042,6 +1066,98 @@ BEGINF	__divhi3
 2:	;; return RES
 	RET
 ENDF	__divhi3
+#endif
+
+#ifdef L__divsi3
+#define AH  ARG0
+#define AL  ARG1
+#define BH  ARG2
+#define BL  ARG3
+#define NEG STATIC_CHAIN
+BEGINF	__divsi3
+	;; init NEG = 0
+	ldi	0
+	plo	NEG
+
+	;; check if A < 0
+	ghi	AH
+	shl		; copy sign to carry
+	lbnf	0f
+
+	;; A = -A, NEG = !NEG
+	glo	AL
+	sdi	0
+	plo	AL
+	ghi	AL
+	sdbi	0
+	phi	AL
+	glo	AH
+	sdbi	0
+	plo	AH
+	ghi	AH
+	sdbi	0
+	phi	AH
+	inc	NEG	; flip low bit
+
+0:	;; check if B < 0
+	ghi	BH
+	shl		; copy sign to carry
+	lbnf	1f
+
+	;; B = -B, NEG = !NEG
+	glo	BL
+	sdi	0
+	plo	BL
+	ghi	BL
+	sdbi	0
+	phi	BL
+	glo	BH
+	sdbi	0
+	plo	BH
+	ghi	BH
+	sdbi	0
+	phi	BH
+	inc	NEG	; flip low bit
+
+1:	;; push NEG & 1
+	glo	NEG
+	ani	1
+	stxd
+
+	;; A = __udivmodsi4 (A, B, 0)
+	ldi	0
+	stxd
+	sep	4
+	.hword	__udivmodsi4
+	inc	SP
+
+	;; if (NEG) A = -A
+	inc	SP
+	ldn	SP
+	lbz	2f
+
+	;; A = -A
+	glo	AL
+	sdi	0
+	plo	AL
+	ghi	AL
+	sdbi	0
+	phi	AL
+	glo	AH
+	sdbi	0
+	plo	AH
+	ghi	AH
+	sdbi	0
+	phi	AH
+
+2:	;; return A
+	RET
+ENDF	__divsi3
+#undef NEG
+#undef BL
+#undef BH
+#undef AL
+#undef AH
 #endif
 
 #ifdef L__modhi3
@@ -1525,28 +1641,10 @@ ENDF	__subvhi3
 	.byte	0x68, 0x1f
 .endm
 
-#ifdef L__udivsi3
-BEGINF	__udivsi3
-	NYI	0xff
-ENDF	__udivsi3
-#endif
-
-#ifdef L__umodsi3
-BEGINF	__umodsi3
-	NYI	0xfe
-ENDF	__umodsi3
-#endif
-
 #ifdef L__ctzhi2
 BEGINF	__ctzhi2
 	NYI	0xfa
 ENDF	__ctzhi2
-#endif
-
-#ifdef L__divsi3
-BEGINF	__divsi3
-	NYI	0xf8
-ENDF	__divsi3
 #endif
 
 #ifdef L__modsi3
