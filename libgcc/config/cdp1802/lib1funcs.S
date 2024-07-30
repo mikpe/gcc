@@ -1289,6 +1289,138 @@ ENDF	__mulhi3
 #undef A
 #endif
 
+#ifdef L__mulsi3
+#define AH ARG0
+#define AL ARG1
+#define BH ARG2
+#define BL ARG3
+#define RESH 11
+#define RESL 12
+BEGINF	__mulsi3
+	;; if (A == 0) return 0
+	glo	AL
+	str	SP
+	ghi	AL
+	or
+	str	SP
+	glo	AH
+	or
+	str	SP
+	ghi	AH
+	or
+	lbz	3f
+
+	;; push r12 on the stack
+	glo	12
+	stxd
+	ghi	12
+	stxd
+
+	;; RES = 0
+	ldi	0
+	plo	RESL
+	phi	RESL
+	plo	RESH
+	phi	RESH
+
+	lbr	2f
+
+0:	;; if (B & 1) ...
+	glo	BL
+	shr		; (B & 1) to carry
+	lbnf	1f
+
+	;; RES += A
+	glo	AL
+	str	SP
+	glo	RESL
+	add
+	plo	RESL
+	ghi	AL
+	str	SP
+	ghi	RESL
+	adc
+	phi	RESL
+	glo	AH
+	str	SP
+	glo	RESH
+	adc
+	plo	RESH
+	ghi	AH
+	str	SP
+	ghi	RESH
+	adc
+	phi	RESH
+
+1:	;; A <<= 1
+	glo	AL
+	shl
+	plo	AL
+	ghi	AL
+	shlc
+	phi	AL
+	glo	AH
+	shlc
+	plo	AH
+	ghi	AH
+	shlc
+	phi	AH
+
+	;; B >>= 1
+	ghi	BH
+	shr
+	phi	BH
+	glo	BH
+	shrc
+	plo	BH
+	ghi	BL
+	shrc
+	phi	BL
+	glo	BL
+	shrc
+	plo	BL
+
+2:	;; if (B != 0) goto 0b
+	glo	BL
+	str	SP
+	ghi	BL
+	or
+	str	SP
+	glo	BH
+	or
+	str	SP
+	ghi	BH
+	or
+	lbnz	0b
+
+	;; A = RES
+	glo	RESL
+	plo	AL
+	ghi	RESL
+	phi	AL
+	glo	RESH
+	plo	AH
+	ghi	RESH
+	phi	AH
+
+	;; pop r12 from the stack
+	inc	SP
+	lda	SP
+	phi	12
+	ldn	SP
+	plo	12
+
+3:	;; return A
+	RET
+ENDF	__mulsi3
+#undef RESL
+#undef RESH
+#undef BL
+#undef BH
+#undef AL
+#undef AH
+#endif
+
 #ifdef L__ucmpsi2
 #define A_HIGH ARG0
 #define A_LOW  ARG1
@@ -1651,12 +1783,6 @@ ENDF	__ctzhi2
 BEGINF	__modsi3
 	NYI	0xf6
 ENDF	__modsi3
-#endif
-
-#ifdef L__mulsi3
-BEGINF	__mulsi3
-	NYI	0xf5
-ENDF	__mulsi3
 #endif
 
 #ifdef L__mulvhi3
