@@ -718,6 +718,251 @@ ENDF	__udivmodhi4
 #undef NUM
 #endif
 
+/* SI-mode divide and modulo, manually translated from C.
+   We want a temporary to cache (NUM - DEN) from the comparison
+   in the second loop, which raises the register pressure to
+   5 x 32-bits == 10 registers, but we only have 9 (r7-r15).
+   We therefore encode BIT as a byte number and a byte-wide bit
+   mask <log2(BIT)/8, 1<<(log2(BIT)&7)>, which fits in 16 bits.  */
+#ifdef L__udivmodsi4
+#define NUMH	ARG0
+#define NUML	ARG1
+#define DENH	ARG2
+#define DENL	ARG3
+#define TMPH	11
+#define TMPL	12
+#define RESH	13
+#define RESL	14
+#define BIT	15
+/* MODWANTED is in MEM[SP+1] on entry */
+BEGINF	__udivmodsi4
+	;; read MODWANTED & 1 into the carry flag
+	inc	SP
+	ldn	SP
+	shr
+	dec	SP
+
+	;; push r12-r15 on the stack
+	glo	15
+	stxd
+	ghi	15
+	stxd
+	glo	14
+	stxd
+	ghi	14
+	stxd
+	glo	13
+	stxd
+	ghi	13
+	stxd
+	glo	12
+	stxd
+	ghi	12
+	stxd
+
+	;; BIT = 1, RES = 0
+	ldi	1
+	plo	BIT
+	ldi	0
+	phi	BIT
+	plo	RESL
+	phi	RESL
+	plo	RESH
+	phi	RESH
+
+	;; push MODWANTED & 1 on the stack so it's easy to access before the epilogue
+	shl
+	stxd
+
+	lbr	1f
+
+	;; first loop
+
+0:	;; DEN <<= 1
+	glo	DENL
+	shl
+	plo	DENL
+	ghi	DENL
+	shlc
+	phi	DENL
+	glo	DENH
+	shlc
+	plo	DENH
+	ghi	DENH
+	shlc
+	phi	DENH
+
+	;; BIT <<= 1
+	glo	BIT	; shift byte mask left
+	shl		; carry if byte mask became zero
+	lsnf		; skip ldi below if no carry
+	ldi	1	; reinit byte mask to 1
+	plo	BIT
+	ghi	BIT	; increment byte counter if carry
+	adci	0
+	phi	BIT
+
+	;; if BIT == 0 skip both loops
+	xri	4	; BIT == 1 <<si 32 -> log2(BIT) == 32 -> log2(BIT)/8 == 4
+	lbz	8f
+
+1:	;; if (DEN >= NUM) break
+	glo	NUML	; compute DEN - NUM, only record borrow
+	str	SP
+	glo	DENL
+	sm
+	ghi	NUML
+	str	SP
+	ghi	DENL
+	smb
+	glo	NUMH
+	str	SP
+	glo	DENH
+	smb
+	ghi	NUMH
+	str	SP
+	ghi	DENH
+	smb
+	lbdf	2f	; if >=u then no borrow, i.e. carry set
+
+	;; if (!(DEN & (1U<<31))) continue
+	ghi	DENH
+	shl
+	lbnf	0b	; if high bit not set then no carry
+
+	;; second loop, INV: BIT != 0
+
+2:	;; compute TMP = NUM - DEN
+	glo	DENL
+	str	SP
+	glo	NUML
+	sm
+	plo	TMPL
+	ghi	DENL
+	str	SP
+	ghi	NUML
+	smb
+	phi	TMPL
+	glo	DENH
+	str	SP
+	glo	NUMH
+	smb
+	plo	TMPH
+	ghi	DENH
+	str	SP
+	ghi	NUMH
+	smb
+	lbnf	7f	; if <u then borrow, i.e. carry clear
+
+	;; NUM = TMP
+	phi	NUMH
+	glo	TMPH
+	plo	NUMH
+	ghi	TMPL
+	phi	NUML
+	glo	TMPL
+	plo	NUML
+
+	;; RES |= BIT
+	glo	BIT	; byte mask
+	str	SP
+	ghi	BIT	; byte number
+	lbnz	3f
+	glo	RESL
+	or
+	plo	RESL
+	lbr	7f
+
+3:	smi	1
+	lbnz	4f
+	ghi	RESL
+	or
+	phi	RESL
+	lbr	7f
+
+4:	smi	1
+	lbnz	5f
+	glo	RESH
+	or
+	plo	RESH
+	lbr	7f
+
+5:	ghi	RESH
+	or
+	phi	RESL
+
+7:	;; DEN >>= 1
+	ghi	DENH
+	shr
+	phi	DENH
+	glo	DENH
+	shrc
+	plo	DENH
+	ghi	DENL
+	shrc
+	phi	DENL
+	glo	DENL
+	shrc
+	plo	DENL
+
+	;; BIT >>= 1
+	glo	BIT	; shift byte mask right
+	shr		; carry if byte mask became zero
+	lsnf		; skip ldi below if no carry
+	ldi	0x80	; reinit byte mask to 1<<7
+	plo	BIT
+	ghi	BIT	; decrement byte counter if carry
+	smbi	0
+	phi	BIT
+	lbdf	2b	; if >=u 0 then no borrow, i.e. carry set
+
+8:	;; if (!MODWANTED) NUM = RES
+	inc	SP
+	lda	SP
+	lbnz	9f
+
+	;; NUM = RES
+	glo	RESL
+	plo	NUML
+	ghi	RESL
+	phi	NUML
+	glo	RESH
+	plo	NUMH
+	ghi	RESH
+	phi	NUMH
+
+9:	;; pop r12-r15 from the stack
+	lda	SP
+	phi	12
+	lda	SP
+	plo	12
+	lda	SP
+	phi	13
+	lda	SP
+	plo	13
+	lda	SP
+	phi	14
+	lda	SP
+	plo	14
+	lda	SP
+	phi	15
+	ldn	SP
+	plo	15
+
+	;; return NUM
+	RET
+ENDF	__udivmodsi4
+#undef BIT
+#undef RESL
+#undef RESH
+#undef TMPL
+#undef TMPH
+#undef DENL
+#undef DENH
+#undef NUML
+#undef NUMH
+#endif
+
 #ifdef L__udivhi3
 BEGINF	__udivhi3
 	;; return __udivmodhi4(ARG0, ARG1, 0)

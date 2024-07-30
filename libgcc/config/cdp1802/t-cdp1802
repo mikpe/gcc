@@ -55,6 +55,7 @@ LIB1ASMFUNCS = \
 	__subvhi3 \
 	__ucmpsi2 \
 	__udivmodhi4 \
+	__udivmodsi4 \
 	__udivhi3 \
 	__udivsi3 \
 	__umodhi3 \
