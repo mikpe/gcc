@@ -1764,6 +1764,50 @@ BEGINF	__subvhi3
 ENDF	__subvhi3
 #endif
 
+/* Perform a HI-mode multiplication, calling abort() on overflow.
+   This does a SI-mode unsigned multiplication, and signals overflow
+   if the high word of the result is non-zero.  */
+#ifdef L__mulvhi3
+BEGINF	__mulvhi3
+	;; zero-extend the parameters to 32-bits:
+	;; <ARG0,ARG1,ARG2,ARG3> = <0,ARG0,0,ARG1>
+	glo	ARG1
+	plo	ARG3
+	ghi	ARG1
+	phi	ARG3
+	glo	ARG0
+	plo	ARG1
+	ghi	ARG0
+	phi	ARG1
+	ldi	0
+	plo	ARG2
+	phi	ARG2
+	plo	ARG0
+	phi	ARG0
+
+	;; <ARG0,ARG1> = <ARG0,ARG1> *32 <ARG2,ARG3>
+	sep	4
+	.hword	__mulsi3
+
+	;; if (ARG0 != 0) abort()
+	glo	ARG0
+	str	SP
+	ghi	ARG0
+	or
+	lbz	1f
+
+	sep	4
+	.hword	abort
+
+1:	;; return ARG1
+	glo	ARG1
+	plo	ARG0
+	ghi	ARG1
+	phi	ARG0
+	RET
+ENDF	__mulvhi3
+#endif
+
 /* Stubs for NYI functions load a cookie into D and then execute
    a special simulator instruction to output a NYI error with the
    PC and that cookie, and then halt.  Libc uses cookies 1 up, so
@@ -1783,12 +1827,6 @@ ENDF	__ctzhi2
 BEGINF	__modsi3
 	NYI	0xf6
 ENDF	__modsi3
-#endif
-
-#ifdef L__mulvhi3
-BEGINF	__mulvhi3
-	NYI	0xf4
-ENDF	__mulvhi3
 #endif
 
 #ifdef L__negvhi2
