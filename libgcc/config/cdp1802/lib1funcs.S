@@ -1767,6 +1767,74 @@ ENDF	__clzhi2
 #undef X
 #endif
 
+/* Our __ctzhi2(0) returns 16.  */
+#ifdef L__ctzhi2
+#define X ARG0
+#define N ARG1
+BEGINF	__ctzhi2
+	;; N = 1
+	ldi	1
+	plo	N
+
+	;; if ((x & 0x00FF) == 0) {
+	;;     if ((x & 0xFF00) == 0) return 16;
+        ;;     n += 8; x >>= 8;
+	;; }
+	glo	X
+	lbnz	2f
+	ghi	X
+	lbnz	1f
+
+	;; return 16
+	ldi	16
+	lbr	9f
+
+1:	;; x >>= 8; n += 8;
+	plo	X
+	ldi	9
+	plo	N
+
+2:	;; if ((x & 0x0F) == 0) { n += 4; x >>= 4; }
+	glo	X
+	ani	0x0F
+	lbnz	3f
+	glo	N
+	adi	4
+	plo	N
+	glo	X
+	shr
+	shr
+	shr
+	shr
+	plo	X
+
+3:	;; if ((x & 0x03) == 0) { n += 2; x >>= 2; }
+	glo	X
+	ani	0x03
+	lbnz	4f
+	inc	N
+	inc	N
+	glo	X
+	shr
+	shr
+	plo	X
+
+4:	;; return n - (x & 1)
+	glo	X
+	ani	1
+	str	SP
+	glo	N
+	sm
+
+9:	plo	ARG0
+	ldi	0
+	phi	ARG0
+	RET
+ENDF	__ctzhi2
+#undef N
+#undef X
+#endif
+
 #ifdef L__ffshi2
 BEGINF	__ffshi2
 	;; -x
@@ -1971,12 +2039,6 @@ ENDF	__mulvhi3
 	ldi	\nr
 	.byte	0x68, 0x1f
 .endm
-
-#ifdef L__ctzhi2
-BEGINF	__ctzhi2
-	NYI	0xfa
-ENDF	__ctzhi2
-#endif
 
 #ifdef L__negvhi2
 BEGINF	__negvhi2
