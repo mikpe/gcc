@@ -1645,6 +1645,71 @@ BEGINF	__popcounthi2
 ENDF	__popcounthi2
 #endif
 
+#ifdef L__parityhi2
+BEGINF	__parityhi2
+	;; LOW(ARG0) ^= (LOW(ARG0) >> 1)
+	glo	ARG0
+	str	SP
+	shr
+	xor
+;	plo	ARG0
+
+	;; LOW(ARG0) ^= (LOW(ARG0) >> 2)
+;	glo	ARG0
+	str	SP
+	shr
+	shr
+	xor
+;	plo	ARG0
+
+	;; LOW(ARG0) ^= (LOW(ARG0) >> 4)
+;	glo	ARG0
+	str	SP
+	shr
+	shr
+	shr
+	shr
+	xor
+	plo	ARG0
+
+	;; HIGH(ARG0) ^= (HIGH(ARG0) >> 1)
+	ghi	ARG0
+	str	SP
+	shr
+	xor
+;	phi	ARG0
+
+	;; HIGH(ARG0) ^= (HIGH(ARG0) >> 2)
+;	ghi	ARG0
+	str	SP
+	shr
+	shr
+	xor
+;	phi	ARG0
+
+	;; HIGH(ARG0) ^= (HIGH(ARG0) >> 4)
+;	ghi	ARG0
+	str	SP
+	shr
+	shr
+	shr
+	shr
+	xor
+;	phi	ARG0
+
+	;; return (HIGH(ARG0) ^ LOW(ARG0)) & 1
+;	ghi	ARG0
+	str	SP
+	glo	ARG0
+	xor
+	ani	1
+	plo	ARG0
+	ldi	0
+	phi	ARG0
+	RET
+ENDF	__parityhi2
+#endif
+
 /* Our __clzhi2(0) returns 16.  */
 #ifdef L__clzhi2
 #define N	ARG1
@@ -1917,10 +1982,4 @@ ENDF	__ctzhi2
 BEGINF	__negvhi2
 	NYI	0xf3
 ENDF	__negvhi2
-#endif
-
-#ifdef L__parityhi2
-BEGINF	__parityhi2
-	NYI	0xf2
-ENDF	__parityhi2
 #endif
