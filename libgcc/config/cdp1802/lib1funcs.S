@@ -1217,6 +1217,96 @@ BEGINF	__modhi3
 ENDF	__modhi3
 #endif
 
+#ifdef L__modsi3
+#define AH  ARG0
+#define AL  ARG1
+#define BH  ARG2
+#define BL  ARG3
+#define NEG STATIC_CHAIN
+BEGINF	__modsi3
+	;; init NEG = 0
+	ldi	0
+	plo	NEG
+
+	;; check if A < 0
+	ghi	AH
+	shl		; copy sign to carry
+	lbnf	0f
+
+	;; A = -A, NEG = 1
+	glo	AL
+	sdi	0
+	plo	AL
+	ghi	AL
+	sdbi	0
+	phi	AL
+	glo	AH
+	sdbi	0
+	plo	AH
+	ghi	AH
+	sdbi	0
+	phi	AH
+	inc	NEG
+
+0:	;; check if B < 0
+	ghi	BH
+	shl		; copy sign to carry
+	lbnf	1f
+
+	;; B = -B
+	glo	BL
+	sdi	0
+	plo	BL
+	ghi	BL
+	sdbi	0
+	phi	BL
+	glo	BH
+	sdbi	0
+	plo	BH
+	ghi	BH
+	sdbi	0
+	phi	BH
+
+1:	;; push NEG
+	glo	NEG
+	stxd
+
+	;; A = __udivmodsi4 (A, B, 1)
+	ldi	1
+	stxd
+	sep	4
+	.hword	__udivmodsi4
+	inc	SP
+
+	;; if (NEG) A = -A
+	inc	SP
+	ldn	SP
+	lbz	2f
+
+	;; A = -A
+	glo	AL
+	sdi	0
+	plo	AL
+	ghi	AL
+	sdbi	0
+	phi	AL
+	glo	AH
+	sdbi	0
+	plo	AH
+	ghi	AH
+	sdbi	0
+	phi	AH
+
+2:	;; return A
+	RET
+ENDF	__modsi3
+#undef NEG
+#undef BL
+#undef BH
+#undef AL
+#undef AH
+#endif
+
 #ifdef L__mulhi3
 #define A ARG0
 #define B ARG1
@@ -1821,12 +1911,6 @@ ENDF	__mulvhi3
 BEGINF	__ctzhi2
 	NYI	0xfa
 ENDF	__ctzhi2
-#endif
-
-#ifdef L__modsi3
-BEGINF	__modsi3
-	NYI	0xf6
-ENDF	__modsi3
 #endif
 
 #ifdef L__negvhi2
