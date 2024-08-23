@@ -242,7 +242,7 @@ gendef (const char *format)
      of the arguments.  */
 
   puts ("static inline rtx");
-  printf ("init_rtx_fmt_%s (rtx rt, machine_mode mode", format);
+  printf ("init_rtx_fmt_%s (const char *mfile, unsigned int mline, rtx rt, machine_mode mode", format);
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (",\n\t%sarg%d", type_from_format (*p), i++);
@@ -260,13 +260,15 @@ gendef (const char *format)
     else
       printf ("  %s (rt, %d) = arg%d;\n", accessor_from_format (*p), i, j++);
 
+  puts ("  rt->mfile = mfile;");
+  puts ("  rt->mline = mline;");
   puts ("  return rt;\n}\n");
 
   /* Write the definition of the gen function name and the types
      of the arguments.  */
 
   puts ("static inline rtx");
-  printf ("gen_rtx_fmt_%s_stat (RTX_CODE code, machine_mode mode", format);
+  printf ("gen_rtx_fmt_%s_stat (const char *mfile, unsigned int mline, RTX_CODE code, machine_mode mode", format);
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (",\n\t%sarg%d", type_from_format (*p), i++);
@@ -278,7 +280,7 @@ gendef (const char *format)
   puts ("  rtx rt;\n");
 
   puts ("  rt = rtx_alloc (code PASS_MEM_STAT);");
-  printf ("  return init_rtx_fmt_%s (rt, mode", format);
+  printf ("  return init_rtx_fmt_%s (mfile, mline, rt, mode", format);
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (", arg%d", i++);
@@ -290,7 +292,7 @@ gendef (const char *format)
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (", arg%d", i++);
-  printf (") \\\n  gen_rtx_fmt_%s_stat ((c), (m)", format);
+  printf (") \\\n  gen_rtx_fmt_%s_stat (__FILE__, __LINE__, (c), (m)", format);
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (", (arg%d)", i++);
@@ -302,7 +304,7 @@ gendef (const char *format)
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (", arg%d", i++);
-  printf (") \\\n  init_rtx_fmt_%s (rtx_alloca ((c)), (m)", format);
+  printf (") \\\n  init_rtx_fmt_%s (__FILE__, __LINE__, rtx_alloca ((c)), (m)", format);
   for (p = format, i = 0; *p != 0; p++)
     if (*p != '0')
       printf (", (arg%d)", i++);
