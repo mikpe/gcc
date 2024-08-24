@@ -439,9 +439,6 @@ struct GTY((desc("0"), tag("0"),
     } const_vector;
   } GTY ((skip)) u2;
 
-  const char *mfile;
-  unsigned int mline;
-
   /* The first element of the operands of this rtx.
      The number of operands and their types are controlled
      by the `code' field, according to rtl.def.  */
