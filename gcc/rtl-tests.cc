@@ -46,7 +46,6 @@ along with GCC; see the file COPYING3.  If not see
 
 namespace selftest {
 
-#if 0
 /* Verify that PAT is printed as EXPECTED.  Helper function for
    selftests.  */
 
@@ -326,9 +325,6 @@ rtl_tests_cc_tests ()
   set_first_insn (NULL);
   set_last_insn (NULL);
 }
-#else
-void rtl_tests_cc_tests ()  { }
-#endif
 
 } // namespace selftest
 #endif /* #if CHECKING_P */

@@ -1026,8 +1026,6 @@ rtx_writer::print_rtx (const_rtx in_rtx)
       break;
     }
 
-  if (in_rtx->mfile)
-    fprintf (m_outfile, " @ %s:%u", in_rtx->mfile, in_rtx->mline);
   fputc (')', m_outfile);
   m_sawclose = true;
 }
