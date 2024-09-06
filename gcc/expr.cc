@@ -4236,6 +4236,17 @@ emit_move_via_integer (machine_mode mode, rtx x, rtx y, bool force)
 /* A subroutine of emit_move_insn_1.  X is a push_operand in MODE.
    Return an equivalent MEM that does not use an auto-increment.  */
 
+static rtx
+do_emit_move_resolve_push (machine_mode mode, rtx x, rtx y)
+{
+  fprintf (stderr, "@ emit_move_resolve_push: mode %u\ndst: ", mode);
+  print_rtl (stderr, x);
+  fprintf (stderr, "\nsrc: ");
+  print_rtl (stderr, y);
+  fprintf (stderr, "\n");
+  return emit_move_resolve_push (mode, x);
+}
+
 rtx
 emit_move_resolve_push (machine_mode mode, rtx x)
 {
@@ -4304,7 +4315,7 @@ emit_move_complex_push (machine_mode mode, rtx x, rtx y)
      machine can push exactly, we need to use move instructions.  */
   if (maybe_ne (PUSH_ROUNDING (submodesize), submodesize))
     {
-      x = emit_move_resolve_push (mode, x);
+      x = do_emit_move_resolve_push (mode, x, y);
       return emit_move_insn (x, y);
     }
 #endif
@@ -4476,7 +4487,7 @@ emit_move_multi_word (machine_mode mode, rtx x, rtx y)
   /* If X is a push on the stack, do the push now and replace
      X with a reference to the stack pointer.  */
   if (push_operand (x, mode))
-    x = emit_move_resolve_push (mode, x);
+    x = do_emit_move_resolve_push (mode, x, y);
 
   /* If we are in reload, see if either operand is a MEM whose address
      is scheduled for replacement.  */
