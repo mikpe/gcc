@@ -11,6 +11,14 @@
 extern void abort(void);
 extern double fabs(double);
 
+/* Due to code size and increasing per-iteration stack usage the CDP1802
+   cannot run the last two iterations of the loop.  */
+#ifdef __CDP1802__
+#define MAXI 8
+#else
+#define MAXI 10
+#endif
+
 void foo (void)
 {
   const int correct[1100] = {1, 0, -2, 0, 1, 0, 1, -1, -10, -30, -67};
@@ -38,7 +46,7 @@ void foo (void)
       return b ();
   }
 
-  for (i=0; i<=10; i++)
+  for (i=0; i<=MAXI; i++)
   {
     if (fabs(a( i, x1, x2, x3, x4, x5 ) - correct [i]) > 0.1)
       abort();
