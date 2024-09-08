@@ -4504,7 +4504,15 @@ emit_move_multi_word (machine_mode mode, rtx x, rtx y)
   /* This function can only handle cases where the number of words is
      known at compile time.  */
   mode_size = GET_MODE_SIZE (mode).to_constant ();
-  gcc_assert (mode_size >= UNITS_PER_WORD);
+  if (!(mode_size >= UNITS_PER_WORD))
+    {
+      fprintf (stderr, "@ emit_move_multi_word: mode %d\nx: ", mode);
+      print_rtl (stderr, x);
+      fprintf (stderr, "\ny: ");
+      print_rtl (stderr, y);
+      fprintf (stderr, "\n");
+      gcc_assert (mode_size >= UNITS_PER_WORD);
+    }
 
   /* If X is a push on the stack, do the push now and replace
      X with a reference to the stack pointer.  */
