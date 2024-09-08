@@ -43,12 +43,19 @@ random_bitstring ()
 
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
 
+/* Avoid the test case timing out on the CDP1802.  */
+#ifdef __CDP1802__
+#define MAXI 1000
+#else
+#define MAXI 10000
+#endif
+
 int
 main (void)
 {
   long long int i;
 
-  for (i = 0; i < 10000; i++)
+  for (i = 0; i < MAXI; i++)
     {
       unsigned long long x, y;
       x = random_bitstring ();
