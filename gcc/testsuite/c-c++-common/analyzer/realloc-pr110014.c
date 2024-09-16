@@ -1,4 +1,4 @@
-void *realloc (void *, unsigned long)
+void *realloc (void *, __SIZE_TYPE__)
   __attribute__((__nothrow__, __leaf__))
   __attribute__((__warn_unused_result__)) __attribute__((__alloc_size__ (2)));
 
