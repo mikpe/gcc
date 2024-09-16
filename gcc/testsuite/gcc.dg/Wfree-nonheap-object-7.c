@@ -2,7 +2,7 @@
 /* { dg-options "-O2 -Wfree-nonheap-object" } */
 
 struct local_caches *get_local_caches_lcs;
-void *calloc(long, long);
+void *calloc(__SIZE_TYPE__, __SIZE_TYPE__);
 void *realloc();
 
 struct local_caches {
