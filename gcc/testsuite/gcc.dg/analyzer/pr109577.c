@@ -2,7 +2,7 @@
    Therefore this test has been duplicated as
    c-c++-common/analyzer/pr109577-noexcept.c  */
 
-void *malloc (unsigned long);
+void *malloc (__SIZE_TYPE__);
 
 double *
 unsafe (__SIZE_TYPE__ n)
