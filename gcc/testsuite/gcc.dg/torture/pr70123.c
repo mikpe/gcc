@@ -1,5 +1,6 @@
 /* { dg-do run } */
 /* { dg-options "-fPIC" { target fpic } } */
+/* { dg-skip-if "not enough registers" { cdp1802-*-* } } */
 __attribute__ ((noinline, noclone)) int
 bar (int flag, const char *__restrict format, ...)
 {
