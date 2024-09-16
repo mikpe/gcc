@@ -105,6 +105,8 @@
 #  define SIZE 252
 #elif defined (__loongarch__)
 #  define SIZE 240   /* 256 - 8 bytes for $fp, and 8 bytes for a temp value */
+#elif defined (__CDP1802__)
+#define SIZE 254
 #else
 #  define SIZE 256
 #endif
