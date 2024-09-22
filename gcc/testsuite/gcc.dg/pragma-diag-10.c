@@ -11,7 +11,7 @@ __rawmemchr_ppc (const void *s, int c)
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #pragma GCC diagnostic ignored "-Wstringop-overread"
   if (c != 0)
-    return __builtin_memchr (s, c, (unsigned long)-1);    // { dg-bogus "specified bound \\d+ exceeds maximum object size" }
+    return __builtin_memchr (s, c, (__SIZE_TYPE__)-1);    // { dg-bogus "specified bound \\d+ exceeds maximum object size" }
 #pragma GCC diagnostic pop
 
   return (char *)s + __builtin_strlen (s);
