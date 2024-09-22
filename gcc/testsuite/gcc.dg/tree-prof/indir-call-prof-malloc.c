@@ -1,3 +1,4 @@
+/* { dg-skip-if "no <dlfcn.h>" { cdp1802-*-* } } */
 /* { dg-options "-O2 -ldl -fprofile-correction" } */
 
 #define _GNU_SOURCE
