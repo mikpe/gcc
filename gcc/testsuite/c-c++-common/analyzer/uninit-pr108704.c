@@ -1,3 +1,5 @@
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
+
 typedef unsigned short int __uint16_t;
 typedef unsigned int __uint32_t;
 typedef unsigned long int __uint64_t;
