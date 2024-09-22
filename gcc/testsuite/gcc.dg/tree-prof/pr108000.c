@@ -5,7 +5,11 @@
 volatile int flag;
 const int array_size = 10;
 int* array;
+#if __SIZEOF_INT__ == 2
+int iterations = 10000;
+#else
 int iterations = 10000000;
+#endif
 
 #define BAR(num) \
 int __attribute__((noinline)) \
