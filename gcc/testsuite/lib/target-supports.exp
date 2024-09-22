@@ -9234,6 +9234,7 @@ proc check_effective_target_natural_alignment_32 { } {
 	   || [istarget rl78-*-*]
 	   || [istarget pdp11-*-*]
 	   || [istarget msp430-*-*]
+	   || [istarget cdp1802-*-*]
 	   || [istarget cris-*-*] } {
 	   return 0
 	 } else {
