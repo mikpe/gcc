@@ -50,7 +50,7 @@
 
 void foo ()
 {
-  int c;
+  long c;
 
   c = L'\ubad';		/* { dg-error "incomplete" "incomplete UCN 1" } */
   c = L"\U1234"[0];	/* { dg-error "incomplete" "incomplete UCN 2" } */
