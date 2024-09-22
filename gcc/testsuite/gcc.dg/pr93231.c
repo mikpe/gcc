@@ -9,7 +9,7 @@ int ctz_ice1 (int x)
       31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
     };
 
-  return table[((int)((x & -x) * -0x077CB531)) >> 27];
+  return table[((long)((x & -x) * -0x077CB531)) >> 27];
 }
 
 int ctz_ice2 (unsigned x)
