@@ -1,5 +1,6 @@
 /* PR preprocessor/103026 */
 /* { dg-do compile } */
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
 /* { dg-options "-Wbidi-chars=any,ucn -Wno-multichar -Wno-overflow" } */
 /* Test all bidi chars in various contexts (identifiers, comments,
    string literals, character constants), both UCN and UTF-8.  The bidi
