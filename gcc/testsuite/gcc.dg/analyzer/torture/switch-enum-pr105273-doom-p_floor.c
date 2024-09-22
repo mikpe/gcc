@@ -1,3 +1,5 @@
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
+
 /* Reduced from linuxdoom-1.10's p_floor.c (GPLv2).  */
 
 #define FRACBITS		16
