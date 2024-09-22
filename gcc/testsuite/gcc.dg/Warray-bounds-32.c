@@ -2,6 +2,7 @@
    of a string literal
    Test to exercise indices into wide string literals.
    { dg-do compile }
+   { dg-skip-if "not 16-bit clean" { cdp1802-*-* } }
    { dg-options "-O2 -Warray-bounds -ftrack-macro-expansion=0" } */
 
 #include "range.h"
