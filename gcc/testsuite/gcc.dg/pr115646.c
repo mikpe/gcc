@@ -5,7 +5,7 @@
 extern double pow(double x, double y);
 
 struct S {
-    unsigned int a : 3, b : 8, c : 21;
+    unsigned long a : 3, b : 8, c : 21;
 };
 
 void foo (struct S *p)
