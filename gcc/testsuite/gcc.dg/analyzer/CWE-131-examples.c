@@ -142,5 +142,5 @@ void example_5 (void)
   /* Populate the id array. */
   id_sequence[0] = 13579; /* { dg-warning "heap-based buffer overflow" } */
   id_sequence[1] = 24680; /* { dg-warning "heap-based buffer overflow" } */
-  id_sequence[2] = 97531; /* { dg-warning "heap-based buffer overflow" } */
+  id_sequence[2] = 32767; /* { dg-warning "heap-based buffer overflow" } */
 } /* { dg-warning "leak of 'id_sequence'" } */
