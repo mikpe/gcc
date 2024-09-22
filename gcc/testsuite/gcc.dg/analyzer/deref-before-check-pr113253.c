@@ -4,6 +4,7 @@
    C only: reduced reproducer doesn't easily work with C++.  */
 
 /* { dg-additional-options "-O2 -g" } */
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
 
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef __UINTPTR_TYPE__ uintptr_t;
