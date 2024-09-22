@@ -8874,6 +8874,7 @@ proc check_effective_target_natural_alignment_32 { } {
 	   || [istarget pdp11-*-*]
 	   || [istarget msp430-*-*]
 	   || [istarget m32c-*-*]
+	   || [istarget cdp1802-*-*]
 	   || [istarget cris-*-*] } {
 	   return 0
 	 } else {
