@@ -1,3 +1,5 @@
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
+
 /* PR analyzer/112792 ("-Wanalyzer-out-of-bounds false positives seen on
    Linux kernel with certain unions").  */
 
