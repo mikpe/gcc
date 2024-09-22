@@ -51,9 +51,9 @@ void malloc_uint16_anti_range_memset (uint16_t n)
   sink (p);
   memset (p, 0, 6);
   sink (p);
-  memset (p, 0, UINT16_MAX - 1);
+  memset (p, 0, (UINT16_MAX / 2) - 1);
   sink (p);
-  memset (p, 0, UINT16_MAX);
+  memset (p, 0, (UINT16_MAX / 2));
   sink (p);
 }
 
@@ -118,7 +118,7 @@ void usr_alloc2_uint8_memset (uint8_t m, uint8_t n)
   if (5 <= n && n <= 9) return;
   void *p = usr_alloc2 (m, n);
 
-  size_t sz = UINT8_MAX * UINT8_MAX + 1;
+  size_t sz = UINT8_MAX * (UINT8_MAX / 2) - 1;
   memset (p, 0, sz);               // { dg-warning "\\\[-Wstringop-overflow" "" { xfail *-*-* } }
                                    // { dg-warning "\\\[-Warray-bounds" "pr?????" { target *-*-* } .-1 }
   sink (p);
