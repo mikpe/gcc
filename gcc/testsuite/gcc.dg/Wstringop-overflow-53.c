@@ -10,7 +10,11 @@
 #define LONG_MAX   __LONG_MAX__
 #define LONG_MIN   (-LONG_MAX - 1)
 
-#define USHRT_MAX  (SHRT_MAX * 2 + 1)
+#if __SHRT_MAX__ == __INT_MAX__
+# define USHRT_MAX (SHRT_MAX * 2U + 1U)
+#else
+# define USHRT_MAX (SHRT_MAX * 2 + 1)
+#endif
 #define UINT_MAX   ~0U
 #define ULONG_MAX  ~0LU
 
