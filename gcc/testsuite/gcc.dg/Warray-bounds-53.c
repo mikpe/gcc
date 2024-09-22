@@ -1,6 +1,7 @@
 /* PR middle-end/92341 - missing -Warray-bounds indexing past the end
    of a compound literal
    { dg-do compile }
+   { dg-skip-if "not 16-bit clean" { cdp1802-*-* } }
    { dg-options "-O2 -Wall -ftrack-macro-expansion=0" } */
 
 #include "range.h"
