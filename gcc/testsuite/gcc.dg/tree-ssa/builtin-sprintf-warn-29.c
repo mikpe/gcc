@@ -62,7 +62,7 @@ void test_decl (void)
 
   {
     size_t n = strlen (p->ax);
-    sprintf (a7, "%s", p->ax);    // { dg-bogus "-Wformat-overflow" "pr??????" { xfail ilp32 } }
+    sprintf (a7, "%s", p->ax);    // { dg-bogus "-Wformat-overflow" "pr??????" { xfail { ! lp64 } } }
     sink (a7, n);
   }
 }
@@ -173,7 +173,7 @@ void test_ptr (struct S *p)
 
   {
     size_t n = strlen (p->ax);
-    sprintf (a8, "%s", p->ax);    // { dg-bogus "-Wformat-overflow" "pr??????" { xfail ilp32 } }
+    sprintf (a8, "%s", p->ax);    // { dg-bogus "-Wformat-overflow" "pr??????" { xfail { ! lp64 } } }
     sink (a8, n);
   }
 }
