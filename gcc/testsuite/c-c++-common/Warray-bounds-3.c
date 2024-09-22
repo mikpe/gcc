@@ -165,10 +165,15 @@ void test_memcpy_overflow (char *d, const char *s, size_t n)
 
 void test_memcpy_bounds_memarray_range (void)
 {
+#if __SIZEOF_INT__ == 2
+  typedef long int32_t;
+#else
+  typedef int int32_t;
+#endif
 #undef TM
 #define TM(mem, dst, src, n)			\
   do {						\
-    struct MA { char a5[5]; int i; } ma;	\
+    struct MA { char a5[5]; int32_t i; } ma;	\
     sink (&ma);   /* Initialize arrays.  */	\
     memcpy (dst, src, n);			\
     sink (&ma);					\
