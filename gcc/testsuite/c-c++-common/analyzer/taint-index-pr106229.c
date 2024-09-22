@@ -1,3 +1,5 @@
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
+
 #include <stdint.h>
 
 /* Attacker-controlled 8 bit values where the array isn't
