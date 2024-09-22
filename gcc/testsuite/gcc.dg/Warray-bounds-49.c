@@ -1,6 +1,7 @@
 /* PR middle-end/91647 - missing -Warray-bounds accessing a zero-length array
    of a declared object
    { dg-do "compile" }
+   { dg-skip-if "not 16-bit clean" { cdp1802-*-* } }
    { dg-options "-O2 -Wall" } */
 
 struct __attribute__ ((aligned (16))) A16
