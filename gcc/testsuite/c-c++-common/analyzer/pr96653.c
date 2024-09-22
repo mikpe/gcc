@@ -2,6 +2,7 @@
    Adapted from Linux 5.9-rc1:drivers/media/v4l2-core/v4l2-ctrls.c.  */
 
 /* { dg-additional-options "-O1" } */
+/* { dg-skip-if "not 16-bit clean" { cdp1802-*-* } } */
 
 typedef __UINT32_TYPE__ u32;
 typedef __INT64_TYPE__ s64;
