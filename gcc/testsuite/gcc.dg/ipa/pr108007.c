@@ -7,7 +7,15 @@
    given nonsensical input, that we remove it even when the user has turned off
    normal DCE.  */
 
-int a, b, d, e, f = 10000000, h;
+/* f needs to be chosen so that g becomes negative and e becomes positive
+   so there is no goto back to L.  */
+#if __SIZEOF_INT__ == 2
+int f = -10000;
+#else
+int f = 10000000;
+#endif
+
+int a, b, d, e, h;
 short c, g;
 static int *i() {
   g = f;
