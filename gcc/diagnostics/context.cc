@@ -999,6 +999,7 @@ context::action_after_output (enum kind diag_kind)
 
     case kind::ice:
     case kind::ice_nobt:
+    case kind::debug_bt:
       {
 	/* Attempt to ensure that any outputs are flushed e.g. that .sarif
 	   files are written out.
@@ -1012,12 +1013,15 @@ context::action_after_output (enum kind diag_kind)
 	  }
 
 	struct backtrace_state *state = nullptr;
-	if (diag_kind == kind::ice)
+	if (diag_kind == kind::ice || diag_kind == kind::debug_bt)
 	  state = backtrace_create_state (nullptr, 0, bt_err_callback, nullptr);
 	int count = 0;
 	if (state != nullptr)
 	  backtrace_full (state, 2, bt_callback, bt_err_callback,
 			  (void *) &count);
+
+	if (diag_kind == kind::debug_bt)
+	  break;
 
 	if (m_abort_on_error)
 	  real_abort ();
