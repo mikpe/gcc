@@ -53,3 +53,5 @@ DEFINE_DIAGNOSTIC_KIND (werror, "error: ", NULL)
 /* This is like kind::ICE, but backtrace is not printed.  Used in the driver
    when reporting fatal signal in the compiler.  */
 DEFINE_DIAGNOSTIC_KIND (ice_nobt, "internal compiler error: ", "error")
+/* This is like kind::ICE except it doesn't consider the occurrence an error.  */
+DEFINE_DIAGNOSTIC_KIND (debug_bt, "debug: ", "debug")
