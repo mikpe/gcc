@@ -106,6 +106,7 @@ extern const char *trim_filename (const char *);
 #endif
 extern void internal_error (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2)
      ATTRIBUTE_NORETURN;
+extern void internal_debug_bt (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2);
 extern void internal_error_no_backtrace (const char *, ...)
      ATTRIBUTE_GCC_DIAG(1,2) ATTRIBUTE_NORETURN;
 /* Pass one of the OPT_W* from options.h as the first parameter.  */
