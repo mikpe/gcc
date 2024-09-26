@@ -791,6 +791,18 @@ internal_error (const char *gmsgid, ...)
   gcc_unreachable ();
 }
 
+void
+internal_debug_bt (const char *gmsgid, ...)
+{
+  auto_diagnostic_group d;
+  va_list ap;
+  va_start (ap, gmsgid);
+  rich_location richloc (line_table, input_location);
+  global_dc->diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap,
+			      diagnostics::kind::debug_bt);
+  va_end (ap);
+}
+
 /* Like internal_error, but no backtrace will be printed.  Used when
    the internal error does not happen at the current location, but happened
    somewhere else.  */
