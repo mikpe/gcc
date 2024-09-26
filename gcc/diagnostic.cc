@@ -944,6 +944,7 @@ diagnostic_context::action_after_output (diagnostic_t diag_kind)
 
     case DK_ICE:
     case DK_ICE_NOBT:
+    case DK_DEBUG_BT:
       {
 	/* Attempt to ensure that any outputs are flushed e.g. that .sarif
 	   files are written out.
@@ -956,12 +957,15 @@ diagnostic_context::action_after_output (diagnostic_t diag_kind)
 	  }
 
 	struct backtrace_state *state = NULL;
-	if (diag_kind == DK_ICE)
+	if (diag_kind == DK_ICE || diag_kind == DK_DEBUG_BT)
 	  state = backtrace_create_state (NULL, 0, bt_err_callback, NULL);
 	int count = 0;
 	if (state != NULL)
 	  backtrace_full (state, 2, bt_callback, bt_err_callback,
 			  (void *) &count);
+
+	if (diag_kind == DK_DEBUG_BT)
+	  break;
 
 	if (m_abort_on_error)
 	  real_abort ();
