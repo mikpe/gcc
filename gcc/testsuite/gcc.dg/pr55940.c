@@ -1,6 +1,7 @@
 /* PR target/55940 */
 /* { dg-do run } */
 /* { dg-skip-if "pointer arithmetic can wrap" { msp430-*-* } { "*" } { "-mlarge" } } */
+/* { dg-skip-if "pointer arithmetic can wrap" { cdp1802-*-* } } */
 /* { dg-options "-Os" } */
 /* { dg-additional-options "-mpreferred-stack-boundary=2" { target { { i?86-*-* x86_64-*-* } && ia32 } } } */
 
