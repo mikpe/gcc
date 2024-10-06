@@ -27,7 +27,7 @@ extern bool cdp1802_epilogue_uses_p (int);
 extern bool cdp1802_expand_ashlhi3 (rtx, rtx, rtx);
 extern void cdp1802_expand_call (rtx, rtx, rtx);
 extern void cdp1802_expand_cbranchhi4 (enum rtx_code, rtx, rtx, rtx);
-extern void cdp1802_expand_epilogue (void);
+extern void cdp1802_expand_epilogue (bool);
 extern void cdp1802_expand_nonlocal_goto (rtx, rtx, rtx, rtx);
 extern void cdp1802_expand_prologue (void);
 extern void cdp1802_expand_restore_stack_nonlocal (rtx, rtx);
