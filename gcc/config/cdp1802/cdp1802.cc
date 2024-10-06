@@ -1104,7 +1104,7 @@ cdp1802_expand_prologue (void)
 /* Worker function for epilogue expander.  */
 
 void
-cdp1802_expand_epilogue (void)
+cdp1802_expand_epilogue (bool sibcall_p)
 {
   struct cdp1802_stack_layout layout;
   rtx mem_pop_rtx;
@@ -1163,7 +1163,8 @@ cdp1802_expand_epilogue (void)
 
   /* Return.  */
   gcc_assert (one_below_p);
-  emit_jump_insn (gen_return_internal ());
+  if (!sibcall_p)
+    emit_jump_insn (gen_return_internal ());
 }
 
 /* Predicate for return expander.  */
@@ -1354,6 +1355,9 @@ cdp1802_expand_ashlhi3 (rtx dst, rtx arg, rtx amount)
 #define TARGET_ASM_OUTPUT_MI_THUNK cdp1802_asm_output_mi_thunk
 #undef  TARGET_ASM_CAN_OUTPUT_MI_THUNK
 #define TARGET_ASM_CAN_OUTPUT_MI_THUNK hook_bool_const_tree_hwi_hwi_const_tree_true
+
+#undef TARGET_FUNCTION_OK_FOR_SIBCALL
+#define TARGET_FUNCTION_OK_FOR_SIBCALL hook_bool_tree_tree_true
 
 #undef TARGET_STRICT_ARGUMENT_NAMING
 #define TARGET_STRICT_ARGUMENT_NAMING hook_bool_CUMULATIVE_ARGS_true
