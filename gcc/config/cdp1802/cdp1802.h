@@ -318,12 +318,6 @@ enum reg_class
 
 #define GLOBAL_ASM_OP "\t.global\t"
 
-/* How Initialization Functions Are Handled.  */
-
-/* TODO: switch to init/fini_array */
-#define CTORS_SECTION_ASM_OP	"\t.section\t.ctors,\"a\""
-#define DTORS_SECTION_ASM_OP	"\t.section\t.dtors,\"a\""
-
 /* Output of Assembler Instructions.  */
 
 #define REGISTER_NAMES {        \
