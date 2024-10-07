@@ -631,62 +631,6 @@ cdp1802_rtx_costs (rtx x, machine_mode mode, int /*outer_code*/,
     }
 }
 
-/* Macros Controlling Initialization Routines.  */
-
-/* Worker function for TARGET_ASM_CONSTRUCTOR.
-
-   Like default_named_section_asm_out_constructor, but don't make
-   the section writable.  */
-
-static void
-cdp1802_asm_out_constructor (rtx symbol, int priority)
-{
-  const char *section = ".ctors";
-  char buf[18];
-
-  /* ??? This only works reliably with the GNU linker.  */
-  if (priority != DEFAULT_INIT_PRIORITY)
-    {
-      sprintf (buf, ".ctors.%.5u",
-	       /* Invert the numbering so the linker puts us in the proper
-		  order; constructors are run from right to left, and the
-		  linker sorts in increasing order.  */
-	       MAX_INIT_PRIORITY - priority);
-      section = buf;
-    }
-
-  switch_to_section (get_section (section, 0, NULL));
-  assemble_align (POINTER_SIZE);
-  assemble_integer (symbol, POINTER_SIZE / BITS_PER_UNIT, POINTER_SIZE, 1);
-}
-
-/* Worker function for TARGET_ASM_DESTRUCTOR.
-
-   Like default_named_section_asm_out_destructor, but don't make
-   the section writable.  */
-
-static void
-cdp1802_asm_out_destructor (rtx symbol, int priority)
-{
-  const char *section = ".dtors";
-  char buf[18];
-
-  /* ??? This only works reliably with the GNU linker.  */
-  if (priority != DEFAULT_INIT_PRIORITY)
-    {
-      sprintf (buf, ".dtors.%.5u",
-	       /* Invert the numbering so the linker puts us in the proper
-		  order; constructors are run from right to left, and the
-		  linker sorts in increasing order.  */
-	       MAX_INIT_PRIORITY - priority);
-      section = buf;
-    }
-
-  switch_to_section (get_section (section, 0, NULL));
-  assemble_align (POINTER_SIZE);
-  assemble_integer (symbol, POINTER_SIZE / BITS_PER_UNIT, POINTER_SIZE, 1);
-}
-
 /* Output of Assembler Instructions.  */
 
 static const char *
@@ -1375,11 +1319,6 @@ cdp1802_expand_ashlhi3 (rtx dst, rtx arg, rtx amount)
 #define TARGET_MEMORY_MOVE_COST cdp1802_memory_move_cost
 #undef  TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS cdp1802_rtx_costs
-
-#undef  TARGET_ASM_CONSTRUCTOR
-#define TARGET_ASM_CONSTRUCTOR cdp1802_asm_out_constructor
-#undef  TARGET_ASM_DESTRUCTOR
-#define TARGET_ASM_DESTRUCTOR cdp1802_asm_out_destructor
 
 #undef  TARGET_PRINT_OPERAND
 #define TARGET_PRINT_OPERAND cdp1802_print_operand
