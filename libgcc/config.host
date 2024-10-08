@@ -647,7 +647,7 @@ bpf-*-*)
         extra_parts="crti.o crtn.o"
 	;;
 cdp180[2456]*-*-elf)
-	extra_parts="$extra_parts crti.o crtn.o"
+	# no crti.o/crtn.o in extra_parts since we only use .init/fini_array
 	tmake_file="$tmake_file cdp1802/t-cdp1802 t-softfp-sfdf t-softfp"
 	;;
 cris-*-elf)
