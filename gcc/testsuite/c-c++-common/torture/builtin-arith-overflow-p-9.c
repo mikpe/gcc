@@ -1,6 +1,7 @@
 /* Test __builtin_{add,sub}_overflow_p on {,un}signed int.  */
 /* { dg-do run } */
 /* { dg-skip-if "" { ! run_expensive_tests }  { "*" } { "-O0" "-O2" } } */
+/* { dg-skip-if "too slow"  { cdp1802-*-* } { "-O0" } { "" } } */
 
 typedef signed int S;
 typedef unsigned int U;
