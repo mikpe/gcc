@@ -1,4 +1,5 @@
-/* { dg-do run { xfail  { sparc*-*-* } } } */
+<<<<<<< HEAD
+/* { dg-do run { xfail { { sparc*-*-* cdp1802-*-* } } } */
 /* { dg-options "-O2" } */
 
 #include <inttypes.h>
