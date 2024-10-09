@@ -2,6 +2,7 @@
 /* { dg-do run } */
 /* { dg-skip-if "" { ! run_expensive_tests }  { "*" } { "-O0" "-O2" } } */
 /* { dg-skip-if "too slow"  { cdp1802-*-* } { "-O0" } { "" } } */
+/* { dg-timeout-factor 2 { target cdp1802-*-* } } */
 
 typedef signed long int S;
 typedef unsigned long int U;
