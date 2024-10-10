@@ -79,7 +79,15 @@
    stack, see TARGET_STRICT_ARGUMENT_NAMING and TARGET_FUNCTION_ARG.  This
    simplifies both the generated code and the backend.  */
 
-/* A structure to describe the layout.  */
+/* A structure to describe the layout.
+
+   Caching this in cfun->machine doesn't work, as the set of registers to
+   save changes during the course of compiling a function.  In particular,
+   the hard frame pointer is sometimes initially in this set and later not.
+   That change is not accompanied by a call to TARGET_COMPUTE_FRAME_LAYOUT
+   or a change to frame_pointer_needed.
+
+   Therefore the layout is always recomputed when needed.  */
 struct cdp1802_stack_layout
 {
   /* Size of the low two items in the fixed-size part of the stack.  */
@@ -112,23 +120,9 @@ cdp1802_compute_stack_layout (struct cdp1802_stack_layout *layout)
     if (cdp1802_regno_needs_save_p (regno))
       layout->register_save_size += UNITS_PER_WORD;
 
-  /* FIXME: there is an issue with functions that both take
-     parameters on the stack (due to stdarg or having many
-     parameters) and call alloca().  For them and only them
-     the AP elimination offset is 2 bytes too short. See
-     gcc.dg/torture/stackalign/vararg-1.c.  */
-
   layout->frame_size = layout->locals_size + layout->register_save_size;
   layout->ap_minus_fp = layout->register_save_size + 2;
   layout->fp_minus_sp = layout->locals_size + 1;
-
-#if 0
-  printf("locals_size %d\n", layout->locals_size);
-  printf("register_save_size %d\n", layout->register_save_size);
-  printf("frame_size %d\n", layout->frame_size);
-  printf("fp_minus_sp %d\n", layout->fp_minus_sp);
-  printf("ap_minus_fp %d\n", layout->ap_minus_fp);
-#endif
 }
 
 /* Run-time Target Specification.  */
@@ -212,6 +206,18 @@ cdp1802_secondary_reload (bool /*in_p*/, rtx x, reg_class_t rclass,
 
 /* Eliminating Frame Pointer and Arg Pointer.  */
 
+/* Worker function for TARGET_FRAME_POINTER_REQUIRED.
+
+   Without this hook the gcc.dg/torture/stackalign/vararg-1.c test
+   case is miscompiled due to an incorrect elimination offset from
+   HARD_FRAME_POINTER_REGNUM to ARG_POINTER_REGNUM.  */
+
+static bool
+cdp1802_frame_pointer_required (void)
+{
+  return cfun->calls_alloca;
+}
+
 /* Worker function for TARGET_CAN_ELIMINATE.  */
 
 static bool
@@ -242,10 +248,6 @@ cdp1802_initial_elimination_offset (int from, int to)
     result = layout.fp_minus_sp + layout.ap_minus_fp; /* fp_minus_sp includes the +1 */
   else
     gcc_unreachable ();
-
-#if 0
-  printf ("%s(%d, %d) -> %d\n", __FUNCTION__, from, to, result);
-#endif
 
   return result;
 }
@@ -1274,6 +1276,8 @@ cdp1802_expand_ashlhi3 (rtx dst, rtx arg, rtx amount)
 #undef TARGET_SECONDARY_RELOAD
 #define TARGET_SECONDARY_RELOAD cdp1802_secondary_reload
 
+#undef  TARGET_FRAME_POINTER_REQUIRED
+#define TARGET_FRAME_POINTER_REQUIRED cdp1802_frame_pointer_required
 #undef TARGET_CAN_ELIMINATE
 #define TARGET_CAN_ELIMINATE cdp1802_can_eliminate
 
@@ -1341,4 +1345,4 @@ cdp1802_expand_ashlhi3 (rtx dst, rtx arg, rtx amount)
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
-/* #include "gt-cdp1802.h" */	/* TODO: where does this come from? */
+/* #include "gt-cdp1802.h" */	/* not needed as we have no struct machine_function */
