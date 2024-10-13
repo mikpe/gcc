@@ -1,4 +1,5 @@
 /* { dg-xfail-if "Can not call system libm.a with -msoft-float" { powerpc-*-aix* rs6000-*-aix* } { "-msoft-float" } { "" } } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 #include <math.h>
 
 void abort (void);
