@@ -1,6 +1,7 @@
 /* Test C2Y complex increment and decrement.  */
 /* { dg-do run } */
 /* { dg-options "-std=c2y -pedantic-errors" } */
+/* { dg-skip-if "too large" { cdp1802-*-* } } */
 
 extern void abort (void);
 extern void exit (int);
