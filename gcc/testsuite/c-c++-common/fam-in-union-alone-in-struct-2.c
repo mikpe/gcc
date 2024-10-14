@@ -9,14 +9,14 @@ union with_fam_1 {
 } with_fam_1_v = {.b = {1, 2, 3, 4}};
 
 union with_fam_2 {
-  int a;
+  __INT32_TYPE__ a;
   char b[];  
-} with_fam_2_v = {.a = 0x1f2f3f4f};
+} with_fam_2_v = {.a = __INT32_C(0x1f2f3f4f)};
 
 union with_fam_3 {
   unsigned char a[];  
-  int b[];  
-} with_fam_3_v = {.b = {0x1f2f3f4f, 0x5f6f7f8f}};
+  __INT32_TYPE__ b[];  
+} with_fam_3_v = {.b = {__INT32_C(0x1f2f3f4f), __INT32_C(0x5f6f7f8f)}};
 
 struct only_fam {
   int b[]; 
