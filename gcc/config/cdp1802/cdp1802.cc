@@ -150,9 +150,9 @@ cdp1802_stack_savearea_mode (int /*level*/)
 static void
 cdp1802_override_options_after_change (void)
 {
-  /* -fdse breaks pr54471.c by removing the stores of a long long return
-     value to the stack.  */
-  flag_dse = 0;
+  /* When STACK_PUSH_CODE is PRE_DEC we need -fno-combine-stack-adjustments
+     to avoid breaking lots of tests.  With POST_DEC we needed -fno-dse.  */
+  flag_combine_stack_adjustments = 0;
 }
 
 /* How Values Fit in Registers.  */
@@ -479,6 +479,7 @@ cdp1802_legitimate_address_p (machine_mode /*mode*/, rtx x,
 			      bool strict, code_helper = ERROR_MARK)
 {
   if (GET_CODE (x) == POST_INC
+      || GET_CODE (x) == PRE_DEC
       || GET_CODE (x) == POST_DEC)
     x = XEXP (x, 0);
 
@@ -761,7 +762,7 @@ cdp1802_print_operand (FILE *stream, rtx x, int code)
 	}
       break;
 
-    case 'M':	/* A memory operand: (reg), (reg--), or (reg++).  */
+    case 'M':	/* A memory operand: (reg), (--reg), (reg--), or (reg++).  */
       if (MEM_P (x))
 	{
 	  rtx address = XEXP (x, 0);
@@ -770,6 +771,7 @@ cdp1802_print_operand (FILE *stream, rtx x, int code)
 	    {
 	    case POST_DEC:
 	    case POST_INC:
+	    case PRE_DEC:
 	      address = XEXP (address, 0);
 	      break;
 	    default:
@@ -1010,7 +1012,7 @@ cdp1802_expand_prologue (void)
   struct cdp1802_stack_layout layout;
   rtx mem_push_rtx;
 
-  mem_push_rtx = gen_rtx_POST_DEC (Pmode, stack_pointer_rtx);
+  mem_push_rtx = gen_rtx_PRE_DEC (Pmode, stack_pointer_rtx);
   mem_push_rtx = gen_rtx_MEM (HImode, mem_push_rtx);
 
   cdp1802_compute_stack_layout (&layout);

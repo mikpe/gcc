@@ -38,7 +38,7 @@
 (define_constraint "Q"
   "A register push operation."
   (and (match_code "mem")
-       (match_code "post_dec" "0")
+       (match_code "pre_dec" "0")
        (match_test "XEXP (XEXP (op, 0), 0) == stack_pointer_rtx")))
 
 (define_constraint "R"
