@@ -191,7 +191,7 @@ enum reg_class
 /* Basic Stack Layout.  */
 
 #define STACK_GROWS_DOWNWARD 1
-#define STACK_PUSH_CODE	POST_DEC
+#define STACK_PUSH_CODE	PRE_DEC /* not exactly, but gcc's POST_DEC is very wrong */
 #define FRAME_GROWS_DOWNWARD 1
 #undef ARGS_GROW_DOWNWARD
 #define STACK_POINTER_OFFSET 1
