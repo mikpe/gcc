@@ -43,7 +43,6 @@ extern void cdp1802_print_operand_address (FILE *, rtx);
 extern poly_int64 cdp1802_push_rounding (poly_int64);
 extern bool cdp1802_regno_ok_for_base_p (int);
 extern enum reg_class cdp1802_regno_reg_class (int);
-extern machine_mode cdp1802_stack_savearea_mode (int);
 extern const char *cdp1802_template_movdf_r_r (rtx, rtx);
 extern const char *cdp1802_template_movsf_r_r (rtx, rtx);
 
