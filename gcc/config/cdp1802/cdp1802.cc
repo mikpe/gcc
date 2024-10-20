@@ -137,14 +137,6 @@ cdp1802_cpu_cpp_builtins (cpp_reader *pfile)
 
 /* Storage Layout.  */
 
-/* Implement STACK_SAVEAREA_MODE.  */
-
-machine_mode
-cdp1802_stack_savearea_mode (int /*level*/)
-{
-  return HImode;
-}
-
 /* Worker function for TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE.  */
 
 static void
@@ -239,7 +231,7 @@ cdp1802_initial_elimination_offset (int from, int to)
   cdp1802_compute_stack_layout (&layout);
 
   if (from == FRAME_POINTER_REGNUM && to == HARD_FRAME_POINTER_REGNUM)
-    result = 1; /* FIXME: shouldn't this be -1? */
+    result = 1;
   else if (from == FRAME_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
     result = layout.fp_minus_sp;
   else if (from == ARG_POINTER_REGNUM && to == HARD_FRAME_POINTER_REGNUM)
@@ -528,7 +520,7 @@ cdp1802_memory_move_cost (machine_mode mode, reg_class_t rclass, bool in)
 	  if (in)
 	    return 5; /* lda r1; phi r2; ldn r1; plo r2; dec r1 */
 	  else
-	    return 5; /* inc r2; glo r1; stxd r2; ghi r1; str r2 */
+	    return 6; /* ghi r1; str r2; glo r1; inc r2; str r2; dec r2 */
 	}
     }
 
