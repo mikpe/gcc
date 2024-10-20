@@ -56,8 +56,6 @@
 #define PCC_BITFIELD_TYPE_MATTERS 0
 #define MAX_FIXED_MODE_SIZE 32
 
-#define STACK_SAVEAREA_MODE(LEVEL) cdp1802_stack_savearea_mode ((LEVEL))
-
 /* Layout of Source Language Data Types.  */
 
 #define INT_TYPE_SIZE 16
