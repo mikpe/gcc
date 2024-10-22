@@ -911,6 +911,37 @@ cdp1802_option_override (void)
   cdp1802_override_options_after_change ();
 }
 
+/* Worker function for the addhi3, addptrhi3, and subhi3 insns.
+
+   AMOUNT should be a CONST_INT in range -7 to 7, inclusive.
+
+   Expand an ADD or SUB with 0-7 to a sequence of INC or DEC instructions.
+
+   An ADD (SUB) with a negative amount is treated as a SUB (ADD) with the negated amount.  */
+
+const char *
+cdp1802_template_incdec (bool add_p, rtx amount)
+{
+  static const char incs[7 * 8 + 1 + 1] =
+    "inc %0\n\tinc %0\n\tinc %0\n\tinc %0\n\tinc %0\n\tinc %0\n\tinc %0\n\t;";
+  static const char decs[7 * 8 + 1 + 1] =
+    "dec %0\n\tdec %0\n\tdec %0\n\tdec %0\n\tdec %0\n\tdec %0\n\tdec %0\n\t;";
+  int aval;
+
+  gcc_assert (CONST_INT_P (amount));
+  aval = INTVAL (amount);
+
+  if (aval < 0)
+    {
+      aval = -aval;
+      add_p = !add_p;
+    }
+
+  gcc_assert (IN_RANGE (aval, 0, 7));
+
+  return (add_p ? incs : decs) + (7 * 8) - (aval * 8);
+}
+
 /* Worker function for movdf_internal insn.
 
    Adjust the copying order to avoid clobbering the value being copied.  */
