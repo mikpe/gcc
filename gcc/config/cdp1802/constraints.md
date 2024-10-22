@@ -33,6 +33,13 @@
 (define_register_constraint "z" "Z_REGS"
   "Hidden argument register")
 
+;; Integer constraints.
+
+(define_constraint "I"
+  "An integer constant between -7 and 7"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (ival, -7, 7)")))
+
 ;; Extra constraints.
 
 (define_constraint "Q"
