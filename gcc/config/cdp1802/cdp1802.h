@@ -113,7 +113,6 @@
 #define CDP1802_RV	CDP1802_R7	/* first return value register */
 #define CDP1802_SC	CDP1802_R6	/* static chain */
 #define CDP1802_HFP	CDP1802_R15	/* hard frame pointer */
-#define CDP1802_CARRY	CDP1802_DF	/* carry/borrow flag */
 
 /* Basic Characteristics of Registers.  */
 
@@ -124,7 +123,7 @@
   1, 1, 0, 0,	/*  r4  r5  r6  r7 */	\
   0, 0, 0, 0,	/*  r8  r9 r10 r11 */	\
   0, 0, 0, 0,	/* r12 r13 r14 r15 */	\
-  1, 0, 1, 1,	/*   D  DF   X  FP */	\
+  1, 1, 1, 1,	/*   D  DF   X  FP */	\
   1		/*  AP		   */	}
 
 /* Ones indicate caller-saved (callee-clobbered) registers.  */
@@ -133,14 +132,14 @@
   0, 0, 1, 1,	/*  r4  r5  r6  r7 */	\
   1, 1, 1, 0,	/*  r8  r9 r10 r11 */	\
   0, 0, 0, 0,	/* r12 r13 r14 r15 */	\
-  0, 1, 0, 0,	/*   D  DF   X  FP */	\
+  0, 0, 0, 0,	/*   D  DF   X  FP */	\
   0		/*  AP		   */	}
 
 #define PC_REGNUM CDP1802_PC
 
 /* Order of Allocation of Registers.  */
 
-#define REG_ALLOC_ORDER { 10, 9, 8, 7, 6, 12, 13, 14, 15, 11, 17, 0, 1, 2, 3, 4, 5, 16, 18 }
+#define REG_ALLOC_ORDER { 10, 9, 8, 7, 6, 12, 13, 14, 15, 11, 0, 1, 2, 3, 4, 5, 16, 18 }
 
 /* How Values Fit in Registers.  */
 
