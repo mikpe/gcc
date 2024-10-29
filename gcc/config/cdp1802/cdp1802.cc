@@ -154,7 +154,7 @@ cdp1802_override_options_after_change (void)
 static bool
 cdp1802_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 {
-  return mode == BImode || (regno != CDP1802_CARRY && GET_MODE_SIZE (mode) <= 8);
+  return mode == BImode || GET_MODE_SIZE (mode) <= 8;
 }
 
 /* Worker function for TARGET_MODES_TIEABLE_P.  */
@@ -481,18 +481,6 @@ cdp1802_legitimate_address_p (machine_mode /*mode*/, rtx x,
     return true;
 
   return false;
-}
-
-/* Representation of condition codes using registers.  */
-
-/* Worker function for TARGET_FIXED_CONDITION_CODE_REGS.  */
-
-static bool
-cdp1802_fixed_condition_code_regs (unsigned int *p1, unsigned int *p2)
-{
-  *p1 = CDP1802_CARRY;
-  *p2 = INVALID_REGNUM;
-  return true;
 }
 
 /* Describing Relative Costs of Operations.  */
@@ -997,12 +985,7 @@ cdp1802_template_movsf_r_r (rtx dst, rtx src)
 static rtx
 cdp1802_emit_addhi3_postreload (rtx dest, rtx src0, rtx src1)
 {
-  rtx set, clobber, insn;
-
-  set = gen_rtx_SET (dest, gen_rtx_PLUS (HImode, src0, src1));
-  clobber = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (BImode, CDP1802_CARRY));
-  insn = emit_insn (gen_rtx_PARALLEL (VOIDmode, gen_rtvec (2, set, clobber)));
-  return insn;
+  return emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (HImode, src0, src1)));
 }
 
 /* Helper for the prologue expander.  */
@@ -1199,8 +1182,7 @@ cdp1802_expand_nonlocal_goto (rtx /*op0*/, rtx op1, rtx op2, rtx op3)
 void
 cdp1802_expand_cbranchhi4 (enum rtx_code code, rtx op0, rtx op1, rtx loc)
 {
-  rtx condition_rtx, loc_ref, branch, cy_clobber;
-  rtvec vec;
+  rtx condition_rtx, loc_ref, branch;
   machine_mode mode;
 
   mode = GET_MODE (op0);
@@ -1212,11 +1194,7 @@ cdp1802_expand_cbranchhi4 (enum rtx_code code, rtx op0, rtx op1, rtx loc)
 			gen_rtx_IF_THEN_ELSE (VOIDmode, condition_rtx,
 					      loc_ref, pc_rtx));
 
-  cy_clobber = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (BImode, CDP1802_CARRY));
-
-  vec = gen_rtvec (2, branch, cy_clobber);
-
-  emit_jump_insn (gen_rtx_PARALLEL (VOIDmode, vec));
+  emit_jump_insn (branch);
 }
 
 /* Worker function for call expanders.
@@ -1335,9 +1313,6 @@ cdp1802_expand_ashlhi3 (rtx dst, rtx arg, rtx amount)
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P cdp1802_legitimate_address_p
-
-#undef TARGET_FIXED_CONDITION_CODE_REGS
-#define TARGET_FIXED_CONDITION_CODE_REGS cdp1802_fixed_condition_code_regs
 
 #undef  TARGET_MEMORY_MOVE_COST
 #define TARGET_MEMORY_MOVE_COST cdp1802_memory_move_cost
