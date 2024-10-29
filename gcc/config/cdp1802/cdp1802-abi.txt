@@ -44,7 +44,7 @@ r13	callee-save
 r14	callee-save
 r15	callee-save, optional frame pointer
 D	fixed, 8-bit accumulator
-DF	caller-save, 1-bit carry/borrow flag
+DF	fixed, 1-bit carry/borrow flag
 X	fixed, 4-bit register selector for some memory access instructions
 P	fixed, 4-bit register selector for the program counter
 
