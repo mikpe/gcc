@@ -133,6 +133,8 @@ void
 cdp1802_cpu_cpp_builtins (cpp_reader *pfile)
 {
   cpp_define (pfile, "__CDP1802__");
+  if (TARGET_1804)
+    cpp_define (pfile, "__CDP1804__");
 }
 
 /* Storage Layout.  */
@@ -896,6 +898,16 @@ cdp1802_debug_unwind_info (void)
 static void
 cdp1802_option_override (void)
 {
+  if (cdp1802_arch_option)
+    {
+      if (strcmp (cdp1802_arch_option, "1804") == 0)
+	target_flags |= MASK_1804;
+      else if (strcmp(cdp1802_arch_option, "1802") == 0)
+	target_flags &= ~MASK_1804;
+      else
+	error ("unknown CDP1802 family member in %<-march=%>: %s", cdp1802_arch_option);
+    }
+
   cdp1802_override_options_after_change ();
 }
 
