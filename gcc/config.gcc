@@ -4653,6 +4653,17 @@ case "${target}" in
 		with_cpu=${with_cpu:-$target_cpu_cname}
 		;;
 
+	cdp180[246]*-*-elf)
+		supported_defaults=arch
+		case "$with_arch" in
+		"" | 1802 | 1804)
+			;;
+		*)
+			echo "Unknown ARCH used in --with-arch=$with_arch" 1>&2
+			;;
+		esac
+		;;
+
 	fr*-*-*linux*)
 		supported_defaults=cpu
 		case "$with_cpu" in
