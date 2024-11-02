@@ -23,6 +23,9 @@
 
 /* Controlling the Compilation Driver.  */
 
+#define OPTION_DEFAULT_SPECS \
+  { "arch", "%{!march=*:-march=%(VALUE)}" }
+
 #undef  LINK_SPEC
 #define LINK_SPEC "%{h*} %{v:-V} \
 		  %{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic}"
