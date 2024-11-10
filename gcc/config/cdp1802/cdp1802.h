@@ -355,7 +355,8 @@ enum reg_class
 #define HAS_LONG_UNCOND_BRANCH true
 #define CASE_VECTOR_MODE HImode
 #undef WORD_REGISTER_OPERATIONS
-#define MOVE_MAX 1		/* TODO: 1804 can do 2 */
+#define MOVE_MAX (TARGET_1804 ? 2 : 1)
+#define MAX_MOVE_MAX 2 /* must be a compile-time constant */
 #define Pmode HImode
 #define FUNCTION_MODE QImode
 
