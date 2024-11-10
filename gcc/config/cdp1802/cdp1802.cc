@@ -380,6 +380,7 @@ cdp1802_asm_output_mi_thunk (FILE *file,
      : FIRST_ARGUMENT_REGISTER);
 
   /* Add DELTA to THIS.  */
+  /* TODO: if (abs (delta) < 8) generate inc or dec sequence instead */
   if (delta != 0)
     fprintf (file,
 	     "\tglo %u\n"
@@ -397,6 +398,7 @@ cdp1802_asm_output_mi_thunk (FILE *file,
       /* We use the caller-save r15 as TEMP.  */
 
       /* temp = *this + vcall_offset */
+      /* TODO: if (abs (vcall_offset) < 8) generate load-then-inc-or-dec-sequence instead */
       fprintf (file,
 	       "\tinc %u\n"	/* point THIS to low byte */
 	       "\tldn %u\n"	/* load *THIS low byte */
