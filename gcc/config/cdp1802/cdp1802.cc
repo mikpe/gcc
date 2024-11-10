@@ -490,6 +490,7 @@ cdp1802_legitimate_address_p (machine_mode /*mode*/, rtx x,
 /* Describing Relative Costs of Operations.  */
 
 /* Worker function for TARGET_MEMORY_MOVE_COST.  */
+/* TODO: review for 1804 */
 
 static int
 cdp1802_memory_move_cost (machine_mode mode, reg_class_t rclass, bool in)
@@ -523,6 +524,7 @@ cdp1802_memory_move_cost (machine_mode mode, reg_class_t rclass, bool in)
 /* Worker function for TARGET_RTX_COSTS.  */
 
 /* TODO: needs CDP1802 overhaul */
+/* TODO: review for 1804 */
 static bool
 cdp1802_rtx_costs (rtx x, machine_mode mode, int /*outer_code*/,
 		   int /*opno*/, int *total, bool speed_p)
@@ -845,7 +847,11 @@ void
 cdp1802_output_reg_push (FILE *stream, int regno)
 {
   const char *name = reg_names[regno];
-  fprintf (stream, "\tglo %s\n\tstxd\n\tghi %s\n\tstxd\n", name, name);
+
+  if (TARGET_1804)
+    fprintf (stream, "\trsxd %s\n", name);
+  else
+    fprintf (stream, "\tglo %s\n\tstxd\n\tghi %s\n\tstxd\n", name, name);
 }
 
 /* Implement ASM_OUTPUT_REG_POP.  */
@@ -854,7 +860,11 @@ void
 cdp1802_output_reg_pop (FILE *stream, int regno)
 {
   const char *name = reg_names[regno];
-  fprintf (stream, "\tinc 2\n\tlda 2\n\tphi %s\n\tldn 2\n\tplo %s\n", name, name);
+
+  if (TARGET_1804)
+    fprintf (stream, "\tinc 2\n\trlxa %s\n\tdec 2\n", name);
+  else
+    fprintf (stream, "\tinc 2\n\tlda 2\n\tphi %s\n\tldn 2\n\tplo %s\n", name, name);
 }
 
 /* Output of Dispatch Tables.  */
