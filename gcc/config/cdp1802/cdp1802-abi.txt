@@ -100,6 +100,10 @@ To return:
 Apart from the intended effects on SP, PC, and X, the function call
 and return mechanism may clobber D.  It may _not_ clobber DF.
 
+TODO: for 1804 the final pop-then-return should be "rlxa 15; rlxa 3"
+as this avoids (a) forcing the last pop to be a half-pop, or (b) forcing
+SP to be one-below before the "sep 5"
+
 Note: The NCRT differs from the old Standard Call and Return Technique
 (SCRT) published by RCA in that it does not maintain return addresses
 on _both_ the stack and in a LINK register (r6).  Not having the LINK
