@@ -1,5 +1,5 @@
 /* Target Code for the RCA CDP1802 processor.
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
    Contributed by Mikael Pettersson <mikpelinux@gmail.com>
 
    This file is part of GCC.
@@ -154,7 +154,7 @@ cdp1802_override_options_after_change (void)
 /* Worker function for TARGET_HARD_REGNO_MODE_OK.  */
 
 static bool
-cdp1802_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
+cdp1802_hard_regno_mode_ok (unsigned int /*regno*/, machine_mode mode)
 {
   return mode == BImode || GET_MODE_SIZE (mode) <= 8;
 }
