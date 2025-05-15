@@ -87,6 +87,12 @@ test_format()
   s = std::format("{:%Z %T %F %z %Ez}", ltf);
   __builtin_puts(s.c_str());
   VERIFY( s == "FOO 20:22:02 2024-07-28 -0100 -01:00" );
+
+  s = std::format("{}", local_seconds{});
+  VERIFY( s == "1970-01-01 00:00:00" );
+
+  s = std::format("{}", local_days{}); // PR libstdc++/120293
+  VERIFY( s == "1970-01-01" );
 }
 
 int main()
