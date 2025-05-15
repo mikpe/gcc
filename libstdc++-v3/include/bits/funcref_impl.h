@@ -67,13 +67,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Res, typename... _ArgTypes, bool _Noex>
     class function_ref<_Res(_ArgTypes...) _GLIBCXX_MOF_CV
 		       noexcept(_Noex)>
+    : __polyfunc::_Ref_base
     {
       static_assert(
 	(std::__is_complete_or_unbounded(__type_identity<_ArgTypes>()) && ...),
 	"each parameter type must be a complete class");
 
+      using _Base = __polyfunc::_Ref_base;
       using _Invoker = __polyfunc::_Invoker<_Noex, _Res, _ArgTypes...>;
-      using _Signature = _Invoker::_Signature;
+      using _ArgsSignature = _Res(_ArgTypes...) noexcept(_Noex);
+      using _TargetQuals = int _GLIBCXX_MOF_CV&;
 
       // [func.wrap.ref.ctor]/1 is-invokable-using
       template<typename... _Tps>
@@ -89,8 +92,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	function_ref(_Fn* __fn) noexcept
 	{
 	  __glibcxx_assert(__fn != nullptr);
-	  _M_invoke = _Invoker::template _S_ptrs<_Fn*>();
 	  _M_init(__fn);
+	  _M_invoke = _Invoker::template _S_ptrs<_Fn*>();
 	}
 
       /// Target and bound object is object referenced by parameter.
@@ -108,21 +111,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{
 	  using _Fd = remove_cv_t<_Vt>;
 	  if constexpr (__is_std_op_wrapper<_Fd>)
-	    {
-	      _M_invoke = _Invoker::template _S_nttp<_Fd{}>;
-	      _M_ptrs._M_obj = nullptr;
-	    }
+	    _M_invoke = _Invoker::template _S_nttp<_Fd{}>;
 	  else if constexpr (requires (_ArgTypes&&... __args) {
 		    _Fd::operator()(std::forward<_ArgTypes>(__args)...);
 		  })
+	    _M_invoke = _Invoker::template _S_static<_Fd>;
+	  else if constexpr (__is_function_ref_v<_Fd>
+	       && __polyfunc::__is_invoker_convertible<_Fd, function_ref>())
 	    {
-	      _M_invoke = _Invoker::template _S_static<_Fd>;
-	      _M_ptrs._M_obj = nullptr;
+	      _Base::operator=(__polyfunc::__base_of(__f));
+	      _M_invoke = __polyfunc::__invoker_of(__f);
 	    }
           else
 	    {
-	      _M_invoke = _Invoker::template _S_ptrs<_Vt _GLIBCXX_MOF_CV&>();
 	      _M_init(std::addressof(__f));
+	      _M_invoke = _Invoker::template _S_ptrs<_Vt _GLIBCXX_MOF_CV&>();
 	    }
 	}
 
@@ -146,7 +149,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    static_assert(__fn != nullptr);
 
 	  _M_invoke = &_Invoker::template _S_nttp<__fn>;
-	  _M_ptrs._M_obj = nullptr;
 	}
 
       /// Target object is equivalent to std::bind_front<_fn>(std::ref(__ref)).
@@ -162,6 +164,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  if constexpr (is_pointer_v<_Fn> || is_member_pointer_v<_Fn>)
 	    static_assert(__fn != nullptr);
 
+	  _M_init(std::addressof(__ref));
 	  if constexpr (is_member_pointer_v<_Fn>
 			  && same_as<_Td, typename __inv_unwrap<_Td>::type>)
 	    // N.B. invoking member pointer on lvalue produces the same effects,
@@ -169,7 +172,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    _M_invoke = &_Invoker::template _S_bind_ptr<__fn, _Td _GLIBCXX_MOF_CV>;
 	  else
 	    _M_invoke = &_Invoker::template _S_bind_ref<__fn, _Td _GLIBCXX_MOF_CV&>;
-	  _M_init(std::addressof(__ref));
 	}
 
       /// Target object is equivalent to std::bind_front<_fn>(__ptr).
@@ -185,13 +187,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  if constexpr (is_member_pointer_v<_Fn>)
 	    __glibcxx_assert(__ptr != nullptr);
 
-	  _M_invoke = &_Invoker::template _S_bind_ptr<__fn, _Td _GLIBCXX_MOF_CV>;
 	  _M_init(__ptr);
+	  _M_invoke = &_Invoker::template _S_bind_ptr<__fn, _Td _GLIBCXX_MOF_CV>;
 	}
 
       template<typename _Tp>
-	requires (!is_same_v<_Tp, function_ref>) && (!is_pointer_v<_Tp>)
+	requires (!is_same_v<_Tp, function_ref>)
+		 && (!is_pointer_v<_Tp>)
 		 && (!__is_constant_wrapper_v<_Tp>)
+		 && (!__polyfunc::__is_funcref_assignable<function_ref, _Tp>())
 	function_ref&
 	operator=(_Tp) = delete;
 
@@ -206,18 +210,23 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return _M_invoke(_M_ptrs, std::forward<_ArgTypes>(__args)...); }
 
     private:
-      template<typename _Tp>
-	constexpr void
-	_M_init(_Tp* __ptr) noexcept
-	{
-	  if constexpr (is_function_v<_Tp>)
-	    _M_ptrs._M_func = reinterpret_cast<void(*)()>(__ptr);
-	  else
-	    _M_ptrs._M_obj = __ptr;
-	}
-
       typename _Invoker::__ptrs_func_t _M_invoke;
-      __polyfunc::_Ptrs _M_ptrs;
+
+      template<typename _Func>
+	friend constexpr auto&
+	__polyfunc::__invoker_of(_Func&) noexcept;
+
+      template<typename _Func>
+	friend constexpr auto&
+	__polyfunc::__base_of(_Func&) noexcept;
+
+      template<typename _Src, typename _Dst>
+	friend consteval bool
+	__polyfunc::__is_invoker_convertible() noexcept;
+
+      template<typename _Dst, typename _Src>
+        friend consteval bool
+        __polyfunc::__is_funcref_assignable() noexcept;
     };
 
 #undef _GLIBCXX_MOF_CV

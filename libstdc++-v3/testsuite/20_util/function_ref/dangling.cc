@@ -1,12 +1,13 @@
 // { dg-do compile { target c++26 } }
 
 #include <functional>
+#include <string>
 
-template<typename F>
-constexpr std::function_ref<int(int, int) const>
+template<typename Signature = int(int, int) const, typename F>
+constexpr std::function_ref<Signature>
 create(F f)
 {
-  std::function_ref<int(int, int) const> fr(f);
+  std::function_ref<Signature> fr(f);
   return fr;
 }
 
@@ -71,4 +72,14 @@ struct StaticWinsET {
 };
 
 constexpr auto vStaticWinsET = create(StaticWinsET{});
+
+auto func = [](std::string s) noexcept -> int
+{ return s.size(); };
+
+constexpr std::function_ref<int(std::string)> stdCompatibleFRef
+  = std::function_ref<int(std::string) const noexcept>(func);
+constexpr std::function_ref<int(std::string&&)> implCompatible1FRef
+  = std::function_ref<int(std::string)>(func);
+constexpr std::function_ref<int(std::string) const> implCompatible2FRef
+  = std::function_ref<int(std::string)>(func);
 

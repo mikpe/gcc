@@ -70,7 +70,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       using _Base = __polyfunc::_Mo_base;
       using _Invoker = __polyfunc::_Invoker<_Noex, _Res, _ArgTypes...>;
-      using _Signature = _Invoker::_Signature;
 
       template<typename _Tp>
 	using __callable
@@ -236,14 +235,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typename _Invoker::__storage_func_t _M_invoke = nullptr;
 
       template<typename _Func>
-	friend auto&
+	friend constexpr auto&
 	__polyfunc::__invoker_of(_Func&) noexcept;
 
       template<typename _Func>
-	friend auto&
+	friend constexpr auto&
 	__polyfunc::__base_of(_Func&) noexcept;
 
-      template<typename _Dst, typename _Src>
+      template<typename _Src, typename _Dst>
 	friend consteval bool
 	__polyfunc::__is_invoker_convertible() noexcept;
     };

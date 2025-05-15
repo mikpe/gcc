@@ -74,3 +74,11 @@ struct InstanceWinsET {
 
 constexpr auto vInstanceWinsET = create(InstanceWinsET{}); // { dg-error "is not a constant expression" }
 
+constexpr auto func = [](std::string s) noexcept -> int
+{ return s.size(); };
+
+constexpr std::function_ref<int(const std::string&)> incompatible1FRef
+  = std::function_ref<int(std::string)>(func); // { dg-error "is not a constant expression" }
+constexpr std::function_ref<long(std::string)> incompatible2FRef
+  = std::function_ref<int(std::string)>(func); // { dg-error "is not a constant expression" }
+

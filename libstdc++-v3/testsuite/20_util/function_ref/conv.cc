@@ -36,8 +36,33 @@ static_assert( std::is_same_v<std::function_ref<void(int const[5])>,
 static_assert( std::is_same_v<std::function_ref<void(FuncType)>,
 			      std::function_ref<void(FuncType*)>>);
 
-// The C++26 [func.wrap.general] p2 does not currently cover funciton_ref,
-// so we make extra copies of arguments.
+// Compatible signatures per standard, function_ref is assignable
+static_assert( std::is_assignable_v<std::function_ref<int(long) noexcept>&,
+				    std::function_ref<int(long) const noexcept>> );
+static_assert( std::is_assignable_v<std::function_ref<int(long) const>&,
+				    std::function_ref<int(long) const noexcept>> );
+static_assert( std::is_assignable_v<std::function_ref<int(long)>&,
+				    std::function_ref<int(long) const noexcept>> );
+
+// Incompatible signatures per standard,  not assignable
+static_assert( !std::is_assignable_v<std::function_ref<int(long) const>&,
+				     std::function_ref<int(long)>> );
+static_assert( !std::is_assignable_v<std::function_ref<int(int)>&,
+				     std::function_ref<int(long)>> );
+static_assert( !std::is_assignable_v<std::function_ref<long(long)>&,
+				     std::function_ref<int(long)>> );
+static_assert( !std::is_assignable_v<std::function_ref<long(int)>&,
+				     std::function_ref<int(long)>> );
+
+// Implementation-specific compatible signatures, function_ref is not assingable
+static_assert( !std::is_assignable_v<std::function_ref<int(CountedArg)>&,
+				     std::function_ref<int(CountedArg&&)>> );
+static_assert( !std::is_assignable_v<std::function_ref<CountedArg()>&,
+				     std::function_ref<const CountedArg(long)>> );
+static_assert( !std::is_assignable_v<std::function_ref<const CountedArg()>&,
+				     std::function_ref<CountedArg(long)>> );
+static_assert( !std::is_assignable_v<std::function_ref<int(long) const>&,
+				     std::function_ref<int(long)>> );
 
 void
 test01()
@@ -54,26 +79,40 @@ test01()
   VERIFY( r2c(c) == 2 );
 
   std::function_ref<int(CountedArg) const> r3r(r1);
-  VERIFY( r3r(c) == 2 );
+  VERIFY( r3r(c) == 1 );
   std::function_ref<int(CountedArg) const> r3m(m1);
   VERIFY( r3m(c) == 2 );
   std::function_ref<int(CountedArg) const> r3c(c1);
   VERIFY( r3c(c) == 2 );
 
-  std::function_ref<int(CountedArg)> r4r(r1);
-  VERIFY( r4r(c) == 2 );
-  std::function_ref<int(CountedArg)> r4m(m1);
+  std::function_ref<int(CountedArg) noexcept> r4r(r1);
+  VERIFY( r4r(c) == 1 );
+  std::function_ref<int(CountedArg) noexcept> r4m(m1);
   VERIFY( r4m(c) == 2 );
-  std::function_ref<int(CountedArg)> r4c(c1);
+  std::function_ref<int(CountedArg) noexcept> r4c(c1);
   VERIFY( r4c(c) == 2 );
 
+  std::function_ref<int(CountedArg)> r5r(r1);
+  VERIFY( r4r(c) == 1 );
+  std::function_ref<int(CountedArg)> r5m(m1);
+  VERIFY( r4m(c) == 2 );
+  std::function_ref<int(CountedArg)> r5c(c1);
+  VERIFY( r4c(c) == 2 );
+
+  r3r = r1;
+  VERIFY( r3r(c) == 1 );
+  r4r = r1;
+  VERIFY( r4r(c) == 1 );
+  r5r = r1;
+  VERIFY( r5r(c) == 1 );
+
   // Incompatible signatures
-  std::function_ref<long(CountedArg) const noexcept> r5r(r1);
-  VERIFY( r5r(c) == 2 );
-  std::function_ref<long(CountedArg) const noexcept> r5m(m1);
-  VERIFY( r5r(c) == 2 );
-  std::function_ref<long(CountedArg) const noexcept> r5c(c1);
-  VERIFY( r5r(c) == 2 );
+  std::function_ref<long(CountedArg) const noexcept> r6r(r1);
+  VERIFY( r6r(c) == 2 );
+  std::function_ref<long(CountedArg) const noexcept> r6m(m1);
+  VERIFY( r6r(c) == 2 );
+  std::function_ref<long(CountedArg) const noexcept> r6c(c1);
+  VERIFY( r6r(c) == 2 );
 }
 
 void
@@ -110,7 +149,7 @@ test03()
   // Call const overload as std::function_ref<int(CountedArg) const>
   // inside std::function_ref<int(CountedArg)> would do.
   std::function_ref<int(CountedArg)> r2(r1);
-  VERIFY( r2(c) == 1002 );
+  VERIFY( r2(c) == 1001 );
   std::move_only_function<int(CountedArg)> m2(r1);
   VERIFY( m2(c) == 1002 );
 
@@ -119,7 +158,7 @@ test03()
   std::function_ref<int(CountedArg)> r3(f);
   VERIFY( r3(c) == 1 );
   std::function_ref<int(CountedArg) const> r4(r3);
-  VERIFY( r4(c) == 2 );
+  VERIFY( r4(c) == 1 );
   std::move_only_function<int(CountedArg) const> m4(r3);
   VERIFY( m4(c) == 2 );
 }
@@ -234,7 +273,7 @@ test07()
   std::function_ref<int()> r3r(r1);
   VERIFY( r3r() == 2 );
   r1 = f1;
-  VERIFY( r3r() == 1 ); // converting-constructor
+  VERIFY( r3r() == 2 ); // converting-constructor
 
   std::function_ref<int()> r3m(m1);
   VERIFY( r3m() == 2 );
@@ -263,6 +302,19 @@ test08()
 void
 test09()
 {
+  auto f = [](CountedArg arg) noexcept { return arg.counter; };
+  // For non-tirival types Param and Param&& are compatible.
+  std::function_ref<int(CountedArg) const noexcept> r1(f);
+  VERIFY( r1({}) == 1 );
+  std::function_ref<int(CountedArg&&) const noexcept> r2(r1);
+  VERIFY( r2({}) == 1 );
+
+  auto fs = [](CountedArg const& arg, std::string) noexcept { return arg.counter; };
+  std::function_ref<int(CountedArg, std::string) const noexcept> rs1(fs);
+  VERIFY( rs1(c, "") == 1 );
+  std::function_ref<int(CountedArg, std::string&&) const noexcept> rs2(rs1);
+  VERIFY( rs2(c, "") == 1 );
+
   // Scalar types and small trivially move constructible types are passed
   // by value to invoker. So int&& signature is not compatible for such types.
   auto fi = [](CountedArg const& arg, int) noexcept { return arg.counter; };
@@ -271,11 +323,20 @@ test09()
   std::function_ref<int(CountedArg, int&&) const noexcept> ri2(ri1);
   VERIFY( ri2(c, 0) == 2 );
 
-  auto fs = [](CountedArg const& arg, std::string_view) noexcept { return arg.counter; };
-  std::function_ref<int(CountedArg, std::string_view) const noexcept> rs1(fs);
-  VERIFY( rs1(c, "") == 1 );
-  std::function_ref<int(CountedArg, std::string_view&&) const noexcept> rs2(rs1);
-  VERIFY( rs2(c, "") == 2 );
+  auto fv = [](CountedArg const& arg, std::string_view) noexcept { return arg.counter; };
+  std::function_ref<int(CountedArg, std::string_view) const noexcept> rv1(fv);
+  VERIFY( rv1(c, "") == 1 );
+  std::function_ref<int(CountedArg, std::string_view&&) const noexcept> rv2(rv1);
+  VERIFY( rv2(c, "") == 2 );
+
+  // CV-qual on by-value return is also ignored
+  auto fr = [](CountedArg const& arg) noexcept { return arg; };
+  std::function_ref<CountedArg(CountedArg) const noexcept> rr1(fr);
+  VERIFY( rr1(c).counter == 2 );
+  std::function_ref<const CountedArg(CountedArg) const noexcept> rr2(rr1);
+  VERIFY( rr2(c).counter == 2 );
+  std::function_ref<CountedArg(CountedArg)> rr3(rr2);
+  VERIFY( rr3(c).counter == 2 );
 }
 
 int main()

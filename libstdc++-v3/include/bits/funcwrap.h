@@ -231,12 +231,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
      using _Invoker = _Base_invoker<_Noex, remove_cv_t<_Ret>, __param_t<_Args>...>;
 
    template<typename _Func>
-     auto&
+     constexpr auto&
      __invoker_of(_Func& __f) noexcept
      { return __f._M_invoke; }
 
    template<typename _Func>
-     auto&
+     constexpr auto&
      __base_of(_Func& __f) noexcept
      { return static_cast<__like_t<_Func&, typename _Func::_Base>>(__f); }
 
@@ -244,9 +244,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
      consteval bool
      __is_invoker_convertible() noexcept
      {
-       if constexpr (requires { typename _Src::_Signature; })
-	 return is_convertible_v<typename _Src::_Signature,
-				 typename _Dst::_Signature>;
+       if constexpr (requires { typename _Src::_Invoker::_Signature; })
+	 return is_convertible_v<typename _Src::_Invoker::_Signature,
+				 typename _Dst::_Invoker::_Signature>;
        else
 	 return false;
      }
@@ -539,6 +539,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   /// @cond undocumented
   namespace __polyfunc
   {
+    struct _Ref_base
+    {
+      constexpr
+      _Ref_base() noexcept
+      { _M_ptrs._M_obj = nullptr; }
+
+      template<typename _Tp>
+	constexpr void
+	_M_init(_Tp* __ptr) noexcept
+	{
+	  if constexpr (is_function_v<_Tp>)
+	    _M_ptrs._M_func = reinterpret_cast<void(*)()>(__ptr);
+	  else
+	    _M_ptrs._M_obj = __ptr;
+	}
+
+      _Ptrs _M_ptrs;
+    };
+
     template<typename _Sig>
       struct __skip_first_arg;
 
@@ -584,6 +603,28 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     requires (!is_void_v<_SignaturePtr>)
     function_ref(constant_wrapper<__cwfn, _Fn>, _Tp&&)
       -> function_ref<remove_pointer_t<_SignaturePtr>>;
+
+  /// @cond undocumented
+  template<typename _Tp>
+    constexpr bool __is_function_ref_v = false;
+  template<typename _Tp>
+    constexpr bool __is_function_ref_v<function_ref<_Tp>> = true;
+
+  namespace __polyfunc
+  {
+    template<typename _Dst, typename _Src>
+      consteval bool
+      __is_funcref_assignable() noexcept
+      {
+	if constexpr (__is_function_ref_v<_Src>)
+	  if constexpr (is_convertible_v<typename _Src::_ArgsSignature*,
+					 typename _Dst::_ArgsSignature*>)
+	    return is_convertible_v<typename _Dst::_TargetQuals,
+				    typename _Src::_TargetQuals>;
+	return false;
+      }
+  } // namespace __polyfunc
+  /// @endcond
 
 #endif // __glibcxx_function_ref
 
