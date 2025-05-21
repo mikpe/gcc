@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Free Software Foundation, Inc.
+// Copyright (C) 2017-2025 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -15,36 +15,45 @@
 // with this library; see the file COPYING3.  If not see
 // <http://www.gnu.org/licenses/>.
 
-// { dg-options "-D_GLIBCXX_DEBUG" }
-// { dg-do compile { target c++11 } }
-// { dg-skip-if "" { *-*-* } { "-D_GLIBCXX_PARALLEL" } }
+// { dg-do compile { target c++17 } }
 
-#include <vector>
+#include <memory>
 
-// PR libstdc++/80553
-
+// This has a trivial destructor, but should not be destructible!
 struct DeletedDtor {
   ~DeletedDtor() = delete;
 };
+
+void
+test01()
+{
+  alignas(DeletedDtor) unsigned char buf[sizeof(DeletedDtor)];
+  auto p = ::new (buf) DeletedDtor();
+  std::destroy_n(p, 1);
+}
 
 class PrivateDtor {
   ~PrivateDtor() { }
 };
 
 void
-test01()
-{
-  std::vector<DeletedDtor> v;
-}
-
-void
 test02()
 {
-  std::vector<PrivateDtor> v;
+  alignas(PrivateDtor) unsigned char buf[sizeof(PrivateDtor)];
+  auto p = ::new (buf) PrivateDtor();
+  std::destroy_n(p, 1);
 }
+
+#if __cpp_constexpr_dynamic_alloc // >= C++20
+consteval bool
+test03()
+{
+  DeletedDtor* p = nullptr;
+  std::destroy_n(p, 0);
+  return true;
+}
+static_assert(test03());
+#endif
 
 // { dg-error "deleted function .*DeletedDtor" "" { target *-*-* } 0 }
 // { dg-error "PrivateDtor.* is private" "" { target *-*-* } 0 }
-
-// In Debug Mode the "required from here" errors come from <debug/vector>
-// { dg-error "required from here" "" { target *-*-* } 180 }
