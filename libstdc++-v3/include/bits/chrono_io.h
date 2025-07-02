@@ -843,14 +843,10 @@ namespace __format
 	    __throw_format_error("format error: invalid weekday");
 
 	  locale __loc = _M_locale(__ctx);
-	  const auto& __tp = use_facet<__timepunct<_CharT>>(__loc);
-	  const _CharT* __days[7];
-	  if (__full)
-	    __tp._M_days(__days);
-	  else
-	    __tp._M_days_abbreviated(__days);
-	  __string_view __str(__days[__wd.c_encoding()]);
-	  return _M_write(std::move(__out), __loc, __str);
+	  struct tm __tm{};
+	  __tm.tm_wday = __wd.c_encoding();
+	  return _M_locale_fmt(std::move(__out), __loc, __tm,
+			       __full ? 'A' : 'a', 0);
 	}
 
       template<typename _Tp, typename _FormatContext>
@@ -864,14 +860,10 @@ namespace __format
 	  if (!__m.ok())
 	    __throw_format_error("format error: invalid month");
 	  locale __loc = _M_locale(__ctx);
-	  const auto& __tp = use_facet<__timepunct<_CharT>>(__loc);
-	  const _CharT* __months[12];
-	  if (__full)
-	    __tp._M_months(__months);
-	  else
-	    __tp._M_months_abbreviated(__months);
-	  __string_view __str(__months[(unsigned)__m - 1]);
-	  return _M_write(std::move(__out), __loc, __str);
+	  struct tm __tm{};
+	  __tm.tm_mon = (unsigned)__m - 1;
+	  return _M_locale_fmt(std::move(__out), __loc, __tm,
+			       __full ? 'B' : 'b', 0);
 	}
 
       template<typename _Tp, typename _FormatContext>
@@ -1196,13 +1188,14 @@ namespace __format
 	     _FormatContext& __ctx) const
 	{
 	  // %p The locale's equivalent of the AM/PM designations.
-	  auto __hms = _S_hms(__t);
+	  auto __hi = _S_hms(__t).hours().count();
+	  if (__hi >= 24) [[unlikely]]
+	    __hi %= 24;
+
 	  locale __loc = _M_locale(__ctx);
-	  const auto& __tp = use_facet<__timepunct<_CharT>>(__loc);
-	  const _CharT* __ampm[2];
-	  __tp._M_am_pm(__ampm);
-	  return _M_write(std::move(__out), __loc,
-			  __ampm[__hms.hours().count() >= 12]);
+	  struct tm __tm{};
+	  __tm.tm_hour = __hi;
+	  return _M_locale_fmt(std::move(__out), __loc, __tm, 'p', 0);
 	}
 
       template<typename _Tp, typename _FormatContext>
