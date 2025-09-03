@@ -21511,8 +21511,14 @@ tsubst_copy_and_build (tree t,
 	  }
 	else if (TREE_CODE (member) == FIELD_DECL)
 	  {
+	    /* Assume access of this FIELD_DECL has already been checked; we
+	       don't recheck it to avoid bogus access errors when substituting
+	       a reduced constant initializer (97740).  */
+	    gcc_checking_assert (TREE_CODE (TREE_OPERAND (t, 1)) == FIELD_DECL);
+	    push_deferring_access_checks (dk_deferred);
 	    r = finish_non_static_data_member (member, object, NULL_TREE,
 					       complain);
+	    pop_deferring_access_checks ();
 	    if (TREE_CODE (r) == COMPONENT_REF)
 	      REF_PARENTHESIZED_P (r) = REF_PARENTHESIZED_P (t);
 	    RETURN (r);
