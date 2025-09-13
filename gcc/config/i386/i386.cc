@@ -25524,6 +25524,14 @@ ix86_stack_protect_guard (void)
   return default_stack_protect_guard ();
 }
 
+/* Implement TARGET_STACK_PROTECT_GUARD_SYMBOL_P.  */
+
+static bool
+ix86_stack_protect_guard_symbol_p (void)
+{
+  return TARGET_SSP_GLOBAL_GUARD;
+}
+
 static bool
 ix86_stack_protect_runtime_enabled_p (void)
 {
@@ -28538,6 +28546,10 @@ ix86_libgcc_floating_mode_supported_p
 
 #undef TARGET_STACK_PROTECT_GUARD
 #define TARGET_STACK_PROTECT_GUARD ix86_stack_protect_guard
+
+#undef TARGET_STACK_PROTECT_GUARD_SYMBOL_P
+#define TARGET_STACK_PROTECT_GUARD_SYMBOL_P \
+  ix86_stack_protect_guard_symbol_p
 
 #undef TARGET_STACK_PROTECT_RUNTIME_ENABLED_P
 #define TARGET_STACK_PROTECT_RUNTIME_ENABLED_P \

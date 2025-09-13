@@ -4654,6 +4654,17 @@ The default version of this hook creates a variable called\n\
  tree, (void),
  default_stack_protect_guard)
 
+/* Return true if the user provided stack protection guard definition of
+   __stack_chk_guard is used.  */
+DEFHOOK
+(stack_protect_guard_symbol_p,
+ "Usually, the compiler uses an external variable @samp{__stack_chk_guard}\n\
+defined in @file{libgcc2.c} as the stack protection guard symbol.  Define\n\
+this hook to return true if a user provided definition of\n\
+@samp{__stack_chk_guard} with the @code{uintptr_t} type is used.",
+ bool, (void),
+ hook_bool_void_false)
+
 /* This target hook allows the operating system to override the CALL_EXPR
    that is invoked when a check vs the guard variable fails.  */
 DEFHOOK

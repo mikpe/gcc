@@ -5426,6 +5426,13 @@ The default version of this hook creates a variable called
 @samp{__stack_chk_guard}, which is normally defined in @file{libgcc2.c}.
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_STACK_PROTECT_GUARD_SYMBOL_P (void)
+Usually, the compiler uses an external variable @samp{__stack_chk_guard}
+defined in @file{libgcc2.c} as the stack protection guard symbol.  Define
+this hook to return true if a user provided definition of
+@samp{__stack_chk_guard} with the @code{uintptr_t} type is used.
+@end deftypefn
+
 @deftypefn {Target Hook} tree TARGET_STACK_PROTECT_FAIL (void)
 This hook returns a @code{CALL_EXPR} that alerts the runtime that the
 stack protect guard variable has been modified.  This expression should

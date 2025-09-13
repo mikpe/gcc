@@ -941,9 +941,12 @@ default_stack_protect_guard (void)
     {
       rtx x;
 
+      if (targetm.stack_protect_guard_symbol_p ())
+	t = lang_hooks.types.type_for_mode (ptr_mode, 1);
+      else
+	t = ptr_type_node;
       t = build_decl (UNKNOWN_LOCATION,
-		      VAR_DECL, get_identifier ("__stack_chk_guard"),
-		      ptr_type_node);
+		      VAR_DECL, get_identifier ("__stack_chk_guard"), t);
       TREE_STATIC (t) = 1;
       TREE_PUBLIC (t) = 1;
       DECL_EXTERNAL (t) = 1;
@@ -954,8 +957,14 @@ default_stack_protect_guard (void)
 
       /* Do not share RTL as the declaration is visible outside of
 	 current function.  */
-      x = DECL_RTL (t);
-      RTX_FLAG (x, used) = 1;
+      if (mode_mem_attrs[(int) DECL_MODE (t)])
+	{
+	  /* NB: Don't call make_decl_rtl when mode_mem_attrs isn't
+	     initialized.  -save-temps won't initialize mode_mem_attrs
+	     and make_decl_rtl will fail.  */
+	  x = DECL_RTL (t);
+	  RTX_FLAG (x, used) = 1;
+	}
 
       stack_chk_guard_decl = t;
     }

@@ -10,7 +10,7 @@ uintptr_t __stack_chk_guard = 0x2d853605a4d9a09cUL;
 uintptr_t __stack_chk_guard = 0xdd2cc927UL;
 #endif
 
-void
+extern "C" void
 __stack_chk_fail (void)
 {
   exit (0); /* pass */
