@@ -2824,10 +2824,8 @@ spaceship_replacement (basic_block cond_bb, basic_block middle_bb,
 	    {
 	      if (has_cast_debug_uses)
 		{
-		  tree temp3 = make_node (DEBUG_EXPR_DECL);
-		  DECL_ARTIFICIAL (temp3) = 1;
-		  TREE_TYPE (temp3) = TREE_TYPE (orig_use_lhs);
-		  SET_DECL_MODE (temp3, TYPE_MODE (type));
+		  tree temp3
+		    = build_debug_expr_decl (TREE_TYPE (orig_use_lhs));
 		  t = fold_convert (TREE_TYPE (temp3), temp2);
 		  g = gimple_build_debug_bind (temp3, t, phi);
 		  gsi_insert_before (&gsi, g, GSI_SAME_STMT);
