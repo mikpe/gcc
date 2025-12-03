@@ -68,6 +68,12 @@ range_query::range_of_stmt (vrange &r, gimple *stmt, tree name)
 
 // Default for updating range info is to do nothing.
 void
+range_query::update_range_info (tree)
+{
+}
+
+// Default for updating range info is to do nothing.
+void
 range_query::update_range_info (tree, const vrange &)
 {
 }

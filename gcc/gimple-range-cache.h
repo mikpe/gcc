@@ -111,6 +111,7 @@ public:
   bool get_global_range (vrange &r, tree name) const;
   bool get_global_range (vrange &r, tree name, bool &current_p);
   void set_global_range (tree name, const vrange &r, bool changed = true);
+  void mark_stale (tree name);
   void update_consumers (tree name);
   range_query &const_query () { return m_globals; }
 
@@ -143,6 +144,7 @@ private:
 
   vec<basic_block> m_workback;
   class update_list *m_update;
+  bitmap m_stale;
 };
 
 #endif // GCC_SSA_RANGE_CACHE_H

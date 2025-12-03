@@ -1019,10 +1019,12 @@ ranger_cache::ranger_cache (int not_executable_flag, bool use_imm_uses)
 	gori_ssa ()->exports (bb);
     }
   m_update = new update_list ();
+  m_stale = BITMAP_ALLOC (NULL);
 }
 
 ranger_cache::~ranger_cache ()
 {
+  BITMAP_FREE (m_stale);
   delete m_update;
   destroy_infer_oracle ();
   destroy_relation_oracle ();
@@ -1064,6 +1066,17 @@ ranger_cache::get_global_range (vrange &r, tree name) const
   return false;
 }
 
+// Mark NAME as stale.  The next query of NAME forces a recalculation.
+
+void
+ranger_cache::mark_stale (tree name)
+{
+  // Only mark it as stale if it has been processed. If it has no range
+  // it will be calculated at the next request anyway.
+  if (m_globals.has_range (name))
+    bitmap_set_bit (m_stale, SSA_NAME_VERSION (name));
+}
+
 // Get the global range for NAME, and return in R.  Return false if the
 // global range is not set, and R will contain the legacy global value.
 // CURRENT_P is set to true if the value was in cache and not stale.
@@ -1100,6 +1113,13 @@ ranger_cache::get_global_range (vrange &r, tree name, bool &current_p)
 	    }
 	}
       m_globals.set_range (name, r);
+    }
+
+  // If NAME is out of date, clear the bit and mark as not current.
+  if (bitmap_bit_p (m_stale, SSA_NAME_VERSION (name)))
+    {
+      bitmap_clear_bit (m_stale, SSA_NAME_VERSION (name));
+      current_p = false;
     }
 
   // If the existing value was not current, mark it as always current.

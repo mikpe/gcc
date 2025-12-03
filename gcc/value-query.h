@@ -75,6 +75,9 @@ public:
   virtual bool range_on_entry (vrange &r, basic_block bb, tree expr);
   virtual bool range_on_exit (vrange &r, basic_block bb, tree expr);
 
+  // Indicate that NAME should be considered for a range update.
+  virtual void update_range_info (tree name);
+  // Provide a specific range update to NAME.
   virtual void update_range_info (tree name, const vrange &r);
 
   inline class relation_oracle &relation () const  { return *m_relation; }
