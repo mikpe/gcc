@@ -2012,6 +2012,11 @@ get_maxval_strlen (tree arg, strlen_range_kind rkind, tree *nonstr = NULL)
   /* A non-null NONSTR is meaningless when determining the maximum
      value of an integer ARG.  */
   gcc_assert (rkind != SRK_INT_VALUE || nonstr == NULL);
+
+  // If arg is already a constant, simply return it.
+  if (TREE_CODE (arg) == INTEGER_CST && rkind == SRK_INT_VALUE)
+    return arg;
+
   /* ARG must have an integral type when RKIND says so.  */
   gcc_assert (rkind != SRK_INT_VALUE || INTEGRAL_TYPE_P (TREE_TYPE (arg)));
 
