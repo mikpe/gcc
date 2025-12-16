@@ -1274,19 +1274,21 @@ bool
 ranger_cache::range_of_expr (vrange &r, tree name, gimple *stmt)
 {
   if (!gimple_range_ssa_p (name))
-    {
-      get_tree_range (r, name, stmt);
-      return true;
-    }
-
-  basic_block bb = gimple_bb (stmt);
-  gimple *def_stmt = SSA_NAME_DEF_STMT (name);
-  basic_block def_bb = gimple_bb (def_stmt);
-
-  if (bb == def_bb)
-    range_of_def (r, name, bb);
+    get_tree_range (r, name, stmt);
+  /* If no context is provided, pick up the global value.  */
+  else if (!stmt)
+    get_global_range (r, name);
   else
-    entry_range (r, name, bb, RFD_NONE);
+    {
+      basic_block bb = gimple_bb (stmt);
+      gimple *def_stmt = SSA_NAME_DEF_STMT (name);
+      basic_block def_bb = gimple_bb (def_stmt);
+
+      if (bb == def_bb)
+	range_of_def (r, name, bb);
+      else
+	entry_range (r, name, bb, RFD_NONE);
+    }
   return true;
 }
 
