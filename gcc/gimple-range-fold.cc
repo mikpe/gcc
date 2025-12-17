@@ -668,16 +668,14 @@ fold_using_range::fold_stmt (vrange &r, gimple *s, fur_source &src, tree name)
     name = gimple_get_lhs (s);
 
   // Process addresses and loads from static constructors.
-  if (gimple_code (s) == GIMPLE_ASSIGN)
-    {
-      if (gimple_assign_rhs_code (s) == ADDR_EXPR)
-	return range_of_address (as_a <prange> (r), s, src);
-      if (range_from_readonly_var (r, s))
-	return true;
-    }
+  if (gimple_code (s) == GIMPLE_ASSIGN && range_from_readonly_var (r, s))
+    return true;
 
   gimple_range_op_handler handler (s);
-  if (handler)
+  if (gimple_code (s) == GIMPLE_ASSIGN
+      && gimple_assign_rhs_code (s) == ADDR_EXPR)
+    res = range_of_address (as_a <prange> (r), s, src);
+  else if (handler)
     res = range_of_range_op (r, handler, src);
   else if (is_a<gphi *>(s))
     res = range_of_phi (r, as_a<gphi *> (s), src);
