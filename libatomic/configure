@@ -15435,7 +15435,7 @@ esac
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the target supports hidden visibility" >&5
 $as_echo_n "checking whether the target supports hidden visibility... " >&6; }
-if ${libat_cv_have_attribute_visibility+:} false; then :
+if ${gcc_cv_have_attribute_visibility+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -15453,16 +15453,16 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  libat_cv_have_attribute_visibility=yes
+  gcc_cv_have_attribute_visibility=yes
 else
-  libat_cv_have_attribute_visibility=no
+  gcc_cv_have_attribute_visibility=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   CFLAGS="$save_CFLAGS"
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libat_cv_have_attribute_visibility" >&5
-$as_echo "$libat_cv_have_attribute_visibility" >&6; }
-  if test $libat_cv_have_attribute_visibility = yes; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_have_attribute_visibility" >&5
+$as_echo "$gcc_cv_have_attribute_visibility" >&6; }
+  if test $gcc_cv_have_attribute_visibility = yes; then
 
 $as_echo "#define HAVE_ATTRIBUTE_VISIBILITY 1" >>confdefs.h
 

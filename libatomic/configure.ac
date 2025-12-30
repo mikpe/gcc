@@ -256,7 +256,7 @@ case " $config_path " in
 esac
 
 # See what sort of export controls are available.
-LIBAT_CHECK_ATTRIBUTE_VISIBILITY
+GCC_CHECK_ATTRIBUTE_VISIBILITY
 LIBAT_CHECK_ATTRIBUTE_DLLEXPORT
 LIBAT_CHECK_ATTRIBUTE_ALIAS
 if test x$try_ifunc = xyes; then

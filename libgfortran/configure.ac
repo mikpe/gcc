@@ -787,7 +787,7 @@ fi
 
 
 # Check out attribute support.
-LIBGFOR_CHECK_ATTRIBUTE_VISIBILITY
+GCC_CHECK_ATTRIBUTE_VISIBILITY
 LIBGFOR_CHECK_ATTRIBUTE_ALIAS
 
 # Check out atomic builtins support.
