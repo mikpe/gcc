@@ -2095,6 +2095,7 @@ irange::intersect (const vrange &v)
   int_range_max r2 (*this);
   unsigned r2_lim = r2.num_pairs ();
   unsigned i2 = 0;
+  bool need_snapping = !m_bitmask.unknown_p ();
   for (unsigned i = 0; i < r.num_pairs (); )
     {
       // If r1's upper is < r2's lower, we can skip r1's pair.
@@ -2128,29 +2129,51 @@ irange::intersect (const vrange &v)
 	    m_base[bld_pair * 2] = r2l;
 	}
       else
-	// Decrease and set a new upper.
+	// Decrease the index to use the existing lower bound, and
+	// set a new upper for this pair.
 	bld_pair--;
 
+      // Changes to false if the last value in i2's range is consumed.
+      bool more = true;
       // ...and choose the lower of the upper bounds.
       if (wi::le_p (ru, r2u, sign))
 	{
 	  m_base[bld_pair * 2 + 1] = ru;
-	  bld_pair++;
 	  // Move past the r1 pair and keep trying.
 	  i++;
-	  continue;
 	}
       else
 	{
 	  m_base[bld_pair * 2 + 1] = r2u;
-	  bld_pair++;
 	  i2++;
-	  if (i2 < r2_lim)
-	    continue;
-	  // No more r2, break.
-	  break;
+	  // No more r2, break the loop when done.
+	  if (i2 >= r2_lim)
+	    more = false;
 	}
-      // r2 has the higher lower bound.
+      // Now snap these ranges to the bitmask, if there is one.
+      if (need_snapping)
+	{
+	  bool ovf;
+	  wide_int lb, ub;
+	  if (snap (m_base[bld_pair * 2], m_base[bld_pair * 2 + 1],
+		    lb, ub, ovf))
+	    {
+	      // If the new subrange does not fit the mask, skip it.
+	      if (ovf)
+		{
+		  if (!more)
+		    break;
+		  continue;
+		}
+	      // Otherwise adjust the pair.
+	      m_base[bld_pair * 2] = lb;
+	      m_base[bld_pair * 2 + 1] = ub;
+	    }
+	}
+      // Current pair now satisfies any mask, ready for another pair.
+      bld_pair++;
+      if (!more)
+	break;
     }
 
   // At the exit of this loop, it is one of 2 things:
@@ -2163,13 +2186,6 @@ irange::intersect (const vrange &v)
     }
 
   m_kind = VR_RANGE;
-  // Snap subranges if there is a bitmask.  See PR 123319.
-  if (!m_bitmask.unknown_p ())
-    {
-      snap_subranges ();
-      if (undefined_p ())
-	return true;
-    }
   // The range has been altered, so normalize it even if nothing
   // changed in the mask.
   if (!intersect_bitmask (r))
