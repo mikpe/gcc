@@ -48,7 +48,7 @@ void test02(void)
   cistreambuf_iter istrb_it05(istrs01);
   cistreambuf_iter istrb_it06(istrs01.rdbuf());
   VERIFY( istrb_it05 == istrb_it06 );
-  
+
   // bool equal(istreambuf_iter& b)
   cistreambuf_iter istrb_it07(0);
   cistreambuf_iter istrb_it08;
@@ -109,8 +109,69 @@ void test02(void)
     }
 }
 
+void
+test_empty()
+{
+  std::istreambuf_iterator<char> null(0), end;
+  VERIFY( null == end );
+
+  std::istringstream ess;
+  // The specification seems to indicate that these iterators are not
+  // end-of-stream iterators, as they have non-null rdbuf pointers.
+  // (see LWG 2366: istreambuf_iterator end-of-stream equality).
+  // However we treat them as end-of-stream, as otherwise they would
+  // produce a range containing a single EOF character.
+  std::istreambuf_iterator<char> it1(ess), it2(ess);
+  VERIFY( it1 == end );
+  VERIFY( it2 == end );
+}
+
+void
+test_multi()
+{
+  // C++98 (and later) define operator* in [istreambuf.iterator.ops] as:
+  // Returns: The character obtained via the streambuf member sbuf_->sgetc().
+  // This means the behavior of multiple iterators to the same sequence
+  // is specified by the standard (which is not generally true for
+  // input iterators)
+  std::istringstream iss("abcd");
+  std::istreambuf_iterator<char> it1(iss), it2(iss), end;
+
+  VERIFY( it1 != end );
+  VERIFY( it2 != end );
+  VERIFY( *it1 == 'a' );
+  VERIFY( *it2 == 'a' );
+  ++it1;
+
+  VERIFY( it1 != end );
+  VERIFY( it2 != end );
+  VERIFY( *it1 == 'b' );
+  VERIFY( *it2 == 'b' );
+  ++it2;
+
+  VERIFY( it1 != end );
+  VERIFY( it2 != end );
+  VERIFY( *it1 == 'c' );
+  VERIFY( *it2 == 'c' );
+  ++it2;
+
+  VERIFY( it1 != end );
+  VERIFY( it2 != end );
+  VERIFY( *it1 == 'd' );
+  VERIFY( *it2 == 'd' );
+  // second dereference
+  VERIFY( *it1 == 'd' );
+  VERIFY( *it2 == 'd' );
+  ++it1;
+
+  VERIFY( it1 == end );
+  VERIFY( it2 == end );
+}
+
 int main()
 {
   test02();
+  test_empty();
+  test_multi();
   return 0;
 }
