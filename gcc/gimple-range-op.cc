@@ -1220,6 +1220,8 @@ gimple_range_op_handler::maybe_builtin_call ()
   switch (func)
     {
     case CFN_BUILT_IN_CONSTANT_P:
+      if (gimple_call_num_args (call) != 1)
+	return;
       m_op1 = gimple_call_arg (call, 0);
       if (irange::supports_p (TREE_TYPE (m_op1)))
 	m_operator = &op_cfn_constant_p;
@@ -1228,6 +1230,8 @@ gimple_range_op_handler::maybe_builtin_call ()
       break;
 
     CASE_FLT_FN (CFN_BUILT_IN_SIGNBIT):
+      if (gimple_call_num_args (call) != 1)
+	return;
       m_op1 = gimple_call_arg (call, 0);
       m_operator = &op_cfn_signbit;
       break;
@@ -1358,7 +1362,9 @@ gimple_range_op_handler::maybe_builtin_call ()
     default:
       {
 	unsigned arg;
-	if (gimple_call_fnspec (call).returns_arg (&arg) && arg == 0)
+	if (gimple_call_fnspec (call).returns_arg (&arg)
+	    && arg == 0
+	    && gimple_call_num_args (call) > 0)
 	  {
 	    m_op1 = gimple_call_arg (call, 0);
 	    m_operator = &op_cfn_pass_through_arg1;
