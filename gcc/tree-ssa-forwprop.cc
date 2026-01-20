@@ -4258,7 +4258,8 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
 			   ? 0 : refnelts) + i);
       vec_perm_indices indices (sel, orig[1] ? 2 : 1, refnelts);
       machine_mode vmode = TYPE_MODE (perm_type);
-      if (!can_vec_perm_const_p (vmode, vmode, indices))
+      if ((cfun->curr_properties & PROP_gimple_lvec)
+	  && !can_vec_perm_const_p (vmode, vmode, indices))
 	return false;
       mask_type = build_vector_type (ssizetype, refnelts);
       tree op2 = vec_perm_indices_to_tree (mask_type, indices);
@@ -4323,7 +4324,8 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
 			    ? elts[i].second + nelts : i);
 	  vec_perm_indices indices (sel, 2, nelts);
 	  machine_mode vmode = TYPE_MODE (type);
-	  if (!can_vec_perm_const_p (vmode, vmode, indices))
+	  if ((cfun->curr_properties & PROP_gimple_lvec)
+	      && !can_vec_perm_const_p (vmode, vmode, indices))
 	    return false;
 	  mask_type = build_vector_type (ssizetype, nelts);
 	  blend_op2 = vec_perm_indices_to_tree (mask_type, indices);
