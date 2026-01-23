@@ -76,7 +76,7 @@ march=
 UrlSuffix(gcc/NDS32-Options.html#index-march_003d-1)
 
 mcpu=
-UrlSuffix(gcc/NDS32-Options.html#index-mcpu_003d-4)
+UrlSuffix(gcc/NDS32-Options.html#index-mcpu_003d-3)
 
 mconfig-fpu=
 UrlSuffix(gcc/NDS32-Options.html#index-mconfig-fpu_003d)

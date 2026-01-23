@@ -4,8 +4,6 @@
 /* { dg-options "-O1 " } */
 /* Option -fno-tree-lrs removed By Andrew MacLeod since it is no longer 
    supported in the compiler beginning with GCC 4.3.  */
-/* m32c has varying sized pointers */
-/* { dg-skip-if "" { "m32c-*-*" } { "*" } { "-mcpu=m32c" "-mcpu=m32cm" } } */
 
 __extension__ typedef __INTPTR_TYPE__ intptr_t;
 

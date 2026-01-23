@@ -245,7 +245,6 @@ TARGET_SPECIFIC_PAGES = {
     'gcc/HPPA-Options.html' : 'gcc/config/pa/',
     'gcc/IA-64-Options.html' : 'gcc/config/ia64/',
     'gcc/LoongArch-Options.html' : 'gcc/config/loongarch/',
-    'gcc/M32C-Options.html' : 'gcc/config/m32c/',
     'gcc/M32R_002fD-Options.html' : 'gcc/config/m32r/',
     'gcc/M680x0-Options.html' : 'gcc/config/m68k/',
     'gcc/MCore-Options.html' : 'gcc/config/mcore/',

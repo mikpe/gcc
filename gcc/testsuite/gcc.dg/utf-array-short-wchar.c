@@ -35,9 +35,9 @@ const char32_t	s32_4[]	= u8"ab";	/* { dg-error "from a string literal with type 
 
 const char32_t	s32_5[0] = U"ab";	/* { dg-warning " is too long" } */
 const char32_t	s32_6[1] = U"ab";	/* { dg-warning " is too long" } */
-const char32_t	s32_7[2] = U"ab";	/* { dg-warning " is too long" "" { target "m32c-*-*" } } */
-const char32_t	s32_8[3] = U"ab";	/* { dg-warning " is too long" "" { target "m32c-*-*" } } */
-const char32_t	s32_9[4] = U"ab";	/* { dg-warning " is too long" "" { target "m32c-*-*" } } */
+const char32_t	s32_7[2] = U"ab";
+const char32_t	s32_8[3] = U"ab";
+const char32_t	s32_9[4] = U"ab";
 
 const wchar_t	sw_0[]	= "ab";		/* { dg-error "from a string literal with type array of .char." } */
 const wchar_t	sw_1[]	= u"ab";

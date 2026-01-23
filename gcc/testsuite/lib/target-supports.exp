@@ -670,7 +670,6 @@ proc check_effective_target_variadic_mi_thunk { } {
 	 || [istarget h8300-*-*]
 	 || [istarget iq2000-*-*]
 	 || [istarget lm32-*-*]
-	 || [istarget m32c-*-*]
 	 || [istarget m32r-*-*]
 	 || [istarget mcore-*-*]
 	 || [istarget moxie-*-*]
@@ -860,7 +859,6 @@ proc check_profiling_available { test_what } {
 	     || [istarget fido-*-elf]
 	     || [istarget h8300-*-*]
 	     || [istarget lm32-*-*]
-	     || [istarget m32c-*-elf]
 	     || [istarget m68k-*-elf]
 	     || [istarget m68k-*-uclinux*]
 	     || [istarget mips*-*-elf*]
@@ -9236,7 +9234,6 @@ proc check_effective_target_natural_alignment_32 { } {
 	   || [istarget rl78-*-*]
 	   || [istarget pdp11-*-*]
 	   || [istarget msp430-*-*]
-	   || [istarget m32c-*-*]
 	   || [istarget cris-*-*] } {
 	   return 0
 	 } else {

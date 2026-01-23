@@ -898,7 +898,7 @@ promote_mode (const_tree type ATTRIBUTE_UNUSED, machine_mode mode,
 
   /* FIXME: this is the same logic that was there until GCC 4.4, but we
      probably want to test POINTERS_EXTEND_UNSIGNED even if PROMOTE_MODE
-     is not defined.  The affected targets are M32C, S390, SPARC.  */
+     is not defined.  The affected targets are S390, SPARC.  */
 #ifdef PROMOTE_MODE
   code = TREE_CODE (type);
   unsignedp = *punsignedp;

@@ -283,7 +283,7 @@ esac
 # Obsolete configurations.
 case ${target} in
      ia64*-*-hpux* | ia64*-*-*vms* | ia64*-*-elf*	\
-   | m32c*-*-* | epiphany*-*-* | rl78*-*-*		\
+   | epiphany*-*-* | rl78*-*-*		\
  )
     if test "x$enable_obsolete" != xyes; then
       echo "*** Configuration ${target} is obsolete." >&2
@@ -359,11 +359,6 @@ tm_p_file=
 cpu_type=`echo ${target} | sed 's/-.*$//'`
 cpu_is_64bit=
 case ${target} in
-m32c*-*-*)
-        cpu_type=m32c
-	tmake_file=m32c/t-m32c
-	target_has_targetm_common=no
-        ;;
 aarch64*-*-*)
 	cpu_type=aarch64
 	extra_headers="arm_fp16.h arm_neon.h arm_bf16.h arm_acle.h arm_sve.h arm_sme.h arm_neon_sve_bridge.h arm_private_fp8.h arm_private_neon_types.h"
@@ -3704,11 +3699,6 @@ am33_2.0-*-linux*)
 	gas=yes gnu_ld=yes
 	use_collect2=no
 	;;
-m32c-*-elf*)
-	tm_file="elfos.h newlib-stdint.h ${tm_file}"
-	c_target_objs="m32c-pragma.o"
-	cxx_target_objs="m32c-pragma.o"
- 	;;
 *)
 	echo "*** Configuration ${target} not supported" 1>&2
 	exit 1

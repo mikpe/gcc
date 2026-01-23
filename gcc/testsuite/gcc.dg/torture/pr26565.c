@@ -1,6 +1,4 @@
 /* { dg-do run } */
-/* m32c is already packed.  */
-/* { dg-skip-if "" { "m32c-*-*" } } */
 
 void *memcpy(void *dest, const void *src, __SIZE_TYPE__ n);
 

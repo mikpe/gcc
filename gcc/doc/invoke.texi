@@ -1177,9 +1177,6 @@ Objective-C and Objective-C++ Dialects}.
 @emph{LynxOS Options} (@ref{LynxOS Options})
 @gccoptlist{-mshared  -mthreads  -mlegacy-threads}
 
-@emph{M32C Options} (@ref{M32C Options})
-@gccoptlist{-mcpu=@var{cpu}  -msim  -memregs=@var{number}}
-
 @emph{M32R/D Options} (@ref{M32R/D Options})
 @gccoptlist{-m32r2  -m32rx  -m32r
 -mdebug
@@ -21248,7 +21245,6 @@ other compilers on the same platform.
 * LM32 Options::
 * LoongArch Options::
 * LynxOS Options::
-* M32C Options::
 * M32R/D Options::
 * M680x0 Options::
 * MCore Options::
@@ -28023,39 +28019,6 @@ Support multi-threading.
 @item -mlegacy-threads
 Support legacy multi-threading.
 This option is incompatible with @option{-mthreads}.
-@end table
-
-@node M32C Options
-@subsection M32C Options
-@cindex M32C options
-
-@table @gcctabopt
-@opindex mcpu=
-@item -mcpu=@var{name}
-Select the CPU for which code is generated.  @var{name} may be one of
-@samp{r8c} for the R8C/Tiny series, @samp{m16c} for the M16C (up to
-/60) series, @samp{m32cm} for the M16C/80 series, or @samp{m32c} for
-the M32C/80 series.
-
-@opindex msim
-@opindex mno-sim
-@item -msim
-Specifies that the program will be run on the simulator.  This causes
-an alternate runtime library to be linked in which supports, for
-example, file I/O@.  You must not use this option when generating
-programs that will run on real hardware; you must provide your own
-runtime library for whatever I/O functions are needed.
-
-@opindex memregs=
-@item -memregs=@var{number}
-Specifies the number of memory-based pseudo-registers GCC uses
-during code generation.  These pseudo-registers are used like real
-registers, so there is a tradeoff between GCC's ability to fit the
-code into available registers, and the performance penalty of using
-memory instead of registers.  Note that all modules in a program must
-be compiled with the same value for this option.  Because of that, you
-must not use this option with GCC's default runtime libraries.
-
 @end table
 
 @node M32R/D Options

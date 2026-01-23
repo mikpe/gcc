@@ -872,7 +872,7 @@ Here are the possible CPU types:
 @quotation
 aarch64, aarch64_be, alpha, alpha64, amdgcn, arc, arceb, arm, armeb, avr, bfin,
 bpf, cris, csky, epiphany, fido, fr30, frv, ft32, h8300, hppa, hppa2.0,
-hppa64, i486, i686, ia64, iq2000, lm32, loongarch64, m32c, m32r, m32rle, m68k,
+hppa64, i486, i686, ia64, iq2000, lm32, loongarch64, m32r, m32rle, m68k,
 mcore, microblaze, microblazeel, mips, mips64, mips64el, mips64octeon,
 mips64orion, mips64vr, mipsel, mipsisa32, mipsisa32r2, mipsisa64, mipsisa64r2,
 mipsisa64r2el, mipsisa64sb1, mipsisa64sr71k, mipstx39, mmix, mn10300, moxie,
@@ -3999,8 +3999,6 @@ information have to.
 @item
 @uref{#lm32-x-uclinux,,lm32-*-uclinux}
 @item
-@uref{#m32c-x-elf,,m32c-*-elf}
-@item
 @uref{#m32r-x-elf,,m32r-*-elf}
 @item
 @uref{#m68k-x-x,,m68k-*-*}
@@ -4614,14 +4612,6 @@ Same as @code{loongarch64-linux-gnuf64} for legacy support.
 
 More information about LoongArch can be found at
 @uref{https://github.com/loongson/LoongArch-Documentation}.
-
-@html
-<hr />
-@end html
-@anchor{m32c-x-elf}
-@heading m32c-*-elf
-Renesas M32C processor.
-This configuration is intended for embedded systems.
 
 @html
 <hr />
