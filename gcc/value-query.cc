@@ -336,7 +336,7 @@ range_query::get_tree_range (vrange &r, tree expr, gimple *stmt,
   else
     type = TREE_TYPE (expr);
 
-  if (!value_range::supports_type_p (type))
+  if (!r.supports_type_p (type))
     {
       r.set_undefined ();
       return false;
