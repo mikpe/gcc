@@ -223,7 +223,7 @@ streamer_read_value_range (class lto_input_block *ib, data_in *data_in,
   tree type = stream_read_tree (ib, data_in);
 
   // Initialize the value_range to the correct type.
-  vr.set_type (type);
+  vr.set_range_class (type);
 
   if (is_a <irange> (vr))
     {

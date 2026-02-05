@@ -370,7 +370,7 @@ range_cast (value_range &r, tree type)
   varying.set_varying (type);
 
   // Ensure we are in the correct mode for the call to fold.
-  r.set_type (type);
+  r.set_range_class (type);
 
   // Call op_convert, if it fails, the result is varying.
   if (!range_op_handler (CONVERT_EXPR).fold_range (r, type, tmp, varying))

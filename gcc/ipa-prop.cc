@@ -177,7 +177,7 @@ ipa_vr::equal_p (const ipa_vr &o) const
 void
 ipa_vr::get_vrange (value_range &r) const
 {
-  r.set_type (m_type);
+  r.set_range_class (m_type);
   m_storage->get_vrange (r, m_type);
 }
 

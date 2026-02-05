@@ -767,13 +767,13 @@ public:
 //
 // Using any of the various constructors initializes the object
 // appropriately, but the default constructor is uninitialized and
-// must be initialized either with set_type() or by assigning into it.
+// must be initialized either with set_range_class() or by assigning into /it.
 //
 // Assigning between incompatible types is allowed.  For example if a
 // temporary holds an irange, you can assign an frange into it, and
 // all the right things will happen.  However, before passing this
 // object to a function accepting a vrange, the correct type must be
-// set.  If it isn't, you can do so with set_type().
+// set.  If it isn't, you can do so with set_range_class().
 
 class value_range
 {
@@ -784,7 +784,7 @@ public:
   value_range (tree, tree, value_range_kind kind = VR_RANGE);
   value_range (const value_range &);
   ~value_range ();
-  void set_type (tree type);
+  void set_range_class (tree type);
   vrange& operator= (const vrange &);
   value_range& operator= (const value_range &);
   bool operator== (const value_range &r) const;
@@ -832,7 +832,7 @@ private:
 };
 
 // The default constructor is uninitialized and must be initialized
-// with either set_type() or with an assignment into it.
+// with either set_range_class() or with an assignment into it.
 
 inline
 value_range::value_range ()
@@ -885,9 +885,10 @@ value_range::~value_range ()
 
 // Initialize object to an UNDEFINED range that can hold ranges of
 // TYPE.  Clean-up memory if there was a previous object.
+// Note that this does *not* set the type of the underlying vrange.
 
 inline void
-value_range::set_type (tree type)
+value_range::set_range_class (tree type)
 {
   if (m_vrange)
     m_vrange->~vrange ();
@@ -896,6 +897,7 @@ value_range::set_type (tree type)
 
 // Initialize object to an UNDEFINED range that can hold ranges of
 // TYPE.
+// Note that this does *not* set the type of the underlying vrange.
 
 inline void
 value_range::init (tree type)

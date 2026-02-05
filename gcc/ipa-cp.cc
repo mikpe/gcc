@@ -891,7 +891,7 @@ ipcp_vr_lattice::set_to_bottom ()
      but nothing else (union, intersect, etc).  This allows us to set
      bottoms on any ranges, and is safe as all users of the lattice
      check for bottom first.  */
-  m_vr.set_type (void_type_node);
+  m_vr.set_range_class (void_type_node);
   m_vr.set_varying (void_type_node);
 
   return true;

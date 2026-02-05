@@ -1594,7 +1594,7 @@ unaryop_svalue::maybe_get_value_range_1 (value_range &out) const
 	     a VARYING of the unknown value as the 2nd operand.  */
 	  value_range varying (type);
 	  varying.set_varying (type);
-	  out.set_type (type);
+	  out.set_range_class (type);
 	  if (handler.fold_range (out, type, arg_vr, varying))
 	    return true;
 	}
@@ -1742,7 +1742,7 @@ binop_svalue::maybe_get_value_range_1 (value_range &out) const
 	range_op_handler handler (m_op);
 	if (handler)
 	  {
-	    out.set_type (type);
+	    out.set_range_class (type);
 	    if (handler.fold_range (out, get_type (), lhs, rhs))
 	      return true;
 	  }
