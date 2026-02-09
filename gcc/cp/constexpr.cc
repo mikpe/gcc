@@ -1096,6 +1096,9 @@ explain_invalid_constexpr_fn (tree fun)
 	  require_potential_rvalue_constant_expression (body);
 	  if (DECL_CONSTRUCTOR_P (fun))
 	    cx_check_missing_mem_inits (DECL_CONTEXT (fun), body, true);
+	  else if (body == NULL_TREE || body == error_mark_node)
+	    error ("body of %<constexpr%> function %qD not a return-statement",
+		   fun);
 	}
     }
 }
