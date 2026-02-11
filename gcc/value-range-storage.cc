@@ -593,12 +593,8 @@ frange_storage::fits_p (const frange &) const
 prange_storage *
 prange_storage::alloc (vrange_internal_alloc &allocator, const prange &r)
 {
-  size_t size = sizeof (prange_storage);
-  if (!r.undefined_p ())
-    {
-      unsigned prec = TYPE_PRECISION (r.type ());
-      size += trailing_wide_ints<NINTS>::extra_size (prec);
-    }
+  prange_format format (r);
+  size_t size = sizeof (prange_storage) + format.extra_size;
   prange_storage *p = static_cast <prange_storage *> (allocator.alloc (size));
   new (p) prange_storage (r);
   return p;
@@ -608,64 +604,163 @@ prange_storage::alloc (vrange_internal_alloc &allocator, const prange &r)
 
 prange_storage::prange_storage (const prange &r)
 {
-  // It is the caller's responsibility to allocate enough space such
-  // that the precision fits.
-  if (r.undefined_p ())
-    // Undefined ranges do not require any extra space for trailing
-    // wide ints.
-    m_trailing_ints.set_precision (0);
-  else
-    m_trailing_ints.set_precision (TYPE_PRECISION (r.type ()));
-
+  prange_format format (r);
+  m_trailing_ints.set_precision (format.precision, format.num_words);
   set_prange (r);
+}
+
+// FIll the format structure for range R.
+
+prange_storage::prange_format::prange_format (const prange &r)
+{
+  kind = PR_UNDEFINED;
+  has_bitmask = 0;
+  extra_size = 0;
+  precision = 0;
+  num_words = 0;
+
+  if (r.undefined_p ())
+    return;
+
+  if (r.varying_p ())
+    {
+      kind = PR_VARYING;
+      return;
+    }
+
+  if (r.zero_p ())
+    {
+      kind = PR_ZERO;
+      return;
+    }
+
+  if (r.nonzero_p ())
+    kind = PR_NONZERO;
+  else
+    {
+      prange tmp (r.type ());
+      if (r.lower_bound () == tmp.lower_bound ()
+	  && r.upper_bound () == tmp.upper_bound ())
+	kind = PR_FULL;
+      else
+	{
+	  // PR_OTHER requires words of storage for the end points.
+	  kind = PR_OTHER;
+	  num_words += 2;
+	}
+    }
+  precision = TYPE_PRECISION (r.type ());
+  has_bitmask = !r.get_bitmask ().unknown_p ();
+
+  // Bitmasks require 2 words of storage.
+  if (has_bitmask)
+    num_words += 2;
+
+  if (num_words != 0)
+    extra_size = trailing_wide_ints<NINTS>::extra_size (precision, num_words);
+
+  // PR_FULL must have a bitmask, or it should be PR_VARYING.
+  gcc_checking_assert (kind != PR_FULL || has_bitmask);
 }
 
 void
 prange_storage::set_prange (const prange &r)
 {
-  if (r.undefined_p ())
-    m_kind = VR_UNDEFINED;
-  else if (r.varying_p ())
-    m_kind = VR_VARYING;
-  else
+  prange_format format (r);
+  m_kind = format.kind;
+  m_has_bitmask = format.has_bitmask;
+  unsigned index = 0;
+
+  switch (m_kind)
     {
-      m_kind = VR_RANGE;
-      set_low (r.lower_bound ());
-      set_high (r.upper_bound ());
-      irange_bitmask bm = r.m_bitmask;
-      set_value (bm.value ());
-      set_mask (bm.mask ());
+      case PR_UNDEFINED:
+      case PR_VARYING:
+      case PR_ZERO:
+	return;
+      case PR_NONZERO:
+      case PR_FULL:
+	break;
+      case PR_OTHER:
+	set_word (index++, r.lower_bound (), r.type ());
+	set_word (index++, r.upper_bound (), r.type ());
+	break;
+      default:
+	gcc_unreachable ();
     }
+
+  if (m_has_bitmask)
+    {
+      irange_bitmask bm = r.m_bitmask;
+      set_word (index++, r.m_bitmask.value (), r.type ());
+      set_word (index++, r.m_bitmask.mask (), r.type ());
+    }
+   gcc_checking_assert (index == format.num_words);
 }
 
 void
 prange_storage::get_prange (prange &r, tree type) const
 {
   gcc_checking_assert (r.supports_type_p (type));
-
-  if (m_kind == VR_UNDEFINED)
-    r.set_undefined ();
-  else if (m_kind == VR_VARYING)
-    r.set_varying (type);
-  else
+  unsigned index = 0;
+  switch (m_kind)
     {
-      gcc_checking_assert (m_kind == VR_RANGE);
-      gcc_checking_assert (TYPE_PRECISION (type) == m_trailing_ints.get_precision ());
-      r.m_kind = VR_RANGE;
-      r.m_type = type;
-      r.m_min = get_low ();
-      r.m_max = get_high ();
-      r.m_bitmask = irange_bitmask (get_value (), get_mask ());
-      if (flag_checking)
-	r.verify_range ();
+      case PR_UNDEFINED:
+	r.set_undefined ();
+	return;
+
+      case PR_VARYING:
+	r.set_varying (type);
+	return;
+
+      case PR_ZERO:
+	r.set_zero (type);
+	return;
+
+      case PR_NONZERO:
+	r.set_nonzero (type);
+	break;
+
+      case PR_FULL:
+	{
+	  r.m_kind = VR_RANGE;
+	  r.m_type = type;
+	  prange tmp (type);
+	  r.m_min = tmp.lower_bound ();
+	  r.m_max = tmp.upper_bound ();
+	  break;
+	}
+
+      case PR_OTHER:
+	{
+	  gcc_checking_assert (m_kind == PR_OTHER);
+	  r.m_kind = VR_RANGE;
+	  r.m_type = type;
+	  r.m_min = get_word (index++, type);
+	  r.m_max = get_word (index++, type);
+	  break;
+	}
+      default:
+	gcc_unreachable ();
     }
+
+  if (m_has_bitmask)
+    {
+      wide_int value = get_word (index++, type);
+      wide_int mask = get_word (index++, type);
+      r.m_bitmask = irange_bitmask (value, mask);
+    }
+  else
+    r.m_bitmask.set_unknown (TYPE_PRECISION (type));
+
+  if (flag_checking)
+    r.verify_range ();
 }
 
 bool
 prange_storage::equal_p (const prange &r) const
 {
   if (r.undefined_p ())
-    return m_kind == VR_UNDEFINED;
+    return m_kind == PR_UNDEFINED;
 
   prange tmp;
   get_prange (tmp, r.type ());
@@ -680,7 +775,11 @@ prange_storage::fits_p (const prange &r) const
   if (r.undefined_p ())
     return true;
 
-  return TYPE_PRECISION (r.type ()) <= m_trailing_ints.get_precision ();
+  prange_format f (r);
+  unsigned prec = m_trailing_ints.get_precision ();
+  unsigned num = m_trailing_ints.num_elements ();
+  size_t curr = num ? trailing_wide_ints<NINTS>::extra_size (prec, num) : 0;
+  return f.extra_size <= curr;
 }
 
 

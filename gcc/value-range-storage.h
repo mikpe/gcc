@@ -113,19 +113,35 @@ private:
   DISABLE_COPY_AND_ASSIGN (prange_storage);
   prange_storage (const prange &r);
 
-  enum value_range_kind m_kind : 3;
+  // A prange_format class summarizes the storage requirements for a prange
+  // which are then used to initialize the prange_storage fields.
+  enum prange_kind { PR_UNDEFINED,	// VR_UNDEFINED
+		     PR_VARYING,	// VR_VARYING
+		     PR_ZERO,		// [0, 0]
+		     PR_NONZERO,	// [1, +INF]
+		     PR_FULL,		// [0, +INF] (Must have bitmask)
+		     PR_OTHER };	// [x, y]
+  class prange_format
+  {
+  public:
+    prange_format (const prange &r);
+    enum prange_kind kind;
+    bool has_bitmask;
+    size_t extra_size;
+    unsigned short precision;
+    unsigned num_words;
+  };
+
+  enum prange_kind m_kind;
+  bool m_has_bitmask;
 
   // We don't use TRAILING_WIDE_INT_ACCESSOR because the getters here
   // must be const.  Perhaps TRAILING_WIDE_INT_ACCESSOR could be made
   // const and return wide_int instead of trailing_wide_int.
-  wide_int get_low () const { return m_trailing_ints[0]; }
-  wide_int get_high () const { return m_trailing_ints[1]; }
-  wide_int get_value () const { return m_trailing_ints[2]; }
-  wide_int get_mask () const { return m_trailing_ints[3]; }
-  template <typename T> void set_low (const T &x) { m_trailing_ints[0] = x; }
-  template <typename T> void set_high (const T &x) { m_trailing_ints[1] = x; }
-  template <typename T> void set_value (const T &x) { m_trailing_ints[2] = x; }
-  template <typename T> void set_mask (const T &x) { m_trailing_ints[3] = x; }
+  wide_int get_word (unsigned i, tree) const
+    { return m_trailing_ints[i]; }
+  template <typename T> void set_word (unsigned i, const T &x, tree)
+    { m_trailing_ints[i] = x; }
 
   static const unsigned int NINTS = 4;
   trailing_wide_ints<NINTS> m_trailing_ints;
