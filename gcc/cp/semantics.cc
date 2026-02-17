@@ -3562,9 +3562,12 @@ finish_compound_literal (tree type, tree compound_literal,
 	  return error_mark_node;
 	}
       else if (cxx_dialect < cxx23)
-	pedwarn (input_location, OPT_Wc__23_extensions,
-		 "%<auto{x}%> only available with "
-		 "%<-std=c++2b%> or %<-std=gnu++2b%>");
+	{
+	  if ((complain & tf_warning_or_error) != 0)
+	    pedwarn (input_location, OPT_Wc__23_extensions,
+		     "%<auto{x}%> only available with "
+		     "%<-std=c++2b%> or %<-std=gnu++2b%>");
+	}
       type = do_auto_deduction (type, compound_literal, type, complain,
 				adc_variable_type);
       if (type == error_mark_node)
