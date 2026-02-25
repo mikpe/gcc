@@ -1452,6 +1452,15 @@
   [(set_attr "type" "clz")
    (set_attr "mode" "<MODE>")])
 
+(define_insn "*ctzsi2_extend"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(any_extend:DI
+	  (ctz:SI (match_operand:SI 1 "register_operand" "r"))))]
+  "TARGET_64BIT"
+  "ctz.w\t%0,%1"
+  [(set_attr "type" "clz")
+   (set_attr "mode" "SI")])
+
 ;;
 ;;  ....................
 ;;
