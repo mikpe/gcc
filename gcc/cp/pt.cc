@@ -21862,7 +21862,8 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	      }
 	  }
 	else if (TREE_CODE (member) == SCOPE_REF
-		 && TREE_CODE (TREE_OPERAND (member, 1)) == TEMPLATE_ID_EXPR)
+		 && TREE_CODE (TREE_OPERAND (member, 1)) == TEMPLATE_ID_EXPR
+		 && identifier_p (TREE_OPERAND (TREE_OPERAND (member, 1), 0)))
 	  {
 	    /* Lookup the template functions now that we know what the
 	       scope is.  */
