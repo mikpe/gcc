@@ -24654,6 +24654,7 @@ The PVIPR documents the following overloaded functions:
 * PowerPC AltiVec Built-in Functions Available on ISA 2.07::
 * PowerPC AltiVec Built-in Functions Available on ISA 3.0::
 * PowerPC AltiVec Built-in Functions Available on ISA 3.1::
+* PowerPC AltiVec/VSX Built-in Functions Available on Future ISA::
 @end menu
 
 @node PowerPC AltiVec Built-in Functions on ISA 2.05
@@ -26686,6 +26687,56 @@ vector unsigned char);
 @exdent vector unsigned __int128 vec_srl (vector unsigned __int128,
 vector unsigned char);
 @end smallexample
+
+@node PowerPC AltiVec/VSX Built-in Functions Available on Future ISA
+@subsubsection PowerPC AltiVec/VSX Built-in Functions Available on Future ISA
+
+The following additional built-in functions are available for the
+PowerPC family of processors, starting with Future ISA.
+
+Future ISA of the PowerPC may add new instructions for accelerating AES
+algorithm. GCC provides support for these new instructions through the
+following built-in functions. The third argument to
+@var{__builtin_aes_encrypt_paired} and @var{__builtin_aes_decrypt_paired} must
+be a constant integer that is 0, 1 or 2. The values correspond to 128, 192 and
+256 bit AES encryption/decryption respectively. The third argument to
+@var{__builtin_galois_field_mult} must be a constant integer that is 0 or 1.
+The values correspond to gcm and xts variant respectively.
+
+@smallexample
+__vector_pair  __builtin_aes_encrypt_paired (__vector_pair, __vector_pair,
+                                             int);
+
+__vector_pair  __builtin_aes128_encrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes192_encrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes256_encrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes_decrypt_paired (__vector_pair, __vector_pair,
+                                             int);
+
+__vector_pair  __builtin_aes128_decrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes192_decrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes256_decrypt_paired (__vector_pair, __vector_pair);
+
+__vector_pair  __builtin_aes_genlastkey_paired (__vector_pair, int);
+
+__vector_pair  __builtin_aes128_genlastkey_paired (__vector_pair);
+
+__vector_pair  __builtin_aes192_genlastkey_paired (__vector_pair);
+
+__vector_pair  __builtin_aes256_genlastkey_paired (__vector_pair);
+
+vec_t __builtin_galois_field_mult (vec_t, vec_t, int);
+
+vec_t __builtin_galois_field_mult_gcm (vec_t, vec_t);
+
+vec_t __builtin_galois_field_mult_xts (vec_t, vec_t);
+@end smallexample
+
 
 @node PowerPC Hardware Transactional Memory Built-in Functions
 @subsection PowerPC Hardware Transactional Memory Built-in Functions
