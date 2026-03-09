@@ -1,3 +1,12 @@
+2026-03-08  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/123365
+	* c-decl.cc (build_compound_literal): Call relayout_decl
+	after completing the type.
+
 2025-12-11  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
