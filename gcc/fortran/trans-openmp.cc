@@ -788,7 +788,9 @@ gfc_omp_clause_default_ctor (tree clause, tree decl, tree outer)
       return NULL_TREE;
     }
 
-  gcc_assert (outer != NULL_TREE);
+  gcc_assert (outer != NULL_TREE
+	      || (!GFC_DESCRIPTOR_TYPE_P (type)
+		  && !gfc_has_alloc_comps (type, OMP_CLAUSE_DECL (clause))));
 
   /* Allocatable arrays and scalars in PRIVATE clauses need to be set to
      "not currently allocated" allocation status if outer
