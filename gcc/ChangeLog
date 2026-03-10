@@ -1,3 +1,13 @@
+2026-03-09  Kalvis Duckmanton  <kalvisd@gmail.com>
+
+	Backported from master:
+	2026-02-14  Kalvis Duckmanton  <kalvisd@gmail.com>
+
+	PR target/112400
+	* config/vax/vax.md (casesi1): Wrap naked operand 1 with a USE
+	where used with the insn split to.
+	(*casesi1): Likewise naked incoming operand 1.
+
 2026-03-05  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:
