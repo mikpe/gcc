@@ -1,3 +1,99 @@
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/124015
+	* include/bits/regex.tcc (regex_traits::lookup_classname): Fix
+	handling of icase parameter.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/124015
+	* testsuite/28_regex/traits/char/lookup_classname.cc: Check for
+	correct result for unrecognized classname. Check that lookup is
+	case insensitive. Check that all required classnames are
+	recognized. Check that icase flag only affects "lower" and
+	"upper".
+	* testsuite/28_regex/traits/wchar_t/lookup_classname.cc:
+	Likewise.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-02-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/121771
+	* include/std/tuple (tuple::tuple(const Elements&...)): Use
+	type_identity_t to prevent constructor being used for CTAD.
+	(tuple::tuple(allocator_arg_t, const A&, const Elements&...)):
+	Likewise.
+	* testsuite/20_util/tuple/cons/121771.cc: New test.
+
+2026-03-09  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-02-12  Xi Ruoyao  <xry111@xry111.site>
+		    Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/17_intro/badnames.cc (__unused): Do not define.
+	* testsuite/17_intro/names.cc [glibc == 2.43] (__unused): Undef.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-10-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex.tcc (regex_traits::value): Use __c instead
+	of __ch.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-11-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex_automaton.tcc [_GLIBCXX_DEBUG]: Include
+	<ostream> so that _State_base::_M_print etc. can use it.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-10-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex.tcc (regex_traits::value): Implement
+	without using istringstream.
+	* include/std/regex: Do not include <sstream>.
+
+2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-04-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex_compiler.h: Replace _GLIBCXX17_CONSTEXPR
+	with constexpr and disable diagnostics with pragmas.
+	(_AnyMatcher::operator()): Use constexpr-if instead of tag
+	dispatching. Postpone calls to _M_translate until after checking
+	result of earlier calls.
+	(_AnyMatcher::_M_apply): Remove both overloads.
+	(_BracketMatcher::operator(), _BracketMatcher::_M_ready):
+	Replace tag dispatching with 'if constexpr'.
+	(_BracketMatcher::_M_apply(_CharT, true_type)): Remove.
+	(_BracketMatcher::_M_apply(_CharT, false_type)): Remove second
+	parameter.
+	(_BracketMatcher::_M_make_cache): Remove both overloads.
+	* include/bits/regex_compiler.tcc (_BracketMatcher::_M_apply):
+	Remove second parameter.
+	* include/bits/regex_executor.tcc: Replace _GLIBCXX17_CONSTEXPR
+	with constexpr and disable diagnostics with pragmas.
+	(_Executor::_M_handle_backref): Replace __glibcxx_assert with
+	static_assert.
+	(_Executor::_M_handle_accept): Mark _S_opcode_backref case as
+	unreachable for non-DFS mode and do not instantiate
+	_M_handle_backref for that case.
+
 2026-03-04  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
