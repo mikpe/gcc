@@ -1,3 +1,31 @@
+2026-03-10  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-24  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR target/124147
+	* config/riscv/autovec.md: Work around fractional-LMUL modes for
+	TARGET_XTHEADVECTOR.
+	* config/riscv/riscv-protos.h (get_m1_mode): Export.
+	* config/riscv/riscv-v.cc (get_m1_mode): Allow to get a VLS m1
+	vector.
+
+2026-03-10  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-26  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR target/122448
+	* config/riscv/riscv-vsetvl.cc (compute_reaching_defintion):
+	Rename...
+	(compute_reaching_definition): ...To this.
+	(pre_vsetvl::compute_vsetvl_def_data):  Compute reaching
+	definitions for vsetvl VL -> vsetvl AVL.
+	(pre_vsetvl::compute_transparent): Include VL uses.
+	(pre_vsetvl::fuse_local_vsetvl_info): Initialize m_reg_use_loc.
+	(pre_vsetvl::earliest_fuse_vsetvl_info): Don't hoist if any
+	successor would use VL.
+
 2026-03-09  Kalvis Duckmanton  <kalvisd@gmail.com>
 
 	Backported from master:

@@ -1,3 +1,19 @@
+2026-03-10  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-24  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR target/124147
+	* gcc.target/riscv/rvv/xtheadvector/pr124147.c: New test.
+
+2026-03-10  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-26  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR target/122448
+	* g++.target/riscv/rvv/base/pr122448.C: New test.
+
 2026-03-09  Kalvis Duckmanton  <kalvisd@gmail.com>
 
 	Backported from master:
