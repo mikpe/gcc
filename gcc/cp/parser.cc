@@ -48039,7 +48039,7 @@ cp_parser_omp_taskwait (cp_parser *parser, cp_token *pragma_tok)
   if (clauses)
     {
       tree stmt = make_node (OMP_TASK);
-      TREE_TYPE (stmt) = void_node;
+      TREE_TYPE (stmt) = void_type_node;
       OMP_TASK_CLAUSES (stmt) = clauses;
       OMP_TASK_BODY (stmt) = NULL_TREE;
       SET_EXPR_LOCATION (stmt, pragma_tok->location);
@@ -50344,7 +50344,7 @@ cp_parser_omp_dispatch (cp_parser *parser, cp_token *pragma_tok)
   if (depend_clauses != NULL_TREE)
     {
       tree stmt = make_node (OMP_TASK);
-      TREE_TYPE (stmt) = void_node;
+      TREE_TYPE (stmt) = void_type_node;
       OMP_TASK_CLAUSES (stmt) = depend_clauses;
       OMP_TASK_BODY (stmt) = NULL_TREE;
       SET_EXPR_LOCATION (stmt, loc);
