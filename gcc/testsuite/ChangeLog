@@ -1,3 +1,36 @@
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124309
+	* g++.dg/modules/part-11_a.C: New test.
+	* g++.dg/modules/part-11_b.C: New test.
+	* g++.dg/modules/part-11_c.C: New test.
+	* g++.dg/modules/part-11_d.C: New test.
+	* g++.dg/modules/part-11_e.C: New test.
+
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124311
+	* g++.dg/modules/imp-member-5_a.C: New test.
+	* g++.dg/modules/imp-member-5_b.C: New test.
+	* g++.dg/modules/imp-member-5_c.C: New test.
+
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124431
+	* g++.dg/modules/merge-21_a.C: New test.
+	* g++.dg/modules/merge-21_b.C: New test.
+	* g++.dg/modules/merge-21_c.C: New test.
+	* g++.dg/modules/merge-21_d.C: New test.
+
 2026-03-10  Robin Dapp  <rdapp@oss.qualcomm.com>
 
 	Backported from master:

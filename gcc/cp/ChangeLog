@@ -1,3 +1,32 @@
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124309
+	* module.cc (enum module_directness): Fix inconsistent
+	capitalisation.
+	(module_state::read_imports): Reparent module locations newly
+	seen as direct via partition.
+
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124311
+	* module.cc (trees_in::key_mergeable): Check DECL_DEFAULTED_FN
+	instead of DECL_ARTIFICIAL.
+
+2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-03-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124431
+	* module.cc (trees_in::key_mergeable): Allow merging members of
+	template specialisations.
+
 2026-03-08  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
