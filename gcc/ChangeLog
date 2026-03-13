@@ -1,3 +1,15 @@
+2026-03-12  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-02-20  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/122856
+	* ipa-cp.cc (self_recursive_pass_through_p): Test jump function type first.
+	(self_recursive_ancestor_p): New function.
+	(find_scalar_values_for_callers_subset): Test also for self-recursive
+	ancestor jump functions.
+	(push_agg_values_for_index_from_edge): Likewise.
+
 2026-03-09  Kalvis Duckmanton  <kalvisd@gmail.com>
 
 	Backported from master:
