@@ -1,3 +1,29 @@
+2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-12  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c/105555
+	* gcc.dg/complex-10.c: New test.
+
+2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-02  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR rtl-optimization/123294
+	* gcc.dg/pr123294-1.c: New test.
+	* gcc.target/aarch64/pr123294-1.c: New test.
+
+2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-01-18  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/123645
+	* gcc.dg/torture/pr123645-1.c: New test.
+	* gcc.dg/torture/pr123645-2.c: New test.
+
 2026-03-13  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
