@@ -6333,11 +6333,27 @@ gfc_match_data_decl (void)
   gfc_symbol *sym;
   match m;
   int elem;
+  gfc_component *comp_tail = NULL;
 
   type_param_spec_list = NULL;
   decl_type_param_list = NULL;
 
   num_idents_on_line = 0;
+
+  /* Record the last component before we start, so that we can roll back
+     any components added during this statement on error.  PR106946.
+     Must be set before any 'goto cleanup' with m == MATCH_ERROR.  */
+  if (gfc_comp_struct (gfc_current_state ()))
+    {
+      gfc_symbol *block = gfc_current_block ();
+      if (block)
+	{
+	  comp_tail = block->components;
+	  if (comp_tail)
+	    while (comp_tail->next)
+	      comp_tail = comp_tail->next;
+	}
+    }
 
   m = gfc_match_decl_type_spec (&current_ts, 0);
   if (m != MATCH_YES)
@@ -6458,6 +6474,80 @@ ok:
   gfc_free_data_all (gfc_current_ns);
 
 cleanup:
+  /* If we failed inside a derived type definition, remove any CLASS
+     components that were added during this failed statement.  For CLASS
+     components, gfc_build_class_symbol creates an extra container symbol in
+     the namespace outside the normal undo machinery.  When reject_statement
+     later calls gfc_undo_symbols, the declaration state is rolled back but
+     that helper symbol survives and leaves the component dangling.  Ordinary
+     components do not create that extra helper symbol, so leave them in
+     place for the usual follow-up diagnostics.  PR106946.
+
+     CLASS containers are shared between components of the same class type
+     and attributes (gfc_build_class_symbol reuses existing containers).
+     We must not free a container that is still referenced by a previously
+     committed component.  Unlink and free the components first, then clean
+     up only orphaned containers.  PR124482.  */
+  if (m == MATCH_ERROR && gfc_comp_struct (gfc_current_state ()))
+    {
+      gfc_symbol *block = gfc_current_block ();
+      if (block)
+	{
+	  gfc_component **prev;
+	  if (comp_tail)
+	    prev = &comp_tail->next;
+	  else
+	    prev = &block->components;
+
+	  /* Record the CLASS container from the removed components.
+	     Normally all components in one declaration share a single
+	     container, but per-variable array specs can produce
+	     additional ones; any beyond the first are harmlessly
+	     leaked until namespace destruction.  */
+	  gfc_symbol *fclass_container = NULL;
+
+	  while (*prev)
+	    {
+	      gfc_component *c = *prev;
+	      if (c->ts.type == BT_CLASS && c->ts.u.derived
+		  && c->ts.u.derived->attr.is_class)
+		{
+		  *prev = c->next;
+		  if (!fclass_container)
+		    fclass_container = c->ts.u.derived;
+		  c->ts.u.derived = NULL;
+		  gfc_free_component (c);
+		}
+	      else
+		prev = &c->next;
+	    }
+
+	  /* Free the container only if no remaining component still
+	     references it.  CLASS containers are shared between
+	     components of the same class type and attributes
+	     (gfc_build_class_symbol reuses existing ones).  */
+	  if (fclass_container)
+	    {
+	      bool shared = false;
+	      for (gfc_component *q = block->components; q; q = q->next)
+		if (q->ts.type == BT_CLASS
+		    && q->ts.u.derived == fclass_container)
+		  {
+		    shared = true;
+		    break;
+		  }
+	      if (!shared)
+		{
+		  if (gfc_find_symtree (fclass_container->ns->sym_root,
+					fclass_container->name))
+		    gfc_delete_symtree (&fclass_container->ns->sym_root,
+					fclass_container->name);
+		  gfc_release_symbol (fclass_container);
+		}
+	    }
+	}
+    }
+
   if (saved_kind_expr)
     gfc_free_expr (saved_kind_expr);
   if (type_param_spec_list)
