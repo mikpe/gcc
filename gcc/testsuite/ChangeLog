@@ -1,3 +1,67 @@
+2026-03-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124461
+	* gcc.target/i386/movrs-pr124461.c: New test.
+
+2026-03-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/124450
+	* gfortran.dg/pr124450.f90: New test.
+
+2026-03-14  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-12  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+		    Gilles Gouaillardet  <gilles.gouaillardet@gmail.com>
+
+	PR fortran/121743
+	* gfortran.dg/pr121743.f90: New test.
+
+2026-03-14  Claudio Bantaloukas  <claudio.bantaloukas@arm.com>
+
+	PR target/123457
+	* gcc.target/aarch64/pch/aarch64-pch.exp: Add new testsuite.
+	* gcc.target/aarch64/pch/pch_arm_acle.c: Add new test file.
+	* gcc.target/aarch64/pch/pch_arm_acle.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_acle_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_acle_include_post.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_multiple.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_multiple.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_multiple_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_multiple_include_post.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_include_post.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_sve_bridge.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_sve_bridge.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_sve_bridge_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_neon_sve_bridge_include_post.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sme.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sme.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sme_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sme_include_post.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sve.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sve.hs: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sve_include_post.c: Likewise.
+	* gcc.target/aarch64/pch/pch_arm_sve_include_post.hs: Likewise.
+
+2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR target/124126
+	* g++.target/aarch64/pr124126-1.C: New test.
+
+2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR target/123285
+	* gcc.target/aarch64/pr123285-1.c: New test.
+
 2026-03-13  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:
