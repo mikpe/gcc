@@ -404,7 +404,7 @@ cdp1802_asm_output_mi_thunk (FILE *file,
 	       "\tldn %u\n"	/* load *THIS low byte */
 	       "\tadi 0x%02x\n"	/* add VCALL_OFFSET low byte */
 	       "\tplo 15\n"	/* put TEMP low byte */
-	       "\tdec %u"	/* point THIS to high byte */
+	       "\tdec %u\n"	/* point THIS to high byte */
 	       "\tldn %u\n"	/* load *THIS high byte */
 	       "\tadci 0x%02x\n"/* add VCALL_OFFSET high byte and carry */
 	       "\tphi 15\n",	/* put TEMP high byte */
