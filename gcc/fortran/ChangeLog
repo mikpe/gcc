@@ -1,3 +1,28 @@
+2026-03-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/106946
+	PR fortran/124482
+	* decl.cc (gfc_match_data_decl): Defer CLASS container cleanup
+	until after all failed components are unlinked.  Check remaining
+	component list before freeing a shared container.
+	* gfortran.h (gfc_free_component): Declare.
+	(gfc_delete_symtree): Declare.
+	* symbol.cc (gfc_free_component): New function.
+	(free_components): Use it.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/124450
+	* trans-io.cc (transfer_expr): If code is NULL, call
+	transfer_array_component with NULL where argument rather than
+	&code->loc.
+
 2025-10-25  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:

@@ -1,3 +1,355 @@
+2026-03-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR target/124126
+	* config/aarch64/aarch64-builtins.cc (aarch64_init_ls64_builtins_types): Copy
+	the array type before setting the mode.
+
+2026-03-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR target/123285
+	* config/aarch64/aarch64-early-ra.cc (early_ra::form_chains): Process clobbers
+	and ABI clobbers before starting to form the chain.
+
+2026-03-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR target/123457
+	* config/aarch64/aarch64-sve-builtins.cc (struct registered_function_hasher):
+	Change base class to ggc_ptr_hash.
+	(initial_indexes): Mark with GTY.
+	(function_table): Likewise.
+	(handle_arm_sve_h): Allocate function_table from ggc instead of heap.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124135
+	* tree-inline.cc (expand_call_inline): If both gimple_call_lhs (stmt)
+	and use_retvar aren't gimple regs but have gimple reg type, use
+	separate load of use_retva into SSA_NAME and then store of it
+	into gimple_call_lhs (stmt).
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124358
+	* match.pd ((ptr) (x p+ y) p+ z -> (ptr) (x p+ (y + z))): Simplify
+	into (ptr) x p+ (y + z) instead.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124366
+	* config/i386/i386.md (@wrss<mode>, @wruss<mode>): Swap operand
+	order for -masm=intel.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124315
+	* config/i386/sse.md (avx512f_vmfmadd_<mode>_mask3<round_name>,
+	avx512f_vmfmsub_<mode>_mask3<round_name>,
+	avx512f_vmfnmadd_<mode>_mask3<round_name>,
+	avx512f_vmfnmsub_<mode>_mask3<round_name>): Use %<iptr>1 instead of
+	%<iptr>3 in -masm=intel syntax.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124335
+	* config/i386/sse.md (*avx512f_load<mode>_mask): Use %{%3%} instead of
+	%{3%} for -masm=intel syntax.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124138
+	* config/i386/i386.cc (avx_vpermilp_parallel): Verify
+	ipar[2] and ipar[3] aren't larger than 3.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/124056
+	* cfgexpand.cc (expand_asm_stmt): If after_md_seq is non-NULL, emit
+	it at the start of after_rtl_seq instead of after fallthru_label.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR rtl-optimization/116600
+	PR middle-end/123386
+	* cfgrtl.cc (force_nonfallthru_and_redirect): Don't do any
+	asm goto adjustments early, only note in asm_goto_edge if
+	any labels point originally to e->dest head.  After jumpblock
+	creation don't add an extra edge for asm_goto_edge, instead
+	adjust those labels pointing to former e->dest head to point
+	to jumpblock instead.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/101312
+	* alias.cc (get_alias_set): Allow TYPE_CANONICAL (mv) to be
+	not its own TYPE_MAIN_VARIANT, as long as its TYPE_MAIN_VARIANT
+	has TYPE_CANONICAL equal to itself.
+	* tree.cc (verify_type): Likewise.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123978
+	* range-op.h (OP_WIDEN_MULT_SIGNED_UNSIGNED): Define.
+	(OP_WIDEN_PLUS_SIGNED, OP_WIDEN_PLUS_UNSIGNED,
+	RANGE_OP_TABLE_SIZE): Renumber.
+	* gimple-range-op.cc (imple_range_op_handler::maybe_non_standard):
+	Use 3 different classes instead of 2 for WIDEN_MULT_EXPR, one
+	for both operands signed, one for both operands unsigned and
+	one for operands with different signedness.  In the last case
+	canonicalize to first operand signed second unsigned.
+	* range-op.cc (operator_widen_mult_signed::wi_fold): Use
+	TYPE_PRECISION (type) rather than wi::get_precision (whatever) * 2,
+	use SIGNED for all wide_int::from calls.
+	(operator_widen_mult_unsigned::wi_fold): Similarly but use UNSIGNED
+	for all wide_int::from calls.
+	(class operator_widen_mult_signed_unsigned): New type.
+	(operator_widen_mult_signed_unsigned::wi_fold): Define.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123818
+	* tree.cc (simple_cst_equal) <case CONSTRUCTOR>: Return -1 if some
+	recursive call returns -1.  Also compare indexes.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/122689
+	* gimple-lower-bitint.cc (gimple_lower_bitint): For the PHI handling
+	if min_prec == prec, break after emitting assignment from c.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-02  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/121104
+	* tree-ssa-math-opts.cc (match_uaddc_usubc): Punt if
+	lhs of ovf1 or ovf2 doesn't have element type compatible with type.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123864
+	* match.pd (__builtin_mul_overflow_p (x, cst, (stype) 0) ->
+	x > stype_max / cst || x < stype_min / cst): Only check
+	integer_minus_onep for signed types.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123876
+	* omp-low.cc (diagnose_sb_2): Handle GIMPLE_ASM.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-23  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123703
+	* builtins.cc (fold_builtin_abs): Return NULL_TREE if type is not
+	integral.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123736
+	* tree-ssa-loop-unswitch.cc (hoist_guard): Guard dump message
+	on dump_file && (dump_flags & TDF_DETAILS) condition.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123513
+	* tree.cc (valid_new_delete_pair_p): If new_name[3] or delete_name[3]
+	is 'I', return false with *pcertain set to false rather than true.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/123607
+	* config/i386/i386.md (movhf_mask): Change constraint on
+	match_operand 2's second alternative from 0C to 0.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/120250
+	* combine.cc (recog_for_combine): Don't try to put SET_SRC
+	into a constant pool if SET_DEST is pc_rtx.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123431
+	* gimple-range-op.cc (gimple_range_op_handler::maybe_builtin_call):
+	Punt if type-generic builtins with a single argument don't have
+	exactly one argument.  For returns_arg punt if call doesn't have
+	at least one argument.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-09  Jakub Jelinek  <jakub@redhat.com>
+
+	* doc/invoke.texi (-x): Add objc-cpp-output,
+	objc++-cpp-output, adascil, adawhy, modula-2, modula-2-cpp-output,
+	rust and lto as further possible option arguments.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-08  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/111817
+	* stmt.cc (parse_input_constraint): For matching construct, goto
+	before the loop without changing j instead of break.  Remove comment
+	about that problem.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR rtl-optimization/119291
+	PR rtl-optimization/121773
+	* combine.cc (try_combine): Check that SET_DEST (setN) is neither
+	modified_between_p nor reg_used_between_p instead of just not
+	reg_used_between_p or pc_rtx.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-06  Jakub Jelinek  <jakub@redhat.com>
+		    Marco Falke  <falke.marco@gmail.com>
+
+	PR tree-optimization/123351
+	* tree-object-size.cc (object_sizes_set_temp): Separate calls to
+	make_ssa_name to ensure deterministic execution order.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/123217
+	* config/i386/i386-expand.cc (ix86_expand_builtin)
+	<case IX86_BUILTIN_ENCODEKEY128U32, case IX86_BUILTIN_ENCODEKEY256U32,
+	case IX86_BUILTIN_URDMSR>: Set target to a new pseudo even if it is
+	non-NULL but doesn't satisfy register_operand predicate.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	* doc/install.texi (--with-tls=): Fix a typo, were -> where.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/123155
+	* config/i386/xmmintrin.h (_mm_maskmove_si64): Rename offset automatic
+	variable to __offset.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/122943
+	* tree-switch-conversion.cc (switch_conversion::build_arrays):
+	Always gimplify subtraction in utype without cast to tidxtype
+	and set m_arr_ref_first to the last stmt of that.  Remove unneeded
+	update_stmt call.  If tidxtype is not utype, append after that stmt
+	cast to tidxtype and set tidx to the lhs of that cast.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/120052
+	* gimplify.cc (gimplify_call_expr): For IFN_UBSAN_BOUNDS
+	call with integer_onep first argument, change that argument
+	to 0 and add TYPE_MAX_VALUE (TYPE_DOMAIN (arr_type)) to
+	3rd argument before gimplification.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/120564
+	* omp-expand.cc (extract_omp_for_update_vars): Use build2 instead of
+	fold_build2 to build argument for gimple_build_cond_empty.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR lto/122620
+	* gimplify-me.cc (gimple_regimplify_operands): Don't try to regimplify
+	TREE_CLOBBER on rhs of gimple_clobber_p if it has gimple_reg_type.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/122394
+	* tree-ssa-phiopt.cc (spaceship_replacement): Use
+	build_debug_expr_decl instead of manually building DEBUG_EXPR_DECL
+	and getting SET_DECL_MODE wrong.
+
 2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:
