@@ -1,3 +1,117 @@
+2026-03-16  Alex Coplan  <alex.coplan@arm.com>
+
+	PR middle-end/124491
+	* gcc.target/aarch64/torture/pr124491.c: New test.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-12  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123175
+	* gcc.dg/torture/pr123175-1.c: New testcase.
+	* gcc.dg/torture/pr123175-2.c: Likewise.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124132
+	* gcc.dg/torture/pr124132.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124130
+	* g++.dg/torture/pr124130.C: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123596
+	* g++.dg/torture/pr123596.C: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123298
+	* gcc.dg/torture/pr123298.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-19  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123061
+	PR tree-optimization/123636
+	* gcc.dg/torture/pr123061.c: New testcase.
+	* gcc.dg/torture/pr123636.c: Likewise.
+	* gcc.dg/tree-ssa/ssa-lim-26.c: Likewise.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/122537
+	* gcc.dg/torture/pr122537.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/121726
+	* gcc.target/i386/pr121726.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-03  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/123416
+	* gcc.dg/torture/pr123416.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-16  Richard Biener  <rguenther@suse.de>
+
+	PR testsuite/103515
+	* gcc.target/powerpc/pr103515.c: Mark the loop in foo1
+	with #pramga GCC novector.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/116747
+	* gcc.dg/tree-ssa/cselim-4.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/111036
+	* gcc.dg/torture/pr111036.c: New testcase.
+
+2026-03-16  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-12  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/102596
+	* gfortran.dg/pr102596.f90: New test.
+
 2026-03-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	PR fortran/106946

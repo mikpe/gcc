@@ -1,3 +1,12 @@
+2026-03-16  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-12  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/102596
+	* trans-openmp.cc (gfc_omp_clause_default_ctor): Only require an
+	outer reference when the constructor path actually uses it.
+
 2026-03-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	PR fortran/106946

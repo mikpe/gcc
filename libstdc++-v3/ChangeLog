@@ -1,3 +1,23 @@
+2026-03-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	Backported from master:
+	2026-03-05  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/124124
+	* testsuite/29_atomics/atomic/cons/zero_padding.cc: Limit size of
+	test types to four bytes.
+
+2026-03-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/105580
+	* include/std/streambuf (streambuf::gptr, streambuf::egptr)
+	(streambuf::gbump): Surround with pragma disabling -Wnull-dereference.
+	* testsuite/24_iterators/istreambuf_iterator/105580.cc: New test.
+	(cherry picked from commits
+	8758503918a91dacff4dbc7126eced21787fbfc9
+	bfc2b87f8244a13ab00e8e3fe2af1d6d18fcaa36
+	a523d1ecc89dcb7ea205e3de22d00443d4a0d91d)
+
 2026-03-09  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,141 @@
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-13  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123573
+	* fold-const.cc (fold_vec_perm): Actually check, not assert,
+	that input and output vector element numbers agree.
+	* match.pd (vec_perm @0 @1 @2): Make sure element numbers
+	are the same when folding to an input vector and wrap that
+	inside a VIEW_CONVERT_EXPR.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-12  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123175
+	* match.pd (vec_perm @0 @1 @2): Fixup for inputs having a
+	different number of elements than the result.
+	* tree-vect-generic.cc (lower_vec_perm): Likewise.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124132
+	* tree-ssa-loop-split.cc (compute_new_first_bound): Fix
+	bound difference computation.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124130
+	* tree-inline.cc (copy_edges_for_bb): Fixup noreturn calls
+	with abnormal edge source.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123596
+	* tree-eh.cc (sink_clobbers): Create a virtual PHI when
+	one is required but not present, queuing arguments
+	for renaming.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123298
+	* tree-ssa-alias.h (get_continuation_for_phi): Take a gphi *,
+	add is_backedge hook argument.
+	(walk_non_aliased_vuses): Add is_backedge hook argument.
+	* tree-ssa-alias.cc (maybe_skip_until): Adjust.
+	(get_continuation_for_phi): Use new hook to classify an
+	edge into the PHI as backedge.
+	(walk_non_aliased_vuses): Adjust.
+	* gimple-lower-bitint.cc (bitint_dom_walker::before_dom_children):
+	Likewise.
+	* ipa-prop.cc (determine_known_aggregate_parts): Likewise.
+	* tree-ssa-scopedtables.cc (avail_exprs_stack::lookup_avail_expr):
+	Likewise.
+	* tree-ssa-pre.cc (translate_vuse_through_block): Likewise.
+	* tree-ssa-sccvn.cc (vn_bb_to_rpo): Make BB to RPO order
+	mapping accessible from new hook.
+	(do_rpo_vn_1): Likewise.
+	(vn_is_backedge): New hook to classify edge.
+	(vn_reference_lookup_pieces): Adjust.
+	(vn_reference_lookup): Likewise.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-19  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123061
+	PR tree-optimization/123636
+	* tree-ssa-loop-im.cc (fill_always_executed_in_1): Change
+	outer-to-inner to inner-to-outer iteration.  Update inner
+	loop state only when always executed in an immediately
+	nested loop.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/122537
+	* tree-ssa-loop-niter.cc (number_of_iterations_lt_to_ne): Register
+	may_be_zero condition when the IV may overflow.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/121726
+	* tree-sra.cc (build_ref_for_offset): Add force_ref_all
+	parameter and use ptr_type_node as alias pointer type in
+	that case.
+	(build_ref_for_model): Add force_ref_all parameter and
+	pass it through, forcing build_ref_for_offset.
+	(generate_subtree_copies): Likewise.
+	(sra_modify_call_arg): Force ref-all accesses.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-03  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/123416
+	* ipa-modref.cc (ipa_merge_modref_summary_after_inlining):
+	Fix typo in condtion for load merging when no callee summary.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/116747
+	* tree-ssa-phiopt.cc (cond_if_else_store_replacement): Avoid
+	duplicate stmts in the set of store pairs to process.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/111036
+	* match.pd (__builtin_constant_p ((T)x)): Strip nop-conversions
+	from __builtin_constant_p arguments.
+
 2026-03-14  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
