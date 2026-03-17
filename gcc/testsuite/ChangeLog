@@ -1,3 +1,119 @@
+2026-03-16  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2026-02-05  Alexandre Oliva  <oliva@adacore.com>
+
+	PR middle-end/123775
+	* gcc.target/aarch64/sve2/pr123775.c: Add sve128 and sve2 hw
+	requirements.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-23  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123775
+	* gcc.target/aarch64/sve2/pr123775.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-22  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123741
+	* gfortran.dg/vect/vect-pr123741.f90: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-20  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123729
+	* g++.dg/torture/pr123729.C: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-19  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123602
+	* g++.dg/torture/pr123603.C: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123575
+	* g++.dg/pr123575.C: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123537
+	* gcc.dg/pr123537.c: New testcase.
+
+2026-03-16  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Backported from master:
+	2026-01-08  Richard Sandiford  <rdsandiford@googlemail.com>
+		    Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/122793
+	* gcc.dg/vect/vect-pr122793.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-09-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/107997
+	PR tree-optimization/121844
+	* gcc.dg/torture/pr121844.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-05-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120341
+	* gcc.dg/torture/pr120341-1.c: New testcase.
+	* gcc.dg/torture/pr120341-2.c: Likewise.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-27  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/116296
+	* gcc.dg/torture/pr116296.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/111036
+	* gcc.dg/torture/pr111036.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/110043
+	* gcc.dg/torture/pr110043.c: New testcase.
+
+2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/109410
+	* gcc.dg/pr109410-2.c: New testcase.
+
 2026-03-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	PR target/124126
