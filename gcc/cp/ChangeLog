@@ -1,3 +1,12 @@
+2026-03-17  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-03-16  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124489
+	* error.cc (dump_type) <case NULLPTR_TYPE>: Use pp_cxx_ws_string
+	instead of pp_string.
+
 2026-03-15  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
