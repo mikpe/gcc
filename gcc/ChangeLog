@@ -1,3 +1,18 @@
+2026-03-17  Alice Carlotti  <alice.carlotti@arm.com>
+
+	* config/aarch64/aarch64-sve2.md (@aarch64_pred_revd<mode>):
+	Remove movprfx alternative.
+	(@cond_revd<mode>): Likewise.
+
+2026-03-17  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-03-07  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR rtl-optimization/121649
+	* cse.cc (find_sets_in_insn):  Only use non-reg vec_select
+	simplifications.
+
 2026-03-16  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:
