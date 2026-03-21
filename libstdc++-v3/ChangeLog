@@ -1,3 +1,19 @@
+2026-03-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-03-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++20/tzdb.cc [_AIX]: Change #ifndef to #ifdef.
+
+2026-03-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-03-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/124568
+	* testsuite/24_iterators/istreambuf_iterator/105580.cc: Add
+	no_pch option.
+
 2026-03-16  Tomasz Kamiński  <tkaminsk@redhat.com>
 
 	Backported from master:

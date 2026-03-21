@@ -1,3 +1,21 @@
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-03-31  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/119532
+	* tree-tailcall.cc (process_assignment): FAIL for fixed-point
+	typed functions.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-05-09  Richard Biener  <rguenther@suse.de>
+
+	PR rtl-optimization/120182
+	* dse.cc (canon_address): Constant addresses have no
+	separate store group.
+
 2026-03-17  Alice Carlotti  <alice.carlotti@arm.com>
 
 	* config/aarch64/aarch64-sve2.md (@aarch64_pred_revd<mode>):
