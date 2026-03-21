@@ -1,3 +1,13 @@
+2026-03-20  Mikael Morin  <morin-mikael@orange.fr>
+
+	Backported from master:
+	2025-09-24  Mikael Morin  <morin-mikael@orange.fr>
+
+	PR fortran/122046
+	* symbol.cc (gfc_get_procedure_ns): Try to find the namespace
+	among the list of contained namespaces before returning the
+	value from the formal_ns field.
+
 2026-03-19  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
