@@ -1,3 +1,124 @@
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-09-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/107997
+	PR tree-optimization/121844
+	* tree-ssa-loop-ivopts.cc (allow_ip_end_pos_p): Do not allow
+	IP_END for latches ending with a control stmt.
+	(create_new_iv): Do not split the latch edge, instead assert
+	that's not necessary.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-05-09  Richard Biener  <rguenther@suse.de>
+
+	PR rtl-optimization/120182
+	* dse.cc (canon_address): Constant addresses have no
+	separate store group.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-03-31  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/119532
+	* tree-tailcall.cc (process_assignment): FAIL for fixed-point
+	typed functions.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/109410
+	* tree-ssa-reassoc.cc (build_and_add_sum): Use
+	gsi_start_nondebug_after_labels_bb to look for a possible
+	returns-twice call.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-30  Richard Biener  <rguenther@suse.de>
+
+	PR debug/123886
+	* dwarf2out.cc (sym_off_pair::sym): Remove GTY((skip)).
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-19  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123602
+	* tree-ssa-pre.cc (find_or_generate_expression): Do not
+	generate references to abnormal SSA names.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-08-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/121370
+	* tree-scalar-evolution.cc (scev_dfs::add_to_evolution_1):
+	Avoid UB integer overflow in accumulating CHREC_RIGHT.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120341
+	* tree-ssa-loop-im.cc (can_sm_ref_p): STRING_CSTs are readonly.
+
+2026-03-20  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	Backported from master:
+	2024-08-22  Andrew Pinski  <quic_apinski@quicinc.com>
+		    Richard Biener   <rguenther@suse.de>
+
+	PR middle-end/116454
+	* fold-const.cc (fold_binary_loc): Fix `a * +-1i`
+	by wrapping arg0 with save_expr when it is not COMPLEX_EXPR.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-27  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/116296
+	* ipa-modref-tree.cc (modref_access_node::contains): Use
+	poly_offset_int for the param offset difference and the
+	overlap computation.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/111036
+	* match.pd (__builtin_constant_p ((T)x)): Strip nop-conversions
+	from __builtin_constant_p arguments.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/110043
+	* pointer-query.cc (get_offset_range): Fail for integer
+	types with precision larger than ptrdiff_type_node.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR rtl-optimization/106859
+	* var-tracking.cc (val_store): Dump -1 as UID if setting_insn
+	is NULL.
+
 2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:

@@ -1,3 +1,112 @@
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-07  Richard Biener  <rguenther@suse.de>
+
+	PR testsuite/123353
+	PR c/123156
+	* gcc.dg/torture/builtin-shufflevector-pr123156.c: Require le.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-12-18  Richard Biener  <rguenther@suse.de>
+
+	PR c/123156
+	* gcc.dg/torture/builtin-shufflevector-pr123156.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-09-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/107997
+	PR tree-optimization/121844
+	* gcc.dg/torture/pr121844.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-05-09  Richard Biener  <rguenther@suse.de>
+
+	PR rtl-optimization/120182
+	* gcc.dg/torture/pr120182.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-03-31  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/119532
+	* gcc.dg/torture/pr119532.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/109410
+	* gcc.dg/pr109410-2.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-19  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123602
+	* g++.dg/torture/pr123603.C: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-08-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/121370
+	* gcc.dg/torture/pr121370.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-16  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120341
+	* gcc.dg/torture/pr120341-1.c: New testcase.
+	* gcc.dg/torture/pr120341-2.c: Likewise.
+
+2026-03-20  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	Backported from master:
+	2024-08-22  Andrew Pinski  <quic_apinski@quicinc.com>
+		    Richard Biener   <rguenther@suse.de>
+
+	PR middle-end/116454
+	* gcc.dg/torture/pr116454-1.c: New test.
+	* gcc.dg/torture/pr116454-2.c: New test.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-27  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/116296
+	* gcc.dg/torture/pr116296.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/111036
+	* gcc.dg/torture/pr111036.c: New testcase.
+
+2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-28  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/110043
+	* gcc.dg/torture/pr110043.c: New testcase.
+
 2026-03-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:
