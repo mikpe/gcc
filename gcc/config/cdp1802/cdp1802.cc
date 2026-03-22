@@ -390,7 +390,7 @@ cdp1802_asm_output_mi_thunk (FILE *file,
 	     "\tadci 0x%02x\n"
 	     "\tphi %u\n",
 	     this_regno, (unsigned int) delta & 0xff, this_regno,
-	     this_regno, (unsigned int) delta >> 8, this_regno);
+	     this_regno, ((unsigned int) delta >> 8) & 0xff, this_regno);
 
   /* If needed, add *(*THIS + VCALL_OFFSET) to THIS.  */
   if (vcall_offset != 0)
