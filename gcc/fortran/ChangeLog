@@ -1,3 +1,13 @@
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/124450
+	* trans-io.cc (transfer_expr): If code is NULL, call
+	transfer_array_component with NULL where argument rather than
+	&code->loc.
+
 2025-10-05  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:

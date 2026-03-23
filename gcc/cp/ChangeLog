@@ -1,3 +1,99 @@
+2026-03-22  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-03-16  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124489
+	* error.cc (dump_type) <case NULLPTR_TYPE>: Use pp_cxx_ws_string
+	instead of pp_string.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	* parser.cc (cp_parser_omp_taskwait): Set TREE_TYPE of OMP_TASK
+	to void_type_node rather than void_node.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120685
+	* typeck2.cc (build_functional_cast_1): For C++23 auto(x)
+	without tf_warning or tf_error return error_mark_node instead of
+	emitting pedwarn and handling it.
+	* semantics.cc (finish_compound_literal): Similarly for C++26
+	auto{x}.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123889
+	* constexpr.cc (explain_invalid_constexpr_fn): Diagnose
+	NULL or error_mark_node massaged on non-constructor.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123578
+	* tree.cc (cxx_printable_name_internal): Call lang_decl_name before
+	finding the slot to cache it in and repeat search in the cache
+	after the call.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/91388
+	* semantics.cc (finish_static_assert): Suppress -Wreturn-type warnings
+	in functions with failed assertions.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/122772
+	* tree.cc (cp_stabilize_bitfield_reference): New function.
+	(cp_stabilize_reference): Use it for stabilization of
+	clk_bitfield or clk_packed lvalues.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/122834
+	* typeck.cc (cp_compare_floating_point_conversion_ranks): Return
+	3 if fmt2->b is 10 except for _Float16 vs. _Decimal128, in that
+	case return -2.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/121445
+	* constexpr.cc (build_data_member_initialization): Just return
+	false if member is COMPONENT_REF of COMPONENT_REF with
+	VAR_P get_base_address.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120876
+	* pt.cc (tsubst_baselink): Move maybe_incomplete handling after
+	!baselink handling.
+
 2026-03-13  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,380 @@
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124489
+	* g++.dg/cpp0x/pr124489.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/124450
+	* gfortran.dg/pr124450.f90: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/122000
+	* gcc.c-torture/execute/pr122000.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124135
+	* g++.dg/torture/pr124135-1.C: New test.
+	* g++.dg/torture/pr124135-2.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124358
+	* gcc.c-torture/execute/pr124358.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124366
+	* gcc.target/i386/cet-pr124366.c: New test.
+
+2026-03-22  liuhongt  <hongtao.liu@intel.com>
+
+	Backported from master:
+	2026-03-04  liuhongt  <hongtao.liu@intel.com>
+
+	PR target/124335
+	* gcc.target/i386/avx512fp16-pr124335.c: Require target
+	avx512fp16 instead of avx512bw.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124315
+	* gcc.target/i386/avx512f-pr124315.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124335
+	* gcc.target/i386/avx512fp16-pr124335.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-02  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124288
+	* gcc.dg/torture/vec-cvt-1.c (FLTTEST): Use comma expression
+	to store into {flt,dbl}m{in,ax} and read from it again for
+	comparison.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/123365
+	* gcc.c-torture/compile/pr123365.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124138
+	* gcc.dg/pr124138.c: New test.
+	* gcc.target/i386/avx512f-pr124138-1.c: New test.
+	* gcc.target/i386/avx512f-pr124138-2.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120685
+	* g++.dg/cpp23/auto-fncast19.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/124056
+	* gcc.target/i386/pr124056.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR rtl-optimization/116600
+	PR middle-end/123386
+	* gcc.c-torture/compile/pr116600.c: New test.
+	* gcc.c-torture/compile/pr123386.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123889
+	* g++.dg/cpp0x/constexpr-123889.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/101312
+	* gcc.dg/pr101312-1.c: New test.
+	* gcc.dg/pr101312-2.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/123882
+	* gcc.dg/pr123882.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123818
+	* g++.dg/cpp0x/pr123818.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123864
+	* gcc.c-torture/execute/pr123864.c: New test.
+	* gcc.dg/torture/pr123864.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123876
+	* gcc.dg/gomp/pr123876.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/123273
+	* c-c++-common/cpp/dir-only-10.c: New test.
+	* c-c++-common/cpp/dir-only-11.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/123578
+	* g++.dg/cpp2a/pr123578.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-23  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123703
+	* gcc.c-torture/compile/pr123703.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123513
+	* g++.dg/warn/Wmismatched-new-delete-10.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/120250
+	* gcc.c-torture/compile/pr120250.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/123431
+	* gcc.dg/pr123431.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-08  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/111817
+	* c-c++-common/pr111817.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/123217
+	* gcc.target/i386/keylocker-pr123217.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/91388
+	* g++.dg/cpp1z/static_assert1.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/122772
+	* g++.dg/cpp1z/eval-order14.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/122834
+	* g++.dg/dfp/pr122834-1.C: New test.
+	* g++.dg/dfp/pr122834-2.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/120052
+	* c-c++-common/gomp/pr120052.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/120564
+	* c-c++-common/gomp/pr120564.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/121445
+	* g++.dg/cpp1y/constexpr-121445.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120876
+	* g++.dg/parse/crash81.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/122394
+	* g++.dg/opt/pr122394.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-10-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/122104
+	* gcc.target/i386/pr122104.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-09-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/121977
+	* g++.dg/gomp/pr121977.C: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-09-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR testsuite/118567
+	* gcc.target/powerpc/vsx-vectorize-9.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-10.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-11.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-12.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-13.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-14.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-15.c: New test.
+	* gcc.target/powerpc/vsx-vectorize-16.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-09-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR testsuite/118567
+	* gcc.target/powerpc/vsx-vectorize-1.c: Remove includes, checking
+	part of main1 and main.
+	* gcc.target/powerpc/vsx-vectorize-2.c: Remove includes, replace
+	bar definition with declaration, remove main.
+	* gcc.target/powerpc/vsx-vectorize-3.c: Likewise.
+	* gcc.target/powerpc/vsx-vectorize-4.c: Likewise.
+	* gcc.target/powerpc/vsx-vectorize-5.c: Likewise.
+	* gcc.target/powerpc/vsx-vectorize-6.c: Likewise.
+	* gcc.target/powerpc/vsx-vectorize-7.c: Likewise.
+	* gcc.target/powerpc/vsx-vectorize-8.c: Likewise.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-08-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/121453
+	* gcc.dg/gomp/pr121453.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-07-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120954
+	* c-c++-common/Warray-bounds-11.c: New test.
+
+2026-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-07-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/120837
+	* gcc.dg/ubsan/pr120837.c: New test.
+
 2026-03-20  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:

@@ -1,3 +1,10 @@
+2026-03-22  Frank Scheiner  <frank.scheiner@web.de>
+
+	Backported from master:
+	2025-11-25  Frank Scheiner  <frank.scheiner@web.de>
+
+	* affinity-fmt.c: Make char *q a pointer to a const char.
+
 2025-06-05  Release Manager
 
 	* GCC 13.4.0 released.
