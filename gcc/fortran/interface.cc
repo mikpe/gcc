@@ -1541,6 +1541,13 @@ gfc_check_dummy_characteristics (gfc_symbol *s1, gfc_symbol *s2,
       int i, compval;
       gfc_expr *shape1, *shape2;
 
+      if (s1->as->rank != s2->as->rank)
+	{
+	  snprintf (errmsg, err_len, "Rank mismatch in argument '%s' (%i/%i)",
+		    s1->name, s1->as->rank, s2->as->rank);
+	  return false;
+	}
+
       /* Sometimes the ambiguity between deferred shape and assumed shape
 	 does not get resolved in module procedures, where the only explicit
 	 declaration of the dummy is in the interface.  */
@@ -1554,7 +1561,9 @@ gfc_check_dummy_characteristics (gfc_symbol *s1, gfc_symbol *s2,
 	      s2->as->lower[i] = gfc_copy_expr (s1->as->lower[i]);
 	}
 
-      if (s1->as->type != s2->as->type)
+      if (s1->as->type != s2->as->type
+	  && !(s1->as->type == AS_DEFERRED
+	       && s2->as->type == AS_ASSUMED_SHAPE))
 	{
 	  snprintf (errmsg, err_len, "Shape mismatch in argument '%s'",
 		    s1->name);
