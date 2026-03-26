@@ -1,3 +1,12 @@
+2026-03-25  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-25  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124627
+	* tree-inline.cc (copy_debug_stmts): Only copy debug
+	stmts that are still in the IL.
+
 2026-03-17  Alice Carlotti  <alice.carlotti@arm.com>
 
 	* config/aarch64/aarch64-sve2.md (@aarch64_pred_revd<mode>):

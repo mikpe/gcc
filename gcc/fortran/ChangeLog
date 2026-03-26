@@ -1,3 +1,27 @@
+2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/119273
+	* trans-array.cc (expr_contains_impure_fcn): New function.
+	(gfc_expr_contains_impure_fcn): New function calling above fcn.
+	(array_bound_check_elemental): Add indexse pre-block to se pre.
+	Warn if the index expression contains a function not declared
+	to be pure.
+
+2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-16  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/105168
+	* trans-expr.cc (gfc_conv_class_to_class): If the argument expr
+	is not a class type use the parent tree if that is a class.
+	(gfc_conv_procedure_call): If the argument expression is not a
+	variable, shift the bounds to give unity lbounds.
+	(gfc_trans_arrayfunc_assign): Return NULL_TREE instead of NULL.
+
 2026-03-20  Mikael Morin  <morin-mikael@orange.fr>
 
 	Backported from master:

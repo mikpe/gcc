@@ -1,3 +1,19 @@
+2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/119273
+	* gfortran.dg/pr119273.f90: New test.
+
+2026-03-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-16  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/105168
+	* gfortran.dg/pr105168.f90: New test.
+
 2026-03-23  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/generic_inst20.ads, gnat.dg/generic_inst20.adb: New test.
