@@ -1,3 +1,33 @@
+2026-03-25  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-13  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123573
+	* fold-const.cc (fold_vec_perm): Actually check, not assert,
+	that input and output vector element numbers agree.
+	* match.pd (vec_perm @0 @1 @2): Make sure element numbers
+	are the same when folding to an input vector and wrap that
+	inside a VIEW_CONVERT_EXPR.
+
+2026-03-25  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-12  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/123175
+	* match.pd (vec_perm @0 @1 @2): Fixup for inputs having a
+	different number of elements than the result.
+	* tree-vect-generic.cc (lower_vec_perm): Likewise.
+
+2026-03-25  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2024-10-18  Tamar Christina  <tamar.christina@arm.com>
+
+	* tree-vect-generic.cc (lower_vec_perm): Use output vector size instead
+	of input vector when determining output nunits.
+
 2026-03-20  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:
