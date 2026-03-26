@@ -5012,6 +5012,27 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
    (if (!HONOR_NANS (@0))
     (op @0 @1))))
 
+/* min (a, b) <= max (a, b) -> true
+   max (a, b) >= min (a, b) -> true
+   min (a, b) >  max (a, b) -> false
+   max (a, b) <  min (a, b) -> false */
+(for legt (le gt)
+ (simplify
+  (legt:c (min @0 @1) (max @0 @1))
+  (if (!HONOR_NANS (@0))
+   { constant_boolean_node (legt == LE_EXPR, type); })))
+
+/* min (a, b) <  max (a, b) -> a != b
+   max (a, b) >  min (a, b) -> a != b
+   min (a, b) >= max (a, b) -> a == b
+   max (a, b) <= min (a, b) -> a == b */
+(for ltge (lt ge)
+     neeq (ne eq)
+ (simplify
+  (ltge:c (min @0 @1) (max @0 @1))
+  (if (!HONOR_NANS (@0))
+   (neeq @0 @1))))
+
 /* Simplify min (&var[off0], &var[off1]) etc. depending on whether
    the addresses are known to be less, equal or greater.  */
 (for minmax (min max)
