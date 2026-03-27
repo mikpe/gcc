@@ -228,7 +228,7 @@
    vs<vlmem_op_attr>.v\t%3,%0%p1
    vmv.v.v\t%0,%3
    vmv.v.v\t%0,%3"
-  "&& riscv_vector::whole_reg_to_reg_move_p (operands, <MODE>mode, 7)"
+  "&& riscv_vector::whole_reg_move_p (operands, <MODE>mode, 7)"
   [(set (match_dup 0) (match_dup 3))]
   ""
   [(set_attr "type" "vlde,vlde,vlde,vste,vimov,vimov")

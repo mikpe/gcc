@@ -790,7 +790,9 @@ bool can_be_broadcast_p (rtx);
 bool strided_broadcast_p (rtx);
 bool gather_scatter_valid_offset_p (machine_mode);
 HOST_WIDE_INT estimated_poly_value (poly_int64, unsigned int);
-bool whole_reg_to_reg_move_p (rtx *, machine_mode, int);
+bool whole_reg_move_p (rtx *, machine_mode, int);
+bool whole_reg_loadstore_p (rtx dest, rtx src, rtx mask, rtx avl, rtx
+			    avl_type);
 bool splat_to_scalar_move_p (rtx *);
 rtx get_fp_rounding_coefficient (machine_mode);
 }

@@ -1967,7 +1967,16 @@
    vse<sew>.v\t%3,%0%p1
    vmv.v.v\t%0,%3
    vmv.v.v\t%0,%3"
-  "&& riscv_vector::whole_reg_to_reg_move_p (operands, <MODE>mode, 7)"
+  "&& (register_operand (operands[0], <MODE>mode)
+       && register_operand (operands[3], <MODE>mode)
+       && riscv_vector::whole_reg_move_p (operands, <MODE>mode, 7))
+      || ((memory_operand (operands[0], <MODE>mode)
+	  || memory_operand (operands[3], <MODE>mode))
+	 && operands[2] != operands[0]
+	 && !reload_completed
+	 && riscv_vector::whole_reg_loadstore_p (operands[0], operands[3],
+						 operands[1], operands[4],
+						 operands[7]))"
   [(set (match_dup 0) (match_dup 3))]
   ""
   [(set_attr "type" "vlde,vlde,vlde,vste,vimov,vimov")
@@ -1975,7 +1984,7 @@
 
 ;; Dedicated pattern for vse.v instruction since we can't reuse pred_mov pattern to include
 ;; memory operand as input which will produce inferior codegen.
-(define_insn "@pred_store<mode>"
+(define_insn_and_split "@pred_store<mode>"
   [(set (match_operand:V_VLS 0 "memory_operand"                 "+m")
 	(if_then_else:V_VLS
 	  (unspec:<VM>
@@ -1988,6 +1997,12 @@
 	  (match_dup 0)))]
   "TARGET_VECTOR"
   "vse<sew>.v\t%2,%0%p1"
+  "&& !reload_completed
+  && riscv_vector::whole_reg_loadstore_p (operands[0], operands[2],
+					  operands[1], operands[3],
+					  operands[4])"
+  [(set (match_dup 0) (match_dup 2))]
+  ""
   [(set_attr "type" "vste")
    (set_attr "mode" "<MODE>")
    (set (attr "avl_type_idx") (const_int 4))
@@ -2016,7 +2031,7 @@
    vmmv.m\t%0,%3
    vmclr.m\t%0
    vmset.m\t%0"
-  "&& riscv_vector::whole_reg_to_reg_move_p (operands, <MODE>mode, 5)"
+  "&& riscv_vector::whole_reg_move_p (operands, <MODE>mode, 5)"
   [(set (match_dup 0) (match_dup 3))]
   ""
   [(set_attr "type" "vldm,vstm,vmalu,vmalu,vmalu")

@@ -6451,7 +6451,7 @@ estimated_poly_value (poly_int64 val, unsigned int kind)
 
 /* Return true it is whole register-register move.  */
 bool
-whole_reg_to_reg_move_p (rtx *ops, machine_mode mode, int avl_type_index)
+whole_reg_move_p (rtx *ops, machine_mode mode, int avl_type_index)
 {
   /* An operation is a whole-register move if either
      (1) Its vlmax operand equals VLMAX
@@ -6467,6 +6467,32 @@ whole_reg_to_reg_move_p (rtx *ops, machine_mode mode, int avl_type_index)
 	 into NON-VLMAX with LEN = NUNITS.  */
       else if (CONST_INT_P (ops[4])
 	       && known_eq (INTVAL (ops[4]), GET_MODE_NUNITS (mode)))
+	return true;
+    }
+
+  return false;
+}
+
+/* Same but for a whole-register load or store.  */
+bool
+whole_reg_loadstore_p (rtx dest, rtx src, rtx mask, rtx avl, rtx avl_type)
+{
+  machine_mode mode = GET_MODE (dest);
+  if (!multiple_p (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR))
+    return false;
+
+  if (((memory_operand (dest, mode)
+       && register_operand (src, mode))
+      || (register_operand (dest, mode)
+	  && memory_operand (src, mode)))
+      && satisfies_constraint_Wc1 (mask))
+    {
+      if (INTVAL (avl_type) == VLMAX)
+	return true;
+      /* AVL propagation PASS will transform FIXED-VLMAX with NUNITS < 32
+	 into NON-VLMAX with LEN = NUNITS.  */
+      else if (CONST_INT_P (avl)
+	       && known_eq (INTVAL (avl), GET_MODE_NUNITS (mode)))
 	return true;
     }
   return false;
