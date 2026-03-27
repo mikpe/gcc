@@ -5006,6 +5006,22 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
        && operand_equal_p (@1, TYPE_MIN_VALUE (type), OEP_ONLY_CONST))
    @0)))
 
+/* minmax (a + c, b + c) -> minmax (a, b) + c */
+(for minmax (min max)
+ (simplify
+  (minmax:c (plus:cs @0 @2) (plus:s @1 @2))
+   (if (TYPE_OVERFLOW_UNDEFINED (type)
+	&& !TYPE_OVERFLOW_SANITIZED (type))
+    (plus (minmax @0 @1) @2))))
+
+/* minmax (a - c, b - c) -> minmax (a, b) - c */
+(for minmax (min max)
+ (simplify
+  (minmax:c (minus:s @0 @2) (minus:s @1 @2))
+   (if (TYPE_OVERFLOW_UNDEFINED (type)
+	&& !TYPE_OVERFLOW_SANITIZED (type))
+    (minus (minmax @0 @1) @2))))
+
 /* max (a, a + CST) -> a + CST where CST is positive.  */
 /* max (a, a + CST) -> a where CST is negative.  */
 (simplify
