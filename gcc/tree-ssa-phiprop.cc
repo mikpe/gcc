@@ -274,22 +274,57 @@ can_handle_load (gimple *load_stmt,
     expected_vuse = gimple_phi_result (vphi);
   else if (up_vuse)
     expected_vuse = up_vuse;
+  /* Try to see if the store does not effect the load.  */
+  gimple *other_store = SSA_NAME_DEF_STMT (vuse);
+  /* For aggregates, skipping the store is too
+     hard to handle as you need to check for loads
+     and it is not worth the extra checks so just handle expected vuse
+     and the dominated by case.   */
+  if (aggregate)
+    {
+      /* If the vuse on the load is the same as the expected vuse,
+	 there are no stores inbetween.  */
+      if (vuse == expected_vuse)
+	return vuse;
+      if (expected_vuse)
+	return NULL_TREE;
+      if (gimple_bb (other_store) != bb
+	  && dominated_by_p (CDI_DOMINATORS,
+			     bb, gimple_bb (other_store)))
+	return vuse;
+      return NULL_TREE;
+    }
+
+  /* Skip over clobbers in the same bb as the use
+     as they don't interfere with loads.  */
+  while (!SSA_NAME_IS_DEFAULT_DEF (vuse)
+	 && gimple_clobber_p (other_store)
+	 && gimple_bb (other_store) == bb)
+    {
+      vuse = gimple_vuse (other_store);
+      other_store = SSA_NAME_DEF_STMT (vuse);
+    }
+  /* If the load does not have a store beforehand,
+     then we can do the load in conditional. */
+  if (SSA_NAME_IS_DEFAULT_DEF (vuse))
+    {
+      /* For loads that have no stores before, there should be no
+	 vphi.  */
+      gcc_checking_assert (!vphi);
+      /* The common vuse is the same as the default or there is none. */
+      gcc_checking_assert (!up_vuse || up_vuse == vuse);
+      return vuse;
+    }
 
   /* If the vuse on the load is the same as the expected vuse,
      there are no stores inbetween.  */
   if (vuse == expected_vuse)
     return vuse;
-  /* Try to see if the store does not effect the load.  */
-  gimple *other_store = SSA_NAME_DEF_STMT (vuse);
+
   /* Only handling the case where the store is in the same
      bb as the phi.  */
   if (gimple_bb (other_store) == bb)
     {
-      /* For aggregates, skipping the store is too
-	 hard to handle as you need to check for loads
-	 and it is not worth the extra checks. */
-      if (aggregate)
-	return NULL_TREE;
       tree src = gimple_assign_rhs1 (load_stmt);
       ao_ref read;
       ao_ref_init (&read, src);
