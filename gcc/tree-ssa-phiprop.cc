@@ -101,12 +101,14 @@ struct phiprop_d
 };
 
 /* Insert a new phi node for the dereference of PHI at basic_block
-   BB with the virtual operands from USE_STMT.  */
+   BB with the virtual operands from USE_STMT. The vuse for
+   the load will be set to OTHER_VUSE unless there is virtual op
+   phi for BB.  */
 
 static tree
 phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
 		    struct phiprop_d *phivn, size_t n,
-		    bitmap dce_ssa_names)
+		    bitmap dce_ssa_names, tree other_vuse)
 {
   tree res;
   gphi *new_phi = NULL;
@@ -176,7 +178,7 @@ phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
 	      if (vphi)
 		vuse = PHI_ARG_DEF_FROM_EDGE (vphi, e);
 	      else
-		vuse = gimple_vuse (use_stmt);
+		vuse = other_vuse;
 	    }
 	  else
 	    /* For the aggregate copy case updating virtual operands
@@ -243,26 +245,85 @@ chk_uses (tree, tree *idx, void *data)
    incoming VUSE (up_vuse).  If neither is present
    make sure the def stmt of the virtual use is in a
    different basic block dominating BB.  When the def
-   is an edge-inserted one we know it dominates us.  */
-static bool
-can_handle_load (gimple *load_stmt, basic_block bb,
-		 gphi *vphi, tree up_vuse)
+   is an edge-inserted one we know it dominates us.
+   Returns the vuse to use for the inserting.  NULL_TREE
+   is returned when we can't do the insert.  */
+
+static tree
+can_handle_load (gimple *load_stmt,
+		 basic_block bb,
+		 gphi *vphi, tree up_vuse, bool aggregate)
 {
   tree vuse = gimple_vuse (load_stmt);
-  if (vphi)
-    return vuse == gimple_phi_result (vphi);
-  if (up_vuse)
-    return vuse == up_vuse;
-  gimple *def_stmt = SSA_NAME_DEF_STMT (vuse);
   /* If the load does not have a store beforehand,
      then we can do the load in conditional. */
   if (SSA_NAME_IS_DEFAULT_DEF (vuse))
-    return true;
-  if (gimple_bb (def_stmt) != bb
+    {
+      /* For loads that have no stores before, there should be no
+	 vphi.  */
+      gcc_checking_assert (!vphi);
+      /* The common vuse is the same as the default or there is none. */
+      gcc_checking_assert (!up_vuse || up_vuse == vuse);
+      return vuse;
+    }
+
+  /* If we have a vphi, then that needs to be end point.
+     If we have a common incoming vuse, that needs to be the end point.  */
+  tree expected_vuse = NULL_TREE;
+  if (vphi)
+    expected_vuse = gimple_phi_result (vphi);
+  else if (up_vuse)
+    expected_vuse = up_vuse;
+
+  /* If the vuse on the load is the same as the expected vuse,
+     there are no stores inbetween.  */
+  if (vuse == expected_vuse)
+    return vuse;
+  /* Try to see if the store does not effect the load.  */
+  gimple *other_store = SSA_NAME_DEF_STMT (vuse);
+  /* Only handling the case where the store is in the same
+     bb as the phi.  */
+  if (gimple_bb (other_store) == bb)
+    {
+      /* For aggregates, skipping the store is too
+	 hard to handle as you need to check for loads
+	 and it is not worth the extra checks. */
+      if (aggregate)
+	return NULL_TREE;
+      tree src = gimple_assign_rhs1 (load_stmt);
+      ao_ref read;
+      ao_ref_init (&read, src);
+      if (stmt_may_clobber_ref_p_1 (other_store, &read, false))
+	return NULL_TREE;
+      vuse = gimple_vuse (other_store);
+      /* If that skipped store was the first store in program,
+	 then we can do the load conditional.  */
+      if (SSA_NAME_IS_DEFAULT_DEF (vuse))
+	{
+	  /* For loads that have no stores before, there should be no
+	     vphi.  */
+	  gcc_checking_assert (!vphi);
+	  /* The common vuse is the same as the default or there is none. */
+	  gcc_checking_assert (!up_vuse || up_vuse == vuse);
+	  return vuse;
+	}
+      other_store = SSA_NAME_DEF_STMT (vuse);
+      /* If the new vuse (after skipping) is the same as expected
+	 then that is the vuse to return.  */
+      if (vuse == expected_vuse)
+	return vuse;
+      if (gimple_bb (other_store) == bb)
+	return NULL_TREE;
+    }
+
+  /* If there was no an expected vuse then see if the vuse dominates the phi of
+      the address.  */
+  if (!expected_vuse
       && dominated_by_p (CDI_DOMINATORS,
-			 bb, gimple_bb (def_stmt)))
-    return true;
-  return false;
+			 bb, gimple_bb (other_store)))
+    return vuse;
+
+  return NULL_TREE;
 }
 
 /* Propagate between the phi node arguments of PHI in BB and phi result
@@ -385,12 +446,14 @@ propagate_with_phi (basic_block bb, gphi *vphi, gphi *phi,
 	    && !gimple_has_volatile_ops (use_stmt)))
 	continue;
 
-      if (!can_handle_load (use_stmt, bb, vphi, up_vuse))
-	continue;
-
       bool aggregate = false;
       if (!is_gimple_reg_type (TREE_TYPE (gimple_assign_lhs (use_stmt))))
 	aggregate = true;
+
+      tree other_vuse;
+      other_vuse = can_handle_load (use_stmt, bb, vphi, up_vuse, aggregate);
+      if (!other_vuse)
+	continue;
 
       if ((canpossible_trap || aggregate)
 	  && !dom_info_available_p (cfun, CDI_POST_DOMINATORS))
@@ -459,7 +522,8 @@ propagate_with_phi (basic_block bb, gphi *vphi, gphi *phi,
 		goto next;
 	    }
 
-	  phiprop_insert_phi (bb, phi, use_stmt, phivn, n, dce_ssa_names);
+	  phiprop_insert_phi (bb, phi, use_stmt, phivn, n,
+			      dce_ssa_names, other_vuse);
 
 	  /* Remove old stmt. The phi and all of maybe its depedencies
 	     will be removed later via simple_dce_from_worklist. */
@@ -492,7 +556,8 @@ propagate_with_phi (basic_block bb, gphi *vphi, gphi *phi,
       else
 	{
 	  tree vuse = gimple_vuse (use_stmt);
-	  res = phiprop_insert_phi (bb, phi, use_stmt, phivn, n, dce_ssa_names);
+	  res = phiprop_insert_phi (bb, phi, use_stmt, phivn, n,
+				    dce_ssa_names, other_vuse);
 	  type = TREE_TYPE (res);
 
 	  /* Remember the value we created for *ptr.  */
