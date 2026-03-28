@@ -810,6 +810,7 @@ proc check_profiling_available { test_what } {
 	     || [istarget arm*-*-symbianelf*]
 	     || [istarget avr-*-*]
 	     || [istarget bfin-*-*]
+	     || [istarget cdp1802-*-*]
 	     || [istarget cris-*-*]
 	     || [istarget csky-*-elf*]
 	     || [istarget fido-*-elf]
