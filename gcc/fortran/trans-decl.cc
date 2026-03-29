@@ -5037,6 +5037,11 @@ gfc_trans_deferred_vars (gfc_symbol * proc_sym, gfc_wrapped_block * block)
 					NULL_TREE);
 		  continue;
 		}
+	      else if (sym->attr.codimension && !sym->attr.dimension)
+		{
+		  /* Scalar coarrays do not need array allocation.  */
+		  continue;
+		}
 	      else
 		{
 		  loc = input_location;
