@@ -1,3 +1,12 @@
+2026-03-28  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-28  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/84245
+	* match.cc (gfc_match_select_type): Free the temporary namespace
+	only on MATCH_NO. Return immediately on MATCH_ERROR.
+
 2026-03-22  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
