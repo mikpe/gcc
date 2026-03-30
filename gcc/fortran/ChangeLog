@@ -1,3 +1,38 @@
+2026-03-29  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-13  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/102459
+	* trans-openmp.cc (gfc_trans_omp_clauses): Choose the scalar
+	reference path from the full expression rank rather than the first
+	array reference.
+	(gfc_trans_omp_depobj): Likewise.
+
+2026-03-29  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-12  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/82721
+	* decl.cc (discard_pending_charlen): New helper.
+	(build_sym): Discard unattached CHARACTER length nodes when
+	gfc_add_type rejects the declaration.
+
+2026-03-29  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2025-01-23  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/96087
+	* trans-decl.cc (gfc_get_symbol_decl): If a dummy is missing a
+	backend decl, it is likely that it has come from a module proc
+	interface. Look for the formal symbol by name in the containing
+	proc and use its backend decl.
+	* trans-expr.cc (gfc_apply_interface_mapping_to_expr): For the
+	same reason, match the name, rather than the symbol address to
+	perform the mapping.
+
 2026-03-28  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
