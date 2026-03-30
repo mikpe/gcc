@@ -481,6 +481,7 @@ struct cpu_branch_cost
 {
   const int predictable;    /* Predictable branch or optimizing for size.  */
   const int unpredictable;  /* Unpredictable branch or optimizing for speed.  */
+  const int br_mispredict_factor;  /* Scale factor for cost of misprediction on branches.  */
 };
 
 /* Control approximate alternatives to certain FP operators.  */
