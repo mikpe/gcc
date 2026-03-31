@@ -1,3 +1,26 @@
+2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-11  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/95338
+	* trans-types.cc (gfc_get_entry_result_type): New helper to use the
+	ABI return type for mixed ENTRY union fields.
+	(gfc_get_mixed_entry_union): Use it for each entry result field.
+
+2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-12  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/106946
+	* decl.cc (gfc_match_data_decl): Remove CLASS components added by a
+	failed declaration in a derived type, and guard symtree deletion.
+	* gfortran.h (gfc_free_component, gfc_delete_symtree): Declare.
+	* symbol.cc (gfc_free_component): New function.
+	(free_components): Use it.
+	(gfc_delete_symtree): Make non-static.
+
 2026-03-29  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:

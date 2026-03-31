@@ -1,3 +1,29 @@
+2026-03-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2025-09-03  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/97740
+	* g++.dg/cpp0x/constexpr-97740a.C: New test.
+	* g++.dg/cpp0x/constexpr-97740b.C: New test.
+
+2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-11  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/95338
+	* gfortran.dg/pr95338.f90: New test.
+
+2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-12  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/106946
+	* gfortran.dg/pr106946.f90: Cover allocatable and pointer CLASS
+	declarations, including a valid component followed by a bad one.
+
 2026-03-29  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
