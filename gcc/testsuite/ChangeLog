@@ -1,3 +1,22 @@
+2026-03-30  Tamar Christina  <tamar.christina@arm.com>
+
+	PR target/123017
+	* gcc.target/aarch64/pr123017_1.c: New test.
+	* gcc.target/aarch64/pr123017_2.c: New test.
+	* gcc.target/aarch64/pr123017_3.c: New test.
+	* gcc.target/aarch64/pr123017_4.c: New test.
+	* gcc.target/aarch64/pr123017_5.c: New test.
+	* gcc.target/aarch64/pr123017_6.c: New test.
+	* gcc.target/aarch64/pr123017_7.c: New test.
+
+2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-11  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/95338
+	* gfortran.dg/pr95338.f90: New test.
+
 2026-03-29  Jeff Law  <jeffrey.law@oss.qualcomm.com>
 
 	Backported from master:

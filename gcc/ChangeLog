@@ -1,3 +1,17 @@
+2026-03-30  Tamar Christina  <tamar.christina@arm.com>
+
+	PR target/123017
+	* config/aarch64/aarch64-protos.h (struct cpu_branch_cost): Add
+	br_mispredict_factor.
+	* config/aarch64/aarch64.cc (aarch64_max_noce_ifcvt_seq_cost,
+	aarch64_noce_conversion_profitable_p,
+	TARGET_MAX_NOCE_IFCVT_SEQ_COST,
+	TARGET_NOCE_CONVERSION_PROFITABLE_P): New.
+	* config/aarch64/tuning_models/generic.h (generic_branch_cost): Add
+	br_mispredict_factor.
+	* config/aarch64/tuning_models/generic_armv8_a.h: Remove
+	generic_armv8_a_branch_cost and use generic_branch_cost.
+
 2026-03-29  Jeff Law  <jeffrey.law@oss.qualcomm.com>
 
 	Backported from master:
