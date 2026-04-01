@@ -1,3 +1,19 @@
+2026-03-31  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-03-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/124463
+	* include/bits/deque.tcc (__uninitialized_copy_a): Define
+	overloads for input and output iterators being std::deque
+	iterators, and for only the output iterator being a std::deque
+	iterator.
+	(__uninitialized_move_a): Overload for input and output
+	iterators being std::deque iterators.
+	* include/bits/stl_uninitialized.h (__uninitialized_copy_a)
+	(__uninitialized_move_a): Declare overloads for std::deque
+	iterators.
+
 2026-03-20  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:

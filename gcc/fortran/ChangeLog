@@ -1,3 +1,47 @@
+2026-03-31  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-03-25  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/124567
+	* interface.cc (gfc_check_dummy_characteristics): Split shape check
+	into a separate check for rank and a check for shape, taking into
+	account a corner case where the ambiguity between deferred shape
+	and assumed shape has not been fully resolved at the time of
+	checking.
+
+2026-03-31  Mikael Morin  <morin-mikael@orange.fr>
+
+	Backported from master:
+	2025-07-31  Mikael Morin  <morin-mikael@orange.fr>
+
+	PR fortran/121342
+	* trans-expr.cc (gfc_conv_subref_array_arg): Remove offset
+	update.
+	(gfc_conv_procedure_call): For polymorphic functions, move the
+	scalarizer descriptor information...
+	* trans-array.cc (gfc_add_loop_ss_code): ... here, and evaluate
+	the bounds to fresh variables.
+	(get_class_info_from_ss): Remove offset update.
+	(gfc_conv_ss_startstride): Don't set a zero value for function
+	result upper bounds.
+	(late_set_loop_bounds): New.
+	(gfc_conv_loop_setup): If the bounds of a function result have
+	been set, and no other array provided loop bounds for a
+	dimension, use the function result bounds as loop bounds for
+	that dimension.
+	(gfc_set_delta): Don't skip delta setting for polymorphic
+	function results.
+
+2026-03-31  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2025-06-19  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/120713
+	* trans-array.cc (gfc_trans_deferred_array): Statically
+	initialize deferred length variable for SAVEd character arrays.
+
 2026-03-30  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
