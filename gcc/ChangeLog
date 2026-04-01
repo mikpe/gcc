@@ -1,3 +1,8 @@
+2026-03-31  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* tree-ssa-dse.cc (compute_trims): Bail out if ref->size is not
+	byte aligned either.
+
 2026-03-25  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:
