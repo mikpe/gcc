@@ -711,9 +711,19 @@ proc lto-execute-1 { src1 sid } {
     set i 1
     set done 0
     while { !$done } {
-	set names [glob -nocomplain -types f -- "${dir}/${base}_${i}.{c,C,ii,\[fF\]{,90,95,03,08},d,m,mm}"]
+	set prefix "${dir}/${base}_${i}"
+
+	# glob returns a case insensitive list if filesystem is case
+	# insensitive.  To have a case sensitive list, fetch the extended list
+	# and then filter it to avoid duplicates.
+	regsub -all {([.^$*+?()$${}|])} $prefix {\\\1} pattern
+	set pattern [format {^%s.(c|C|ii|[fF](|90|95|03|08)|d|m|mm)$} $pattern]
+	set names [lsearch -inline -all -regexp \
+	  [glob -nocomplain -types f -- "${prefix}.*"] $pattern]
+
 	if { [llength ${names}] > 1 } {
-	    warning "lto-execute: more than one file matched ${dir}/${base}_${i}.{c,C,ii,\[fF\]{,90,95,03,08},d,m,mm}"
+	    warning "lto-execute: more than one file matched $pattern"
+	    verbose "matching files: $names"
 	}
 	if { [llength ${names}] == 1 } {
 	    lappend src_list [lindex ${names} 0]
