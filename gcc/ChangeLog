@@ -1,3 +1,10 @@
+2026-04-01  Wu Haotian  <rigoligo03@gmail.com>
+
+	Backported from master:
+	2026-03-31  Wu Haotian  <rigoligo03@gmail.com>
+
+	* config.gcc: removed linux.h and t-linux for loongarch*-*-elf* targets
+
 2026-03-31  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* tree-ssa-dse.cc (compute_trims): Bail out if ref->size is not
