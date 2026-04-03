@@ -1,3 +1,24 @@
+2026-04-02  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-02  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/102596
+	* trans-openmp.cc (gfc_omp_clause_default_ctor): Only require an
+	outer reference when the constructor path actually uses it.
+
+2026-04-02  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-04-02  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/120286
+	* trans-openmp.cc (gfc_is_class_pointer_type): New helper.
+	(gfc_omp_clause_copy_ctor): Unwrap saved descriptors before
+	deciding whether privatization should preserve only pointer
+	association.  Handle scalar class pointers on that path too.
+	(gfc_omp_clause_dtor): Likewise.
+
 2026-03-30  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
