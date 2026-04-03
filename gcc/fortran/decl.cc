@@ -130,6 +130,27 @@ discard_pending_charlen (gfc_charlen *cl)
   free (cl);
 }
 
+/* Drop the charlen nodes created while matching a declaration that is about
+   to be rejected.  Callers must clear any surviving owners before using this
+   helper, so only the statement-local nodes remain on the namespace list.  */
+
+static void
+discard_pending_charlens (gfc_charlen *saved_cl)
+{
+  if (!gfc_current_ns)
+    return;
+
+  while (gfc_current_ns->cl_list != saved_cl)
+    {
+      gfc_charlen *cl = gfc_current_ns->cl_list;
+
+      gcc_assert (cl);
+      gfc_current_ns->cl_list = cl->next;
+      gfc_free_expr (cl->length);
+      free (cl);
+    }
+}
+
 /********************* DATA statement subroutines *********************/
 
 static bool in_match_data = false;
@@ -2033,7 +2054,8 @@ fix_initializer_charlen (gfc_typespec *ts, gfc_expr *init)
    expression to a symbol.  */
 
 static bool
-add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
+add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus,
+		      gfc_charlen *saved_cl_list)
 {
   symbol_attribute attr;
   gfc_symbol *sym;
@@ -2121,6 +2143,16 @@ add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
 					 "at %L "
 					 "with variable length elements",
 					 &sym->declared_at);
+
+			      /* This rejection path can leave several
+				 declaration-local charlens on cl_list,
+				 including the replacement symbol charlen and
+				 the array-constructor typespec charlen.
+				 Clear the surviving owners first, then drop
+				 only the nodes created by this declaration.  */
+			      sym->ts.u.cl = NULL;
+			      init->ts.u.cl = NULL;
+			      discard_pending_charlens (saved_cl_list);
 			      return false;
 			    }
 			  clen = mpz_get_si (length->value.integer);
@@ -2637,6 +2669,7 @@ variable_decl (int elem)
   gfc_array_spec *as;
   gfc_array_spec *cp_as; /* Extra copy for Cray Pointees.  */
   gfc_charlen *cl;
+  gfc_charlen *saved_cl_list;
   bool cl_deferred;
   locus var_locus;
   match m;
@@ -2647,6 +2680,7 @@ variable_decl (int elem)
   initializer = NULL;
   as = NULL;
   cp_as = NULL;
+  saved_cl_list = gfc_current_ns->cl_list;
 
   /* When we get here, we've just matched a list of attributes and
      maybe a type and a double colon.  The next thing we expect to see
@@ -3185,7 +3219,8 @@ variable_decl (int elem)
      NULL here, because we sometimes also need to check if a
      declaration *must* have an initialization expression.  */
   if (!gfc_comp_struct (gfc_current_state ()))
-    t = add_init_expr_to_sym (name, &initializer, &var_locus);
+    t = add_init_expr_to_sym (name, &initializer, &var_locus,
+			      saved_cl_list);
   else
     {
       if (current_ts.type == BT_DERIVED
@@ -7290,7 +7325,9 @@ match_procedure_decl (void)
 	  if (m != MATCH_YES)
 	    goto cleanup;
 
-	  if (!add_init_expr_to_sym (sym->name, &initializer, &gfc_current_locus))
+	  if (!add_init_expr_to_sym (sym->name, &initializer,
+				     &gfc_current_locus,
+				     gfc_current_ns->cl_list))
 	    goto cleanup;
 
 	}
@@ -9520,8 +9557,11 @@ do_parm (void)
 {
   gfc_symbol *sym;
   gfc_expr *init;
+  gfc_charlen *saved_cl_list;
   match m;
   bool t;
+
+  saved_cl_list = gfc_current_ns->cl_list;
 
   m = gfc_match_symbol (&sym, 0);
   if (m == MATCH_NO)
@@ -9563,7 +9603,8 @@ do_parm (void)
       goto cleanup;
     }
 
-  t = add_init_expr_to_sym (sym->name, &init, &gfc_current_locus);
+  t = add_init_expr_to_sym (sym->name, &init, &gfc_current_locus,
+			    saved_cl_list);
   return (t) ? MATCH_YES : MATCH_ERROR;
 
 cleanup:
@@ -10974,6 +11015,7 @@ enumerator_decl (void)
   char name[GFC_MAX_SYMBOL_LEN + 1];
   gfc_expr *initializer;
   gfc_array_spec *as = NULL;
+  gfc_charlen *saved_cl_list;
   gfc_symbol *sym;
   locus var_locus;
   match m;
@@ -10981,6 +11023,7 @@ enumerator_decl (void)
   locus old_locus;
 
   initializer = NULL;
+  saved_cl_list = gfc_current_ns->cl_list;
   old_locus = gfc_current_locus;
 
   /* When we get here, we've just matched a list of attributes and
@@ -11037,7 +11080,8 @@ enumerator_decl (void)
      to be parsed.  add_init_expr_to_sym() zeros initializer, so we
      use last_initializer below.  */
   last_initializer = initializer;
-  t = add_init_expr_to_sym (name, &initializer, &var_locus);
+  t = add_init_expr_to_sym (name, &initializer, &var_locus,
+			    saved_cl_list);
 
   /* Maintain enumerator history.  */
   gfc_find_symbol (name, NULL, 0, &sym);
