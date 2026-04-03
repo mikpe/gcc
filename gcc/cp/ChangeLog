@@ -1,3 +1,12 @@
+2026-04-02  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-02  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124477
+	* module.cc (trees_in::read_function_def): Set DECL_ARGUMENTS if
+	installing and otherwise missing.
+
 2026-03-28  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
