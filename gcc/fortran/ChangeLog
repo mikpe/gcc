@@ -1,3 +1,32 @@
+2026-04-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-04-03  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/124652
+	* trans-expr.cc (gfc_conv_procedure_call): Do not clobber a
+	procedure pointer intent(out) argument.
+	* trans-intrinsic.cc (conv_isocbinding_function): When passing to
+	C_FUNLOC a procedure pointer that is a dummy, dereference it.
+
+2026-04-05  Kirill Chilikin  <chilikin.k@gmail.com>
+
+	Backported from master:
+	2026-02-03  Kirill Chilikin  <chilikin.k@gmail.com>
+
+	PR fortran/117303
+	* trans-intrinsic.cc (conv_isocbinding_function):
+	Assign the reference returned by C_FUNLOC to a variable.
+
+2026-04-05  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-20  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/120723
+	* trans-openmp.cc (gfc_trans_omp_clauses): Handle bare scalar
+	OpenACC attach/detach clauses without pointer-mapping nodes.
+
 2026-04-02  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:

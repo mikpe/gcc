@@ -1,3 +1,38 @@
+2026-04-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-04-03  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/124652
+	* gfortran.dg/c_funloc_tests_10.f90: New test.
+
+2026-04-05  Kirill Chilikin  <chilikin.k@gmail.com>
+
+	Backported from master:
+	2026-02-03  Kirill Chilikin  <chilikin.k@gmail.com>
+
+	PR fortran/117303
+	* gfortran.dg/c_funloc_tests_7.f90:
+	Updated test due to changed code generation.
+	* gfortran.dg/c_funloc_tests_9.f90: New test.
+
+2026-04-05  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-20  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/120723
+	* gfortran.dg/goacc/pr120723.f90: New test.
+
+2026-04-05  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/aggr35_pkg.adb: Pass -gnatws.
+
+2026-04-05  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/aggr35.adb: New test.
+	* gnat.dg/aggr35_pkg.ads, gnat.dg/aggr35_pkg.adb: New helper.
+
 2026-04-03  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
