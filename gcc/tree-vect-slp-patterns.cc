@@ -302,6 +302,7 @@ static inline bool
 vect_match_expression_p (slp_tree node, tree_code code)
 {
   if (!node
+      || SLP_TREE_CODE (node) == VEC_PERM_EXPR
       || !SLP_TREE_REPRESENTATIVE (node))
     return false;
 
