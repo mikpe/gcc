@@ -636,96 +636,119 @@ release_defs_bitset (bitmap toremove)
 /* Verify virtual SSA form.  */
 
 bool
-verify_vssa (basic_block bb, tree current_vdef, sbitmap visited)
+verify_vssa (basic_block bb_start, tree current_vdef, sbitmap visited)
 {
   bool err = false;
 
-  if (!bitmap_set_bit (visited, bb->index))
-    return false;
+  struct state_t {
+    basic_block bb;
+    tree	vdef;
+  } state;
 
-  /* Pick up the single virtual PHI def.  */
-  gphi *phi = NULL;
-  for (gphi_iterator si = gsi_start_phis (bb); !gsi_end_p (si);
-       gsi_next (&si))
+  auto_vec<state_t, 3> worklist;
+  state.bb = bb_start;
+  state.vdef = current_vdef;
+  worklist.safe_push (state);
+
+  while (!worklist.is_empty ())
     {
-      tree res = gimple_phi_result (si.phi ());
-      if (virtual_operand_p (res))
+      const auto &state = worklist.pop ();
+      const auto &bb = state.bb;
+      current_vdef = state.vdef;
+
+      if (!bitmap_set_bit (visited, bb->index))
+	continue;
+
+      /* Pick up the single virtual PHI def.  */
+      gphi *phi = NULL;
+      for (gphi_iterator si = gsi_start_phis (bb); !gsi_end_p (si);
+	   gsi_next (&si))
 	{
-	  if (phi)
+	  tree res = gimple_phi_result (si.phi ());
+	  if (virtual_operand_p (res))
 	    {
-	      error ("multiple virtual PHI nodes in BB %d", bb->index);
+	      if (phi)
+		{
+		  error ("multiple virtual PHI nodes in BB %d", bb->index);
+		  print_gimple_stmt (stderr, phi, 0);
+		  print_gimple_stmt (stderr, si.phi (), 0);
+		  err = true;
+		}
+	      else
+		phi = si.phi ();
+	    }
+	}
+      if (phi)
+	{
+	  current_vdef = gimple_phi_result (phi);
+	  if (TREE_CODE (current_vdef) != SSA_NAME)
+	    {
+	      error ("virtual definition is not an SSA name");
 	      print_gimple_stmt (stderr, phi, 0);
-	      print_gimple_stmt (stderr, si.phi (), 0);
 	      err = true;
 	    }
-	  else
-	    phi = si.phi ();
 	}
-    }
-  if (phi)
-    {
-      current_vdef = gimple_phi_result (phi);
-      if (TREE_CODE (current_vdef) != SSA_NAME)
-	{
-	  error ("virtual definition is not an SSA name");
-	  print_gimple_stmt (stderr, phi, 0);
-	  err = true;
-	}
-    }
 
-  /* Verify stmts.  */
-  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
-       gsi_next (&gsi))
-    {
-      gimple *stmt = gsi_stmt (gsi);
-      tree vuse = gimple_vuse (stmt);
-      if (vuse)
+      /* Verify stmts.  */
+      for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+	   gsi_next (&gsi))
 	{
-	  if (vuse != current_vdef)
+	  gimple *stmt = gsi_stmt (gsi);
+	  tree vuse = gimple_vuse (stmt);
+	  if (vuse)
 	    {
-	      error ("stmt with wrong VUSE");
-	      print_gimple_stmt (stderr, stmt, 0, TDF_VOPS);
+	      if (vuse != current_vdef)
+		{
+		  error ("stmt with wrong VUSE");
+		  print_gimple_stmt (stderr, stmt, 0, TDF_VOPS);
+		  fprintf (stderr, "expected ");
+		  print_generic_expr (stderr, current_vdef);
+		  fprintf (stderr, "\n");
+		  err = true;
+		}
+	      tree vdef = gimple_vdef (stmt);
+	      if (vdef)
+		{
+		  current_vdef = vdef;
+		  if (TREE_CODE (current_vdef) != SSA_NAME)
+		    {
+		      error ("virtual definition is not an SSA name");
+		      print_gimple_stmt (stderr, phi, 0);
+		      err = true;
+		    }
+		}
+	    }
+	}
+
+      /* Verify destination PHI uses and add successors to worklist.  */
+      edge_iterator ei;
+      edge e;
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	{
+	  gphi *phi = get_virtual_phi (e->dest);
+	  if (phi
+	     && PHI_ARG_DEF_FROM_EDGE (phi, e) != current_vdef)
+	    {
+	      error ("PHI node with wrong VUSE on edge from BB %d",
+		     e->src->index);
+	      print_gimple_stmt (stderr, phi, 0, TDF_VOPS);
 	      fprintf (stderr, "expected ");
 	      print_generic_expr (stderr, current_vdef);
 	      fprintf (stderr, "\n");
 	      err = true;
 	    }
-	  tree vdef = gimple_vdef (stmt);
-	  if (vdef)
+
+	  /* Add successor BB along with current vdef to worklist.  */
+	  if (!bitmap_bit_p (visited, e->dest->index))
 	    {
-	      current_vdef = vdef;
-	      if (TREE_CODE (current_vdef) != SSA_NAME)
-		{
-		  error ("virtual definition is not an SSA name");
-		  print_gimple_stmt (stderr, phi, 0);
-		  err = true;
-		}
+	      state_t new_state;
+	      new_state.bb = e->dest;
+	      new_state.vdef = current_vdef;
+
+	      worklist.safe_push (new_state);
 	    }
 	}
     }
-
-  /* Verify destination PHI uses and recurse.  */
-  edge_iterator ei;
-  edge e;
-  FOR_EACH_EDGE (e, ei, bb->succs)
-    {
-      gphi *phi = get_virtual_phi (e->dest);
-      if (phi
-	  && PHI_ARG_DEF_FROM_EDGE (phi, e) != current_vdef)
-	{
-	  error ("PHI node with wrong VUSE on edge from BB %d",
-		 e->src->index);
-	  print_gimple_stmt (stderr, phi, 0, TDF_VOPS);
-	  fprintf (stderr, "expected ");
-	  print_generic_expr (stderr, current_vdef);
-	  fprintf (stderr, "\n");
-	  err = true;
-	}
-
-      /* Recurse.  */
-      err |= verify_vssa (e->dest, current_vdef, visited);
-    }
-
   return err;
 }
 
