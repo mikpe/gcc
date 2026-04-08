@@ -1,3 +1,59 @@
+2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123700
+	* g++.dg/cpp2a/lambda-targ24.C: New test.
+	* g++.dg/cpp2a/lambda-targ24a.C: New test.
+
+2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123529
+	PR c++/98930
+	* g++.dg/cpp1z/nontype9.C: New test.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/118630
+	* g++.dg/modules/late-ret-5.h: New test.
+	* g++.dg/modules/late-ret-5_a.H: New test.
+	* g++.dg/modules/late-ret-5_b.C: New test.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124735
+	* g++.dg/modules/auto-8_a.H: New test.
+	* g++.dg/modules/auto-8_b.C: New test.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124781
+	* g++.dg/modules/export-7.C: New test.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124785
+	* g++.dg/modules/noexcept-5.h: New test.
+	* g++.dg/modules/noexcept-5_a.C: New test.
+	* g++.dg/modules/noexcept-5_b.C: New test.
+	* g++.dg/modules/noexcept-5_c.C: New test.
+
 2026-04-06  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:

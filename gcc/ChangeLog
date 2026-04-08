@@ -1,3 +1,17 @@
+2026-04-07  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	Backported from master:
+	2026-04-07  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	PR target/124613
+	* config/riscv/riscv-vector-builtins.cc (rvv_switcher::rvv_switcher):
+	Add riscv_registering_builtins.
+	(rvv_switcher::~rvv_switcher): Set riscv_registering_builtins to
+	false.
+	* config/riscv/riscv.cc (riscv_vector_mode_supported_p): Use
+	riscv_registering_builtins.
+	* config/riscv/riscv.h: Declare.
+
 2026-04-01  Wu Haotian  <rigoligo03@gmail.com>
 
 	Backported from master:

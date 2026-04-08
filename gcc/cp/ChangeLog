@@ -1,3 +1,62 @@
+2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123700
+	* pt.cc (dependent_opaque_alias_p): Return true for a
+	template-id typedef with a lambda targ.
+
+2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123529
+	PR c++/98930
+	* pt.cc (has_value_dependent_address): Correct context
+	dependence check for a static local variable.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/118630
+	* module.cc (depset::hash::add_dependency): Correct entry point
+	corection for recursive clusters.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124735
+	* module.cc (trees_in::is_matching_decl): Handle importing
+	undeduced auto when existing is already deduced.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124781
+	* module.cc (set_originating_module): Add a function comment,
+	only set attachment/exporting for entities with non-NULL
+	DECL_CONTEXT.
+	(check_module_decl_linkage): Use decl_anon_ns_mem_p instead of
+	decl_internal_context_p.
+
+2026-04-07  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2026-04-06  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/124785
+	* module.cc (trees_in::is_matching_decl): Narrow condition for
+	when noexcept propagation occurs; assert that we don't propagate
+	noexcept-specs for TEMPLATE_DECLs.
+
 2026-04-02  Nathaniel Shead  <nathanieloshead@gmail.com>
 
 	Backported from master:
