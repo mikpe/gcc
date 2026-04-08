@@ -83,7 +83,10 @@ proc host_header_path {hname} {
 
 # Return the pathname CMI munged like the compiler.
 proc munge_cmi {cmi} {
-    if { [string index $cmi 0] == "/" } {
+    if { [string index $cmi 1] == ":" && [info exists ::env(OS)] && [string match "Windows*" $::env(OS)] } {
+	# Windows paths like C:/some/path should be munged to C-/some/path
+	set cmi [string replace $cmi 1 1 "-"]
+    } elseif { [string index $cmi 0] == "/" } {
 	set cmi [string range $cmi 1 end]
     } else {
 	set cmi ",/$cmi"
