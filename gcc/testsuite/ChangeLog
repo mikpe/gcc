@@ -1,3 +1,108 @@
+2026-04-08  Christophe Lyon  <christophe.lyon@arm.com>
+
+	Backported from master:
+	2026-04-02  Christophe Lyon  <christophe.lyon@arm.com>
+
+	PR target/124705
+	* gcc.dg/tree-ssa/gen-vect-26.c: Disable loop peeling check for
+	arm*-*-.
+	* gcc.dg/tree-ssa/gen-vect-28.c: Likewise.
+
+2026-04-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-04-01  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR target/124705
+	* gcc.dg/tree-ssa/gen-vect-26.c: Disable loop peeling check for
+	arm-none-eabi.
+	* gcc.dg/tree-ssa/gen-vect-28.c: Likewise.
+
+2026-04-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-04-01  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR testsuite/93080
+	* gcc.dg/tree-ssa/forwprop-40.c: Xfail for arm_mve.
+	* gcc.dg/tree-ssa/forwprop-41.c: Likewise.
+
+2026-04-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-03-02  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* gcc.target/arm/addr-modes-int.c: Drop additional option
+	-march=armv7-a.
+
+2026-04-08  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2026-01-31  Alexandre Oliva  <oliva@adacore.com>
+
+	* gcc.dg/vect/complex/fast-math-complex-mls-half-float.c:
+	Don't expect COMPLEX_ADD_ROT270.
+
+2026-04-08  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	Backported from master:
+	2025-11-06  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* lib/target-supports.exp
+	(check_effective_target_arm_v8_vfp_ok_nocache): New.
+	(check_effective_target_arm_v8_vfp_ok): Call the above helper, and
+	use global flags.
+	(add_options_for_arm_v8_vfp): Use et_arm_v8_vfp_flags.
+	* gcc.target/arm/lceil-vcvt_1.c: Remove -march=armv8-a.
+	* gcc.target/arm/lfloor-vcvt_1.c: Likewise.
+	* gcc.target/arm/lround-vcvt_1.c: Likewise.
+	* gcc.target/arm/vrinta-ce.c: Likewise.
+
+2026-04-08  Christophe Lyon  <christophe.lyon@arm.com>
+
+	Backported from master:
+	2026-02-03  Christophe Lyon  <christophe.lyon@arm.com>
+
+	* lib/target-supports.exp
+	(check_effective_target_arm_neon_ok_nocache): Add "-mcpu=unset
+	-march=armv7-a+simd -mfpu=auto" to the list.
+
+2026-04-08  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-01-29  Richard Earnshaw  <rearnsha@arm.com>
+		    Artemiy Volkov  <artemiy.volkov@arm.com>
+
+	* lib/target-supports.exp:
+	(check_effective_target_arm_v8_3a_complex_neon_ok_nocache):
+	Split and fill in arm and aarch64 compile options.  Remove the
+	cpu_unset variable.
+	(check_effective_target_arm_v8_2a_fp16_neon_ok_nocache): Likewise.
+	(check_effective_target_arm_v8_3a_fp16_complex_neon_ok_nocache):
+	Likewise.
+	(check_effective_target_arm_neon_ok_nocache): Rework to use
+	-mfpu=auto.
+	(check_effective_target_arm_neon_fp16_ok_nocache): Likewise.
+
+2026-04-08  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	Backported from master:
+	2025-09-01  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* lib/target-supports.exp
+	(check_effective_target_arm_neon_ok_nocache): Remove arm32 check.
+	Add istarget arm*-*-* check.
+	(check_effective_target_arm_neon_fp16_ok_nocache): Likewise.
+	(check_effective_target_arm_neon_softfp_fp16_ok_nocache): Likewise.
+	(check_effective_target_arm_v8_neon_ok_nocache): Likewise.
+	(check_effective_target_arm_neonv2_ok_nocache): Likewise.
+	(check_effective_target_vect_pack_trunc): Remove istarget arm*-*-*
+	check.
+	(check_effective_target_vect_unpack): Likewise.
+	(check_effective_target_vect_condition): Likewise.
+	(check_effective_target_vect_cond_mixed): Likewise.
+	(available_vector_sizes): Likewise.
+
 2026-04-07  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
