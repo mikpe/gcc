@@ -1,3 +1,31 @@
+2026-04-09  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2026-03-20  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/116296
+	* ipa-modref-tree.cc (modref_access_node::contains): Use
+	poly_offset_int for the param offset difference and the
+	overlap computation.
+
+2026-04-09  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	Backported from master:
+	2026-04-09  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	PR target/117771
+	PR c/124830
+	* system.h: Move the include of sstream and memory above safe-ctype.h.
+
+2026-04-09  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-04-09  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/105192
+	* ifcvt.cc (find_if_header): Don't attempt to use ctrap expander
+	after reload.
+
 2026-03-31  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* tree-ssa-dse.cc (compute_trims): Bail out if ref->size is not
