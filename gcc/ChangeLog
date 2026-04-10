@@ -1,3 +1,12 @@
+2026-04-09  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-04-09  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/105192
+	* ifcvt.cc (find_if_header): Don't attempt to use ctrap expander
+	after reload.
+
 2026-04-07  Robin Dapp  <rdapp@oss.qualcomm.com>
 
 	Backported from master:
