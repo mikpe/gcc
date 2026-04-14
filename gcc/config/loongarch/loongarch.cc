@@ -4280,6 +4280,7 @@ loongarch_rtx_costs (rtx x, machine_mode mode, int outer_code,
     case EQ:
     case NE:
     case UNORDERED:
+    case ORDERED:
     case LTGT:
     case UNGE:
     case UNGT:
