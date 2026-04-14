@@ -10150,6 +10150,7 @@
    (set_attr "type" "multiple")]
 )
 
+;; (pred4 && pred5) != 0
 (define_insn "*cmp_ite0"
   [(set (match_operand 6 "dominant_cc_register" "")
 	(compare
@@ -10166,7 +10167,11 @@
 	        "lPy,rI,L,lPy,lPy,rI,rI,L,L")])
 	  (const_int 0))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_AND_Y))"
   "*
   {
     static const char * const cmp1[NUM_OF_COND_CMP][2] =
@@ -10233,6 +10238,7 @@
            (const_int 10))])]
 )
 
+;; (!pred4 || pred5) != 0
 (define_insn "*cmp_ite1"
   [(set (match_operand 6 "dominant_cc_register" "")
 	(compare
@@ -10249,7 +10255,11 @@
 	        "lPy,rI,L,lPy,lPy,rI,rI,L,L")])
 	  (const_int 1))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_NX_OR_Y))"
   "*
   {
     static const char * const cmp1[NUM_OF_COND_CMP][2] =
@@ -10332,7 +10342,11 @@
 	    (match_operand:SI 3 "arm_add_operand"
 	        "lPy,rI,L,lPy,lPy,r,rI,rI,L,L")]))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_AND_Y))"
   "*
   {
     static const char *const cmp1[NUM_OF_COND_CMP][2] =
@@ -10417,7 +10431,11 @@
 	    (match_operand:SI 3 "arm_add_operand"
 	        "lPy,rI,L,lPy,lPy,r,rI,rI,L,L")]))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_OR_Y))"
   "*
   {
     static const char *const cmp1[NUM_OF_COND_CMP][2] =
