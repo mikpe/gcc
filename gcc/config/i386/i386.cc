@@ -343,9 +343,9 @@ static int const x86_64_preserve_none_int_parameter_registers[6] =
   R12_REG, R13_REG, R14_REG, R15_REG, DI_REG, SI_REG
 };
 
-static int const x86_64_int_return_registers[4] =
+static int const x86_64_int_return_registers[2] =
 {
-  AX_REG, DX_REG, DI_REG, SI_REG
+  AX_REG, DX_REG
 };
 
 /* Define the structure for the machine field in struct function.  */
@@ -3870,9 +3870,6 @@ ix86_function_value_regno_p (const unsigned int regno)
       return true;
     case DX_REG:
       return (!TARGET_64BIT || ix86_cfun_abi () != MS_ABI);
-    case DI_REG:
-    case SI_REG:
-      return TARGET_64BIT && ix86_cfun_abi () != MS_ABI;
 
       /* Complex values are returned in %st(0)/%st(1) pair.  */
     case ST0_REG:
@@ -4310,7 +4307,8 @@ function_value_64 (machine_mode orig_mode, machine_mode mode,
     }
 
   ret = construct_container (mode, orig_mode, valtype, true,
-			     X86_64_REGPARM_MAX, X86_64_SSE_REGPARM_MAX,
+			     X86_64_MAX_RETURN_NREGS,
+			     X86_64_MAX_SSE_RETURN_NREGS,
 			     x86_64_int_return_registers, 0);
 
   /* For zero sized structures, construct_container returns NULL, but we

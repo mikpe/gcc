@@ -1878,6 +1878,11 @@ typedef struct ix86_args {
 #define X86_64_REGPARM_MAX 6
 #define X86_64_MS_REGPARM_MAX 4
 
+/* Maximum numbers of registers used in return values according to x86-64
+   psABI.  */
+#define X86_64_MAX_RETURN_NREGS 2
+#define X86_64_MAX_SSE_RETURN_NREGS 2
+
 #define X86_32_REGPARM_MAX 3
 
 #define REGPARM_MAX							\
