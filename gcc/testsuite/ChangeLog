@@ -1,3 +1,35 @@
+2026-04-14  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2025-09-11  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/121616
+	* gfortran.dg/alloc_comp_assign_17.f90: New test.
+
+2026-04-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-03-11  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/123271
+	* gcc.target/arm/pr123271.c: New test.
+
+2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	* gfortran.dg/goacc/omp-108382.f90: New test.
+
+2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/95879
+	PR fortran/95879
+	* gfortran.dg/pr95879.f90: New test.
+
 2026-04-09  Richard Biener  <rguenther@suse.de>
 
 	Revert:
