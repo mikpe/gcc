@@ -4052,8 +4052,9 @@ shuffle_interleave_patterns (struct expand_vec_perm_d *d)
 }
 
 
-/* Recognize even/odd patterns like [0 2 4 6].  We use two compress
-   and one slideup.  */
+/* Recognize even/odd patterns like [0 2 4 6].  We try to use two narrow shifts
+   and one slideup when possible.  Otherwise, we use two compress and one
+   slideup.  */
 
 static bool
 shuffle_even_odd_patterns (struct expand_vec_perm_d *d)
@@ -4086,6 +4087,41 @@ shuffle_even_odd_patterns (struct expand_vec_perm_d *d)
   /* Success!  */
   if (d->testing_p)
     return true;
+
+  /* When the element width is smaller than the greatest ELEN, we can use two
+     vnsrl instructions, each extracting the even/odd elements of one source,
+     and a vslideup instruction to merge them into one vector.
+
+     PR target/124996: VLS mode subregs larger than what
+     riscv_regmode_natural_size allows cause a memory roundtrip.  Therefore, for
+     now, we only do this when the mode size is no greater than the natural size
+     of the register.  Once this is fixed, the condition should be replaced by
+     the ELEN condition.  */
+  if (known_le (GET_MODE_SIZE (vmode), riscv_regmode_natural_size (vmode)))
+    {
+      unsigned int elen = GET_MODE_BITSIZE (GET_MODE_INNER (vmode));
+      unsigned int elen2x = elen * 2;
+      scalar_int_mode smode_elen2x = int_mode_for_size (elen2x, 0).require ();
+      scalar_int_mode smode = int_mode_for_size (elen, 0).require ();
+      machine_mode vmode_elen2x
+	= get_vector_mode (smode_elen2x, vlen / 2).require ();
+      machine_mode vmode_half = get_vector_mode (smode, vlen / 2).require ();
+      unsigned int shift_amt = even ? 0 : elen;
+      insn_code icode = code_for_pred_narrow_scalar (LSHIFTRT, vmode_elen2x);
+      rtx tmp = gen_reg_rtx (vmode);
+      rtx ops_shift1[]
+	= {gen_lowpart (vmode_half, d->target),
+	   gen_lowpart (vmode_elen2x, d->op0), gen_int_mode (shift_amt, Pmode)};
+      rtx ops_shift2[]
+	= {gen_lowpart (vmode_half, tmp), gen_lowpart (vmode_elen2x, d->op1),
+	   gen_int_mode (shift_amt, Pmode)};
+      emit_vlmax_insn (icode, BINARY_OP, ops_shift1);
+      emit_vlmax_insn (icode, BINARY_OP, ops_shift2);
+      rtx ops[] = {d->target, d->target, tmp, gen_int_mode (vlen / 2, Pmode)};
+      icode = code_for_pred_slide (UNSPEC_VSLIDEUP, vmode);
+      emit_vlmax_insn (icode, SLIDEUP_OP_MERGE, ops);
+      return true;
+    }
 
   machine_mode mask_mode = get_mask_mode (vmode);
   rvv_builder builder (mask_mode, vlen, 1);
