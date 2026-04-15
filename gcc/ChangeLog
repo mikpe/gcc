@@ -1,3 +1,94 @@
+2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-07  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124802
+	* tree-vect-slp-patterns.cc (vect_match_expression_p): Fail
+	for SLP_TREE_PERMUTE_P.
+
+2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124677
+	* tree-vect-loop.cc (vectorizable_recurr): Skip vector
+	stmts for the def.
+
+2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-27  Richard Biener  <rguenther@suse.de>
+
+	PR debug/124644
+	* dwarf2out.cc (dwarf2out_abstract_function): Only
+	add DW_AT_artificial if the decl isn't DECL_ARTIFICIAL.
+
+2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-18  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124555
+	* match.pd ((A - B) >=/> 0 ? (A - B) : (B - A) -> abs (A - B)):
+	Guard the vector case with target_supports_op_p checks.
+	((A - B) <=/< 0 ? (A - B) : (B - A) -> -abs (A - B)): Likewise.
+	((type)A >=/> 0 ? A : -A -> abs (A)): Likewise.
+	((type)A <=/< 0 ? A : -A -> -abs (A)): Likewise.
+
+2026-04-14  Jan Hubicka  <jh@suse.cz>
+
+	Backported from master:
+	2026-03-10  Jan Hubicka  <jh@suse.cz>
+		    Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/120987
+	* ipa-modref.cc (ipa_merge_modref_summary_after_inlining): Mask
+	off non const/pure/novops related flags when combining of outer
+	functions.
+
+2026-04-13  Vineet Gupta  <vineet.gupta@linux.dev>
+
+	PR target/124670
+	* config/bpf/bpf.md (zero_extendsidi2): Use 'W' in asm template.
+
+2026-04-13  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-03-11  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/123271
+	* config/arm/arm.md (subvsi3_intmin): Renamed to ...
+	(sub_cmpVsi3_intmin): ... this.
+	(subvsi3): Renamed to ...
+	(sub_cmpVsi3): ... this.
+	(subvsi3_imm1): Renamed to ...
+	(sub_cmpVsi3_imm1): ... this.
+	(usubvsi3_borrow): Renamed to ...
+	(usub_cmpVsi3_borrow): ... this.
+	(usubvsi3_borrow_imm): Renamed to ...
+	(usub_cmpVsi3_borrow_imm): ... this.
+	(subvsi3_borrow): Renamed to ...
+	(sub_cmpVsi3_borrow): ... this.
+	(subvsi3_borrow_imm): Renamed to ...
+	(sub_cmpVsi3_borrow_imm): ... this.
+
+2026-04-13  Hu, Lin1  <lin1.hu@intel.com>
+
+	PR target/124710
+	* config/i386/sse.md (iptrps2qq): New mode attribute for
+	ps2qq Intel syntax memory operand size override.
+	(avx10_2_vcvttps2<sat_cvt_sign_prefix>qqs<mode><mask_name><round_saeonly_name>):
+	Use %<iptrps2qq>1 in Intel syntax to emit qword ptr for V2DI (128-bit)
+	memory operands.
+	(avx10_2_vcvttsd2<sat_cvt_sign_prefix>sis<mode><round_saeonly_name>):
+	Use %q1 in Intel syntax to emit qword ptr for scalar double memory
+	operands.
+	(avx10_2_vcvttss2<sat_cvt_sign_prefix>sis<mode><round_saeonly_name>):
+	Use %k1 in Intel syntax to emit dword ptr for scalar single memory
+	operands.
+
 2026-04-09  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:

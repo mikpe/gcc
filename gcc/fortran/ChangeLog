@@ -1,3 +1,23 @@
+2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-03-30  Christopher Albert  <albert@tugraz.at>
+
+	* scanner.cc (skip_free_oacc_sentinel): Clear openmp_flag only for
+	fresh OpenACC directive lines.
+	(skip_free_omp_sentinel): Clear openacc_flag only for fresh OpenMP
+	directive lines.
+
+2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/95879
+	PR fortran/95879
+	* parse.cc (fixup_st_func_formals): New function to update
+	statement function formal argument lists referencing a symbol
+	about to be freed.
+	(gfc_fixup_sibling_symbols): Call fixup_st_func_formals before
+	gfc_release_symbol.
+
 2026-04-06  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
