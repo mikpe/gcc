@@ -1,3 +1,35 @@
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/121643
+	PR c++/123975
+	* coroutines.cc (build_co_await): Pass rvalue to await_suspend.
+	(expand_one_await_expression): Fix await_suspend surgery.
+
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/121961
+	* coroutines.cc (build_actor_fn): Move the delete label before
+	the refcount handling.
+	(cp_coroutine_transform::build_ramp_function): Decrement refcount
+	after destroying gro.
+
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/117133
+	PR c++/124768
+	PR c++/124773
+	* mangle.cc (unmangled_name_p): Don't mangle internal extern "C"
+	variables.
+
 2026-04-07  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

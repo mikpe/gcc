@@ -1,3 +1,31 @@
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/121643
+	PR c++/123975
+	* g++.dg/coroutines/pr121643.C: New test.
+	* g++.dg/coroutines/pr123975.C: New test.
+
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/121961
+	* g++.dg/asan/coroutines1.C: New test.
+
+2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/117133
+	PR c++/124768
+	PR c++/124773
+	* g++.dg/abi/mangle84.C: New test.
+
 2026-04-14  Christophe Lyon  <christophe.lyon@arm.com>
 
 	Backported from master:
