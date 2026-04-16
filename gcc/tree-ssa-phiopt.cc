@@ -4048,10 +4048,11 @@ pass_phiopt::execute (function *)
 	    hoist_adjacent_loads (bb, bb1, bb2, bb3);
 
 	  /* Try to see if there are only store in each side of the if
-	     and try to remove that; don't do this for -Og.  */
+	     and try to remove that; don't do this for -Og.
+	     With sinking the stores we might end up with empty blocks.  */
 	  if (EDGE_COUNT (bb3->preds) == 2 && !optimize_debug)
 	    while (cond_if_else_store_replacement_limited (bb1, bb2, bb3))
-	      ;
+	      cfgchanged = true;
 	}
 
       gimple_stmt_iterator gsi;
