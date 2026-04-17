@@ -1,3 +1,8 @@
+2026-04-16  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/121616
+	* gfortran.dg/alloc_comp_assign_17.f90: Removed.
+
 2026-04-14  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
