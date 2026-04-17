@@ -1,3 +1,15 @@
+2026-04-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	Backported from master:
+	2026-04-14  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/bits/version.def (stdbit_h, stdckdint_h): Define.
+	* include/bits/version.h: Regenerate.
+	* include/c_compatibility/stdbit.h (__cpp_lib_stdbit_h): Define
+	and use it in guards.
+	* include/c_compatibility/stdckdint.h (__cpp_lib_stdckdint_h):
+	Define and use it in guards.
+
 2026-04-07  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
