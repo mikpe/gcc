@@ -1,3 +1,19 @@
+2026-04-17  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-04-03  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/100155
+	* gfortran.dg/pr100155.f90: New test.
+
+2026-04-17  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-27  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/102619
+	* gfortran.dg/pr102619.f90: New test.
+
 2026-04-16  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
