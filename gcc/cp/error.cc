@@ -2629,7 +2629,6 @@ dump_expr (cxx_pretty_printer *pp, tree t, int flags)
     case EQ_EXPR:
     case NE_EXPR:
     case SPACESHIP_EXPR:
-    case EXACT_DIV_EXPR:
       dump_binary_op (pp, OVL_OP_INFO (false, TREE_CODE (t))->name, t, flags);
       break;
 
@@ -2637,6 +2636,7 @@ dump_expr (cxx_pretty_printer *pp, tree t, int flags)
     case FLOOR_DIV_EXPR:
     case ROUND_DIV_EXPR:
     case RDIV_EXPR:
+    case EXACT_DIV_EXPR:
       dump_binary_op (pp, "/", t, flags);
       break;
 
