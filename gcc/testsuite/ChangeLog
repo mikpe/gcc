@@ -1,3 +1,12 @@
+2026-04-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-04-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/124876
+	* gcc.target/i386/zero-scratch-regs-23.c: Scan vpxord on ZMM16-31.
+	* gcc.target/i386/zero-scratch-regs-33.c: New test.
+
 2026-04-17  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:

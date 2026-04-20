@@ -1,3 +1,12 @@
+2026-04-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-04-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/124876
+	* config/i386/i386.cc (ix86_zero_call_used_regs): Zero ZMM16-31
+	if needed.
+
 2026-04-14  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:
