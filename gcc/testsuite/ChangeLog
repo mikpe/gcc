@@ -1,3 +1,8 @@
+2026-04-19  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/106946
+	* gfortran.dg/pr106946.f90: Removed.
+
 2026-04-17  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
