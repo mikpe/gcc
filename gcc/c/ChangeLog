@@ -1,3 +1,31 @@
+2026-04-20  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-04-01  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124635
+	* c-typeck.cc (c_reconstruct_complex_type): Copy
+	TYPE_REVERSE_STORAGE_ORDER.
+
+2026-04-20  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-03-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/122572
+	* c-decl.cc (finish_struct): Add distinct canonical type.
+	* c-tree.h (c_type_canonical): Prototype for new function.
+	* c-typeck.cc (c_type_canonical): New function.
+	(ptr_to_tagged_member): New function.
+
+2026-04-20  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-03-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/122572
+	* c-typeck.cc (tagged_types_tu_compatible_p): Fix check.
+
 2026-03-08  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
