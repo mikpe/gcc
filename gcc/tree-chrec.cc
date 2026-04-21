@@ -53,7 +53,6 @@ chrec_fold_plus_poly_poly (enum tree_code code,
   tree left, right;
   class loop *loop0 = get_chrec_loop (poly0);
   class loop *loop1 = get_chrec_loop (poly1);
-  tree rtype = code == POINTER_PLUS_EXPR ? chrec_type (poly1) : type;
 
   gcc_assert (poly0);
   gcc_assert (poly1);
@@ -112,6 +111,7 @@ chrec_fold_plus_poly_poly (enum tree_code code,
 
   if (code == PLUS_EXPR || code == POINTER_PLUS_EXPR)
     {
+      tree rtype = code == POINTER_PLUS_EXPR ? chrec_type (poly1) : type;
       left = chrec_fold_plus
 	(type, CHREC_LEFT (poly0), CHREC_LEFT (poly1));
       right = chrec_fold_plus
