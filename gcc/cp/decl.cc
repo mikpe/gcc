@@ -1023,6 +1023,10 @@ wrapup_namespace_globals ()
 
 	  if (VAR_P (decl)
 	      && DECL_EXTERNAL (decl)
+	      /* We mark consteval-only variables DECL_EXTERNAL, but
+		  extern constexpr inline std::meta::info i{};
+		 is a definition (the extern is redundant).  */
+	      && !DECL_INITIAL (decl)
 	      && DECL_INLINE_VAR_P (decl)
 	      && DECL_ODR_USED (decl))
 	    error_at (DECL_SOURCE_LOCATION (decl),
