@@ -1,3 +1,20 @@
+2026-04-22  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-12-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123002
+	* gcc.dg/vect/vect-pr123002.c: Make global data non-const
+	and non-static.
+
+2026-04-22  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-12-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123002
+	* gcc.dg/vect/vect-pr123002.c: New testcase.
+
 2026-04-21  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:

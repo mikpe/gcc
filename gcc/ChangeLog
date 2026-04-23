@@ -1,3 +1,22 @@
+2026-04-22  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2025-12-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123002
+	* tree-vectorizer.h (supportable_widening_operation): Remove
+	vinfo and stmt_info parameters, add flag to indicate whether
+	the context would allow OP_{EVEN,ODD}.
+	* tree-vect-patterns.cc (vect_recog_abd_pattern): Adjust
+	and pass false.
+	(vect_recog_widen_op_pattern): Likewise.
+	(vect_recog_widen_abd_pattern): Likewise.
+	* tree-vect-stmts.cc (vectorizable_conversion): Move
+	even/odd validity check here, from supportable_widening_operation.
+	Adjust it to be conservative.
+	(supportable_widening_operation): Get flag whether even/odd
+	is OK to use and remove then unused parameters and code.
+
 2026-04-19  H.J. Lu  <hjl.tools@gmail.com>
 
 	Backported from master:
