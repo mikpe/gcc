@@ -1,3 +1,17 @@
+2026-04-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/124933
+	* config/arm/constraints.md (Uj): Allow offset addressing for
+	all targets, only allow Neon addressing when we have both Neon
+	and FP16INST.
+	* config/arm/vfp.md (mov<mode>_vfp_<mode>16): Only use vld1/vst1
+	when the pattern needs address write-back.
+
+2026-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/124971
+	* gensupport.cc (convert_syntax): Fix up // comment handling.
+
 2026-04-21  Gaius Mulley  <gaiusmod2@gmail.com>
 
 	PR modula2/120189

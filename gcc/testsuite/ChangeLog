@@ -1,3 +1,55 @@
+2026-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/DRs/dr2581-2.C: Adjust for __cpp_impl_reflection bump from
+	202506L to 202603L.
+	* g++.dg/reflect/feat1.C: Likewise.  Also adjust for
+	__cpp_lib_reflection bump from 202506L to 202603L.
+	* g++.dg/reflect/feat2.C: Likewise.
+	* g++.dg/reflect/feat3.C: Likewise.
+
+2026-04-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR tree-optimization/124909
+	* gcc.dg/match-shift-cmp-3.c:  Adjust expected results for
+	target short_enums.
+
+2026-04-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/124933
+	* lib/target-supports.exp (v8_1m_main_fp_hard): New arm
+	architecture variant.
+	* gcc.target/arm/pr124933.c: New test.
+	* gcc.target/arm/armv8_2-fp16-move-1.c: Update expected output.
+
+2026-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/124969
+	* gcc.dg/ubsan/pr124969-2.c: New test.
+
+2026-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/124969
+	* gcc.dg/ubsan/pr124969-1.c: New test.
+
+2026-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/122483
+	* gcc.target/aarch64/sme/streaming_mode_1.c: Xfail errors for
+	sc_a, sc_c, sc_e, s_a, s_c, s_e and keyword_contradiction_1.
+	* gcc.target/aarch64/sme/za_state_1.c: Xfail errors for shared_a,
+	shared_c, shared_e, preserved_a, preserved_c, preserved_e and
+	keyword_conflict_1.
+	* gcc.target/aarch64/sme/za_state_2.c: Xfail errors for shared_b,
+	shared_d, shared_f and shared_h.  Add xfailed dg-bogus for
+	extra diagnostics on shared_f and shared_h.
+
+2026-04-22  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR target/124959
+	* gcc.dg/hoist-register-pressure-1.c,
+	gcc.dg/hoist-register-pressure-2.c,
+	gcc.dg/hoist-register-pressure-3.c: Exclude cris-*-*.
+
 2026-04-21  Jakub Jelinek  <jakub@redhat.com>
 
 	PR c++/124944
