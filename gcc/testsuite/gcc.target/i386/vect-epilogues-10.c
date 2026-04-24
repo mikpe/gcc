@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -mavx512f -mprefer-vector-width=512 --param vect-partial-vector-usage=1 -fdump-tree-vect-optimized" } */
+/* { dg-options "-O3 -mavx512f -mprefer-vector-width=512 --param vect-partial-vector-usage=1 -fdump-tree-vect-optimized -fno-vect-cost-model" } */
 
 double foo (double *a, long long *mask, int n)
 {

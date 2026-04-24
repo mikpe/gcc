@@ -1258,7 +1258,7 @@ Target Joined UInteger Var(ix86_vect_unroll_limit) Init(4) Param
 Limit how much the autovectorizer may unroll a loop.
 
 -param=ix86-vect-compare-costs=
-Target Joined UInteger Var(ix86_vect_compare_costs) Init(0) IntegerRange(0, 1) Param Optimization
+Target Joined UInteger Var(ix86_vect_compare_costs) Init(1) IntegerRange(0, 1) Param Optimization
 Whether x86 vectorizer cost modeling compares costs of different vector sizes.
 
 mlam=

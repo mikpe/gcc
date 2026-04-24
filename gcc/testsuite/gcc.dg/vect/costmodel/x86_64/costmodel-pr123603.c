@@ -1,5 +1,4 @@
 /* { dg-do compile } */
-/* { dg-additional-options "--param ix86-vect-compare-costs=1" } */
 
 void foo (int *block)
 {
