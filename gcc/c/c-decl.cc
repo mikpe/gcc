@@ -1709,7 +1709,8 @@ pushtag (location_t loc, tree name, tree type)
      NULL-named TYPE_DECL node helps dwarfout.c to know when it needs
      to output a representation of a tagged type, and it also gives
      us a convenient place to record the "scope start" address for the
-     tagged type.  */
+     tagged type, and it is used to track whether the type is used
+     in a non-local context via mark_decl_used.  */
 
   TYPE_STUB_DECL (type) = pushdecl (build_decl (loc,
 						TYPE_DECL, NULL_TREE, type));
@@ -13134,6 +13135,11 @@ declspecs_add_type (location_t loc, struct c_declspecs *specs,
 	      specs->typedef_p = true;
 	      specs->locations[cdw_typedef] = loc;
 	    }
+
+	  if (TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE
+	      || TREE_CODE (type) == ENUMERAL_TYPE)
+	    mark_decl_used (TYPE_STUB_DECL (type), false);
+
 	  if (spec.expr)
 	    {
 	      tree expr = save_expr (fold_convert (void_type_node, spec.expr));

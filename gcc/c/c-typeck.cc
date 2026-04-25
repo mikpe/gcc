@@ -2373,7 +2373,7 @@ function_to_pointer_conversion (location_t loc, tree exp)
 
   tree exp2 = build_unary_op (loc, ADDR_EXPR, exp, false);
 
-  /* If the function is defined and known to not to require a non-local
+  /* If the function is defined and known to not require a non-local
      context, make sure no trampoline is generated.  */
   if (TREE_CODE (exp) == FUNCTION_DECL
       && DECL_INITIAL (exp) && !C_FUNC_NONLOCAL_CONTEXT (exp))
