@@ -3401,6 +3401,14 @@ emit_move_insn (rtx x, rtx y)
   rtx y_cst = NULL_RTX;
   rtx last_insn, set;
 
+  #if 0
+  printf("%s mode x=%d (%s), mode y=%d (%s)\n", __func__,
+          mode, GET_MODE_NAME(mode),
+          GET_MODE(y), GET_MODE_NAME(GET_MODE(y)));
+        print_rtl_single(stdout, x);
+        print_rtl_single(stdout, y);
+  #endif
+
   gcc_assert (mode != BLKmode
 	      && (GET_MODE (y) == mode || GET_MODE (y) == VOIDmode));
 

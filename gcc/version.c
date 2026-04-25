@@ -15,3 +15,4 @@ const char bug_report_url[] = BUGURL;
 
 const char version_string[] = BASEVER DATESTAMP DEVPHASE REVISION;
 const char pkgversion_string[] = PKGVERSION;
+const char revision_string[] = REVISION;

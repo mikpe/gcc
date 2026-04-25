@@ -1000,7 +1000,9 @@ compile_file (void)
     emutls_finish ();
 
   output_shared_constant_pool ();
+// printf ("MGB %s output obj blocks\n", __func__);
   output_object_blocks ();
+// printf ("MGB %s output obj blocks done\n", __func__);
 
   /* Write out any pending weak symbol declarations.  */
   weak_finish ();

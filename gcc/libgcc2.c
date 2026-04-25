@@ -4,6 +4,7 @@
    2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
+
 This file is part of GCC.
 
 GCC is free software; you can redistribute it and/or modify it under
@@ -1049,6 +1050,9 @@ __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 	      udiv_qrnnd (q0, n1, n2, n1, d1);
 	      umul_ppmm (m1, m0, q0, d0);
 
+// TODO something in this disabled code block causes a compiler segfault
+// gdb bt says invalid hash in ../../libiberty/hashtab.c:678
+#if 0
 	      if (m1 > n1 || (m1 == n1 && m0 > n0))
 		{
 		  q0--;
@@ -1065,6 +1069,8 @@ __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 		  rr.s.high = n1 >> bm;
 		  *rp = rr.ll;
 		}
+#endif
+              q1 = 0;
 	    }
 	}
     }

@@ -1192,6 +1192,7 @@ ira_init_register_move_cost (enum machine_mode mode)
 	      && ira_may_move_out_cost[mode] == NULL);
   if (move_cost[mode] == NULL)
     init_move_cost (mode);
+// printf("MGB init code for mode %d to %p\n", mode, move_cost[mode]);
   ira_register_move_cost[mode] = move_cost[mode];
   /* Don't use ira_allocate because the tables exist out of scope of a
      IRA call.  */
@@ -1227,6 +1228,7 @@ ira_init_once (void)
 
   for (mode = 0; mode < MAX_MACHINE_MODE; mode++)
     {
+// printf("MGB clear cost mode %d\n", mode);
       ira_register_move_cost[mode] = NULL;
       ira_may_move_in_cost[mode] = NULL;
       ira_may_move_out_cost[mode] = NULL;
@@ -1247,6 +1249,7 @@ free_register_move_costs (void)
 	free (ira_may_move_in_cost[mode]);
       if (ira_may_move_out_cost[mode] != NULL)
 	free (ira_may_move_out_cost[mode]);
+// printf("MGB clear cost mode %d\n", mode);
       ira_register_move_cost[mode] = NULL;
       ira_may_move_in_cost[mode] = NULL;
       ira_may_move_out_cost[mode] = NULL;

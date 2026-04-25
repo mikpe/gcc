@@ -311,6 +311,9 @@ default_scalar_mode_supported_p (enum machine_mode mode)
       return false;
 
     case MODE_FLOAT:
+      // printf("%s mode is float\n", __func__);
+      // printf ("%s check prec %d of mode %s\n", __func__, precision,
+      //            GET_MODE_NAME (mode));
       if (precision == FLOAT_TYPE_SIZE)
 	return true;
       if (precision == DOUBLE_TYPE_SIZE)

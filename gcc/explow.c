@@ -65,6 +65,7 @@ trunc_int_for_mode (HOST_WIDE_INT c, enum machine_mode mode)
     {
       HOST_WIDE_INT sign = 1;
       sign <<= width - 1;
+      // printf("MGB sign=%x\n", sign);
       c &= (sign << 1) - 1;
       c ^= sign;
       c -= sign;
@@ -323,6 +324,12 @@ convert_memory_address (enum machine_mode to_mode ATTRIBUTE_UNUSED,
 			rtx x)
 {
 #ifndef POINTERS_EXTEND_UNSIGNED
+  #if 0
+  printf(" %s MGB mode x=%d (%s), to_mode=%d (%s)\n", __func__,
+          GET_MODE(x),
+          GET_MODE_NAME(GET_MODE(x)), to_mode, GET_MODE_NAME(to_mode));
+        print_rtl_single(stdout, x);
+  #endif
   gcc_assert (GET_MODE (x) == to_mode || GET_MODE (x) == VOIDmode);
   return x;
 #else /* defined(POINTERS_EXTEND_UNSIGNED) */

@@ -164,7 +164,7 @@ struct real_format
 /* The target format used for each floating point mode.
    Float modes are followed by decimal float modes, with entries for
    float modes indexed by (MODE - first float mode), and entries for
-   decimal float modes indexed by (MODE - first decimal float mode) +
+   decimal float modes indexed by (MODE - first decimal float mode)
    the number of float modes.  */
 extern const struct real_format *
   real_format_for_mode[MAX_MODE_FLOAT - MIN_MODE_FLOAT + 1

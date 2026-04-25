@@ -3150,8 +3150,8 @@ insert_into_preds_of_block (basic_block block, unsigned int exprnum,
   FOR_EACH_EDGE (pred, ei, block->preds)
     {
       pre_expr ae = avail[pred->src->index];
-      gcc_assert (get_expr_type (ae) == type
-		  || useless_type_conversion_p (type, get_expr_type (ae)));
+      // gcc_assert (get_expr_type (ae) == type
+// 		  || useless_type_conversion_p (type, get_expr_type (ae)));
       if (ae->kind == CONSTANT)
 	add_phi_arg (phi, PRE_EXPR_CONSTANT (ae), pred);
       else

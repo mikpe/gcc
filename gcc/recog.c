@@ -2045,7 +2045,9 @@ extract_insn (rtx insn)
 
       icode = recog_memoized (insn);
       if (icode < 0)
+      {
 	fatal_insn_not_found (insn);
+        }
 
       recog_data.n_operands = noperands = insn_data[icode].n_operands;
       recog_data.n_alternatives = insn_data[icode].n_alternatives;

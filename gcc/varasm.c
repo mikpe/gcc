@@ -596,7 +596,7 @@ get_block_for_section (section *sect)
 {
   struct object_block *block;
   void **slot;
-
+// printf("MGB %s sect=%p\n",__func__,sect);
   if (sect == NULL)
     return NULL;
 
@@ -1204,6 +1204,7 @@ get_block_for_decl (tree decl)
 {
   section *sect;
 
+// printf("MGB %s for %p\n",__func__,decl);
   if (TREE_CODE (decl) == VAR_DECL)
     {
       /* The object must be defined in this translation unit.  */
@@ -1300,6 +1301,7 @@ make_decl_rtl (tree decl)
   gcc_assert (TREE_CODE (decl) != TYPE_DECL
 	      && TREE_CODE (decl) != LABEL_DECL);
 
+// printf("MGB %s\n",__func__);
   /* For a duplicate declaration, we can be called twice on the
      same DECL node.  Don't discard the RTL already made.  */
   if (DECL_RTL_SET_P (decl))
@@ -1320,6 +1322,7 @@ make_decl_rtl (tree decl)
       /* Let the target reassign the RTL if it wants.
 	 This is necessary, for example, when one machine specific
 	 decl attribute overrides another.  */
+// printf("MGB enc sec\n");
       targetm.encode_section_info (decl, DECL_RTL (decl), false);
 
       /* If the symbol has a SYMBOL_REF_BLOCK field, update it based
@@ -1658,6 +1661,7 @@ assemble_start_function (tree decl, const char *fnname)
 
   app_disable ();
 
+// printf ("MGB ** %s\n", __func__);
   if (CONSTANT_POOL_BEFORE_FUNCTION)
     output_constant_pool (fnname, decl);
 
@@ -1760,6 +1764,7 @@ assemble_start_function (tree decl, const char *fnname)
   /* Standard thing is just output label for the function.  */
   ASM_OUTPUT_LABEL (asm_out_file, fnname);
 #endif /* ASM_DECLARE_FUNCTION_NAME */
+// printf ("MGB ** %s done\n", __func__);
 }
 
 /* Output assembler code associated with defining the size of the
@@ -1774,6 +1779,7 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
     switch_to_section (function_section (decl));
   ASM_DECLARE_FUNCTION_SIZE (asm_out_file, fnname, decl);
 #endif
+// printf ("MGB ** %s\n", __func__);
   if (! CONSTANT_POOL_BEFORE_FUNCTION)
     {
       output_constant_pool (fnname, decl);
@@ -1795,6 +1801,7 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
       ASM_OUTPUT_LABEL (asm_out_file, crtl->subsections.hot_section_end_label);
       switch_to_section (save_text_section);
     }
+// printf ("MGB ** %s done\n", __func__);
 }
 
 /* Assemble code to leave SIZE bytes of zeros.  */
@@ -3525,6 +3532,7 @@ void
 init_varasm_status (void)
 {
   crtl->varasm.pool = create_constant_pool ();
+//   printf("MGB B%s init new pool %p\n", __func__, crtl->varasm.pool);
   crtl->varasm.deferred_constants = 0;
 }
 
@@ -3560,6 +3568,7 @@ force_const_mem (enum machine_mode mode, rtx x)
   crtl->uses_const_pool = 1;
 
   /* Decide which pool to use.  */
+// printf("MGB use (shared) blocks=%d\n", targetm.use_blocks_for_constant_p (mode, x));
   pool = (targetm.use_blocks_for_constant_p (mode, x)
 	  ? shared_constant_pool
 	  : crtl->varasm.pool);
@@ -3607,21 +3616,28 @@ force_const_mem (enum machine_mode mode, rtx x)
   else
     pool->first = pool->last = desc;
   pool->last = desc;
-
+// printf("MGB %s pool=%p last=%p\n", __func__, pool, desc);
   /* Create a string containing the label name, in LABEL.  */
   ASM_GENERATE_INTERNAL_LABEL (label, "LC", const_labelno);
+// printf("MGB %s added label LC%d\n", __func__, const_labelno);
   ++const_labelno;
 
   /* Construct the SYMBOL_REF.  Make sure to mark it as belonging to
      the constants pool.  */
+// printf("MGB %s use_obj...=%d\n", __func__, use_object_blocks_p());
+// printf("MGB %s use_bl...=%d\n", __func__, targetm.use_blocks_for_constant_p(mode,x));
   if (use_object_blocks_p () && targetm.use_blocks_for_constant_p (mode, x))
     {
+// printf("MGB %s create block symbol\n", __func__);
       section *sect = targetm.asm_out.select_rtx_section (mode, x, align);
       symbol = create_block_symbol (ggc_strdup (label),
 				    get_block_for_section (sect), -1);
     }
   else
+{
+// printf("MGB %s create symbol ref\n", __func__);
     symbol = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (label));
+}
   desc->sym = symbol;
   SYMBOL_REF_FLAGS (symbol) |= SYMBOL_FLAG_LOCAL;
   CONSTANT_POOL_ADDRESS_P (symbol) = 1;
@@ -3753,6 +3769,7 @@ output_constant_pool_1 (struct constant_descriptor_rtx *desc,
      functioning even with INSN_DELETED_P and friends.  */
 
   tmp = x;
+// printf ("MGB %s code=%d\n", __func__, GET_CODE(tmp));
   switch (GET_CODE (tmp))
     {
     case CONST:
@@ -3811,11 +3828,16 @@ mark_constant (rtx *current_rtx, void *data ATTRIBUTE_UNUSED)
   if (x == NULL_RTX || GET_CODE (x) != SYMBOL_REF)
     return 0;
 
+// printf("MGB %s marking ",__func__);
+// output_addr_const(stdout,x);
+// printf("\n");
+
   if (CONSTANT_POOL_ADDRESS_P (x))
     {
       struct constant_descriptor_rtx *desc = SYMBOL_REF_CONSTANT (x);
       if (desc->mark == 0)
 	{
+// printf ("MGB %s recurse\n", __func__);
 	  desc->mark = 1;
 	  for_each_rtx (&desc->constant, mark_constant, NULL);
 	}
@@ -3844,6 +3866,7 @@ mark_constants (rtx insn)
   if (!INSN_P (insn))
     return;
 
+// printf ("MGB %s\n", __func__);
   /* Insns may appear inside a SEQUENCE.  Only check the patterns of
      insns, not any notes that may be attached.  We don't want to mark
      a constant just because it happens to appear in a REG_EQUIV note.  */
@@ -3871,6 +3894,7 @@ mark_constant_pool (void)
 {
   rtx insn, link;
 
+// printf("MGB %s uses=%d deferred=%d\n",__func__,crtl->uses_const_pool,n_deferred_constants);
   if (!crtl->uses_const_pool && n_deferred_constants == 0)
     return;
 
@@ -3890,7 +3914,10 @@ output_constant_pool_contents (struct rtx_constant_pool *pool)
 {
   struct constant_descriptor_rtx *desc;
 
+// printf("MGB %s pool=%p first=%p\n", __func__, pool, pool->first);
   for (desc = pool->first; desc ; desc = desc->next)
+{
+// printf("MGB %s desc=%p mark=%d\n",__func__,desc,desc->mark);
     if (desc->mark)
       {
 	/* If the constant is part of an object_block, make sure that
@@ -3908,6 +3935,7 @@ output_constant_pool_contents (struct rtx_constant_pool *pool)
 	  }
       }
 }
+}
 
 /* Mark all constants that are used in the current function, then write
    out the function's private constant pool.  */
@@ -3917,6 +3945,7 @@ output_constant_pool (const char *fnname ATTRIBUTE_UNUSED,
 		      tree fndecl ATTRIBUTE_UNUSED)
 {
   struct rtx_constant_pool *pool = crtl->varasm.pool;
+// printf ("MGB %s private pool=%p\n", __func__, pool);
 
   /* It is possible for gcc to call force_const_mem and then to later
      discard the instructions which refer to the constant.  In such a
@@ -3939,7 +3968,9 @@ output_constant_pool (const char *fnname ATTRIBUTE_UNUSED,
 void
 output_shared_constant_pool (void)
 {
+// printf ("MGB out shared pool=%p\n", shared_constant_pool);
   output_constant_pool_contents (shared_constant_pool);
+// printf ("MGB %s ret\n", __func__);
 }
 
 /* Determine what kind of relocations EXP may need.  */
@@ -6611,6 +6642,7 @@ output_object_block (struct object_block *block)
   tree decl;
   rtx symbol;
 
+// printf ("MGB %s o=%p\n", __func__, block->objects);
   if (block->objects == NULL)
     return;
 
@@ -6634,12 +6666,14 @@ output_object_block (struct object_block *block)
       if (CONSTANT_POOL_ADDRESS_P (symbol))
 	{
 	  desc = SYMBOL_REF_CONSTANT (symbol);
+// printf ("MGB %s REF_CONST desc=%p\n", __func__, desc);
 	  output_constant_pool_1 (desc, 1);
 	  offset += GET_MODE_SIZE (desc->mode);
 	}
       else if (TREE_CONSTANT_POOL_ADDRESS_P (symbol))
 	{
 	  decl = SYMBOL_REF_DECL (symbol);
+// printf ("MGB %s REF_DECL decl=%p\n", __func__, decl);
 	  assemble_constant_contents (decl, XSTR (symbol, 0),
 				      get_constant_alignment (decl));
 	  offset += get_constant_size (decl);
@@ -6647,6 +6681,7 @@ output_object_block (struct object_block *block)
       else
 	{
 	  decl = SYMBOL_REF_DECL (symbol);
+// printf ("MGB %s var REF_DECL decl=%p\n", __func__, decl);
 	  assemble_variable_contents (decl, XSTR (symbol, 0), false);
 	  offset += tree_low_cst (DECL_SIZE_UNIT (decl), 1);
 	}
@@ -6659,6 +6694,7 @@ output_object_block (struct object_block *block)
 static int
 output_object_block_htab (void **slot, void *data ATTRIBUTE_UNUSED)
 {
+// printf ("MGB %s\n", __func__);
   output_object_block ((struct object_block *) (*slot));
   return 1;
 }
@@ -6668,7 +6704,9 @@ output_object_block_htab (void **slot, void *data ATTRIBUTE_UNUSED)
 void
 output_object_blocks (void)
 {
+// printf ("MGB %s\n", __func__);
   htab_traverse (object_block_htab, output_object_block_htab, NULL);
+// printf ("MGB %s done\n", __func__);
 }
 
 /* This function provides a possible implementation of the

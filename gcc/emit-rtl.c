@@ -438,18 +438,29 @@ gen_rtx_CONST_INT (enum machine_mode mode ATTRIBUTE_UNUSED, HOST_WIDE_INT arg)
   void **slot;
 
   if (arg >= - MAX_SAVED_CONST_INT && arg <= MAX_SAVED_CONST_INT)
+  {
+   // printf ("gen saved const int %d\n", (int) arg);
     return const_int_rtx[arg + MAX_SAVED_CONST_INT];
+}
 
 #if STORE_FLAG_VALUE != 1 && STORE_FLAG_VALUE != -1
   if (const_true_rtx && arg == STORE_FLAG_VALUE)
+  {
+   // printf ("gen const true\n");
     return const_true_rtx;
+}
 #endif
 
   /* Look up the CONST_INT in the hash table.  */
   slot = htab_find_slot_with_hash (const_int_htab, &arg,
 				   (hashval_t) arg, INSERT);
   if (*slot == 0)
+  {
+   // printf ("gen VOID const int\n");
     *slot = gen_rtx_raw_CONST_INT (VOIDmode, arg);
+    }
+  // else
+  // printf ("gen const %d from slot\n", (int) arg);
 
   return (rtx) *slot;
 }
@@ -693,6 +704,7 @@ validate_subreg (enum machine_mode omode, enum machine_mode imode,
   unsigned int isize = GET_MODE_SIZE (imode);
   unsigned int osize = GET_MODE_SIZE (omode);
 
+// printf ("MGB is=%d os=%d off=%d\n", isize, osize, offset);
   /* All subregs must be aligned.  */
   if (offset % osize != 0)
     return false;
@@ -1301,6 +1313,10 @@ subreg_highpart_offset (enum machine_mode outermode, enum machine_mode innermode
   unsigned int offset = 0;
   int difference = (GET_MODE_SIZE (innermode) - GET_MODE_SIZE (outermode));
 
+  if (GET_MODE_SIZE (innermode) < GET_MODE_SIZE (outermode))
+  {
+  printf("MGB innversize=%d outersize=%d\n", GET_MODE_SIZE(innermode),GET_MODE_SIZE(outermode));
+  }
   gcc_assert (GET_MODE_SIZE (innermode) >= GET_MODE_SIZE (outermode));
 
   if (difference > 0)

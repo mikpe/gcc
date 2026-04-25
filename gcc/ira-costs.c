@@ -138,6 +138,7 @@ copy_cost (rtx x, enum machine_mode mode, enum reg_class rclass, bool to_p,
   sri.extra_cost = 0;
   secondary_class = targetm.secondary_reload (to_p, x, rclass, mode, &sri);
 
+// printf("MGB check init mode %d\n", mode);
   if (ira_register_move_cost[mode] == NULL)
     ira_init_register_move_cost (mode);
 
@@ -294,6 +295,7 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 		     needs to do a copy, which is one insn.  */
 		  struct costs *pp = this_op_costs[i];
 
+//   printf("MGB %s check init mode %d\n", __func__, mode);
 		  if (ira_register_move_cost[mode] == NULL)
 		    ira_init_register_move_cost (mode);
 
@@ -540,8 +542,14 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 		{
 		  struct costs *pp = this_op_costs[i];
 
-		  if (ira_register_move_cost[mode] == NULL)
+// printf("MGB %s check init mode %d\n", __func__, mode);
+              if (ira_register_move_cost[mode] == NULL)
+// {
+// printf("MGB alloc for insn : ");
+// print_inline_rtx (stdout, insn, 0);
+// printf("\n");
 		    ira_init_register_move_cost (mode);
+// }
 
 		  for (k = 0; k < cost_classes_num; k++)
 		    {
@@ -901,8 +909,14 @@ record_address_regs (enum machine_mode mode, rtx x, int context,
 			       ALLOCNO_NUM (ira_curr_regno_allocno_map
 					    [REGNO (x)]));
 	pp->mem_cost += (ira_memory_move_cost[Pmode][rclass][1] * scale) / 2;
+// printf("MGB %s check init mode %d\n", __func__, Pmode);
 	if (ira_register_move_cost[Pmode] == NULL)
+// {
+// printf("MGB rtx : ");
+// print_inline_rtx (stdout, x, 0);
+// printf("\n");
 	  ira_init_register_move_cost (Pmode);
+// }
 	for (k = 0; k < cost_classes_num; k++)
 	  {
 	    i = cost_classes[k];
@@ -1425,8 +1439,16 @@ process_bb_node_for_hard_reg_moves (ira_loop_tree_node_t loop_tree_node)
 	continue;
       mode = ALLOCNO_MODE (a);
       hard_reg_class = REGNO_REG_CLASS (hard_regno);
+// MGB
+// printf("MGB %s insn : ", __func__);
+// print_inline_rtx (stdout, insn, 0);
+// printf("\n");
+// printf("MGB hard_regno_class=%d mode=%d[%s] rclass=%d freq=%d\n",
+// REGNO_REG_CLASS(hard_regno),mode,GET_MODE_NAME(mode),rclass,freq);
+// printf ("MGB mode=%p\n", ira_register_move_cost[mode]);
       cost = (to_p ? ira_register_move_cost[mode][hard_reg_class][rclass]
 	      : ira_register_move_cost[mode][rclass][hard_reg_class]) * freq;
+// printf("MGB cost=%d\n", cost);
       ira_allocate_and_set_costs (&ALLOCNO_HARD_REG_COSTS (a), rclass,
 				  ALLOCNO_COVER_CLASS_COST (a));
       ira_allocate_and_set_costs (&ALLOCNO_CONFLICT_HARD_REG_COSTS (a),
@@ -1597,9 +1619,16 @@ ira_costs (void)
   /* Because we could process operands only as subregs, check mode of
      the registers themselves too.  */
   FOR_EACH_ALLOCNO (a, ai)
+{
+// printf("MGB mode %d=%p have_regs=%d\n",
+// ALLOCNO_MODE(a),
+// ira_register_move_cost[ALLOCNO_MODE (a)],
+// have_regs_of_mode[ALLOCNO_MODE (a)]);
+
     if (ira_register_move_cost[ALLOCNO_MODE (a)] == NULL
 	&& have_regs_of_mode[ALLOCNO_MODE (a)])
       ira_init_register_move_cost (ALLOCNO_MODE (a));
+}
   ira_free (common_classes);
   ira_free (allocno_pref_buffer);
   ira_free (total_costs);

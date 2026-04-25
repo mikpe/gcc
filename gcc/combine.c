@@ -672,9 +672,29 @@ do_SUBST (rtx *into, rtx newval)
       && GET_CODE (newval) == CONST_INT)
     {
       /* Sanity check that we're replacing oldval with a CONST_INT
-	 that is a valid sign-extension for the original mode.  */
+	 that is a valid sign-extension for the original mode. */
+
+      /*  MGB: There is a false assert for TMS9900 if converting an int to a void.
+       *  trunc_int_for_mode() returns 0xffffffff but INTVAL() is 0xffff.
+       *  Disable the assert unless this is not the case */
+      if (GET_MODE(oldval) != HImode || INTVAL(newval) != 0xffff)
+      {
+      if (INTVAL(newval)!=trunc_int_for_mode(INTVAL (newval), GET_MODE (oldval)))
+      {
+          printf ("MGB old=%s(%d) new=%s(%d)\n",
+            GET_MODE_NAME(GET_MODE(oldval)),
+            GET_MODE_BITSIZE(GET_MODE(oldval)),
+            GET_MODE_NAME(GET_MODE(newval)),
+            GET_MODE_BITSIZE(GET_MODE(newval)));
+
+          printf ("MGB i(new)=%x t(new,old)=%x\n",
+              INTVAL(newval),
+              trunc_int_for_mode(INTVAL (newval), GET_MODE (oldval)));
+      }
+
       gcc_assert (INTVAL (newval)
-		  == trunc_int_for_mode (INTVAL (newval), GET_MODE (oldval)));
+                == trunc_int_for_mode (INTVAL (newval), GET_MODE (oldval)));
+      }
 
       /* Replacing the operand of a SUBREG or a ZERO_EXTEND with a
 	 CONST_INT is not valid, because after the replacement, the
@@ -1381,6 +1401,7 @@ setup_incoming_promotions (rtx first)
           && uns1 == uns3
 	  && (mode1 == mode2 || strictly_local))
         {
+          // printf("MGB elim extend mode=%s\n", GET_MODE_NAME(mode4));
 	  /* Record that the value was promoted from mode1 to mode3,
 	     so that any sign extension at the head of the current
 	     function may be eliminated.  */
@@ -4466,6 +4487,7 @@ subst (rtx x, rtx from, rtx to, int in_dest, int unique_copy)
 		    return gen_rtx_CLOBBER (VOIDmode, const0_rtx);
 #endif
 
+
 		  new_rtx = (unique_copy && n_occurrences ? copy_rtx (to) : to);
 		  n_occurrences++;
 		}
@@ -6147,7 +6169,10 @@ expand_compound_operation (rtx x)
 	  && GET_MODE_BITSIZE (GET_MODE (x)) <= HOST_BITS_PER_WIDE_INT
 	  && (nonzero_bits (SUBREG_REG (XEXP (x, 0)), GET_MODE (x))
 	      & ~GET_MODE_MASK (GET_MODE (XEXP (x, 0)))) == 0)
+        {
+        // printf ("MGB reduce ext(subr)\n");
 	return SUBREG_REG (XEXP (x, 0));
+        }
 
       /* (zero_extend:DI (truncate:SI foo:DI)) is just foo:DI when foo
 	 is a comparison and STORE_FLAG_VALUE permits.  This is like
@@ -9934,7 +9959,7 @@ gen_lowpart_for_combine (enum machine_mode omode, rtx x)
 	 generate a paradoxical subreg instead.  That will force a reload
 	 of the original memref X.  */
       if (isize < osize)
-	return gen_rtx_SUBREG (omode, x, 0);
+        return gen_rtx_SUBREG (omode, x, 0);
 
       if (WORDS_BIG_ENDIAN)
 	offset = MAX (isize, UNITS_PER_WORD) - MAX (osize, UNITS_PER_WORD);

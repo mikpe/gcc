@@ -1804,7 +1804,7 @@ df_print_regset (FILE *file, bitmap r)
 	    fprintf (file, " [%s]", reg_names[i]);
 	}
     }
-  fprintf (file, "\n");
+  // fprintf (file, "\n");
 }
 
 
