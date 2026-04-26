@@ -13136,11 +13136,12 @@ declspecs_add_type (location_t loc, struct c_declspecs *specs,
 	    }
 	  if (spec.expr)
 	    {
+	      tree expr = save_expr (fold_convert (void_type_node, spec.expr));
 	      if (specs->expr)
-		specs->expr = build2 (COMPOUND_EXPR, TREE_TYPE (spec.expr),
-				      specs->expr, spec.expr);
+		specs->expr = build2 (COMPOUND_EXPR, TREE_TYPE (expr),
+				      specs->expr, expr);
 	      else
-		specs->expr = spec.expr;
+		specs->expr = expr;
 	      specs->expr_const_operands &= spec.expr_const_operands;
 	    }
 	}
