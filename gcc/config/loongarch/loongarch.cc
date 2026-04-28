@@ -6969,12 +6969,14 @@ loongarch_print_operand (FILE *file, rtx op, int letter)
 	case E_V4SFmode:
 	case E_V8SImode:
 	case E_V8SFmode:
+	case E_SImode:
 	  fprintf (file, "w");
 	  break;
 	case E_V2DImode:
 	case E_V2DFmode:
 	case E_V4DImode:
 	case E_V4DFmode:
+	case E_DImode:
 	  fprintf (file, "d");
 	  break;
 	default:
@@ -12142,6 +12144,55 @@ loongarch_option_same_function_versions (string_slice str1, const_tree,
 				&feature_mask2, NULL);
 
   return feature_mask1 == feature_mask2;
+}
+
+/* Output assembly to materialize the address of the stack canary value
+   into reg.  The third argument, tmp, should be and should only be
+   non-NULL if the extreme code model is effective for the canary.  If
+   the fourth arugment, load, is true, the canary value is loaded into
+   the register.
+
+   The assembly cannot be splitted due to security reason.  */
+void
+loongarch_output_asm_load_canary (rtx reg, rtx canary, rtx tmp)
+{
+  gcc_checking_assert (ssp_operand (canary, VOIDmode));
+  gcc_checking_assert ((!tmp) == ssp_normal_operand (canary, VOIDmode));
+  gcc_checking_assert (register_operand (reg, Pmode));
+
+  rtx op[] = {reg, canary, tmp};
+  bool got = (loongarch_classify_symbol (canary) == SYMBOL_GOT_DISP);
+  bool need_ld = false;
+
+  if (la_opt_explicit_relocs != EXPLICIT_RELOCS_ALWAYS)
+    {
+      if (got)
+	output_asm_insn (tmp ? "la.global\t%0,%2,%1" : "la.global\t%0,%1",
+			 op);
+      else
+	output_asm_insn (tmp ? "la.local\t%0,%2,%1" : "la.local\t%0,%1",
+			 op);
+
+      need_ld = true;
+    }
+  else
+    {
+      output_asm_insn ("pcalau12i\t%0,%r1", op);
+      if (!tmp)
+	output_asm_insn ("ld.%v0\t%0,%0,%L1", op);
+      else
+	{
+	  output_asm_insn ("addi.d\t%2,$r0,%L1", op);
+	  output_asm_insn ("lu32i.d\t%2,%R1", op);
+	  output_asm_insn ("lu52i.d\t%2,%2,%H1", op);
+	  output_asm_insn ("ldx.d\t%0,%0,%2", op);
+	}
+
+      need_ld = got;
+    }
+
+  if (need_ld)
+    output_asm_insn ("ld.%v0\t%0,%0,0", op);
 }
 
 /* Initialize the GCC target structure.  */

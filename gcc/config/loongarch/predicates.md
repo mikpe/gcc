@@ -610,6 +610,14 @@
  (ior (match_operand 0 "register_operand")
       (match_operand 0 "symbolic_off64_operand")))
 
+;; Currently stack canary must be the global symbol __stack_chk_guard.
+(define_predicate "ssp_operand" (match_code "symbol_ref"))
+
+;; If the stack canary is within the normal/medium code model.
+(define_predicate "ssp_normal_operand"
+  (and (match_operand 0 "ssp_operand")
+       (not (match_operand 0 "symbolic_off64_operand"))))
+
 (define_predicate "equality_operator"
   (match_code "eq,ne"))
 
