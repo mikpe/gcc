@@ -26129,6 +26129,8 @@ public:
 			      vect_cost_model_location where) override;
   void finish_cost (const vector_costs *) override;
   bool better_main_loop_than_p (const vector_costs *) const override;
+  bool better_epilogue_loop_than_p (const vector_costs *other,
+				    loop_vec_info main_loop) const;
 
 private:
 
@@ -27008,6 +27010,25 @@ ix86_vector_costs::better_main_loop_than_p (const vector_costs *other) const
     return false;
 
   return vector_costs::better_main_loop_than_p (other);
+}
+
+/* Return true if THIS should be preferred over OTHER as epilog vector
+   loop when vectorizing MAIN_LOOP.  */
+
+bool
+ix86_vector_costs::better_epilogue_loop_than_p (const vector_costs *other,
+						loop_vec_info main_loop) const
+{
+  loop_vec_info this_loop_info = as_a <loop_vec_info> (this->vinfo ());
+  /* The x86 target allows for multiple vector epilogues, if THIS is
+     the suggested epilog mode of OTHER then keep the latter unless
+     THIS has a VF of one which means no further epilog needed.  */
+  int tem;
+  if (known_gt (LOOP_VINFO_VECT_FACTOR (this_loop_info), 1U)
+      && (GET_MODE_SIZE (other->suggested_epilogue_mode (tem))
+	  == GET_MODE_SIZE (this_loop_info->vector_mode)))
+    return false;
+  return vector_costs::better_epilogue_loop_than_p (other, main_loop);
 }
 
 /* Validate target specific memory model bits in VAL. */
