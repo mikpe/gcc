@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -msse2 -mno-sse4 -fno-tree-slp-vectorize" } */
+/* { dg-options "-O2 -msse2 -mno-sse4 -fno-tree-slp-vectorize --param ix86-vect-compare-costs=0" } */
 
 void foo (int * __restrict a, int *b, int s)
 {

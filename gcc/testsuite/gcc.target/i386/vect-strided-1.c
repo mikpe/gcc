@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -msse2 -mno-avx" } */
+/* { dg-options "-O2 -msse2 -mno-avx --param ix86-vect-compare-costs=0" } */
 
 void foo (int * __restrict a, int *b, int s)
 {
