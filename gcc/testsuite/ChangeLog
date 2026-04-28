@@ -1,3 +1,11 @@
+2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125019
+	* gcc.dg/pr125019.c: New testcase.
+
 2026-04-23  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
