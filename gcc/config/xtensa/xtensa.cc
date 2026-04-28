@@ -206,6 +206,7 @@ static bool xtensa_addr_space_subset_p (addr_space_t, addr_space_t);
 static rtx xtensa_addr_space_convert (rtx, tree, tree);
 static bool xtensa_addr_space_legitimate_address_p (machine_mode, rtx, bool,
 						    addr_space_t, code_helper);
+static tree xtensa_handle_force_l32_attribute (tree *, tree, tree, int, bool *);
 
 
 
@@ -389,6 +390,17 @@ static bool xtensa_addr_space_legitimate_address_p (machine_mode, rtx, bool,
 #undef TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P
 #define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P	\
 	xtensa_addr_space_legitimate_address_p
+
+TARGET_GNU_ATTRIBUTES (xtensa_attribute_table,
+{
+ /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
+      affects_type_identity, handler, exclude } */
+  { "force_l32", 0, 0, true, false, false,
+    false, xtensa_handle_force_l32_attribute, NULL }
+});
+
+#undef TARGET_ATTRIBUTE_TABLE
+#define TARGET_ATTRIBUTE_TABLE xtensa_attribute_table
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -2615,6 +2627,18 @@ xtensa_emit_add_imm (rtx dst, rtx src, HOST_WIDE_INT imm, rtx scratch,
 /* Expand a 1- or 2-byte width memory load into an aligned 4-byte width
    load with bit-extraction of the required bytes.  */
 
+static bool
+xtensa_expand_load_force_l32_1 (rtx mem)
+{
+  tree expr = MEM_EXPR (mem), type;
+
+  /* If the "force_l32" attribute is found in the tree associated with
+     mem RTX, return true.  */
+  return expr && (type = TREE_TYPE (expr))
+	 && TREE_CODE (type) == INTEGER_TYPE
+	 && lookup_attribute ("force_l32", TYPE_ATTRIBUTES (type));
+}
+
 bool
 xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
 			      machine_mode src_mode, int unsignedp)
@@ -2623,13 +2647,20 @@ xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
 
   gcc_assert (src_mode == QImode || src_mode == HImode);
 
-  /* Reject sub-word store to memory within the __force_l32 address space.  */
-  if (mem_operand (dest = operands[0], dest_mode)
-      && MEM_ADDR_SPACE (dest) == ADDR_SPACE_FORCE_L32)
+  /* Reject sub-word store to memory with "force_l32".  */
+  if (mem_operand (dest = operands[0], dest_mode))
     {
-      error ("Storing 1- and 2-byte quantities to memory within the "
-	     "%<__force_l32%> address space is not supported");
-      return false;
+      if (MEM_ADDR_SPACE (dest) == ADDR_SPACE_FORCE_L32)
+	{
+	  error ("Storing 1- and 2-byte quantities to memory within the "
+		 "%<__force_l32%> address space is not supported");
+	  return false;
+	}
+      if (xtensa_expand_load_force_l32_1 (dest))
+	warning (OPT_Wattributes,
+		 "Storing 1- and 2-byte quantities to memory with the "
+		 "%<force_l32%> attribute is not supported and the attribute "
+		 "ignored");
     }
 
   /* Exclude insns that do not load memory.  */
@@ -2638,13 +2669,31 @@ xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
     return false;
 
   /* Exclude insns that do not perform memory loading with "force_l32".  */
-  if (MEM_ADDR_SPACE (src) != ADDR_SPACE_FORCE_L32)
+  if (MEM_ADDR_SPACE (src) != ADDR_SPACE_FORCE_L32
+      && ! xtensa_expand_load_force_l32_1 (src))
     return false;
 
-  /* Addressing in the __force_l32 address space is only valid with a base
-     register without offset.  */
-  addr = XEXP (src, 0);
-  gcc_assert (REG_P (addr));
+  /* As a preprocessing, handle cases where addr is (PLUS (REG, OFFSET))
+     form.  */
+  if (REG_P (addr = XEXP (src, 0)))
+    ;
+  else if (GET_CODE (addr) == PLUS)
+    {
+      rtx op0 = XEXP (addr, 0), op1 = XEXP (addr, 1);
+      HOST_WIDE_INT v;
+
+      if (! CONST_INT_P (op1))
+	std::swap (op0, op1);
+      if (! REG_P (op0) || ! CONST_INT_P (op1))
+	return false;
+      if ((v = INTVAL (op1)) == 0)
+	addr = op0;
+      else
+	xtensa_emit_add_imm (addr = gen_reg_rtx (Pmode),
+			     op0, v, NULL_RTX, false);
+    }
+  else
+    return false;
 
   /* First, Load the aligned SImode memory containing the desired [HQ]Imode
      value.  */
@@ -5618,6 +5667,76 @@ xtensa_addr_space_legitimate_address_p (machine_mode mode, rtx addr,
     }
 
   return xtensa_legitimate_address_p (mode, addr, strict, ch);
+}
+
+/* Implement machine-specific attribute "force_l32" handler.  */
+
+static bool
+xtensa_handle_force_l32_attribute_1 (tree *type)
+{
+  /* If the type has definitions for fields, then recursively process each
+     of those types, and return true if any of the processes return true.  */
+  if (RECORD_OR_UNION_TYPE_P (*type))
+    {
+      bool f = false;
+
+      for (tree field = TYPE_FIELDS (*type);
+	   field; field = DECL_CHAIN (field))
+	f |= xtensa_handle_force_l32_attribute_1 (&TREE_TYPE (field));
+
+      return f;
+    }
+
+  /* If the type has an underlying type, it recursively processes that type
+     and returns the result.  */
+  if (TREE_TYPE (*type))
+    return xtensa_handle_force_l32_attribute_1 (&TREE_TYPE (*type));
+
+  /* If the type is INTEGER and its machine mode is [HQ]I, add the
+     "force_l32" attribute to that type and return true.  */
+  if (TREE_CODE (*type) == INTEGER_TYPE
+	   && (TYPE_MODE_RAW (*type) == QImode
+	       || TYPE_MODE_RAW (*type) == HImode))
+    {
+      tree attrs = tree_cons (get_identifier ("force_l32"),
+			      NULL, TYPE_ATTRIBUTES (*type));
+
+      *type = build_type_attribute_variant (*type, attrs);
+
+      return true;
+    }
+
+  /* If none of the above apply, simply return false.  */
+  return false;
+}
+
+static tree
+xtensa_handle_force_l32_attribute (tree *node, tree name,
+				   tree args ATTRIBUTE_UNUSED,
+				   int flags ATTRIBUTE_UNUSED,
+				   bool *no_add_attrs)
+{
+  if (DECL_P (*node))
+    {
+      if (TREE_CODE (*node) != TYPE_DECL && TREE_CODE (*node) != VAR_DECL
+	  && TREE_CODE (*node) != PARM_DECL)
+	{
+	  warning (OPT_Wattributes,
+		   "%qE attribute only applies to declarations of variables, "
+		   "function parameters, or types", name);
+	  *no_add_attrs = true;
+	}
+      /* Traverse all [HQ]Imode INTEGER types nested within the underlying
+	 type of that declaration and attempt to apply the "force_l32"
+	 attribute to them.  */
+      else if (! xtensa_handle_force_l32_attribute_1 (&TREE_TYPE (*node)))
+	{
+	  warning (OPT_Wattributes, "%qE attribute ignored", name);
+	  *no_add_attrs = true;
+	}
+    }
+
+  return NULL_TREE;
 }
 
 /* Machine-specific pass in order to replace all assignments of large
