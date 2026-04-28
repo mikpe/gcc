@@ -1804,8 +1804,11 @@ public:
   unsigned int epilogue_cost () const;
   unsigned int outside_cost () const;
   unsigned int total_cost () const;
+
   unsigned int suggested_unroll_factor () const;
   machine_mode suggested_epilogue_mode (int &masked) const;
+
+  vec_info *vinfo () const { return m_vinfo; }
   bool costing_for_scalar () const { return m_costing_for_scalar; }
 
 protected:

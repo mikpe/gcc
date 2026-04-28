@@ -26128,6 +26128,7 @@ public:
 			      tree vectype, int misalign,
 			      vect_cost_model_location where) override;
   void finish_cost (const vector_costs *) override;
+  bool better_main_loop_than_p (const vector_costs *) const override;
 
 private:
 
@@ -26985,6 +26986,28 @@ ix86_vector_costs::finish_cost (const vector_costs *scalar_costs)
     }
 
   vector_costs::finish_cost (scalar_costs);
+}
+
+/* Return true if THIS should be preferred over OTHER as main vector loop.  */
+
+bool
+ix86_vector_costs::better_main_loop_than_p (const vector_costs *other) const
+{
+  loop_vec_info this_loop_vinfo = as_a<loop_vec_info> (this->vinfo ());
+  loop_vec_info other_loop_vinfo = as_a<loop_vec_info> (other->vinfo ());
+
+  /* If the other loop is masked it does not need an epilog.  Prefer that
+     if the current loop cannot be vectorized fully with a vector
+     epilogs with at most one scalar iteration left.  */
+  if (LOOP_VINFO_NITERS_KNOWN_P (this_loop_vinfo)
+      && LOOP_VINFO_USING_PARTIAL_VECTORS_P (other_loop_vinfo)
+      && known_gt (LOOP_VINFO_VECT_FACTOR (other_loop_vinfo),
+		   LOOP_VINFO_INT_NITERS (this_loop_vinfo))
+      && (popcount_hwi (LOOP_VINFO_INT_NITERS (this_loop_vinfo) & ~1)
+	  > (param_vect_epilogues_nomask != 0)))
+    return false;
+
+  return vector_costs::better_main_loop_than_p (other);
 }
 
 /* Validate target specific memory model bits in VAL. */
