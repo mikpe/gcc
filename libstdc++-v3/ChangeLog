@@ -1,3 +1,20 @@
+2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2023.xml: Update status table.
+	* doc/html/manual/status.html: Regenerate.
+
+2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/using.xml (Flags): Update description of
+	default value for -std option.
+	* doc/html/manual/using.html: Regenerate.
+
 2026-04-22  Jonathan Wakely  <jwakely@redhat.com>
 
 	* doc/html/manual/status.html: Regenerate.
