@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -mavx512vl" } */
+/* { dg-options "-O3 -mavx512vl --param ix86-vect-compare-costs=0" } */
 
 int
 foo (int n, int* p, int* pi)

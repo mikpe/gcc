@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -mavx512bw -mtune=generic -fdump-tree-vect-optimized" } */
+/* { dg-options "-O3 -mavx512bw -mtune=generic --param ix86-vect-compare-costs=0 -fdump-tree-vect-optimized" } */
 
 int test (signed char *data, int n)
 {
