@@ -7068,29 +7068,29 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 #if GIMPLE
 /* Given two integers a and b:
    (a != b) & ((a|b) != 0) -> (a != b)
-   (a != b) | ((a|b) != 0) -> ((a|b) != 0)
-   (a == b) & ((a|b) == 0) -> ((a|b) == 0)
    (a == b) | ((a|b) == 0) -> (a == b)
+
+   (a == b) & ((a|b) == 0) -> ((a|b) == 0)
+   (a != b) | ((a|b) != 0) -> ((a|b) != 0)
+
    (a != b) & ((a|b) == 0) -> false
    (a == b) | ((a|b) != 0) -> true  */
-(simplify
- (bit_and:c (ne:c @0 @1) (ne (bit_ior @0 @1) integer_zerop))
- (ne @0 @1))
-(simplify
- (bit_ior:c (ne:c @0 @1) (ne (bit_ior@2 @0 @1) integer_zerop@3))
- (ne @2 @3))
-(simplify
- (bit_and:c (eq:c @0 @1) (eq (bit_ior@2 @0 @1) integer_zerop@3))
- (eq @2 @3))
-(simplify
- (bit_ior:c (eq:c @0 @1) (eq (bit_ior @0 @1) integer_zerop))
- (eq @0 @1))
-(simplify
- (bit_and:c (ne:c @0 @1) (eq (bit_ior @0 @1) integer_zerop))
- { constant_boolean_node (false, type); })
-(simplify
- (bit_ior:c (eq:c @0 @1) (ne (bit_ior @0 @1) integer_zerop))
- { constant_boolean_node (true, type); })
+(for bitop (bit_and bit_ior)
+     neeq  (ne      eq)
+ (simplify
+  (bitop:c (neeq @0 @1) (neeq (bit_ior @0 @1) integer_zerop))
+  (neeq @0 @1)))
+(for bitop (bit_and bit_ior)
+     neeq  (eq      ne)
+ (simplify
+  (bitop:c (neeq @0 @1) (neeq (bit_ior@2 @0 @1) integer_zerop@3))
+  (neeq @2 @3)))
+(for bitop (bit_and bit_ior)
+     neeql (ne      eq)
+     neeqr (eq      ne)
+ (simplify
+  (bitop (neeql @0 @1) (neeqr (bit_ior @0 @1) integer_zerop))
+  { constant_boolean_node (bitop==BIT_AND_EXPR, type); }))
 #endif
 
 /* These was part of minmax phiopt.  */
