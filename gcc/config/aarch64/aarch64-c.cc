@@ -356,7 +356,7 @@ aarch64_pragma_target_parse (tree args, tree pop_target)
       if (!aarch64_process_target_attr (args))
 	return false;
 
-      aarch64_override_options_internal (&global_options);
+      aarch64_override_options_internal (&global_options, &global_options_set);
     }
 
   /* args is NULL, restore to the state described in pop_target.  */

@@ -19597,12 +19597,15 @@ aarch64_override_options_after_change_1 (struct gcc_options *opts)
 }
 
 /* 'Unpack' up the internal tuning structs and update the options
-    in OPTS.  The caller must have set up selected_tune and selected_arch
+    in OPTS.  OPTS_SET can be used to avoid overriding values that
+    were explicitly set on the command line.
+    The caller must have set up selected_tune and selected_arch
     as all the other target-specific codegen decisions are
     derived from them.  */
 
 void
-aarch64_override_options_internal (struct gcc_options *opts)
+aarch64_override_options_internal (struct gcc_options *opts,
+				   struct gcc_options *opts_set)
 {
   const struct processor *tune = aarch64_get_tune_cpu (opts->x_selected_tune);
   aarch64_tune = tune->sched_core;
@@ -19734,33 +19737,31 @@ aarch64_override_options_internal (struct gcc_options *opts)
 	gcc_unreachable ();
     }
 
-  /* We don't mind passing in global_options_set here as we don't use
-     the *options_set structs anyway.  */
-  SET_OPTION_IF_UNSET (opts, &global_options_set,
+  SET_OPTION_IF_UNSET (opts, opts_set,
 		       param_sched_autopref_queue_depth, queue_depth);
 
   /* Set up parameters to be used in prefetching algorithm.  Do not
      override the defaults unless we are tuning for a core we have
      researched values for.  */
   if (aarch64_tune_params.prefetch->num_slots > 0)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_simultaneous_prefetches,
 			 aarch64_tune_params.prefetch->num_slots);
   if (aarch64_tune_params.prefetch->l1_cache_size >= 0)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_l1_cache_size,
 			 aarch64_tune_params.prefetch->l1_cache_size);
   if (aarch64_tune_params.prefetch->l1_cache_line_size >= 0)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_l1_cache_line_size,
 			 aarch64_tune_params.prefetch->l1_cache_line_size);
 
   if (aarch64_tune_params.prefetch->l1_cache_line_size >= 0)
     {
-      SET_OPTION_IF_UNSET (opts, &global_options_set,
+      SET_OPTION_IF_UNSET (opts, opts_set,
 			   param_destruct_interfere_size,
 			   aarch64_tune_params.prefetch->l1_cache_line_size);
-      SET_OPTION_IF_UNSET (opts, &global_options_set,
+      SET_OPTION_IF_UNSET (opts, opts_set,
 			   param_construct_interfere_size,
 			   aarch64_tune_params.prefetch->l1_cache_line_size);
     }
@@ -19768,28 +19769,28 @@ aarch64_override_options_internal (struct gcc_options *opts)
     {
       /* For a generic AArch64 target, cover the current range of cache line
 	 sizes.  */
-      SET_OPTION_IF_UNSET (opts, &global_options_set,
+      SET_OPTION_IF_UNSET (opts, opts_set,
 			   param_destruct_interfere_size,
 			   256);
-      SET_OPTION_IF_UNSET (opts, &global_options_set,
+      SET_OPTION_IF_UNSET (opts, opts_set,
 			   param_construct_interfere_size,
 			   64);
     }
 
   if (aarch64_tune_params.prefetch->l2_cache_size >= 0)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_l2_cache_size,
 			 aarch64_tune_params.prefetch->l2_cache_size);
   if (!aarch64_tune_params.prefetch->prefetch_dynamic_strides)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_prefetch_dynamic_strides, 0);
   if (aarch64_tune_params.prefetch->minimum_stride >= 0)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_prefetch_minimum_stride,
 			 aarch64_tune_params.prefetch->minimum_stride);
 
   /* Use the alternative scheduling-pressure algorithm by default.  */
-  SET_OPTION_IF_UNSET (opts, &global_options_set,
+  SET_OPTION_IF_UNSET (opts, opts_set,
 		       param_sched_pressure_algorithm,
 		       SCHED_PRESSURE_MODEL);
 
@@ -19803,7 +19804,7 @@ aarch64_override_options_internal (struct gcc_options *opts)
 
   /* Enforce that interval is the same size as size so the mid-end does the
      right thing.  */
-  SET_OPTION_IF_UNSET (opts, &global_options_set,
+  SET_OPTION_IF_UNSET (opts, opts_set,
 		       param_stack_clash_protection_probe_interval,
 		       guard_size);
 
@@ -19828,13 +19829,13 @@ aarch64_override_options_internal (struct gcc_options *opts)
   /* Avoid loop-dependant FMA chains.  */
   if (aarch64_tune_params.extra_tuning_flags
       & AARCH64_EXTRA_TUNE_AVOID_CROSS_LOOP_FMA)
-    SET_OPTION_IF_UNSET (opts, &global_options_set, param_avoid_fma_max_bits,
+    SET_OPTION_IF_UNSET (opts, opts_set, param_avoid_fma_max_bits,
 			 512);
 
   /* Consider fully pipelined FMA in reassociation.  */
   if (aarch64_tune_params.extra_tuning_flags
       & AARCH64_EXTRA_TUNE_FULLY_PIPELINED_FMA)
-    SET_OPTION_IF_UNSET (opts, &global_options_set, param_fully_pipelined_fma,
+    SET_OPTION_IF_UNSET (opts, opts_set, param_fully_pipelined_fma,
 			 1);
 
   /* If dispatch scheduling is enabled, the dispatch_constraints in the
@@ -19845,7 +19846,7 @@ aarch64_override_options_internal (struct gcc_options *opts)
 
   /* Enable possible unprofitable vectorization.  */
   if (opts->x_flag_aarch64_max_vectorization)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 param_vect_allow_possibly_not_worthwhile_vectorizations,
 			 1);
 
@@ -19853,7 +19854,7 @@ aarch64_override_options_internal (struct gcc_options *opts)
      whichever one is not default.  If both are set then prefer the param flag
      over the parameters.  */
   if (opts->x_autovec_preference != AARCH64_AUTOVEC_DEFAULT)
-    SET_OPTION_IF_UNSET (opts, &global_options_set,
+    SET_OPTION_IF_UNSET (opts, opts_set,
 			 aarch64_autovec_preference,
 			 opts->x_autovec_preference);
 
@@ -20167,7 +20168,7 @@ aarch64_override_options (void)
   if (aarch64_track_speculation)
     flag_shrink_wrap = 0;
 
-  aarch64_override_options_internal (&global_options);
+  aarch64_override_options_internal (&global_options, &global_options_set);
 
   /* Save these options as the default ones in case we push and pop them later
      while processing functions with potential target attributes.  */
@@ -20224,14 +20225,15 @@ initialize_aarch64_code_model (struct gcc_options *opts)
 }
 
 /* Implements TARGET_OPTION_RESTORE.  Restore the backend codegen decisions
-   using the information saved in PTR.  */
+   using the information saved in PTR.  OPTS_SET can be used to avoid
+   overriding values that were explicitly set on the command line.  */
 
 static void
 aarch64_option_restore (struct gcc_options *opts,
-			struct gcc_options * /* opts_set */,
+			struct gcc_options *opts_set,
 			struct cl_target_option * /* ptr */)
 {
-  aarch64_override_options_internal (opts);
+  aarch64_override_options_internal (opts, opts_set);
 }
 
 /* Implement TARGET_OPTION_PRINT.  */
@@ -20351,7 +20353,7 @@ aarch64_set_current_function (tree fndecl)
       aarch64_set_asm_isa_flags (base_flags
 				 | aarch64_feature_flags (new_isa_mode));
 
-      aarch64_override_options_internal (&global_options);
+      aarch64_override_options_internal (&global_options, &global_options_set);
       new_tree = build_target_option_node (&global_options,
 					   &global_options_set);
       DECL_FUNCTION_SPECIFIC_TARGET (fndecl) = new_tree;
@@ -20907,7 +20909,7 @@ aarch64_option_valid_attribute_p (tree fndecl, tree, tree args, int)
   /* Set up any additional state.  */
   if (ret)
     {
-      aarch64_override_options_internal (&global_options);
+      aarch64_override_options_internal (&global_options, &global_options_set);
       new_target = build_target_option_node (&global_options,
 					     &global_options_set);
     }
@@ -21184,7 +21186,7 @@ aarch64_option_valid_version_attribute_p (tree fndecl, tree, tree args, int)
   /* Set up any additional state.  */
   if (ret)
     {
-      aarch64_override_options_internal (&global_options);
+      aarch64_override_options_internal (&global_options, &global_options_set);
       new_target = build_target_option_node (&global_options,
 					     &global_options_set);
     }

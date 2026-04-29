@@ -1140,7 +1140,8 @@ void aarch64_expand_tag_memory (rtx, rtx, rtx);
 #endif /* RTX_CODE */
 
 bool aarch64_process_target_attr (tree);
-void aarch64_override_options_internal (struct gcc_options *);
+void aarch64_override_options_internal (struct gcc_options *,
+					struct gcc_options *);
 
 const char *aarch64_general_mangle_builtin_type (const_tree);
 void aarch64_general_init_builtins (void);
