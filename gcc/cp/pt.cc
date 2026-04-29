@@ -16902,24 +16902,29 @@ tsubst_splice_scope (tree t, tree args, tsubst_flags_t complain, tree in_decl)
   tree r = tsubst (SPLICE_SCOPE_EXPR (t), args, complain, in_decl);
   if (r == error_mark_node)
     return r;
+  const bool type_p = SPLICE_SCOPE_TYPE_P (t);
   if (dependent_splice_p (r))
-    return make_splice_scope (r, SPLICE_SCOPE_TYPE_P (t));
-  if (SPLICE_SCOPE_TYPE_P (t) && ctad_template_p (r))
+    r = make_splice_scope (r, type_p);
+  else if (type_p && ctad_template_p (r))
     r = make_template_placeholder (r);
-  if (SPLICE_SCOPE_TYPE_P (t)
+  if (type_p
       ? !valid_splice_type_p (r)
       : !valid_splice_scope_p (r))
     {
       if (complain & tf_error)
 	{
 	  const location_t loc = EXPR_LOCATION (SPLICE_SCOPE_EXPR (t));
-	  if (SPLICE_SCOPE_TYPE_P (t))
+	  if (type_p)
 	    error_at (loc, "%qE is not usable in a splice type", r);
 	  else
 	    error_at (loc, "%qE is not usable in a splice scope", r);
 	}
       return error_mark_node;
     }
+
+  if (type_p)
+    r = cp_build_qualified_type (r, cp_type_quals (t) | cp_type_quals (r),
+				 complain | tf_ignore_bad_quals);
 
   return r;
 }
