@@ -3321,16 +3321,10 @@ ix86_place_single_vector_set (rtx dest, rtx src, bitmap bbs,
 	}
     }
 
-  /* CONST_VECTOR load no larger than integer register
-
-     (set (reg:V2QI 294)
-	  (const_vector:V2QI [(const_int 0 [0]) repeated x2]))
-
-     can use integer load.  */
+  /* NB: CONST_VECTOR load is generated and handled in x86_cse.  */
   if (load
-      && load->kind == X86_CSE_VEC_DUP
-      && (!CONST_VECTOR_P (src)
-	  || GET_MODE_SIZE (GET_MODE (dest)) > UNITS_PER_WORD))
+      && !CONST_VECTOR_P (src)
+      && load->kind == X86_CSE_VEC_DUP)
     {
       /* Get the source from LOAD as (reg:SI 99) in
 
@@ -3644,7 +3638,9 @@ replace_vector_const (machine_mode vector_mode, rtx vector_const,
 
       rtx replace;
       /* Replace the source operand with VECTOR_CONST.  */
-      if (SUBREG_P (src) || mode == vector_mode)
+      if (SUBREG_P (src)
+	  || mode == vector_mode
+	  || CONST_INT_P (vector_const))
 	replace = vector_const;
       else
 	{
@@ -3686,6 +3682,11 @@ replace_vector_const (machine_mode vector_mode, rtx vector_const,
 	  print_rtl_single (dump_file, insn);
 	}
       SET_SRC (set) = replace;
+      if (CONST_INT_P (replace))
+	{
+	  dest = gen_rtx_SUBREG (scalar_mode, dest, 0);
+	  SET_DEST (set) = dest;
+	}
       /* Drop possible dead definitions.  */
       PATTERN (insn) = set;
       INSN_CODE (insn) = -1;
@@ -4701,7 +4702,8 @@ pass_x86_cse::x86_cse (void)
     if (load->count >= load->threshold)
       {
 	machine_mode mode;
-	rtx reg, broadcast_source, broadcast_reg;
+	rtx reg, broadcast_reg;
+	rtx broadcast_source = nullptr;
 	replaced = true;
 	switch (load->kind)
 	  {
@@ -4716,9 +4718,61 @@ pass_x86_cse::x86_cse (void)
 	    load->broadcast_reg = broadcast_reg;
 	    break;
 
+	  case X86_CSE_VEC_DUP:
+	    if (CONST_INT_P (load->val)
+		&& (load->val == CONST0_RTX (load->mode)
+		    || load->size <= UNITS_PER_WORD))
+	      {
+		/* Generate CONST_VECTOR load.  */
+		mode = ix86_get_vector_cse_mode (load->size,
+						 load->mode);
+
+		if (load->val == CONST0_RTX (load->mode))
+		  broadcast_source = CONST0_RTX (mode);
+		else if (load->val == CONSTM1_RTX (load->mode))
+		  broadcast_source = CONSTM1_RTX (mode);
+		else
+		  {
+		    int nunits = GET_MODE_NUNITS (mode);
+		    rtvec v = rtvec_alloc (nunits);
+		    for (int j = 0; j < nunits ; j++)
+		      RTVEC_ELT (v, j) = load->val;
+		    broadcast_source = gen_rtx_CONST_VECTOR (mode, v);
+		  }
+
+		/* NB: Zero CONST_VECTOR load works for MMX and XMM
+		   registers.  */
+		if (load->size <= UNITS_PER_WORD)
+		  {
+		    /* Convert CONST_VECTOR load no larger than integer
+		       register:
+
+		       (set (reg:V2SI 106)
+			    (const_vector:V2SI [(const_int 1 [1]) repeated x2]))
+
+		       to constant integer load:
+
+		       (set (subreg:DI (reg:V2SI 106 [ _20 ]) 0)
+			    (const_int 4294967297 [0x100000001]))
+		       */
+		    machine_mode int_mode
+		      = int_mode_for_mode (mode).require ();
+		    broadcast_source = simplify_subreg (int_mode,
+							broadcast_source,
+							mode, 0);
+		    gcc_assert (broadcast_source != nullptr);
+		    replace_vector_const (mode, broadcast_source,
+					  load->insns, int_mode);
+		    /* Keep redundant constant integer load.  */
+		    load->broadcast_source = nullptr;
+		    load->broadcast_reg = nullptr;
+		    break;
+		  }
+	      }
+	    /* FALLTHRU */
+
 	  case X86_CSE_CONST0_VECTOR:
 	  case X86_CSE_CONSTM1_VECTOR:
-	  case X86_CSE_VEC_DUP:
 	    mode = ix86_get_vector_cse_mode (load->size, load->mode);
 	    broadcast_reg = gen_reg_rtx (mode);
 	    if (load->def_insn)
@@ -4743,18 +4797,7 @@ pass_x86_cse::x86_cse (void)
 		  broadcast_source = CONSTM1_RTX (mode);
 		  break;
 		case X86_CSE_VEC_DUP:
-		  if (CONST_INT_P (load->val)
-		      && GET_MODE_SIZE (mode) <= UNITS_PER_WORD)
-		    {
-		      /* CONST_VECTOR load no larger than integer
-			 register size can use integer load.  */
-		      int nunits = GET_MODE_NUNITS (mode);
-		      rtvec v = rtvec_alloc (nunits);
-		      for (int j = 0; j < nunits ; j++)
-			RTVEC_ELT (v, j) = load->val;
-		      broadcast_source = gen_rtx_CONST_VECTOR (mode, v);
-		    }
-		  else
+		  if (!broadcast_source)
 		    {
 		      reg = gen_reg_rtx (load->mode);
 		      broadcast_source = gen_rtx_VEC_DUPLICATE (mode,
@@ -4844,9 +4887,13 @@ pass_x86_cse::x86_cse (void)
 					      updated_gnu_tls_insns,
 					      updated_gnu2_tls_insns);
 		  break;
+		case X86_CSE_VEC_DUP:
+		  /* Keep redundant constant integer load.  */
+		  if (!load->broadcast_reg)
+		    break;
+		  /* FALLTHRU */
 		case X86_CSE_CONST0_VECTOR:
 		case X86_CSE_CONSTM1_VECTOR:
-		case X86_CSE_VEC_DUP:
 		  ix86_place_single_vector_set (load->broadcast_reg,
 						load->broadcast_source,
 						load->bbs,
