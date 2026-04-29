@@ -6175,7 +6175,13 @@ namespace __format
 	format(_Rg&& __rg, basic_format_context<_Out, _CharT>& __fc) const
 	{
 	  using _Range = remove_reference_t<_Rg>;
-	  if constexpr (__format::__simply_formattable_range<_Range, _CharT>)
+	  if constexpr (ranges::contiguous_range<_Rg>)
+	    {
+	      const span<__format::__maybe_const<_Tp, _CharT>>
+		__spn(ranges::data(__rg), size_t(ranges::distance(__rg)));
+	      return _M_format(__spn, __fc);
+	    }
+	  else if constexpr (__format::__simply_formattable_range<_Range, _CharT>)
 	    return _M_format<const _Range>(__rg, __fc);
 	  else
 	    return _M_format(__rg, __fc);
