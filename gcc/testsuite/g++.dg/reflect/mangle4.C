@@ -20,7 +20,6 @@ template<random_access_iterator I>
 }
 
 int main() {
-  // ??? It's not clear which of these should error.
-  std::default_accessor<int>       _ = std::iterator_accessor<int*>();
-  std::default_accessor<const int> _ = std::iterator_accessor<int*>(); // { dg-error "conversion" }
+  std::default_accessor<int>       _ = std::iterator_accessor<int*>(); // { dg-error "conversion" }
+  std::default_accessor<const int> _ = std::iterator_accessor<int*>();
 }

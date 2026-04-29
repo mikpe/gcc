@@ -8912,7 +8912,8 @@ valid_splice_scope_p (const_tree t)
 {
   return (CLASS_TYPE_P (t)
 	  || TREE_CODE (t) == ENUMERAL_TYPE
-	  || TREE_CODE (t) == NAMESPACE_DECL);
+	  || TREE_CODE (t) == NAMESPACE_DECL
+	  || TREE_CODE (t) == SPLICE_SCOPE);
 }
 
 /* Return true if T is a valid result of the splice in a class member access,

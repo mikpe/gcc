@@ -16904,8 +16904,8 @@ tsubst_splice_scope (tree t, tree args, tsubst_flags_t complain, tree in_decl)
     return r;
   const bool type_p = SPLICE_SCOPE_TYPE_P (t);
   if (dependent_splice_p (r))
-    return make_splice_scope (r, type_p);
-  if (type_p && ctad_template_p (r))
+    r = make_splice_scope (r, type_p);
+  else if (type_p && ctad_template_p (r))
     r = make_template_placeholder (r);
   if (type_p
       ? !valid_splice_type_p (r)
@@ -16924,6 +16924,10 @@ tsubst_splice_scope (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	}
       return error_mark_node;
     }
+
+  if (type_p)
+    r = cp_build_qualified_type (r, cp_type_quals (t) | cp_type_quals (r),
+				 complain | tf_ignore_bad_quals);
 
   return r;
 }
