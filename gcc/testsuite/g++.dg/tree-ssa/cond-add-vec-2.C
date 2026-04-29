@@ -17,4 +17,4 @@ vector2_u64 unsigned long g2 (vector2_u64 unsigned long x) {
 	 : (vector2_u64 unsigned long){40, 40}; 
 }
 
-/* { dg-final { scan-tree-dump-times "VEC_COND_EXPR" 2 "forwprop1" } } */
+/* { dg-final { scan-tree-dump-times "VEC_COND_EXPR|COND_ADD" 2 "forwprop1" } } */

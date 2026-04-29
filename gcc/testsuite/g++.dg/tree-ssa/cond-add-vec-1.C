@@ -34,3 +34,4 @@ f3 (vector4_u8 unsigned char x)
 }
 
 /* { dg-final { scan-tree-dump-not "VEC_COND_EXPR" "forwprop1" } } */
+/* { dg-final { scan-tree-dump-not "COND_ADD" "forwprop1" } } */
