@@ -1,6 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-mgfni -mavx512bw -mavx512f -O3 -march=x86-64 -mtune=generic" } */
-/* { dg-final { scan-assembler-times "vgf2p8affineqb" 12 } } */
+/* { dg-options "-mgfni -mavx512bw -mavx512f -O3 -march=x86-64 -mtune=generic --param vect-epilogues-nomask=0" } */
+/* { dg-final { scan-assembler-times "vgf2p8affineqb" 6 } } */
 
 /* Based on a test case from Andrew Pinski */
 
