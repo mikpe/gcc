@@ -889,6 +889,11 @@ protection when @option{-fstack-protector} is used.
 The minimum size of variables taking part in stack slot sharing when not
 optimizing.
 
+@paindex max-niter-dominators-walk
+@item max-niter-dominators-walk
+Maximum number of dominators BBs to walk when simplifying loop bounds
+and conditions.
+
 @paindex max-jump-thread-duplication-stmts
 @item max-jump-thread-duplication-stmts
 Maximum number of statements allowed in a block that needs to be
