@@ -4639,6 +4639,10 @@ cxx_eval_call_expression (const constexpr_ctx *ctx, tree t,
 	  /* Only cache a permitted result of a constant expression.  */
 	  if (cacheable && !reduced_constant_expression_p (result))
 	    cacheable = false;
+
+	  /* Only cache a result without contract violations.  */
+	  if (cacheable && ctx->global->contract_statement)
+	    cacheable = false;
 	}
       else
 	/* Couldn't get a function copy to evaluate.  */
