@@ -289,12 +289,9 @@ namespace
   // The state used by atomic waiting and notifying functions.
   struct __waitable_state
   {
-    // Don't use std::hardware_destructive_interference_size here because we
-    // don't want the layout of library types to depend on compiler options.
-    static constexpr auto _S_align = 64;
-
     // Count of threads blocked waiting on this state.
-    alignas(_S_align) __platform_wait_t _M_waiters = 0;
+    alignas(std::hardware_destructive_interference_size)
+      __platform_wait_t _M_waiters = 0;
 
 #ifndef _GLIBCXX_HAVE_PLATFORM_WAIT
     mutex _M_mtx;
@@ -310,7 +307,8 @@ namespace
     // If we can't do a platform wait on the atomic variable itself,
     // we use this member as a proxy for the atomic variable and we
     // use this for waiting and notifying functions instead.
-    alignas(_S_align) __platform_wait_t _M_ver = 0;
+    alignas(std::hardware_destructive_interference_size)
+      __platform_wait_t _M_ver = 0;
 
 #ifndef _GLIBCXX_HAVE_PLATFORM_WAIT
     __condvar _M_cv;
