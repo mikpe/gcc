@@ -1,3 +1,10 @@
+2026-04-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/chrono (chrono::__detail::__get_leap_second_info):
+	Update expiry date for leap seconds list.
+	* src/c++20/tzdb.cc (tzdb_list::_Node::_S_read_leap_seconds):
+	Likewise.
+
 2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
