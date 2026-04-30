@@ -10992,6 +10992,33 @@ riscv_modes_tieable_p (machine_mode mode1, machine_mode mode2)
      E.g. V2SI and DI are not tieable.  */
   if (riscv_vector_mode_p (mode1) != riscv_vector_mode_p (mode2))
     return false;
+
+  /* We don't allow tuple vector modes to be tied to any vector mode
+     that has different inner mode.  It may cause unnecessary type
+     conversions.
+     E.g.  RVVMF2x4HI and RVVM2DI are not tieable, but
+     RVVM1x4QI and RVVM1QI are tieable.  */
+  if (riscv_tuple_mode_p (mode1) || riscv_tuple_mode_p (mode2))
+  {
+    machine_mode subpart_mode1, subpart_mode2;
+    if (riscv_tuple_mode_p (mode1))
+    {
+      subpart_mode1 = riscv_vector::get_subpart_mode (mode1);
+      subpart_mode1 = GET_MODE_INNER (subpart_mode1);
+    }
+    else
+      subpart_mode1 = GET_MODE_INNER (mode1);
+    if (riscv_tuple_mode_p (mode2))
+    {
+      subpart_mode2 = riscv_vector::get_subpart_mode (mode2);
+      subpart_mode2 = GET_MODE_INNER (subpart_mode2);
+    }
+    else
+      subpart_mode2 = GET_MODE_INNER (mode2);
+    if (subpart_mode1 != subpart_mode2)
+      return false;
+  }
+
   return (mode1 == mode2
 	  || !(GET_MODE_CLASS (mode1) == MODE_FLOAT
 	       && GET_MODE_CLASS (mode2) == MODE_FLOAT));
