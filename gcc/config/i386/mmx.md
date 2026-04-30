@@ -598,7 +598,7 @@
 (define_insn_and_split "*mov<mode>_imm"
   [(set (match_operand:V_16_32_64 0 "memory_operand" "=m")
 	(match_operand:V_16_32_64 1 "x86_64_const_vector_operand" "i"))]
-  ""
+  "!TARGET_LCP_STALL || <MODE>mode != V2QImode"
   "#"
   "&& reload_completed"
   [(set (match_dup 0) (match_dup 1))]
