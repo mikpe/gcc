@@ -93,9 +93,13 @@ RANLIB_FLAGS = @ranlib_flags@
 AWK = @AWK@
 
 # Should we build position-independent host code?
-enable_host_pie = @enable_host_pie@
 PICFLAG = @PICFLAG@
+
+# The linker flag for the above.
 LD_PICFLAG = @LD_PICFLAG@
+
+# Flags to determine code coverage.
+COVERAGE_FLAGS = @coverage_flags@
 
 SHELL = @SHELL@
 PWD_COMMAND = $${PWDCMD-pwd}
@@ -204,12 +208,12 @@ RTSDIR = rts$(subst /,_,$(MULTISUBDIR))
 # Link flags used to build gnat tools.  By default we prefer to statically
 # link with libgcc to avoid a dependency on shared libgcc (which is tricky
 # to deal with as it may conflict with the libgcc provided by the system).
-GCC_LINK_FLAGS=-static-libstdc++ -static-libgcc
+GCC_LINK_FLAGS = -static-libstdc++ -static-libgcc $(COVERAGE_FLAGS)
 
 # We need to link against libbacktrace because diagnostics use it
 LIBBACKTRACE = ../../../libbacktrace/.libs/libbacktrace.a
 
-ifneq ($(enable_host_pie),)
+ifeq (@enable_host_pie@,yes)
 LIBIBERTY = ../../../libiberty/pic/libiberty.a
 LIBGNAT   = ../$(RTSDIR)/libgnat_pic.a
 else
@@ -245,7 +249,7 @@ all.indirect: Makefile ../gnat1$(exeext)
 INTERNAL_CFLAGS = @CROSS@ -DIN_GCC
 
 # This is the variable actually used when we compile.
-ALL_CFLAGS = $(INTERNAL_CFLAGS) $(T_CFLAGS) $(CFLAGS)
+ALL_CFLAGS = $(T_CFLAGS) $(CFLAGS) $(INTERNAL_CFLAGS) $(COVERAGE_FLAGS)
 
 # Likewise.
 ALL_CPPFLAGS = $(CPPFLAGS)

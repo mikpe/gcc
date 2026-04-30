@@ -162,9 +162,7 @@ PICFLAG = @PICFLAG@
 # The linker flag for the above.
 LD_PICFLAG = @LD_PICFLAG@
 
-# Flags to determine code coverage. When coverage is disabled, this will
-# contain the optimization flags, as you normally want code coverage
-# without optimization.
+# Flags to determine code coverage.
 COVERAGE_FLAGS = @coverage_flags@
 coverageexts = .{gcda,gcno}
 
