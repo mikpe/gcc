@@ -722,13 +722,21 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 			}
 		    }
 
-		  /* If the alternative actually allows memory, make
-		     things a bit cheaper since we won't need an extra
-		     insn to load it.  */
-		  pp->mem_cost
-		    = ((out_p ? ira_memory_move_cost[mode][op_class][0] : 0)
-		       + (in_p ? ira_memory_move_cost[mode][op_class][1] : 0)
-		       - allows_mem[i]) * frequency;
+		  if (op_class == NO_REGS)
+		    /* Although we don't need insn to reload from
+		       memory, still accessing memory is usually more
+		       expensive than a register.  */
+		    pp->mem_cost = frequency;
+		  else
+		    /* If the alternative actually allows memory, make
+		       things a bit cheaper since we won't need an
+		       extra insn to load it.  */
+		    pp->mem_cost
+		      = ((out_p
+			  ? ira_memory_move_cost[mode][op_class][0] : 0)
+			 + (in_p
+			    ? ira_memory_move_cost[mode][op_class][1] : 0)
+			 - allows_mem[i]) * frequency;
 
 		  /* If we have assigned a class to this allocno in
 		     our first pass, add a cost to this alternative
@@ -739,16 +747,28 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 		      enum reg_class pref_class = pref[COST_INDEX (REGNO (op))];
 
 		      if (pref_class == NO_REGS)
+			{
+			  if (op_class != NO_REGS)
+			    alt_cost
+			      += ((out_p
+				   ? ira_memory_move_cost[mode][op_class][0]
+				   : 0)
+				  + (in_p
+				     ? ira_memory_move_cost[mode][op_class][1]
+				     : 0));
+			}
+		      else if (op_class == NO_REGS)
 			alt_cost
 			  += ((out_p
-			       ? ira_memory_move_cost[mode][op_class][0] : 0)
+			       ? ira_memory_move_cost[mode][pref_class][0]
+			       : 0)
 			      + (in_p
-				 ? ira_memory_move_cost[mode][op_class][1]
+				 ? ira_memory_move_cost[mode][pref_class][1]
 				 : 0));
 		      else if (ira_reg_class_intersect
 			       [pref_class][op_class] == NO_REGS)
-			alt_cost
-			  += ira_register_move_cost[mode][pref_class][op_class];
+			alt_cost += (ira_register_move_cost
+				     [mode][pref_class][op_class]);
 		    }
 		  if (REGNO (ops[i]) != REGNO (ops[j])
 		      && ! find_reg_note (insn, REG_DEAD, op))
