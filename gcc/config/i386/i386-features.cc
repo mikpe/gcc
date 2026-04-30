@@ -3222,6 +3222,7 @@ enum x86_cse_kind
 {
   X86_CSE_CONST0_VECTOR,
   X86_CSE_CONSTM1_VECTOR,
+  X86_CSE_CONST_VECTOR,
   X86_CSE_VEC_DUP,
   X86_CSE_TLS_GD,
   X86_CSE_TLS_LD_BASE,
@@ -3240,6 +3241,9 @@ struct redundant_pattern
   rtx tlsdesc_val;
   /* The inner scalar mode.  */
   machine_mode mode;
+  /* The destination mode which can be changed to the integer mode of
+     the same time.  */
+  machine_mode dest_mode;
   /* The instruction which sets the inner scalar.  Nullptr if the inner
      scalar is applied to the whole function, instead of within the same
      block.  */
@@ -3271,9 +3275,11 @@ ix86_place_single_vector_set (rtx dest, rtx src, bitmap bbs,
 			      redundant_pattern *load = nullptr)
 {
   basic_block bb = nearest_common_dominator_for_set (CDI_DOMINATORS, bbs);
-  /* For X86_CSE_VEC_DUP, don't place the vector set outside of the loop
-     to avoid extra spills.  */
-  if (!load || load->kind != X86_CSE_VEC_DUP)
+  /* For X86_CSE_VEC_DUP and X86_CSE_CONST_VECTOR, don't place the vector
+     set outside of the loop to avoid extra spills.  */
+  if (!load
+      || (load->kind != X86_CSE_VEC_DUP
+	  && load->kind != X86_CSE_CONST_VECTOR))
     {
       while (bb->loop_father->latch
 	     != EXIT_BLOCK_PTR_FOR_FN (cfun))
@@ -3281,6 +3287,8 @@ ix86_place_single_vector_set (rtx dest, rtx src, bitmap bbs,
 				      bb->loop_father->header);
     }
 
+  if (CONST_INT_P (src))
+    dest = gen_rtx_SUBREG (load->dest_mode, dest, 0);
   rtx set = gen_rtx_SET (dest, src);
 
   rtx_insn *insn = BB_HEAD (bb);
@@ -3321,10 +3329,7 @@ ix86_place_single_vector_set (rtx dest, rtx src, bitmap bbs,
 	}
     }
 
-  /* NB: CONST_VECTOR load is generated and handled in x86_cse.  */
-  if (load
-      && !CONST_VECTOR_P (src)
-      && load->kind == X86_CSE_VEC_DUP)
+  if (load && load->kind == X86_CSE_VEC_DUP)
     {
       /* Get the source from LOAD as (reg:SI 99) in
 
@@ -3729,54 +3734,174 @@ ix86_broadcast_inner (rtx op, machine_mode mode,
   if (nunits < 2)
     return nullptr;
 
+  bool const_vector_p = CONST_VECTOR_P (op);
+  bool duplicated = GET_CODE (op) == VEC_DUPLICATE;
+  rtx orig_op = op;
+  if (!const_vector_p)
+    {
+      /* Check CONST_VECTOR in REG_EQUAL note.  */
+      rtx equal = find_reg_equal_equiv_note (*insn_p);
+      if (equal)
+	{
+	  equal = XEXP (equal, 0);
+	  const_vector_p = CONST_VECTOR_P (equal);
+	  /* Use CONST_VECTOR in REG_EQUAL note.  */
+	  if (const_vector_p)
+	    {
+	      /* Handle REG_EQUAL note in:
+
+		 (insn 7 5 12 2 (set (subreg:V8SI (reg:V4DI 100) 0)
+			(vec_duplicate:V8SI (reg:SI 102)))
+		    (expr_list:REG_DEAD (reg:SI 102)
+		       (expr_list:REG_EQUAL (const_vector:V4DI [
+			  (const_int -1 [0xffffffffffffffff]) repeated x4]) (nil))))
+
+		 NB: Don't treat it as CONST_VECTOR since EQUAL isn't
+		 supported by ISAs as in gcc.target/i386/pr40957.c.  */
+	      if (GET_MODE (equal) != mode)
+		const_vector_p = false;
+	      else
+		op = equal;
+	    }
+	}
+    }
+
+  machine_mode inner_mode = GET_MODE_INNER (mode);
+
+  if (const_vector_p)
+    {
+      bool int_load_p = GET_MODE_SIZE (mode) <= UNITS_PER_WORD;
+      *kind_p = X86_CSE_CONST_VECTOR;
+      if (int_load_p)
+	{
+	  /* This CONST_VECTOR load can be converted to constant
+	     integer load.  */
+	  *scalar_mode_p = mode;
+	  *insn_p = nullptr;
+	  return op;
+	}
+
+      /* This CONST_VECTOR is wider than the integer register.  */
+      rtx first = XVECEXP (op, 0, 0);
+
+      if (duplicated)
+	{
+	  /* Check if CONST_VECTOR in REG_EQUAL note is duplicated in
+
+	     (insn 10 7 12 2 (set (reg:V8SI 128)
+		(vec_duplicate:V8SI (vec_select:V2SI (reg:V4SI 180)
+			(parallel [(const_int 0 [0])
+				   (const_int 1 [0x1])]))))
+		  (expr_list:REG_EQUAL (const_vector:V8SI [
+		    (const_int 0 [0])
+		    (const_int 34 [0x22])
+		    (const_int 0 [0])
+		    (const_int 34 [0x22])
+		    (const_int 0 [0])
+		    (const_int 34 [0x22])
+		    (const_int 0 [0])
+		    (const_int 34 [0x22])])(nil)))
+
+	   */
+
+	  bool duplicated_const_vector = true;
+	  for (int i = 1; i < nunits; ++i)
+	    {
+	      rtx tmp = XVECEXP (op, 0, i);
+	      if (!rtx_equal_p (tmp, first))
+		{
+		  duplicated_const_vector = false;
+		  break;
+		}
+	    }
+
+	  if (duplicated_const_vector)
+	    {
+	      bool const_double_p = CONST_DOUBLE_P (first);
+	      /* Force the floating point constant to memory.  */
+	      if (const_double_p)
+		first = validize_mem (force_const_mem (inner_mode, first));
+
+	      if (const_double_p || CONST_INT_P (first))
+		{
+		  /* Handle
+
+		     (insn 7 6 8 2 (set (reg:V4SF 99)
+			  (vec_duplicate:V4SF (mem/u/c:SF (symbol_ref/u:DI ("*.LC2") [flags 0x2]) [0  S4 A32])))
+			(expr_list:REG_EQUAL (const_vector:V4SF [
+			   (const_double:SF 3.4e+1 [0x0.88p+6]) repeated x4]) (nil)))
+
+		     and
+
+		     (insn 14 15 16 3 (set (reg:V4SI 116)
+			  (vec_duplicate:V4SI (reg:SI 117)))
+		       (expr_list:REG_EQUAL (const_vector:V4SI [
+			  (const_int 34 [0x22]) repeated x4]) (nil)))
+
+		   */
+		  *kind_p = X86_CSE_VEC_DUP;
+		  *insn_p = nullptr;
+		  *scalar_mode_p = inner_mode;
+		  return first;
+		}
+	    }
+
+	  op = orig_op;
+	}
+      else
+	{
+	  /* Only native CONST_VECTOR is allowed.  */
+	  if (orig_op != op)
+	    return nullptr;
+
+	  /* Check if VEC_DUPLICATE can be used.  */
+	  for (int i = 1; i < nunits; ++i)
+	    {
+	      rtx tmp = XVECEXP (op, 0, i);
+	      /* Vector duplicate value.  */
+	      if (!rtx_equal_p (tmp, first))
+		return nullptr;
+	    }
+
+	  /* Use the inner mode to handle
+	     (const_vector:V2QI [(const_int 0 [0]) repeated x2])
+	   */
+	  *scalar_mode_p = inner_mode;
+	  *insn_p = nullptr;
+	  return first;
+	}
+    }
+
+  if (!duplicated)
+    return nullptr;
+
   *kind_p = X86_CSE_VEC_DUP;
 
-  rtx reg;
-  if (GET_CODE (op) == VEC_DUPLICATE)
+  /* Only
+
+     (vec_duplicate:V4SI (reg:SI 99))
+     (vec_duplicate:V2DF (mem/u/c:DF (symbol_ref/u:DI ("*.LC1") [flags 0x2]) [0 S8 A64]))
+
+     are supported.  Set OP to the broadcast source by default.  */
+  op = XEXP (op, 0);
+  rtx reg = op;
+  if (SUBREG_P (op)
+      && SUBREG_BYTE (op) == 0
+      && !paradoxical_subreg_p (op))
+    reg = SUBREG_REG (op);
+  if (!REG_P (reg))
     {
-      /* Only
-	  (vec_duplicate:V4SI (reg:SI 99))
-	  (vec_duplicate:V2DF (mem/u/c:DF (symbol_ref/u:DI ("*.LC1") [flags 0x2]) [0  S8 A64]))
-	 are supported.  Set OP to the broadcast source by default.  */
-      op = XEXP (op, 0);
-      reg = op;
-      if (SUBREG_P (op)
-	  && SUBREG_BYTE (op) == 0
-	  && !paradoxical_subreg_p (op))
-	reg = SUBREG_REG (op);
-      if (!REG_P (reg))
+      if (MEM_P (op)
+	  && SYMBOL_REF_P (XEXP (op, 0))
+	  && CONSTANT_POOL_ADDRESS_P (XEXP (op, 0)))
 	{
-	  if (MEM_P (op)
-	      && SYMBOL_REF_P (XEXP (op, 0))
-	      && CONSTANT_POOL_ADDRESS_P (XEXP (op, 0)))
-	    {
-	      /* Handle constant broadcast from memory.  */
-	      *scalar_mode_p = GET_MODE_INNER (mode);
-	      *insn_p = nullptr;
-	      return op;
-	    }
-	  return nullptr;
+	  /* Handle constant broadcast from memory.  */
+	  *scalar_mode_p = inner_mode;
+	  *insn_p = nullptr;
+	  return op;
 	}
+      return nullptr;
     }
-  else if (CONST_VECTOR_P (op))
-    {
-      rtx first = XVECEXP (op, 0, 0);
-      for (int i = 1; i < nunits; ++i)
-	{
-	  rtx tmp = XVECEXP (op, 0, i);
-	  /* Vector duplicate value.  */
-	  if (!rtx_equal_p (tmp, first))
-	    return nullptr;
-	}
-      /* Use the inner mode to handle
-	   (const_vector:V2QI [(const_int 0 [0]) repeated x2])
-       */
-      *scalar_mode_p = GET_MODE_INNER (mode);
-      *insn_p = nullptr;
-      return first;
-    }
-  else
-    return nullptr;
 
   mode = GET_MODE (op);
 
@@ -4356,7 +4481,7 @@ private:
   unsigned int x86_cse (void);
   bool candidate_gnu_tls_p (rtx_insn *, attr_tls64);
   bool candidate_gnu2_tls_p (rtx, attr_tls64);
-  bool candidate_vector_p (rtx);
+  bool candidate_vector_p (rtx, rtx_insn *);
   rtx_insn *tls_set_insn_from_symbol (const_rtx, const_rtx);
 }; // class pass_x86_cse
 
@@ -4538,7 +4663,7 @@ pass_x86_cse::candidate_gnu2_tls_p (rtx set, attr_tls64 tls64)
   INSN is a vector broadcast instruction.  */
 
 bool
-pass_x86_cse::candidate_vector_p (rtx set)
+pass_x86_cse::candidate_vector_p (rtx set, rtx_insn *insn)
 {
   rtx src = SET_SRC (set);
   rtx dest = SET_DEST (set);
@@ -4551,6 +4676,7 @@ pass_x86_cse::candidate_vector_p (rtx set)
   if (!REG_P (dest) && !SUBREG_P (dest))
     return false;
 
+  def_insn = insn;
   val = ix86_broadcast_inner (src, mode, &scalar_mode, &kind,
 			      &def_insn);
   return val ? true : false;
@@ -4584,6 +4710,7 @@ pass_x86_cse::x86_cse (void)
   unsigned int i;
   auto_bitmap updated_gnu_tls_insns;
   auto_bitmap updated_gnu2_tls_insns;
+  auto_bitmap call_bbs;
 
   df_set_flags (DF_DEFER_INSN_RESCAN);
 
@@ -4601,13 +4728,19 @@ pass_x86_cse::x86_cse (void)
 	     them.  */
 	  unsigned int threshold = 2;
 
+	  bool call_p = CALL_P (insn);
 	  rtx set = single_set (insn);
-	  if (!set && !CALL_P (insn))
+	  if (!set && !call_p)
 	    continue;
 
 	  tlsdesc_val = nullptr;
 
 	  attr_tls64 tls64 = get_attr_tls64 (insn);
+
+	  /* NB: TLS calls preserve all registers.  */
+	  if (call_p && tls64 == TLS64_NONE)
+	    bitmap_set_bit (call_bbs, BLOCK_FOR_INSN (insn)->index);
+
 	  switch (tls64)
 	    {
 	    case TLS64_GD:
@@ -4633,7 +4766,7 @@ pass_x86_cse::x86_cse (void)
 		continue;
 
 	      /* Check for vector broadcast.  */
-	      if (candidate_vector_p (set))
+	      if (candidate_vector_p (set, insn))
 		break;
 	      continue;
 	    }
@@ -4644,7 +4777,8 @@ pass_x86_cse::x86_cse (void)
 		&& load->kind == kind
 		&& load->mode == scalar_mode
 		&& (load->bb == bb
-		    || kind != X86_CSE_VEC_DUP
+		    || (kind != X86_CSE_VEC_DUP
+			&& kind != X86_CSE_CONST_VECTOR)
 		    /* Non all 0s/1s vector load must be in the same
 		       basic block if it is in a recursive call.  */
 		    || !recursive_call_p)
@@ -4677,12 +4811,19 @@ pass_x86_cse::x86_cse (void)
 	     instruction basic block and the instruction kind.  */
 	  load = new redundant_pattern;
 
+	  /* Convert CONST_VECTOR load no larger than integer register
+	     to constant integer load even if there is no redundant
+	     CONST_VECTOR load.  */
+	  if (CONST_VECTOR_P (val))
+	    threshold = 1;
+
 	  load->val = copy_rtx (val);
 	  if (tlsdesc_val)
 	    load->tlsdesc_val = copy_rtx (tlsdesc_val);
 	  else
 	    load->tlsdesc_val = nullptr;
 	  load->mode = scalar_mode;
+	  load->dest_mode = mode;
 	  load->size = GET_MODE_SIZE (mode);
 	  load->def_insn = def_insn;
 	  load->count = 1;
@@ -4724,10 +4865,13 @@ pass_x86_cse::x86_cse (void)
 		    || load->size <= UNITS_PER_WORD))
 	      {
 		/* Generate CONST_VECTOR load.  */
+	      case X86_CSE_CONST_VECTOR:
 		mode = ix86_get_vector_cse_mode (load->size,
 						 load->mode);
 
-		if (load->val == CONST0_RTX (load->mode))
+		if (CONST_VECTOR_P (load->val))
+		  broadcast_source = load->val;
+		else if (load->val == CONST0_RTX (load->mode))
 		  broadcast_source = CONST0_RTX (mode);
 		else if (load->val == CONSTM1_RTX (load->mode))
 		  broadcast_source = CONSTM1_RTX (mode);
@@ -4757,15 +4901,46 @@ pass_x86_cse::x86_cse (void)
 		       */
 		    machine_mode int_mode
 		      = int_mode_for_mode (mode).require ();
+		    load->dest_mode = int_mode;
 		    broadcast_source = simplify_subreg (int_mode,
 							broadcast_source,
 							mode, 0);
 		    gcc_assert (broadcast_source != nullptr);
-		    replace_vector_const (mode, broadcast_source,
-					  load->insns, int_mode);
-		    /* Keep redundant constant integer load.  */
-		    load->broadcast_source = nullptr;
-		    load->broadcast_reg = nullptr;
+
+		    bool keep_const_int_load = false;
+		    if (!bitmap_empty_p (call_bbs))
+		      {
+			bitmap_iterator bi;
+			unsigned int id;
+			EXECUTE_IF_SET_IN_BITMAP (load->bbs, 0, id, bi)
+			  if (bitmap_bit_p (call_bbs, id))
+			    {
+			      /* NB: Constant integer load is faster
+				 than save and restore an integer
+				 register when crossing a function call.
+			       */
+			      keep_const_int_load = true;
+			      break;
+			    }
+		      }
+
+		    if (keep_const_int_load)
+		      {
+			/* Keep constant integer load.  */
+			replace_vector_const (mode, broadcast_source,
+					      load->insns, int_mode);
+			load->broadcast_source = nullptr;
+			load->broadcast_reg = nullptr;
+		      }
+		    else
+		      {
+			broadcast_reg = gen_reg_rtx (mode);
+			reg = gen_reg_rtx (load->mode);
+			replace_vector_const (mode, broadcast_reg,
+					      load->insns, load->mode);
+			load->broadcast_source = broadcast_source;
+			load->broadcast_reg = broadcast_reg;
+		      }
 		    break;
 		  }
 	      }
@@ -4796,6 +4971,7 @@ pass_x86_cse::x86_cse (void)
 		case X86_CSE_CONSTM1_VECTOR:
 		  broadcast_source = CONSTM1_RTX (mode);
 		  break;
+		case X86_CSE_CONST_VECTOR:
 		case X86_CSE_VEC_DUP:
 		  if (!broadcast_source)
 		    {
@@ -4887,6 +5063,7 @@ pass_x86_cse::x86_cse (void)
 					      updated_gnu_tls_insns,
 					      updated_gnu2_tls_insns);
 		  break;
+		case X86_CSE_CONST_VECTOR:
 		case X86_CSE_VEC_DUP:
 		  /* Keep redundant constant integer load.  */
 		  if (!load->broadcast_reg)
