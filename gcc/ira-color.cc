@@ -2107,8 +2107,9 @@ assign_hard_reg (ira_allocno_t a, bool retry_p)
 				  full_costs[hri] += cost;
 				}
 			    };
+			  enum machine_mode a_mode = ALLOCNO_MODE (a);
 			  for (int r = hard_regno;
-			       r >= 0 && (int) end_hard_regno (mode, r) > hard_regno;
+			       r >= 0 && (int) end_hard_regno (a_mode, r) > hard_regno;
 			       r--)
 			    note_conflict (r);
 			  for (int r = hard_regno + 1;
