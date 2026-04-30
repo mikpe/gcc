@@ -5108,8 +5108,37 @@ loongarch_split_vector_move (rtx dest, rtx src)
   machine_mode mode = GET_MODE (dest);
   bool lsx_p = LSX_SUPPORTED_MODE_P (mode);
 
-  if (FP_REG_RTX_P (dest))
+  if (FP_REG_RTX_P (dest) && GP_REG_RTX_P (src))
     {
+    /* Since the LoongArch architecture has not yet implemented vector
+       parameter passing, the following operations are required when
+       a function returns a vector type that needs to be passed to a
+       vector register.
+
+       As shown in the following instruction sequence:
+
+       (call_insn 5 6 12 2 (parallel [
+	     (set (reg:V2DI 4 $r4)
+		  (call (mem:SI (symbol_ref:DI ("bar"))
+				(const_int 0 [0])))
+		  (clobber (reg:SI 1 $r1)))]))
+       (insn 12 5 7 2 (set (reg:V2DI 32 $f0)
+			   (reg:V2DI 4 $r4)))
+
+       insn 12 will be split here as follows:
+       (insn 15 5 16 2 (set (reg:V2DI 32 $f0)
+			    (vec_merge:V2DI
+				(vec_duplicate:V2DI (reg:DI 4 $r4))
+				(reg:V2DI 32 $f0)
+				(const_int 1 [0x1]))))
+       (insn 16 15 7 2 (set (reg:V2DI 32 $f0)
+			    (vec_merge:V2DI
+				(vec_duplicate:V2DI (reg:DI 5 $r5 [+8 ]))
+				(reg:V2DI 32 $f0)
+				(const_int 2 [0x2]))))
+
+       This can be reproduced with the test case lsx-mov-2.c.
+     */
       gcc_assert (!MEM_P (src));
 
       rtx (*gen_vinsgr2vr_d) (rtx, rtx, rtx, rtx);
@@ -5138,8 +5167,12 @@ loongarch_split_vector_move (rtx dest, rtx src)
 					  GEN_INT (1 << index)));
 	}
     }
-  else if (FP_REG_RTX_P (src))
+  else if (FP_REG_RTX_P (src) && GP_REG_RTX_P (dest))
     {
+      /* Transfer vector data from vector registers to GPRs, generally
+	 for vector argument handling.
+	 This can be reproduced with the test case lsx-mov-1.c.
+       */
       gcc_assert (!MEM_P (dest));
 
       rtx (*gen_vpickve2gr_d) (rtx, rtx, rtx);
@@ -5166,7 +5199,7 @@ loongarch_split_vector_move (rtx dest, rtx src)
 	  emit_insn (gen_vpickve2gr_d (d, new_src, GEN_INT (index)));
 	}
     }
-  else
+  else if (GP_REG_RTX_P (src) && GP_REG_RTX_P (dest))
     {
       /* This part of the code is designed to handle the following situations:
 	 (set (reg:V2DI 4 $r4)

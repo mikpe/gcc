@@ -368,8 +368,7 @@ along with GCC; see the file COPYING3.  If not see
   ((unsigned int) ((int) (REGNO) - LASX_REG_FIRST) < LASX_REG_NUM)
 
 #define FP_REG_RTX_P(X) (REG_P (X) && FP_REG_P (REGNO (X)))
-#define LSX_REG_RTX_P(X) (REG_P (X) && LSX_REG_P (REGNO (X)))
-#define LASX_REG_RTX_P(X) (REG_P (X) && LASX_REG_P (REGNO (X)))
+#define GP_REG_RTX_P(X) (REG_P (X) && GP_REG_P (REGNO (X)))
 
 /* Select a register mode required for caller save of hard regno REGNO.  */
 #define HARD_REGNO_CALLER_SAVE_MODE(REGNO, NREGS, MODE) \
