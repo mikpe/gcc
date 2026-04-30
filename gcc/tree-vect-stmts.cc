@@ -5935,7 +5935,7 @@ bool
 vect_nop_conversion_p (stmt_vec_info stmt_info)
 {
   gassign *stmt = dyn_cast <gassign *> (stmt_info->stmt);
-  if (!stmt)
+  if (!stmt || STMT_VINFO_DATA_REF (stmt_info))
     return false;
 
   tree lhs = gimple_assign_lhs (stmt);

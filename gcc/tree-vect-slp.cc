@@ -9454,15 +9454,21 @@ vect_bb_slp_scalar_cost (bb_vec_info vinfo,
 
       gcc_assert (!gimple_visited_p (stmt->stmt));
 
-      gcc_assert (vect_orig_stmt (stmt) == stmt);
-      stmt_vec_info orig_stmt_info = stmt;
-
-      do
+      if (vect_nop_conversion_p (stmt))
+	;
+      /* For single-argument PHIs assume coalescing which means zero
+	 cost for the scalar and the vector PHIs.  This avoids
+	 artificially favoring the vector path (but may pessimize it
+	 in some cases).  */
+      else if (is_a <gphi *> (stmt->stmt)
+	       && gimple_phi_num_args (as_a <gphi *> (stmt->stmt)) == 1)
+	;
+      else
 	{
 	  vect_cost_for_stmt kind;
-	  if (STMT_VINFO_DATA_REF (orig_stmt_info))
+	  if (STMT_VINFO_DATA_REF (stmt))
 	    {
-	      data_reference_p dr = STMT_VINFO_DATA_REF (orig_stmt_info);
+	      data_reference_p dr = STMT_VINFO_DATA_REF (stmt);
 	      tree base = get_base_address (DR_REF (dr));
 	      /* When the scalar access is to a non-global not
 		 address-taken decl that is not BLKmode assume we can
@@ -9472,27 +9478,17 @@ vect_bb_slp_scalar_cost (bb_vec_info vinfo,
 		  && !TREE_ADDRESSABLE (base)
 		  && DECL_MODE (base) != BLKmode)
 		kind = scalar_stmt;
-	      else if (DR_IS_READ (STMT_VINFO_DATA_REF (orig_stmt_info)))
+	      else if (DR_IS_READ (STMT_VINFO_DATA_REF (stmt)))
 		kind = scalar_load;
 	      else
 		kind = scalar_store;
 	    }
-	  else if (vect_nop_conversion_p (orig_stmt_info))
-	    continue;
-	  /* For single-argument PHIs assume coalescing which means zero
-	     cost for the scalar and the vector PHIs.  This avoids
-	     artificially favoring the vector path (but may pessimize it
-	     in some cases).  */
-	  else if (is_a <gphi *> (orig_stmt_info->stmt)
-		   && gimple_phi_num_args
-		   (as_a <gphi *> (orig_stmt_info->stmt)) == 1)
-	    continue;
 	  else
 	    kind = scalar_stmt;
+	  /* Cost each scalar stmt only once.  */
 	  gimple_set_visited (stmt->stmt, true);
-	  record_stmt_cost (cost_vec, 1, kind, orig_stmt_info,
-			    NULL_TREE, 0, vect_body);
-	} while (false);
+	  record_stmt_cost (cost_vec, 1, kind, stmt, NULL_TREE, 0, vect_body);
+	}
 
       /* Now walk relevant parts of the SSA use-def graph.  */
       slp_oprnds child_ops (stmt);
