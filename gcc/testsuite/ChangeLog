@@ -1,3 +1,30 @@
+2026-04-29  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-04-15  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/122976
+	* gcc.dg/tree-ssa/pr122976.c: New test.
+
+2026-04-29  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-04-14  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/124777
+	* gcc.dg/ipa/pr124777.c: New test.
+
+2026-04-29  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-04-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/124933
+	* lib/target-supports.exp (v8_1m_main_fp_hard): New arm
+	architecture variant.
+	* gcc.target/arm/pr124933.c: New test.
+	* gcc.target/arm/armv8_2-fp16-move-1.c: Update expected output.
+
 2026-04-27  Surya Kumari Jangala  <jskumari@linux.ibm.com>
 
 	Backported from master:

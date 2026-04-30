@@ -1,3 +1,11 @@
+2026-04-29  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR ada/125044
+	* exp_ch6.ads (Needs_BIP_Task_Actuals): Adjust description.
+	* exp_ch6.adb (Expand_N_Extended_Return_Statement): Move activation
+	chain for every build-in-place function with task formal parameters
+	when the type of the return object might have tasks.
+
 2026-04-12  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/124836
