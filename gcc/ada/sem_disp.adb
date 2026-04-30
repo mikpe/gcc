@@ -306,9 +306,7 @@ package body Sem_Disp is
          Ctrl_Type := Check_Controlling_Type (Etype (Formal), Subp);
 
          if Present (Ctrl_Type) then
-
-            --  Obtain the full type in case we are looking at an incomplete
-            --  view.
+            --  Use the full view for an incomplete type
 
             if Ekind (Ctrl_Type) = E_Incomplete_Type
               and then Present (Full_View (Ctrl_Type))
@@ -316,8 +314,7 @@ package body Sem_Disp is
                Ctrl_Type := Full_View (Ctrl_Type);
             end if;
 
-            --  When controlling type is concurrent and declared within a
-            --  generic or inside an instance use corresponding record type.
+            --  Use the corresponding record type for a concurrent type
 
             if Is_Concurrent_Type (Ctrl_Type)
               and then Present (Corresponding_Record_Type (Ctrl_Type))
@@ -392,6 +389,22 @@ package body Sem_Disp is
          Ctrl_Type := Check_Controlling_Type (Etype (Subp), Subp);
 
          if Present (Ctrl_Type) then
+            --  Use the full view for an incomplete type
+
+            if Ekind (Ctrl_Type) = E_Incomplete_Type
+              and then Present (Full_View (Ctrl_Type))
+            then
+               Ctrl_Type := Full_View (Ctrl_Type);
+            end if;
+
+            --  Use the corresponding record type for a concurrent type
+
+            if Is_Concurrent_Type (Ctrl_Type)
+              and then Present (Corresponding_Record_Type (Ctrl_Type))
+            then
+               Ctrl_Type := Corresponding_Record_Type (Ctrl_Type);
+            end if;
+
             if Ctrl_Type = Typ then
                Set_Has_Controlling_Result (Subp);
 
