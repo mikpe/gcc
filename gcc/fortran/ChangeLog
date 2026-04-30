@@ -1,3 +1,7 @@
+2026-04-30  Release Manager
+
+	* GCC 16.1.0 released.
+
 2026-04-21  Paul Thomas  <pault@gcc.gnu.org>
 
 	PR fortran/117077

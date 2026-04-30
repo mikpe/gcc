@@ -1,3 +1,7 @@
+2026-04-30  Release Manager
+
+	* GCC 16.1.0 released.
+
 2026-02-21  Jakub Jelinek  <jakub@redhat.com>
 
 	* Makefile.am (all-local): Depend on stmp-libatomic and otherwise

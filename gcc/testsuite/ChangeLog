@@ -1,3 +1,7 @@
+2026-04-30  Release Manager
+
+	* GCC 16.1.0 released.
+
 2026-04-27  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:

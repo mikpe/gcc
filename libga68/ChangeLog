@@ -1,3 +1,7 @@
+2026-04-30  Release Manager
+
+	* GCC 16.1.0 released.
+
 2026-03-21  Jose E. Marchesi  <jemarch@gnu.org>
 
 	* ga68-math.c: New file.

@@ -1,3 +1,7 @@
+2026-04-30  Release Manager
+
+	* GCC 16.1.0 released.
+
 2026-04-21  Iain Buclaw  <ibuclaw@gdcproject.org>
 
 	* dmd/MERGE: Merge upstream dmd d1fbbb1a2f.
