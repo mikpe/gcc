@@ -1,3 +1,8 @@
+2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* sanitizer_common/sanitizer_platform_limits_posix.cpp: Cherry picked
+	from LLVM commit 3dc4fd6dd41100f051a63642f449b16324389c96.
+
 2026-04-28  Maximilian Ciric  <max.ciric@gmail.com>
 
 	* configure.tgt: Enable HWASAN support for RISC-V target.

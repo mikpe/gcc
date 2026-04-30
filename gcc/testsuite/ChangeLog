@@ -1,3 +1,134 @@
+2026-04-29  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
+
+	PR tree-optimization/113379
+	* gcc.dg/tree-ssa/pr113379.c: New test.
+
+2026-04-29  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* g++.dg/tree-ssa/cond-add-vec-1.C: Add a check to make sure COND_ADD
+	is not there either.
+	* g++.dg/tree-ssa/cond-add-vec-2.C: Change the check for VEC_COND_EXPR
+	to allow for COND_ADD.
+
+2026-04-29  Wilco Dijkstra  <wilco.dijkstra@arm.com>
+
+	* gcc.target/aarch64/pr123791.c: Add -Wno-deprecated.
+	* gcc.target/aarch64/pr78733.c: Likewise.
+	* gcc.target/aarch64/pr79041-2.c: Likewise.
+	* gcc.target/aarch64/pr94530.c: Likewise.
+
+2026-04-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125080
+	* gcc.dg/torture/pr125080.c: New testcase.
+
+2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125035
+	* g++.dg/modules/merge-22.h: New test.
+	* g++.dg/modules/merge-22_a.H: New test.
+	* g++.dg/modules/merge-22_b.C: New test.
+
+2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124582
+	PR c++/123810
+	* g++.dg/modules/anon-4.h: New test.
+	* g++.dg/modules/anon-4_a.H: New test.
+	* g++.dg/modules/anon-4_b.C: New test.
+
+2026-04-29  Andre Vehreschild  <vehre@gcc.gnu.org>
+
+	PR fortran/125021
+	* gfortran.dg/coarray/pr125021.f90: New test.
+
+2026-04-29  Xin Liu  <liulxx@hygon.cn>
+	    Zhaoling Bao  <baozhaoling@hygon.cn>
+
+	* gcc.target/i386/builtin_target.c: Add handling for HYGON CPUs by
+	validating the vendor and invoking HYGON-specific CPU detection.
+	* gcc.target/i386/funcspec-56.inc: Test function target attribute on
+	{arch,tune}=c86-4g-m{4,6,7}.
+	* g++.target/i386/mv33.C: New test.
+
+2026-04-29  Julian Brown  <julian@codesourcery.com>
+
+	* c-c++-common/gomp/declare-mapper-15.c: New test.
+	* c-c++-common/gomp/declare-mapper-16.c: New test.
+	* g++.dg/gomp/declare-mapper-1.C: Adjust expected scan output.
+
+2026-04-29  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-u16.c: Add asm check
+	for vmsgtu.vx.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-u32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-u64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-u8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-u16.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-u32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-u64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-u8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-u16.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-u32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-u64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-u8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_binary.h: Add test
+	helper macro.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_binary_data.h: Add test
+	data for run test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgtu-run-1-u16.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgtu-run-1-u32.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgtu-run-1-u64.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgtu-run-1-u8.c: New test.
+
+2026-04-29  Raghesh Aloor  <Raghesh.Aloor@amd.com>
+
+	* gcc.dg/vect/bb-slp-sum-of-diffs.c: New test.
+
+2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/reflect/compare12.C: New test.
+
+2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/uglification_plugin.cc (plugin_check_tree): Walk
+	REQUIRES_EXPR_PARMS of REQUIRES_EXPR.
+	(plugin_walk_decl): Walk TEMPLATE_PARMS_CONSTRAINTS using
+	plugin_check_tree.  Walk DECL_INITIAL of CONCEPT_DECL as well.
+	* g++.dg/plugin/uglification.C: Add tests for non-uglified names
+	in lambda parameters, lambda captures and requires expressions.
+
+2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/plugin.exp: Set PLUGIN_DEFAULT_REPO.  Add
+	set*module*exports* to plugin_test_list.  Remove *.gcm files
+	at the start and end.
+	* g++.dg/plugin/std_module_exports_plugin.cc: New file.
+	* g++.dg/plugin/std-module-exports-c++20.C: New test.
+	* g++.dg/plugin/std-module-exports-c++23.C: New test.
+	* g++.dg/plugin/std-module-exports-c++26.C: New test.
+
+2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/plugin.exp (plugin_test_list): Add uglification tests.
+	* g++.dg/plugin/uglification_plugin.cc: New file.
+	* g++.dg/plugin/uglification.C: New test.
+	* g++.dg/plugin/uglification-c++98.C: New test.
+	* g++.dg/plugin/uglification-c++11.C: New test.
+	* g++.dg/plugin/uglification-c++14.C: New test.
+	* g++.dg/plugin/uglification-c++17.C: New test.
+	* g++.dg/plugin/uglification-c++20.C: New test.
+	* g++.dg/plugin/uglification-c++23.C: New test.
+	* g++.dg/plugin/uglification-c++26.C: New test.
+
+2026-04-29  Alexandre Oliva  <oliva@adacore.com>
+
+	* gcc.dg/shouldfail-abort.c: New.
+	* gcc.dg/shouldfail-exit-neg.c: New.
+	* gcc.dg/shouldfail-exit-pos.c: New.
+	* gcc.dg/shouldfail-return-neg.c: New.
+	* gcc.dg/shouldfail-return-pos.c: New.
+
 2026-04-28  David Malcolm  <dmalcolm@redhat.com>
 
 	PR analyzer/124217

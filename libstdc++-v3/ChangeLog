@@ -1,3 +1,30 @@
+2026-04-29  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* testsuite/29_atomics/headers/stdatomic.h/macros.cc:
+	Copy of ../atomic/macros.cc with header include changed.
+
+2026-04-29  Alexandre Oliva  <oliva@adacore.com>
+
+	PR libstdc++/124657
+	* include/experimental/bits/simd_x86.h
+	(__is_x86_ps<_Tp>): New.  Replace is_same_v<_Tp, float> with it.
+	(__is_x86_pd<_Tp>): New.  Replace is_same_v<_Tp, double> with it.
+
+2026-04-29  Alexandre Oliva  <oliva@adacore.com>
+
+	PR libstdc++/124657
+	* include/experimental/bits/simd.h (__intrinsic_type::type):
+	Map long double to double.
+
+2026-04-29  Alexandre Oliva  <oliva@adacore.com>
+
+	* include/std/limits (__glibcxx_integral_traps): Set to
+	false.  Update comments.
+	(numeric_limits<bool>::traps): Drop comments.
+	* config/cpu/arm/cpu_defines.h: Remove.
+	* config/cpu/powerpc/cpu_defines.h: Likewise.
+	* configure.host (cpu_defines_dir): Adjust.
+
 2026-04-28  Jonathan Wakely  <jwakely@redhat.com>
 
 	* doc/xml/manual/status_cxx2023.xml: Update status table.
