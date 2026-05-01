@@ -8319,10 +8319,10 @@ void foo (void)
   int f = 0; // No warning, f used
   int g = f = 5;
   (void) g;
-  int h = 0; // No warning, preincrement used
+  int h = 0; // No warning, preincrement result used
   int i = ++h;
   (void) i;
-  int j = 0; // No warning, postdecrement used
+  int j = 0; // No warning, postdecrement result used
   int k = j--;
   (void) k;
   int l = 0; // No warning, l used
