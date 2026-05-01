@@ -1,5 +1,5 @@
 /* { dg-do compile { target fentry } } */
-/* { dg-options "-O2 -pg" } */
+/* { dg-options "-O2 -pg -fno-pie" } */
 /* Keep labels and directives ('.cfi_startproc', '.cfi_endproc').  */
 /* { dg-final { check-function-bodies "**" "" "" { target "*-*-*" } {^\t?\.} } } */
 

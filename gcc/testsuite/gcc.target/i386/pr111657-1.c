@@ -1,5 +1,5 @@
 /* { dg-do assemble } */
-/* { dg-options "-O2 -mno-sse -mtune=generic -save-temps" } */
+/* { dg-options "-O2 -mno-sse -mtune=generic -save-temps -fno-pie" } */
 /* Keep labels and directives ('.cfi_startproc', '.cfi_endproc').  */
 /* { dg-final { check-function-bodies "**" "" "" { target lp64 } {^\t?\.} } } */
 
