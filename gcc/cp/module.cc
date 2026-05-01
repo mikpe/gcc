@@ -12621,7 +12621,7 @@ trees_in::is_matching_decl (tree existing, tree decl, bool is_typedef)
 	  goto mismatch;
 	}
 
-      tree e_type = TREE_TYPE (e_inner);
+      tree& e_type = TREE_TYPE (e_inner);
       tree d_type = TREE_TYPE (d_inner);
 
       for (tree e_args = TYPE_ARG_TYPES (e_type),
@@ -12660,18 +12660,13 @@ trees_in::is_matching_decl (tree existing, tree decl, bool is_typedef)
 	      dump (dumper::MERGE)
 		&& dump ("Propagating instantiated noexcept to %N", existing);
 	      gcc_checking_assert (existing == e_inner);
-	      TREE_TYPE (existing) = d_type;
+	      e_type = build_exception_variant (e_type, d_spec);
 
 	      /* Propagate to existing clones.  */
 	      tree clone;
 	      FOR_EACH_CLONE (clone, existing)
-		{
-		  if (TREE_TYPE (clone) == e_type)
-		    TREE_TYPE (clone) = d_type;
-		  else
-		    TREE_TYPE (clone)
-		      = build_exception_variant (TREE_TYPE (clone), d_spec);
-		}
+		TREE_TYPE (clone)
+		  = build_exception_variant (TREE_TYPE (clone), d_spec);
 	    }
 	}
       else if (!DECL_MAYBE_DELETED (d_inner)
@@ -12694,7 +12689,7 @@ trees_in::is_matching_decl (tree existing, tree decl, bool is_typedef)
 	  gcc_checking_assert (existing == e_inner);
 	  FNDECL_USED_AUTO (existing) = true;
 	  DECL_SAVED_AUTO_RETURN_TYPE (existing) = TREE_TYPE (e_type);
-	  TREE_TYPE (existing) = change_return_type (TREE_TYPE (d_type), e_type);
+	  e_type = change_return_type (TREE_TYPE (d_type), e_type);
 	}
       else if (d_undeduced && !e_undeduced)
 	/* EXISTING was deduced, leave it alone.  */;
