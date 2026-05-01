@@ -66,4 +66,6 @@ particular CPU name.  Permissible values for this option are:
 
 @samp{andes-45-series},
 
+@samp{arc-v-rmx-100-series},
+
 and all valid options for @option{-mcpu=}.

@@ -58,6 +58,7 @@ RISCV_TUNE("mips-p8700", mips_p8700, mips_p8700_tune_info)
 RISCV_TUNE("andes-25-series", andes_25_series, andes_25_tune_info)
 RISCV_TUNE("andes-23-series", andes_23_series, andes_23_tune_info)
 RISCV_TUNE("andes-45-series", andes_45_series, andes_45_tune_info)
+RISCV_TUNE("arc-v-rmx-100-series", arcv_rmx100, arcv_rmx100_tune_info)
 
 #undef RISCV_TUNE
 
