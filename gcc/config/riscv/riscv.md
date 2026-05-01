@@ -2504,8 +2504,7 @@
   ""
   [(const_int 0)]
 {
-  riscv_move_integer (operands[2], operands[0], INTVAL (operands[1]),
-		      <GPR:MODE>mode);
+  riscv_move_integer (operands[2], operands[0], INTVAL (operands[1]));
   DONE;
 })
 
@@ -2538,8 +2537,7 @@
   "&& 1"
   [(const_int 0)]
 {
-  riscv_move_integer (operands[0], operands[0], INTVAL (operands[1]),
-                      <MODE>mode);
+  riscv_move_integer (operands[0], operands[0], INTVAL (operands[1]));
   DONE;
 }
 [(set_attr "type" "move")])

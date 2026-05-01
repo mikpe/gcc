@@ -1736,15 +1736,15 @@ riscv_split_integer (HOST_WIDE_INT val, machine_mode mode)
   bool eq_neg = (loval == hival) && ((loval & 0x80000000) != 0);
 
   if (eq_neg)
-    riscv_move_integer (lo, lo, ~loval & 0xffffffff, mode);
+    riscv_move_integer (lo, lo, ~loval & 0xffffffff);
   else
-    riscv_move_integer (lo, lo, loval, mode);
+    riscv_move_integer (lo, lo, loval);
 
   if (loval == hival)
       hi = gen_rtx_ASHIFT (mode, lo, GEN_INT (32));
   else
     {
-      riscv_move_integer (hi, hi, hival, mode);
+      riscv_move_integer (hi, hi, hival);
       hi = gen_rtx_ASHIFT (mode, hi, GEN_INT (32));
     }
 
@@ -3275,8 +3275,7 @@ riscv_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
    is the original src mode before promotion.  */
 
 void
-riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value,
-		    machine_mode orig_mode)
+riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value)
 {
   struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS];
   machine_mode mode;
@@ -3284,9 +3283,10 @@ riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value,
   rtx x = NULL_RTX;
 
   mode = GET_MODE (dest);
-  /* We use the original mode for the riscv_build_integer call, because HImode
-     values are given special treatment.  */
-  num_ops = riscv_build_integer (codes, value, orig_mode, can_create_pseudo_p ());
+  /* This originally passed in a mode prior to promotions, but what we really
+     need to do is pass in the mode of the destination, that's what ultimately
+     determines how a constant needs to be canonicalized.  */
+  num_ops = riscv_build_integer (codes, value, mode, can_create_pseudo_p ());
 
   if (can_create_pseudo_p () && num_ops > 2 /* not a simple constant */
       && num_ops >= riscv_split_integer_cost (value))
@@ -3383,7 +3383,7 @@ riscv_legitimize_const_move (machine_mode mode, rtx dest, rtx src)
   /* Split moves of big integers into smaller pieces.  */
   if (splittable_const_int_operand (src, mode))
     {
-      riscv_move_integer (dest, dest, INTVAL (src), mode);
+      riscv_move_integer (dest, dest, INTVAL (src));
       return;
     }
 
@@ -3970,7 +3970,7 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 	  if (splittable_const_int_operand (src, mode))
 	    {
 	      reg = gen_reg_rtx (promoted_mode);
-	      riscv_move_integer (reg, reg, INTVAL (src), mode);
+	      riscv_move_integer (reg, reg, INTVAL (src));
 	    }
 	  else
 	    reg = force_reg (promoted_mode, src);

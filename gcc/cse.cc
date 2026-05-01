@@ -4980,6 +4980,34 @@ cse_insn (rtx_insn *insn)
 	    }
 	}
 
+      /* If SRC_EQV is a CONST_INT, try looking up some related
+	 constants (logical and arithmetic negation).  Those may
+	 ultimately be cheaper to re-use.  */
+      if (GET_CODE (src) != CONST_INT
+	  && GET_CODE (src) != REG
+	  && GET_CODE (src) != SUBREG
+	  && src_const
+	  && GET_CODE (src_const) == CONST_INT)
+	{
+	  rtx trial_rtx = GEN_INT (~UINTVAL (src_const));
+	  struct table_elt *tmp = lookup (trial_rtx, HASH (trial_rtx, mode), mode);
+	  rtx_code code = NOT;
+	  if (!tmp)
+	    {
+	      trial_rtx = GEN_INT (-UINTVAL (src_const));
+	      tmp = lookup (trial_rtx, HASH (trial_rtx, mode), mode);
+	      code = NEG;
+	    }
+
+	  if (tmp)
+	    {
+	      src_related = gen_rtx_fmt_e (code, mode, tmp->first_same_value->exp);
+	      src_eqv_here = src_related;
+	      src_related_is_const_anchor = true;
+	    }
+
+	}
+
       /* See if a MEM has already been loaded with a widening operation;
 	 if it has, we can use a subreg of that.  Many CISC machines
 	 also have such operations, but this is only likely to be
