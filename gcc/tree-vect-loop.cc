@@ -7476,7 +7476,6 @@ vectorizable_reduction (loop_vec_info loop_vinfo,
        || reduction_type == INTEGER_INDUC_COND_REDUCTION
        || reduction_type == CONST_COND_REDUCTION
        || reduction_type == EXTRACT_LAST_REDUCTION)
-      && 1
       && ncopies > 1)
     {
       if (dump_enabled_p ())
