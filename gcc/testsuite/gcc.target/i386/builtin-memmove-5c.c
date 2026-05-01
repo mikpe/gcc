@@ -22,7 +22,7 @@
 **	cmpq	\$512, %rdx
 **	ja	.L5
 **	cmpq	\$256, %rdx
-**	jnb	.L16
+**	ja	.L16
 **	vmovdqu64	\(%rsi\), %zmm3
 **	vmovdqu64	64\(%rsi\), %zmm2
 **	vmovdqu64	-64\(%rsi,%rdx\), %zmm1

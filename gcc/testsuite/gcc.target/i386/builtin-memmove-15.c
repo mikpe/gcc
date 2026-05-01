@@ -42,7 +42,7 @@
 **	.p2align 3
 **.L5:
 **	cmpl	\$64, %edx
-**	jnb	.L14
+**	ja	.L14
 **	movl	%edx, %edx
 **	movdqu	\(%rsi\), %xmm3
 **	movdqu	16\(%rsi\), %xmm2
