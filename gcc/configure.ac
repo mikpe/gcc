@@ -3993,18 +3993,15 @@ foo:	.long	25
 .word foo(tlsldo)'
 	;;
   i?86-*-* | x86_64-*-*)
-    case "$target:$gas" in
-      i?86-*-solaris2*:no | x86_64-*-solaris2*:no)
-	tls_section_flag=t
+    if test x$solaris_as = xyes; then
+      tls_section_flag=t
 changequote([,])dnl
-	AC_DEFINE(TLS_SECTION_ASM_FLAG, 't',
+      AC_DEFINE(TLS_SECTION_ASM_FLAG, 't',
 [Define to the flag used to mark TLS sections if the default (`T') doesn't work.])
 changequote(,)dnl
-	;;
-      *:*)
-	tls_section_flag=T
-	;;
-    esac
+    else
+      tls_section_flag=T
+    fi
     conftest_s='
       .section .tdata,"aw'$tls_section_flag'",@progbits'
     case "$target" in
@@ -4245,16 +4242,13 @@ foo:	.long	25
 	.long	foo@TPOFF'
 	;;
   sparc*-*-*)
-    case "$target:$gas" in
-      sparc*-sun-solaris2.*:no)
-	conftest_s='
-	.section ".tdata",#alloc,#write,#tls'
-	;;
-       *:*)
-	 conftest_s='
-	.section ".tdata","awT",@progbits'
-	;;
-    esac
+    if test x$solaris_as = xyes; then
+      conftest_s='
+      .section ".tdata",#alloc,#write,#tls'
+    else
+      conftest_s='
+      .section ".tdata","awT",@progbits'
+    fi
     tls_as_opt=$as_32_opt
     conftest_s="$conftest_s
 foo:	.long	25
@@ -4389,16 +4383,12 @@ ld_version_script_option=''
 if test $in_tree_ld = yes || test x"$gnu_ld" = xyes; then
   gcc_cv_ld_version_script=yes
   ld_version_script_option='--version-script'
-elif test x$gcc_cv_ld != x; then
-  case "$target" in
-    # Solaris 2 ld always supports -M.  It also supports a subset of
-    # --version-script since Solaris 11.4, but requires
-    # -z gnu-version-script-compat to activate.
-    *-*-solaris2*)
-      gcc_cv_ld_version_script=yes
-      ld_version_script_option='-M'
-      ;;
-  esac
+elif test x$solaris_ld = xyes; then
+  # Solaris 2 ld always supports -M.  It also supports a subset of
+  # --version-script since Solaris 11.4, but requires
+  # -z gnu-version-script-compat to activate.
+  gcc_cv_ld_version_script=yes
+  ld_version_script_option='-M'
 fi
 # Don't AC_DEFINE result, only used in jit/Make-lang.in so far.
 AC_MSG_RESULT($gcc_cv_ld_version_script)
@@ -5939,7 +5929,7 @@ foo:
      [changequote(,)dnl
       if test x$gcc_cv_objdump != x \
 	 && $gcc_cv_objdump -W conftest.o 2>&1 \
-		| grep conftest.s > /dev/null 2>&1; then
+		| grep 'conftest\.s' > /dev/null 2>&1; then
 	gcc_cv_as_working_gdwarf_n_flag=no
       else
 	gcc_cv_as_working_gdwarf_n_flag=yes
@@ -6347,7 +6337,7 @@ gcc_cv_ld_ctf=no
 # Check for Solaris ld 1.3315 introduced in Solaris 11.4 SRU 84.  ld -z ctf
 # already went in in SRU 81, but lacked GNU CTF to Solaris CTF conversion.
 if $gcc_cv_ld --help 2>&1 | grep -- '-z ctf' > /dev/null \
-  && test x$gnu_ld = xno && test "$ld_vers_minor" -ge 3315; then
+  && test x$solaris_ld = xyes && test "$ld_vers_minor" -ge 3315; then
   gcc_cv_ld_ctf=yes
   AC_DEFINE(HAVE_LD_CTF, 1, [Define if your linker supports -z ctf.])
 fi
@@ -6580,16 +6570,14 @@ elif test x$gcc_cv_ld != x; then
       gcc_cv_ld_no_as_needed_option='--pop-state'
     fi
   fi
-  case "$target:$gnu_ld" in
-    *-*-solaris2*:no)
-      # Solaris 2 ld always supports -z ignore/-z record.  Prefer the native
-      # forms.
-      gcc_cv_ld_as_needed=yes
-      gcc_cv_ld_as_needed_option="-z ignore"
-      gcc_cv_ld_no_as_needed_option="-z record"
-      gcc_cv_ld_use_as_needed_ldscript=no
-      ;;
-  esac
+  if test x$solaris_ld = xyes; then
+    # Solaris 2 ld always supports -z ignore/-z record.  Prefer the native
+    # forms.
+    gcc_cv_ld_as_needed=yes
+    gcc_cv_ld_as_needed_option="-z ignore"
+    gcc_cv_ld_no_as_needed_option="-z record"
+    gcc_cv_ld_use_as_needed_ldscript=no
+  fi
 fi
 ])
 if test x"$gcc_cv_ld_as_needed" = xyes; then

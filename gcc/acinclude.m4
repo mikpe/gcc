@@ -308,24 +308,23 @@ int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;
 	    gcc_cv_initfini_array=yes
 	  fi
 	elif test x"$gcc_cv_as" != x -a x"$gcc_cv_ld" != x -a x"$gcc_cv_objdump" != x ; then
-	  case $target:$gas in
-	    *:yes)
-	      sh_flags='"a"'
-	      sh_type='%progbits'
-	      ;;
-	    i?86-*-solaris2*:no | x86_64-*-solaris2*:no)
+	  case $target:$solaris_as in
+	    i?86-*-solaris2*:yes | x86_64-*-solaris2*:yes)
 	      sh_flags='"a"'
 	      sh_type='@progbits'
 	      ;;
-	    sparc*-*-solaris2*:no)
+	    sparc*-*-solaris2*:yes)
 	      sh_flags='#alloc'
 	      sh_type='#progbits'
 	      sh_quote='"'
 	      ;;
+	    *:*)
+	      sh_flags='"a"'
+	      sh_type='%progbits'
+	      ;;
 	  esac
-	  case "$target:$gnu_ld" in
-	    *:yes)
-	      cat > conftest.s <<EOF
+	  if test x$solaris_ld = xno; then
+	    cat > conftest.s <<EOF
 .section .dtors,$sh_flags,$sh_type
 .balign 4
 .byte 'A', 'A', 'A', 'A'
@@ -354,24 +353,23 @@ int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;
 .globl _start
 _start:
 EOF
-	      if $gcc_cv_as -o conftest.o conftest.s > /dev/null 2>&1 \
-	         && $gcc_cv_ld -o conftest conftest.o > /dev/null 2>&1 \
-	         && $gcc_cv_objdump -s -j .init_array conftest \
-		    | grep HHHHFFFFDDDDBBBB > /dev/null 2>&1 \
-	         && $gcc_cv_objdump -s -j .fini_array conftest \
-		    | grep GGGGEEEECCCCAAAA > /dev/null 2>&1; then
-	        gcc_cv_initfini_array=yes
-	      fi
-	      ;;
-	    *-*-solaris2*:no)
-	      # When Solaris ld added constructor priority support, it was
-	      # decided to only handle .init_array.N/.fini_array.N since
-	      # there was no need for backwards compatibility with
-	      # .ctors.N/.dtors.N.  .ctors/.dtors remain as separate
-	      # sections with correct execution order resp. to
-	      # .init_array/.fini_array, while gld merges them into
-	      # .init_array/.fini_array.
-	      cat > conftest.s <<EOF
+	    if $gcc_cv_as -o conftest.o conftest.s > /dev/null 2>&1 \
+	       && $gcc_cv_ld -o conftest conftest.o > /dev/null 2>&1 \
+	       && $gcc_cv_objdump -s -j .init_array conftest \
+		  | grep HHHHFFFFDDDDBBBB > /dev/null 2>&1 \
+	       && $gcc_cv_objdump -s -j .fini_array conftest \
+		  | grep GGGGEEEECCCCAAAA > /dev/null 2>&1; then
+	      gcc_cv_initfini_array=yes
+	    fi
+	  else
+	    # When Solaris ld added constructor priority support, it was
+	    # decided to only handle .init_array.N/.fini_array.N since
+	    # there was no need for backwards compatibility with
+	    # .ctors.N/.dtors.N.  .ctors/.dtors remain as separate
+	    # sections with correct execution order resp. to
+	    # .init_array/.fini_array, while gld merges them into
+	    # .init_array/.fini_array.
+	    cat > conftest.s <<EOF
 .section $sh_quote.fini_array.65530$sh_quote,$sh_flags,$sh_type
 .align 4
 .byte 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'
@@ -388,16 +386,15 @@ EOF
 .globl _start
 _start:
 EOF
-	      if $gcc_cv_as -o conftest.o conftest.s > /dev/null 2>&1 \
-	         && $gcc_cv_ld -o conftest conftest.o > /dev/null 2>&1 \
-	         && $gcc_cv_objdump -s -j .init_array conftest \
-		    | grep HHHHHHHHDDDDDDDD > /dev/null 2>&1 \
-	         && $gcc_cv_objdump -s -j .fini_array conftest \
-		    | grep GGGGGGGGCCCCCCCC > /dev/null 2>&1; then
-	        gcc_cv_initfini_array=yes
-	      fi
-	      ;;
-	    esac
+	    if $gcc_cv_as -o conftest.o conftest.s > /dev/null 2>&1 \
+	       && $gcc_cv_ld -o conftest conftest.o > /dev/null 2>&1 \
+	       && $gcc_cv_objdump -s -j .init_array conftest \
+		  | grep HHHHHHHHDDDDDDDD > /dev/null 2>&1 \
+	       && $gcc_cv_objdump -s -j .fini_array conftest \
+		  | grep GGGGGGGGCCCCCCCC > /dev/null 2>&1; then
+	      gcc_cv_initfini_array=yes
+	    fi
+	  fi
 changequote(,)dnl
 	  rm -f conftest conftest.*
 changequote([,])dnl
