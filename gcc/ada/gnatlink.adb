@@ -166,14 +166,18 @@ procedure Gnatlink is
    Verbose_Mode       : Boolean := False;
    Very_Verbose_Mode  : Boolean := False;
 
-   Standard_Gcc : Boolean := True;
-
    Compile_Bind_File : Boolean := True;
    --  Set to False if bind file is not to be compiled
 
    Create_Map_File : Boolean := False;
    --  Set to True by switch -M. The map file name is derived from
    --  the ALI file name (mainprog.ali => mainprog.map).
+
+   Output_PIE : Boolean := False;
+   --  Set to True if -pie is specified on the command line
+
+   Standard_GCC : Boolean := True;
+   --  Set to False if --GCC is specified on the command line
 
    Object_List_File_Supported : Boolean;
    for Object_List_File_Supported'Size use Character'Size;
@@ -568,6 +572,13 @@ procedure Gnatlink is
                   Binder_Options.Table (Binder_Options.Last) :=
                     Linker_Options.Table (Linker_Options.Last);
 
+               elsif Arg'Length = 4 and then Arg (2 .. 4) = "pie" then
+                  Output_PIE := True;
+
+                  Linker_Options.Increment_Last;
+                  Linker_Options.Table (Linker_Options.Last) :=
+                    new String'(Arg);
+
                elsif Arg'Length >= 7 and then Arg (1 .. 7) = "--LINK=" then
                   if Arg'Length = 7 then
                      Exit_With_Error ("Missing argument for --LINK=");
@@ -615,7 +626,7 @@ procedure Gnatlink is
                   begin
                      if Program_Args.all (1).all /= Gcc.all then
                         Gcc := new String'(Program_Args.all (1).all);
-                        Standard_Gcc := False;
+                        Standard_GCC := False;
                      end if;
 
                      --  Set appropriate flags for switches passed
@@ -1114,10 +1125,28 @@ procedure Gnatlink is
 
                elsif Next_Line (Nfirst .. Nlast) = "-lgnarl"
                  or else Next_Line (Nfirst .. Nlast) = "-lgnat"
-                 or else
-                   Next_Line
-                     (1 .. Natural'Min (Nlast, 8 + Library_Version'Length)) =
-                       Shared_Lib ("gnarl")
+               then
+                  if Output_PIE and then GNAT_Static then
+                     Search_Library_Path
+                       (Next_Line   => Next_Line (Nfirst .. Nlast) & "_pic",
+                        Nfirst      => Nfirst,
+                        Nlast       => Nlast + 4,
+                        Last        => Nlast + 4,
+                        GNAT_Static => True,
+                        GNAT_Shared => GNAT_Shared);
+                  else
+                     Search_Library_Path
+                       (Next_Line   => Next_Line,
+                        Nfirst      => Nfirst,
+                        Nlast       => Nlast,
+                        Last        => Nlast,
+                        GNAT_Static => GNAT_Static,
+                        GNAT_Shared => GNAT_Shared);
+                  end if;
+
+               elsif Next_Line
+                       (1 .. Natural'Min (Nlast, 8 + Library_Version'Length)) =
+                         Shared_Lib ("gnarl")
                  or else
                    Next_Line
                      (1 .. Natural'Min (Nlast, 7 + Library_Version'Length)) =
@@ -1518,7 +1547,7 @@ begin
    --  back end switches from this ALI file and use these switches to compile
    --  the binder generated file
 
-   if Compile_Bind_File and then Standard_Gcc then
+   if Compile_Bind_File and then Standard_GCC then
       Initialize_ALI;
       Name_Len := Ali_File_Name'Length;
       Name_Buffer (1 .. Name_Len) := Ali_File_Name.all;
@@ -1621,8 +1650,6 @@ begin
    --             because bindgen uses brackets encoding for all upper
    --             half and wide characters in identifier names.
 
-   --  In addition, in CodePeer mode compile with -x adascil -gnatcC
-
    Binder_Options_From_ALI.Increment_Last;
    Binder_Options_From_ALI.Table (Binder_Options_From_ALI.Last) :=
         new String'("-gnatA");
@@ -1632,6 +1659,8 @@ begin
    Binder_Options_From_ALI.Increment_Last;
    Binder_Options_From_ALI.Table (Binder_Options_From_ALI.Last) :=
         new String'("-gnatiw");
+
+   --  In addition, in CodePeer mode compile with -x adascil -gnatcC
 
    if Opt.CodePeer_Mode then
       Binder_Options_From_ALI.Increment_Last;
@@ -1643,6 +1672,14 @@ begin
       Binder_Options_From_ALI.Increment_Last;
       Binder_Options_From_ALI.Table (Binder_Options_From_ALI.Last) :=
         new String'("-gnatcC");
+   end if;
+
+   --  Moreover, if -pie is specified, make sure that -fPIE is passed
+
+   if Output_PIE then
+      Binder_Options_From_ALI.Increment_Last;
+      Binder_Options_From_ALI.Table (Binder_Options_From_ALI.Last) :=
+        new String'("-fPIE");
    end if;
 
    --  Locate all the necessary programs and verify required files are present
