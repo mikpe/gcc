@@ -122,7 +122,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  used in specializations and overloading.
    *
    *  In particular, there are no default implementations of requirements
-   *  such as @c operator++ and the like.  (How could there be?)
+   *  such as `operator++` and the like.  (How could there be?)
+   *
+   *  @deprecated Deprecated since C++17. The recommended alternative is to
+   *  simply define the typedefs directly in your iterator class.
   */
   template<typename _Category, typename _Tp, typename _Distance = ptrdiff_t,
            typename _Pointer = _Tp*, typename _Reference = _Tp&>
@@ -144,9 +147,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @brief  Traits class for iterators.
    *
    *  This class does nothing but define nested typedefs.  The general
-   *  version simply @a forwards the nested typedefs from the Iterator
-   *  argument.  Specialized versions for pointers and pointers-to-const
-   *  provide tighter, more correct semantics.
+   *  version simply declares aliases for the nested typedefs from the Iterator
+   *  argument.  Partial specializations for pointers define the typedefs
+   *  appropriately for the semantics of pointers.
   */
   template<typename _Iterator>
     struct iterator_traits;
@@ -230,6 +233,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     };
 #endif
 
+  /// @cond undocumented
   /**
    *  This function is not a part of the C++ standard but is syntactic
    *  sugar for internal library use only.
@@ -240,8 +244,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     typename iterator_traits<_Iter>::iterator_category
     __iterator_category(const _Iter&)
     { return typename iterator_traits<_Iter>::iterator_category(); }
-
-  ///@}
 
 #if __cplusplus >= 201103L
   template<typename _Iter>
@@ -280,6 +282,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct __is_random_access_iter
     { enum { __value = __is_base_of(random_access_iterator_tag, _Cat) }; };
 #endif
+
+  /// @endcond
+  /// @}
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

@@ -2619,6 +2619,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<input_iterator _It> class basic_const_iterator;
 
+  /// @cond undocumented
   namespace __detail
   {
     template<typename _It>
@@ -2646,11 +2647,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       struct __basic_const_iterator_iter_cat<_It>
       { using iterator_category = __iter_category_t<_It>; };
   } // namespace detail
+  /// @endcond
 
   template<input_iterator _It>
     using const_iterator
       = __conditional_t<__detail::__constant_iterator<_It>, _It, basic_const_iterator<_It>>;
 
+  /// @cond undocumented
   namespace __detail
   {
     template<typename _Sent>
@@ -2661,6 +2664,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       struct __const_sentinel<_Sent>
       { using type = const_iterator<_Sent>; };
   } // namespace __detail
+  /// @endcond
 
   template<semiregular _Sent>
     using const_sentinel = typename __detail::__const_sentinel<_Sent>::type;

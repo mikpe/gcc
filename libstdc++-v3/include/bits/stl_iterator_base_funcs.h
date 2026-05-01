@@ -131,8 +131,10 @@ _GLIBCXX_END_NAMESPACE_CONTAINER
 #endif
 
 #ifdef __glibcxx_concepts
+/// @cond undocumented
 namespace __detail
 {
+
   // Satisfied if ITER_TRAITS(Iter)::iterator_category is valid and is
   // at least as strong as ITER_TRAITS(Iter)::iterator_concept.
   template<typename _Iter>
@@ -149,21 +151,24 @@ namespace __detail
       = input_iterator<_Iter>
 	  && requires { typename __iter_traits<_Iter>::iterator_concept; }
 	  && ! __iter_category_converts_to_concept<_Iter>;
+
 } // namespace __detail
+/// @endcond
 #endif
 
   /**
    *  @brief A generalization of pointer arithmetic.
-   *  @param  __first  An input iterator.
-   *  @param  __last  An input iterator.
+   *  @param  __first,__last Input iterators that form a valid range.
    *  @return  The distance between them.
    *
-   *  Returns @c n such that __first + n == __last.  This requires
-   *  that @p __last must be reachable from @p __first.  Note that @c
-   *  n may be negative.
+   *  Returns `n` such that `__first + n == __last`.
+   *  This requires that `__last` must be reachable from `__first`, or
+   *  for random access iterators either `__last` is reachable from `__first`
+   *  or `__first` is reachable from `__last`. In the latter case, `n`
+   *  may be negative.
    *
-   *  For random access iterators, this uses their @c + and @c - operations
-   *  and are constant time.  For other %iterator classes they are linear time.
+   *  For random access iterators, this uses their `+` and `-` operations
+   *  and is constant time.  For other %iterator classes they are linear time.
   */
   template<typename _InputIterator>
     _GLIBCXX_NODISCARD __attribute__((__always_inline__))
@@ -193,6 +198,8 @@ namespace __detail
       return std::__distance(__first, __last,
 			     std::__iterator_category(__first));
     }
+
+  /// @cond undocumented
 
   template<typename _InputIterator, typename _Distance>
     inline _GLIBCXX14_CONSTEXPR void
@@ -244,15 +251,17 @@ namespace __detail
     __advance(_OutputIterator&, _Distance, output_iterator_tag) = delete;
 #endif
 
+  /// @endcond
+
   /**
    *  @brief A generalization of pointer arithmetic.
    *  @param  __i  An input iterator.
    *  @param  __n  The @a delta by which to change @p __i.
    *
-   *  This increments @p i by @p n.  For bidirectional and random access
-   *  iterators, @p __n may be negative, in which case @p __i is decremented.
+   *  This increments `i` by `n`.  For bidirectional and random access
+   *  iterators, `__n` may be negative, in which case `__i` is decremented.
    *
-   *  For random access iterators, this uses their @c + and @c - operations
+   *  For random access iterators, this uses their `+` and `-` operations
    *  and are constant time.  For other %iterator classes they are linear time.
   */
   template<typename _InputIterator, typename _Distance>
@@ -316,6 +325,7 @@ namespace __detail
 
 #endif // C++11
 
+  /// @cond undocumented
 #if __glibcxx_algorithm_iterator_requirements // C++ >= 20
   template<typename _Iter>
     consteval auto
@@ -372,6 +382,8 @@ namespace __detail
 #else
 #define _GLIBCXX_ITER_MOVE(__it) _GLIBCXX_MOVE(*__it)
 #endif
+
+  /// @endcond
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
