@@ -5038,6 +5038,10 @@ s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
 	      __SECONDARY_RELOAD_CASE (V1DI, v1di);
 	      __SECONDARY_RELOAD_CASE (V2DI, v2di);
 	      __SECONDARY_RELOAD_CASE (V1TI, v1ti);
+	      __SECONDARY_RELOAD_CASE (V1HF, v1hf);
+	      __SECONDARY_RELOAD_CASE (V2HF, v2hf);
+	      __SECONDARY_RELOAD_CASE (V4HF, v4hf);
+	      __SECONDARY_RELOAD_CASE (V8HF, v8hf);
 	      __SECONDARY_RELOAD_CASE (V1SF, v1sf);
 	      __SECONDARY_RELOAD_CASE (V2SF, v2sf);
 	      __SECONDARY_RELOAD_CASE (V4SF, v4sf);
