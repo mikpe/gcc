@@ -1,3 +1,9 @@
+2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR ada/125044
+	* sem_disp.adb (Check_Controlling_Formals): Apply the same massaging
+	to the result subtype as to the parameter subtypes.
+
 2026-04-29  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/125044

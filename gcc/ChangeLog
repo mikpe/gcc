@@ -1,3 +1,13 @@
+2026-04-30  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-04-14  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/123102
+	* config/arm/arm.md (*cmp_ite0): Apply stricter checks on the
+	comparison mode.
+	(*cmp_ite1, *cmp_and, *cmp_ior): Likewise.
+
 2026-04-29  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
