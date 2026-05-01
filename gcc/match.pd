@@ -5447,7 +5447,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
      icmp (le gt)
  (simplify
   (cmp (rshift@2 @0 zero_one_valued_p@1) integer_zerop)
-  (if (single_use (@2))
+  (if (INTEGRAL_TYPE_P (TREE_TYPE (@0)) && single_use (@2))
    (with { tree utype = unsigned_type_for (TREE_TYPE (@0)); }
     (icmp (convert:utype @0) (convert:utype @1))))))
 #endif
