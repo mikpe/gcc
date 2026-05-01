@@ -55,6 +55,11 @@
 #include <arm_sve.h>
 #endif
 
+/** @namespace std::experimental::parallelism_v2
+ *  @ingroup ts_simd
+ */
+_GLIBCXX_SIMD_BEGIN_NAMESPACE
+
 /** @ingroup ts_simd
  * @{
  */
@@ -78,7 +83,6 @@
  * Variable names:
  * __k: mask object (vector- or bitmask)
  */
-_GLIBCXX_SIMD_BEGIN_NAMESPACE
 
 #if !_GLIBCXX_SIMD_X86INTRIN
 using __m128  [[__gnu__::__vector_size__(16)]] = float;

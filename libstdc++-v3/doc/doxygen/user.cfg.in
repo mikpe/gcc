@@ -2912,6 +2912,8 @@ PREDEFINED             = __cplusplus=202603L \
 			 _GLIBCXX_HAVE_ICONV=1 \
 			 "_GLIBCXX_DOXYGEN_ONLY(X)=X " \
 			 __exception_ptr=__unspecified__ \
+			 "_GLIBCXX_SIMD_BEGIN_NAMESPACE=namespace std::experimental::inline parallelism_v2 {" \
+			 "_GLIBCXX_SIMD_END_NAMESPACE=}" \
 
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
