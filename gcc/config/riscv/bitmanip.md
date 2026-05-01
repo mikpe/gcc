@@ -1441,3 +1441,26 @@
     operands[3] = gen_lowpart (DImode, operands[3]);
     operands[6] = gen_lowpart (SImode, operands[5]);
   })
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+        (xor:X (xor:X (ior:X (match_operand:X 1 "register_operand")
+                             (match_operand:X 2 "register_operand"))
+                      (match_dup 1))
+               (match_operand:X 3 "register_operand")))
+   (clobber (match_operand:X 4 "register_operand"))]
+  "TARGET_ZBB || TARGET_ZBKB"
+  [(set (match_dup 4) (and:X (not:X (match_dup 1)) (match_dup 2)))
+   (set (match_dup 0) (xor:X (match_dup 4) (match_dup 3)))])
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+        (xor:X (xor:X (ior:X (match_operand:X 1 "register_operand")
+                             (match_operand:X 2 "register_operand"))
+                      (match_dup 2))
+               (match_operand:X 3 "register_operand")))
+   (clobber (match_operand:X 4 "register_operand"))]
+  "TARGET_ZBB || TARGET_ZBKB"
+  [(set (match_dup 4) (and:X (not:X (match_dup 2)) (match_dup 1)))
+   (set (match_dup 0) (xor:X (match_dup 4) (match_dup 3)))])
+
