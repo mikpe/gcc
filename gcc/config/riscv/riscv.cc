@@ -5808,6 +5808,42 @@ riscv_expand_conditional_move (rtx dest, rtx op, rtx cons, rtx alt)
 			     ? word_mode : dst_mode);
       bool invert = false;
 
+      /* For unsigned comparisons against power-of-2 boundaries, convert
+	 to a shift-based equality test.  This avoids materializing large
+	 constants like (2^N - 1) which may require multiple instructions.
+	 GTU x, (2^N-1)  ->  NE (x >> N), 0
+	 LEU x, (2^N-1)  ->  EQ (x >> N), 0
+	 GEU x, 2^N      ->  NE (x >> N), 0
+	 LTU x, 2^N      ->  EQ (x >> N), 0  */
+      if (INTEGRAL_MODE_P (mode0) && CONST_INT_P (op1))
+	{
+	  int shift = -1;
+	  rtx_code new_code = UNKNOWN;
+
+	  if ((code == GTU || code == LEU)
+	      && exact_log2 (UINTVAL (op1) + 1) > 0)
+	    {
+	      shift = exact_log2 (UINTVAL (op1) + 1);
+	      new_code = (code == GTU) ? NE : EQ;
+	    }
+	  else if ((code == GEU || code == LTU)
+		   && exact_log2 (UINTVAL (op1)) > 0)
+	    {
+	      shift = exact_log2 (UINTVAL (op1));
+	      new_code = (code == GEU) ? NE : EQ;
+	    }
+
+	  if (shift > 0)
+	    {
+	      op0 = expand_simple_binop (mode0, LSHIFTRT, op0,
+					 GEN_INT (shift), NULL_RTX,
+					 1, OPTAB_DIRECT);
+	      op1 = const0_rtx;
+	      code = new_code;
+	      op = gen_rtx_fmt_ee (code, GET_MODE (op0), op0, op1);
+	    }
+	}
+
       /* Canonicalize the comparison.  It must be an equality comparison
 	 of integer operands, or with SFB it can be any comparison of
 	 integer operands.  If it isn't, then emit an SCC instruction
