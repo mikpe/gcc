@@ -4377,8 +4377,10 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	      && CONST_INT_P (ashift_rhs)
 	      && CONST_INT_P (and_rhs)
 	      && ((INTVAL (and_rhs) >> INTVAL (ashift_rhs)) == 0xffffffff))
-	    *total = COSTS_N_INSNS (1);
-	    return true;
+	    {
+	      *total = COSTS_N_INSNS (1);
+	      return true;
+	    }
 	}
       /* bclri pattern for zbs.  */
       if (TARGET_ZBS
