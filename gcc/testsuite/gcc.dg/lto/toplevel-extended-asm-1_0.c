@@ -1,5 +1,5 @@
 /* { dg-lto-do link } */
-/* { dg-lto-options {{-O2 -flto -flto-partition=1to1} } } */
+/* { dg-lto-options {{-O2 -flto -flto-partition=1to1 -no-pie} } } */
 
 void asm_fn();
 void asm_fn_used();
