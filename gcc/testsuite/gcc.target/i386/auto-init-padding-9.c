@@ -1,7 +1,7 @@
 /* Verify zero initialization for array type with structure element with
    padding.  */ 
 /* { dg-do compile } */
-/* { dg-options "-ftrivial-auto-var-init=zero -march=x86-64" } */
+/* { dg-options "-ftrivial-auto-var-init=zero -march=x86-64 -fno-stack-protector" } */
 /* Keep labels and directives ('.cfi_startproc', '.cfi_endproc').  */
 /* { dg-final { check-function-bodies "**" "" "" { target lp64 } {^\t?\.} } } */
 
