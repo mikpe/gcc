@@ -5439,6 +5439,19 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
       @0)))))
 #endif
 
+#if GIMPLE
+/* PR119420: (A >> bool) == 0 -> (unsigned)a <= (unsigned)bool
+   and its variant:
+   (A >> bool) != 0 -> (unsigned)a > (unsigned)bool;  */
+(for cmp (eq ne)
+     icmp (le gt)
+ (simplify
+  (cmp (rshift@2 @0 zero_one_valued_p@1) integer_zerop)
+  (if (single_use (@2))
+   (with { tree utype = unsigned_type_for (TREE_TYPE (@0)); }
+    (icmp (convert:utype @0) (convert:utype @1))))))
+#endif
+
 /* Rewrite an LROTATE_EXPR by a constant into an
    RROTATE_EXPR by a new constant.  */
 (simplify
