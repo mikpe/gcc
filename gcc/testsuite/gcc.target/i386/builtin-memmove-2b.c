@@ -80,7 +80,7 @@
 **	.p2align 3
 **.L19:
 **	cmpq	\$128, %rdx
-**	jb	.L11
+**	jbe	.L11
 **	vmovdqu	\(%rsi\), %ymm7
 **	vmovdqu	32\(%rsi\), %ymm6
 **	vmovdqu	64\(%rsi\), %ymm5

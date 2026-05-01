@@ -22,7 +22,7 @@
 **	cmpq	\$128, %rdx
 **	ja	.L5
 **	cmpq	\$64, %rdx
-**	jnb	.L15
+**	ja	.L15
 **	movdqu	\(%rsi\), %xmm3
 **	movdqu	16\(%rsi\), %xmm2
 **	movdqu	-16\(%rsi,%rdx\), %xmm1

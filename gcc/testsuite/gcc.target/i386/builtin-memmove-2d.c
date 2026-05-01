@@ -94,7 +94,7 @@
 **.L20:
 **	.cfi_def_cfa_offset 40
 **	cmpq	\$32, %rdx
-**	jb	.L9
+**	jbe	.L9
 **	movq	%rbx, \(%rsp\)
 **	movq	%r14, 16\(%rsp\)
 **	.cfi_offset 3, -40

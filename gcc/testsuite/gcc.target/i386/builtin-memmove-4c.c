@@ -73,7 +73,7 @@
 **	.p2align 3
 **.L17:
 **	cmpq	\$256, %rdx
-**	jb	.L8
+**	jbe	.L8
 **	vmovdqu64	\(%rsi\), %zmm7
 **	vmovdqu64	64\(%rsi\), %zmm6
 **	vmovdqu64	-64\(%rsi,%rdx\), %zmm3

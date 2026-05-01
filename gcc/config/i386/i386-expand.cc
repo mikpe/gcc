@@ -10585,12 +10585,12 @@ ix86_expand_movmem (rtx operands[])
 				 more_8x_vec_label);
 
       rtx_code_label *last_4x_vec_label = nullptr;
-      if (min_size == 0 || min_size < 4 * move_max)
+      if (min_size == 0 || min_size <= 4 * move_max)
 	last_4x_vec_label = gen_label_rtx ();
 
-      /* Jump to LAST_4X_VEC_LABEL if size < 4 * MOVE_MAX.  */
+      /* Jump to LAST_4X_VEC_LABEL if size <= 4 * MOVE_MAX.  */
       if (last_4x_vec_label)
-	emit_cmp_and_jump_insns (count_exp, GEN_INT (4 * move_max), LTU,
+	emit_cmp_and_jump_insns (count_exp, GEN_INT (4 * move_max), LEU,
 				 nullptr, count_mode, 1,
 				 last_4x_vec_label);
 

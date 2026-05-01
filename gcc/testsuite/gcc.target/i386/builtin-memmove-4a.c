@@ -50,7 +50,7 @@
 **	.p2align 3
 **.L14:
 **	cmpq	\$64, %rdx
-**	jb	.L6
+**	jbe	.L6
 **	movdqu	\(%rsi\), %xmm7
 **	movdqu	16\(%rsi\), %xmm6
 **	movdqu	32\(%rsi\), %xmm5
