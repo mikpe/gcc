@@ -1,3 +1,68 @@
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125035
+	* module.cc (merge_key): Add iobj_p and xobj_p bits.
+	(trees_out::key_mergeable) <case MK_named>: Set and stream
+	merge_key's iobj_p and xobj_p bits.
+	(check_mergeable_decl) <case FUNCTION_DECL>: Compare merge_key's
+	iobj_p and xobj_p bits with that of the given function.
+	(trees_in::key_mergeable): Stream merge_key's iobj_p and xobj_p
+	bits.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124582
+	PR c++/123810
+	* module.cc (check_mergeable_decl) <case TYPE_DECL>: Handle
+	merging a typedef to an unnamed type with the -freflection
+	representation.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-27  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124953
+	* module.cc (trees_in::tree_node) <tt_nttp_var>: Push the result
+	of get_template_parm_object to post_load_decls.
+	(post_load_processing): Call cp_finish_decl on any not yet
+	completed NTTP objects.
+	* pt.cc (get_template_parm_object): Don't call cp_finish_decl
+	when !check_init.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-23  Patrick Palka  <ppalka@redhat.com>
+
+	* module.cc (trees_out::core_vals) <case PTRMEM_CST>:
+	Stream PTRMEM_CST_LOCATION.
+	<case TRAIT_EXPR>: Stream TRAIT_EXPR_LOCATION.
+	(trees_in::core_vals): As in trees_out::core_vals.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-23  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124981
+	* module.cc (trees_in::core_vals) <case PTRMEM_CST>: Use RTU
+	instead of RT to stream PTRMEM_CST_MEMBER.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* reflect.cc (compare_reflection): For REFLECT_BASE use lhs == rhs rather
+	than cp_tree_equal.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.

@@ -1,3 +1,56 @@
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123635
+	* gimple-lower-bitint.cc (bitint_large_huge::finish_arith_overflow):
+	Move obj_nelts/atype computation before bitint_extended handling.  For
+	bitint_big_endian in the bitint_extended handling use size_zero_node
+	only for limb_access_type calls, otherwise use
+	size_int (nelts - obj_nelts) and pass NULL_TREE as first argument to
+	limb_access calls.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125039
+	* range-op-float.cc (operator_not_equal::fold_range): Call
+	empty_range_varying when not calling frelop_early_resolve.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124133
+	* config/rs6000/rs6000-c.cc (c_fold_convert): New function.
+	(c_fold_build2_loc): Likewise.
+	(fully_fold_convert): Use c_fold_convert instead of fold_convert.
+	(altivec_build_resolved_builtin): Likewise.  Use c_fold_build2_loc
+	instead of fold_build2.
+	(resolve_vec_mul, resolve_vec_adde_sube, resolve_vec_addec_subec):
+	Use c_fold_build2_loc instead of fold_build2_loc.
+	(resolve_vec_splats, resolve_vec_extract): Use c_fold_convert instead
+	of fold_convert.
+	(resolve_vec_insert): Use c_fold_build2_loc instead of fold_build2.
+	(altivec_resolve_overloaded_builtin): Use c_fold_convert instead
+	of fold_convert.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123635
+	PR tree-optimization/124988
+	* gimple-lower-bitint.cc (bitint_large_huge::finish_arith_overflow):
+	Handle bitint_extend.
+	(bitint_large_huge::lower_addsub_overflow): Fix up comment spelling.
+	For bitint_extended extend the partial limb if any.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.

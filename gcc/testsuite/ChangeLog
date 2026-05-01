@@ -1,3 +1,134 @@
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125035
+	* g++.dg/modules/merge-22.h: New test.
+	* g++.dg/modules/merge-22_a.H: New test.
+	* g++.dg/modules/merge-22_b.C: New test.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-29  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124582
+	PR c++/123810
+	* g++.dg/modules/anon-4.h: New test.
+	* g++.dg/modules/anon-4_a.H: New test.
+	* g++.dg/modules/anon-4_b.C: New test.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-27  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124953
+	* g++.dg/modules/tpl-nttp-3_a.H: New test.
+	* g++.dg/modules/tpl-nttp-3_b.C: New test.
+
+2026-04-30  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-23  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124981
+	* g++.dg/modules/ptrmem-1_a.C: New test.
+	* g++.dg/modules/ptrmem-1_b.C: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/reflect/compare12.C: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/uglification_plugin.cc (plugin_check_tree): Walk
+	REQUIRES_EXPR_PARMS of REQUIRES_EXPR.
+	(plugin_walk_decl): Walk TEMPLATE_PARMS_CONSTRAINTS using
+	plugin_check_tree.  Walk DECL_INITIAL of CONCEPT_DECL as well.
+	* g++.dg/plugin/uglification.C: Add tests for non-uglified names
+	in lambda parameters, lambda captures and requires expressions.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/plugin.exp: Set PLUGIN_DEFAULT_REPO.  Add
+	set*module*exports* to plugin_test_list.  Remove *.gcm files
+	at the start and end.
+	* g++.dg/plugin/std_module_exports_plugin.cc: New file.
+	* g++.dg/plugin/std-module-exports-c++20.C: New test.
+	* g++.dg/plugin/std-module-exports-c++23.C: New test.
+	* g++.dg/plugin/std-module-exports-c++26.C: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-29  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/plugin/plugin.exp (plugin_test_list): Add uglification tests.
+	* g++.dg/plugin/uglification_plugin.cc: New file.
+	* g++.dg/plugin/uglification.C: New test.
+	* g++.dg/plugin/uglification-c++98.C: New test.
+	* g++.dg/plugin/uglification-c++11.C: New test.
+	* g++.dg/plugin/uglification-c++14.C: New test.
+	* g++.dg/plugin/uglification-c++17.C: New test.
+	* g++.dg/plugin/uglification-c++20.C: New test.
+	* g++.dg/plugin/uglification-c++23.C: New test.
+	* g++.dg/plugin/uglification-c++26.C: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125039
+	* gcc.c-torture/compile/pr125039.c: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124988
+	* gcc.dg/torture/bitint-95.c: Add bitint effective targets and
+	guard parts of test which need _BitInt(192) support with
+	__BITINT_MAXWIDTH__ >= 192.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124133
+	* g++.target/powerpc/pr124133-1.C: New test.
+	* g++.target/powerpc/pr124133-2.C: New test.
+
+2026-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/123635
+	PR tree-optimization/124988
+	* gcc.dg/torture/bitint-91.c: New test.
+	* gcc.dg/torture/bitint-92.c: New test.
+	* gcc.dg/torture/bitint-93.c: New test.
+	* gcc.dg/torture/bitint-94.c: New test.
+	* gcc.dg/torture/bitint-95.c: New test.
+
+2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/task6.ads, gnat.dg/task6.adb: New test.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.
