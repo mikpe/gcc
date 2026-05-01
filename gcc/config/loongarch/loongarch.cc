@@ -6756,7 +6756,9 @@ loongarch_print_operand (FILE *file, rtx op, int letter)
 
 
     case 'c':
-      if (CONST_INT_P (op))
+      if (SYMBOL_REF_P (op))
+	output_addr_const (asm_out_file, op);
+      else if (CONST_INT_P (op))
 	fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (op));
       else
 	output_operand_lossage ("unsupported operand for code '%c'", letter);
