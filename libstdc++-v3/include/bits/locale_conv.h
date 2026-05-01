@@ -48,6 +48,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    * @{
    */
 
+  /// @cond undocumented
+
   template<typename _OutStr, typename _InChar, typename _Codecvt,
 	   typename _State, typename _Fn>
     bool
@@ -255,6 +257,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_Tp* _M_ptr;
       };
   }
+  /// @endcond
 
 _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
