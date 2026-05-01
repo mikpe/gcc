@@ -6685,19 +6685,6 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
       && INTEGRAL_TYPE_P (TREE_TYPE (@0)))
   (cond @1 (convert @2) (convert @3))))
 
-/* PR123967: if (cond) A | CST1 : A & ~CST1
-
-   Make both bitops unconditional: (A & ~CST1) | (cond * CST1).  */
-(for cmp (simple_comparison)
- (simplify
-  (cond (cmp@4 @5 @6) (bit_ior @0 INTEGER_CST@1) (bit_and@3 @0 INTEGER_CST@2))
-   (if (INTEGRAL_TYPE_P (type)
-	&& INTEGRAL_TYPE_P (TREE_TYPE (@0))
-	&& (TYPE_UNSIGNED (TREE_TYPE (@1)) || tree_int_cst_sgn (@1) > 0)
-	&& TYPE_PRECISION (type) <= BITS_PER_WORD
-	&& wi::to_wide (@1) == ~wi::to_wide (@2))
-    (bit_ior @3 (mult (convert:type @4) (convert:type @1))))))
-
 /* Simplification moved from fold_cond_expr_with_comparison.  It may also
    be extended.  */
 /* This pattern implements two kinds simplification:
