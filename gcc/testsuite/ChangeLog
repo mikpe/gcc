@@ -1,3 +1,57 @@
+2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/task6.ads, gnat.dg/task6.adb: New test.
+
+2026-04-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125026
+	PR target/125032
+	* gcc.target/i386/pr125026.c: New test.
+	* gcc.target/i386/pr125032-1.c: Likewise.
+	* gcc.target/i386/pr125032-2.c: Likewise.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120398
+	PR tree-optimization/123603
+	* gcc.dg/vect/costmodel/x86_64/costmodel-pr120398.c: New testcase.
+	* gcc.dg/vect/costmodel/x86_64/costmodel-pr123603.c: Adjust.
+	* gcc.target/i386/vect-alignment-peeling-1.c: Likewise.
+	* gcc.target/i386/vect-alignment-peeling-2.c: Likewise.
+	* gcc.target/i386/vect-epilogues-10.c: Add -fno-vect-cost-model.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	* gcc.target/i386/shift-gf2p8affine-1.c: Disable epilogue
+	vectorization.
+	* gcc.target/i386/shift-gf2p8affine-3.c: Likewise.
+	* gcc.target/i386/shift-gf2p8affine-7.c: Likewise.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	* gcc.target/i386/vect-epilogues-2.c: Add
+	--param ix86-vect-compare-costs=0.
+	* gcc.target/i386/vect-epilogues-2b.c: Duplicate from
+	gcc.target/i386/vect-epilogues-2.c, add
+	--param ix86-vect-compare-costs=1 and adjust expected
+	vectorization.
+	* gcc.target/i386/vect-pr113078.c: Likewise.
+	* gcc.target/i386/vect-pr113078b.c: Likewise.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	* gcc.target/i386/vect-strided-1.c: Disable vector cost
+	comparison.
+	* gcc.target/i386/vect-strided-2.c: Likewise.
+	* gcc.target/i386/vect-strided-3.c: Likewise.
+	* gcc.target/i386/vect-strided-4.c: Likewise.
+	* gcc.target/i386/vect-strided-1b.c: Copy of
+	gcc.target/i386/vect-strided-1.c, enable vector cost comparison
+	and adjust expected code generation.
+	* gcc.target/i386/vect-strided-2b.c: Likewise.
+	* gcc.target/i386/vect-strided-3b.c: Likewise.
+	* gcc.target/i386/vect-strided-4b.c: Likewise.
+
 2026-04-29  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
 
 	PR tree-optimization/113379

@@ -1,3 +1,117 @@
+2026-04-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/124878
+	* config/i386/i386.cc (x86_64_int_return_registers): Remove
+	DI_REG and SI_REG.
+	(ix86_function_value_regno_p): Remove DI_REG and SI_REG cases.
+	(function_value_64): Replace X86_64_REGPARM_MAX and
+	X86_64_SSE_REGPARM_MAX with X86_64_MAX_RETURN_NREGS and
+	X86_64_MAX_SSE_RETURN_NREGS for the number of registers used
+	in return values.
+	* config/i386/i386.h (X86_64_MAX_RETURN_NREGS): New.  Defined
+	to 2.
+	(X86_64_MAX_SSE_RETURN_NREGS): Likewise.
+
+2026-04-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125102
+	* config/i386/mmx.md (V_16_32_64:*mov<mode>_imm): Disable
+	16-bit immediate integer store if TARGET_LCP_STALL is true.
+
+2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* Makefile.in (COVERAGE_FLAGS): Remove obsolete comment.
+
+2026-04-30  Vladimir N. Makarov  <vmakarov@redhat.com>
+
+	* ira-costs.cc (record_reg_classes): Process correctly case
+	op_class == NO_REGS.
+
+2026-04-30  Vladimir N. Makarov  <vmakarov@redhat.com>
+
+	* ira-color.cc (assign_hard_reg): Use the right allocno mode to
+	call note_conflict.
+
+2026-04-30  Heiko Eißfeldt  <heiko.Eissfeldt@hexco.de>
+
+	PR middle-end/124805
+	* tree-ssa.cc (verify_vssa):
+	replace recursive calls with iteration for lower stack usage
+
+2026-04-30  Tomas Härdin  <git@haerdin.se>
+
+	* toplev.cc (output_stack_usage_1): Pass RINT_DECL_UNIQUE_NAME
+	instead of PRINT_DECL_NAME to print_decl_identifier.
+
+2026-04-30  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* match.pd (`(a !=/== b) &\| ((a|b) ==/!= 0)`):
+	Simplify patterns using for loop and remove the `:c`
+	on the inner ne/eq.
+
+2026-04-30  Christopher Bazley  <chris.bazley@arm.com>
+
+	* config/aarch64/aarch64-c.cc (aarch64_pragma_target_parse):
+	Pass &global_options_set as an argument to
+	aarch64_override_options_internal.
+	* config/aarch64/aarch64-protos.h (aarch64_override_options_internal):
+	Add a parameter declaration for opts_set.
+	* config/aarch64/aarch64.cc (aarch64_override_options_internal):
+	Add a parameter declaration for opts_set and use the argument
+	when invoking SET_OPTION_IF_UNSET.
+	(aarch64_override_options): Pass &global_options_set as an argument to
+	aarch64_override_options_internal.
+	(aarch64_option_restore): As above.
+	(aarch64_set_current_function): As above.
+	(aarch64_option_valid_attribute_p): As above.
+	(aarch64_option_valid_version_attribute_p): As above.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125088
+	* tree-vect-slp.cc (vect_bb_slp_scalar_cost): Refactor and
+	simplify.
+	* tree-vect-stmts.cc (vect_nop_conversion_p): Exclude
+	copies with memory accesses.
+
+2026-04-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125026
+	PR target/125032
+	* config/i386/i386-features.cc (ix86_place_single_vector_set):
+	Don't check CONST_VECTOR load size.
+	(replace_vector_const): Handle constant integer load.
+	(x86_cse::x86_cse): Convert CONST_VECTOR load no larger than
+	integer to constant integer load and keep redundant constant
+	integer load.  Generate zero CONST_VECTOR load.
+
+2026-04-30  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	* doc/params.texi: Added --param=max-niter-dominators-walk.
+	* params.opt: Added --param=max-niter-dominators-walk.
+	* tree-ssa-loop-niter.cc (MAX_DOMINATORS_TO_WALK): Removed.
+	(determine_value_range): Updated.
+	(bound_difference): Updated.
+	(simplify_using_initial_conditions): Updated.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120398
+	PR tree-optimization/123603
+	* config/i386/i386.opt (ix86-vect-compare-costs): Default to 1.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	* config/i386/i386.cc (ix86_vector_costs::better_epilogue_loop_than_p):
+	New.  If the other loop suggests this as epilog prefer other.
+
+2026-04-30  Richard Biener  <rguenther@suse.de>
+
+	* tree-vectorizer.h (vector_costs::vinfo): New accessor.
+	* config/i386/i386.cc (ix86_vector_costs::better_main_loop_than_p):
+	Prefer a masked main loop if we can elide enough of (vector)
+	epilog loop iterations.
+
 2026-04-29  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
 
 	PR tree-optimization/113379

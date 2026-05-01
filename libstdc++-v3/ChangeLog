@@ -1,3 +1,15 @@
+2026-04-30  Felix Morgner  <felix.morgner@gmail.com>
+
+	PR libstdc++/125112
+	* include/Makefile.am: Move bits/binders.h from bits_headers to
+	bits_freestanding.
+	* include/Makefile.in:
+
+2026-04-30  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* testsuite/26_numerics/random/uniform_real_distribution/operators/gencanon.cc:
+	Updated tests.
+
 2026-04-29  Tomasz Kamiński  <tkaminsk@redhat.com>
 
 	* testsuite/29_atomics/headers/stdatomic.h/macros.cc:
