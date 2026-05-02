@@ -2628,7 +2628,7 @@ xtensa_emit_add_imm (rtx dst, rtx src, HOST_WIDE_INT imm, rtx scratch,
    load with bit-extraction of the required bytes.  */
 
 static bool
-xtensa_expand_load_force_l32_1 (rtx mem)
+xtensa_expand_load_force_l32_1 (const_rtx mem)
 {
   tree expr = MEM_EXPR (mem), type;
 
@@ -2637,6 +2637,29 @@ xtensa_expand_load_force_l32_1 (rtx mem)
   return expr && (type = TREE_TYPE (expr))
 	 && TREE_CODE (type) == INTEGER_TYPE
 	 && lookup_attribute ("force_l32", TYPE_ATTRIBUTES (type));
+}
+
+static bool
+xtensa_expand_load_force_l32_2 (const_rtx reg)
+{
+  unsigned int regno;
+
+  /* These pseudos are unlikely to be passed during the RTL generation,
+     but just in case. */
+  switch (regno = REGNO (reg))
+    {
+    case STACK_POINTER_REGNUM:
+    case FRAME_POINTER_REGNUM:
+    case ARG_POINTER_REGNUM:
+      return true;
+    }
+
+  /* gccint explicitly states that these pseudos indicate the location of
+     the stack frame.  In addition, the static chain pointers also clearly
+     refer to the stack frame.  */
+  return IN_RANGE (regno, FIRST_VIRTUAL_REGISTER, LAST_VIRTUAL_REGISTER)
+	 || (cfun && cfun->static_chain_decl
+	     && cfun->static_chain_decl == REG_EXPR (regno_reg_rtx[regno]));
 }
 
 bool
@@ -2670,13 +2693,17 @@ xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
 
   /* Exclude insns that do not perform memory loading with "force_l32".  */
   if (MEM_ADDR_SPACE (src) != ADDR_SPACE_FORCE_L32
-      && ! xtensa_expand_load_force_l32_1 (src))
+      && ! xtensa_expand_load_force_l32_1 (src)
+      && (!TARGET_FORCE_L32 || MEM_ADDR_SPACE (src) != ADDR_SPACE_GENERIC))
     return false;
 
   /* As a preprocessing, handle cases where addr is (PLUS (REG, OFFSET))
      form.  */
   if (REG_P (addr = XEXP (src, 0)))
-    ;
+    {
+      if (xtensa_expand_load_force_l32_2 (addr))
+	return false;
+    }
   else if (GET_CODE (addr) == PLUS)
     {
       rtx op0 = XEXP (addr, 0), op1 = XEXP (addr, 1);
@@ -2684,7 +2711,8 @@ xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
 
       if (! CONST_INT_P (op1))
 	std::swap (op0, op1);
-      if (! REG_P (op0) || ! CONST_INT_P (op1))
+      if (! REG_P (op0) || ! CONST_INT_P (op1)
+	  || xtensa_expand_load_force_l32_2 (op0))
 	return false;
       if ((v = INTVAL (op1)) == 0)
 	addr = op0;
