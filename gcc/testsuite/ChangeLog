@@ -1,3 +1,83 @@
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/119420
+	* gcc.dg/tree-ssa/pr119420.c: New test.
+
+2026-05-01  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR rtl-optimization/123967
+	* gcc.dg/tree-ssa/pr123967-2.c: New test.
+	* gcc.dg/tree-ssa/pr123967-3.c: New test.
+	* gcc.dg/tree-ssa/pr123967.c: New test.
+
+2026-05-01  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124576
+	* gcc.dg/pr124576.c: New test.
+
+2026-05-01  Daniel Henrique Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR tree-optimization/110010
+	* gcc.dg/tree-ssa/pr110010.c: New test.
+
+2026-05-01  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125115
+	* g++.dg/modules/auto-9.h: New test.
+	* g++.dg/modules/auto-9_a.H: New test.
+	* g++.dg/modules/auto-9_b.C: New test.
+
+2026-05-01  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	* gcc.target/riscv/fusion-auipc-addi.c: New test.
+	* gcc.target/riscv/fusion-lui-addi.c: New test.
+	* gcc.target/riscv/fusion-zexth.c: New test.
+	* gcc.target/riscv/fusion-zextw.c: New test.
+
+2026-05-01  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	* gcc.target/riscv/zicond-shift-cond.c: New test.
+
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125096
+	* g++.dg/reflect/mangle4.C: Move dg-error.
+	* g++.dg/reflect/dep16.C: New test.
+
+2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* gcc.dg/strlenopt-97.c: New test.
+
+2026-05-01  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/pie1.adb: New file.
+
+2026-05-01  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125117
+	* gcc.dg/pr125117.c: New test.
+	* gfortran.dg/pr125117.f90: Likewise.
+	* gcc.target/i386/builtin-memmove-10.c: Updated.
+	* gcc.target/i386/builtin-memmove-15.c: Likewise.
+	* gcc.target/i386/builtin-memmove-2a.c: Likewise.
+	* gcc.target/i386/builtin-memmove-2b.c: Likewise.
+	* gcc.target/i386/builtin-memmove-2c.c: Likewise.
+	* gcc.target/i386/builtin-memmove-2d.c: Likewise.
+	* gcc.target/i386/builtin-memmove-3a.c: Likewise.
+	* gcc.target/i386/builtin-memmove-3b.c: Likewise.
+	* gcc.target/i386/builtin-memmove-3c.c: Likewise.
+	* gcc.target/i386/builtin-memmove-4a.c: Likewise.
+	* gcc.target/i386/builtin-memmove-4b.c: Likewise.
+	* gcc.target/i386/builtin-memmove-4c.c: Likewise.
+	* gcc.target/i386/builtin-memmove-5b.c: Likewise.
+	* gcc.target/i386/builtin-memmove-5c.c: Likewise.
+
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR rtl-optimization/96692
+	* gcc.target/riscv/pr96692.c: New test.
+
 2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/task6.ads, gnat.dg/task6.adb: New test.

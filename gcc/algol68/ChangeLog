@@ -1,3 +1,7 @@
+2026-05-01  Peter Damianov  <peter0x44@disroot.org>
+
+	* Make-lang.in: Correct typo exeect -> exeext
+
 2026-04-22  Thiago Jung Bauermann  <thiago.bauermann@linaro.org>
 
 	* Make-lang.in (algol68.install-html): Fix

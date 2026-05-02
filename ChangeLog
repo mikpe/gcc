@@ -1,3 +1,13 @@
+2026-05-01  Manuel Jacob  <me@manueljacob.de>
+
+	* configure.ac: Set default for CPP_FOR_BUILD environment variable in all cases.
+	* configure: Regenerate.
+
+2026-05-01  Manuel Jacob  <me@manueljacob.de>
+
+	* configure.ac: Preserve *_FOR_BUILD environment variables in all cases.
+	* configure: Regenerate.
+
 2026-04-30  Christopher Bazley  <chris.bazley@arm.com>
 
 	* MAINTAINERS: Add myself to write after approval.

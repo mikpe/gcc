@@ -1,3 +1,12 @@
+2026-05-01  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR ada/87936
+	* gnatlink.adb (Gnatlink): Rename local variable and add Output_PIE
+	local variable; when it is set, compile the binder file with -fPIE.
+	(Process_Args): Set Output_PIE upon seeing -pie.
+	(Process_Binder_File): Append "_pic" to the name of the static Ada
+	runtime if Output_PIE is set.
+
 2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/110336

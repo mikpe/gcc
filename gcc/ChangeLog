@@ -1,3 +1,192 @@
+2026-05-01  Sam James  <sam@gentoo.org>
+
+	* Makefile.in (MOSTLYCLEANFILES): Fix typo of '$(exeext)'.
+
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/119420
+	* match.pd(`(A>>bool) EQ 0 -> (unsigned)A LE bool`): New
+	pattern.
+
+2026-05-01  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR rtl-optimization/123967
+	* match.pd(`if (cond) (A | CST1) : (A & ~CST1)`)`: New pattern.
+
+2026-05-01  Daniel Henrique Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR tree-optimization/110010
+	* match.pd (`(A>>C) NE|EQ (B>>C) -> (A^B) GE|LT (1<<C)`): New
+	pattern.
+
+2026-05-01  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	* config.gcc: Added riscv-fusion.o
+	* config/riscv/riscv-protos.h (enum riscv_fusion_pairs):
+	(riscv_macro_fusion_p): Added declaration.
+	(riscv_macro_fusion_pair_p): Idem.
+	(riscv_get_fusible_ops): Idem.
+	* config/riscv/riscv.cc (enum riscv_fusion_pairs):
+	(riscv_macro_fusion_p): Moved to riscv-fusion.cc
+	(riscv_fusion_enabled_p): Idem.
+	(riscv_set_is_add): Idem.
+	(riscv_set_is_addi): Idem.
+	(riscv_set_is_adduw): Idem.
+	(riscv_set_is_shNadd): Idem.
+	(riscv_set_is_shNadduw): Idem.
+	(riscv_macro_fusion_pair_p): Idem.
+	(riscv_get_fusible_ops): New function to access tune_param->fusible_ops
+	from riscv-fusion.cc.
+	* config/riscv/t-riscv: Added riscv-fusion.cc
+	* config/riscv/riscv-fusion.cc: New file.
+
+2026-05-01  Kewen Lin  <linkewen@hygon.cn>
+
+	* config/i386/c86-4g-m7.md (c86_4g_m7_idiv): New automaton.
+	(c86_4g_m7_fdiv): Ditto.
+	(c86-4g-m7-idiv): New unit.
+	(c86-4g-m7-fdiv): Ditto.
+	(c86_4g_m7_idiv_DI): Adjust unit in the reservation.
+	(c86_4g_m7_idiv_SI): Ditto.
+	(c86_4g_m7_idiv_HI): Ditto.
+	(c86_4g_m7_idiv_QI): Ditto.
+	(c86_4g_m7_idiv_DI_load): Ditto.
+	(c86_4g_m7_idiv_SI_load): Ditto.
+	(c86_4g_m7_idiv_HI_load): Ditto.
+	(c86_4g_m7_idiv_QI_load): Ditto.
+	(c86_4g_m7_fp_div): Ditto.
+	(c86_4g_m7_fp_div_load): Ditto.
+	(c86_4g_m7_fp_idiv_load): Ditto.
+	(c86_4g_m7_avx512_ssediv): Ditto.
+	(c86_4g_m7_avx512_ssediv_mem): Ditto.
+	(c86_4g_m7_avx512_ssediv_z): Ditto.
+	(c86_4g_m7_avx512_ssediv_zmem): Ditto.
+	(c86_4g_m7_avx512_sse_sqrt): Ditto.
+	(c86_4g_m7_avx512_sse_sqrt_load): Ditto.
+	(c86_4g_m7_fp_sqrt): Ditto.  Rename from ...
+	(c86_4g_m7fp_sqrt): ... here.
+	* config/i386/c86-4g.md (c86_4g_idiv): New automaton.
+	(c86_4g_fdiv): Ditto.
+	(c86-4g-idiv): New unit.
+	(c86-4g-fdiv): Ditto.
+	(c86_4g_idiv_DI): Ditto.
+	(c86_4g_idiv_SI): Ditto.
+	(c86_4g_idiv_HI): Ditto.
+	(c86_4g_idiv_QI): Ditto.
+	(c86_4g_idiv_mem_DI): Ditto.
+	(c86_4g_idiv_mem_SI): Ditto.
+	(c86_4g_idiv_mem_HI): Ditto.
+	(c86_4g_idiv_mem_QI): Ditto.
+	(c86_4g_fp_sqrt): Ditto.
+	(c86_4g_sse_sqrt_sf): Ditto.
+	(c86_4g_sse_sqrt_sf_mem): Ditto.
+	(c86_4g_sse_sqrt_df): Ditto.
+	(c86_4g_sse_sqrt_df_mem): Ditto.
+	(c86_4g_fp_op_div): Ditto.
+	(c86_4g_fp_op_div_load): Ditto.
+	(c86_4g_fp_op_idiv_load): Ditto.
+	(c86_4g_ssediv_ss_ps): Ditto.
+	(c86_4g_ssediv_ss_ps_load): Ditto.
+	(c86_4g_ssediv_ss_pd): Ditto.
+	(c86_4g_ssediv_ss_pd_load): Ditto.
+	(c86_4g_ssediv_avx256_ps): Ditto.
+	(c86_4g_ssediv_avx256_ps_load): Ditto.
+	(c86_4g_ssediv_avx256_pd): Ditto.
+	(c86_4g_ssediv_avx256_pd_load): Ditto.
+
+2026-05-01  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+	    Artemiy Volkov  <artemiyv@acm.org>
+	    Luis Silva  <luiss@synopsys.com>
+
+	* config/riscv/riscv-cores.def (RISCV_TUNE): Add arc-v-rmx-100-series.
+	* config/riscv/riscv-opts.h (enum riscv_microarchitecture_type):
+	Add arcv_rmx100.
+	(enum arcv_mpy_option_enum): New enum for ARC-V multiply options.
+	* config/riscv/riscv-protos.h (arcv_mpy_1c_bypass_p): New declaration.
+	(arcv_mpy_2c_bypass_p): New declaration.
+	(arcv_mpy_10c_bypass_p): New declaration.
+	* config/riscv/riscv.cc (arcv_mpy_1c_bypass_p): New function.
+	(arcv_mpy_2c_bypass_p): New function.
+	(arcv_mpy_10c_bypass_p): New function.
+	* config/riscv/riscv.md: Add arcv_rmx100.
+	* config/riscv/riscv.opt: New option for RMX-100 multiply unit
+	configuration.
+	* doc/riscv-mtune.texi: Document arc-v-rmx-100-series.
+	* config/riscv/arcv-rmx100.md: New file.
+
+2026-05-01  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+	    Artemiy Volkov  <artemiyv@acm.org>
+	    Luis Silva  <luiss@synopsys.com>
+
+	* config/riscv/riscv-cores.def (RISCV_TUNE): Add arc-v-rhx-100-series.
+	* config/riscv/riscv-opts.h (enum riscv_microarchitecture_type): Add
+	arcv_rhx100.
+	* config/riscv/riscv.cc (arcv_rhx100_tune_info): New riscv_tune_param.
+	* config/riscv/riscv.md: Add arcv_rhx100 to tune attribute.
+	* doc/riscv-mtune.texi: Add RHX-100 documentation.
+	* config/riscv/arcv-rhx100.md: New file.
+
+2026-05-01  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	* config/riscv/riscv.cc (riscv_expand_conditional_move):
+	Convert unsigned comparisons against power-of-2 boundaries
+	to shift-based equality tests.
+
+2026-05-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.ac: Test solaris_as, solaris_ld instead of gas, gnu_ld.
+	(gcc_cv_as_working_gdwarf_n_flag): Escape '.' in filename.
+	* acinclude.m4 (gcc_cv_initfini_array): Test solaris_as,
+	solaris_ld instead of gas, gnu_ld.
+	* configure: Regenerate.
+
+2026-05-01  Jin Ma  <jinma@linux.alibaba.com>
+
+	* config/riscv/riscv.cc (riscv_rtx_costs): Add missing braces
+	around the if body for the slli.uw pattern in the AND case.
+
+2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* tree-ssa-strlen.cc (get_string_length): Transform
+	__strcat_chk (x, y, z) when we need strlen (x) afterwards into
+	l1 = strlen (x); l = __stpcpy_chk (x + l1, y, z - l1) - x;
+	where l is the strlen (x), instead of using z as last __stpcpy_chk
+	argument.
+
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124559
+	* config/riscv/riscv-protos.h (riscv_move_integer): Drop mode argument.
+	* config/riscv/riscv.cc (riscv_move_integer): Pass mode after promotions
+	to riscv_build_integer.  All callers changed.
+	* config/riscv/riscv.md: Corresponding changes.
+	* cse.cc (cse_insn): Try to derive one constant from another using NOT/NEG.
+
+2026-05-01  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125117
+	* config/i386/i386-expand.cc (ix86_expand_movmem): Generate
+	last_4x_vec_label when min_size <= 4 * MOVE_MAX.
+
+2026-05-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	* config/s390/s390.cc (s390_secondary_reload): Add cases for HF
+	vector modes.
+	* config/s390/s390.md: Add modes V{1,2,4,8}HF to mode iterator
+	ALL.
+
+2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	* tree-vect-loop.cc (vectorizable_reduction): Remove pointless
+	&& 1.
+
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR rtl-optimization/96692
+	* config/riscv/bitmanip.md (xor+xor+ior splitters): New splitters
+	that ultimately generate andn+xor when possible.
+
 2026-04-30  H.J. Lu  <hjl.tools@gmail.com>
 
 	PR target/124878

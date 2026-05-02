@@ -1,3 +1,8 @@
+2026-05-01  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124576
+	* c-decl.cc (declspecs_add_type): Add save_expr.
+
 2026-04-29  Julian Brown  <julian@codesourcery.com>
 
 	* c-parser.cc (c_parser_omp_target_data): Instantiate mappers for
