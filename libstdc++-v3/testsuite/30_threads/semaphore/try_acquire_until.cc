@@ -43,8 +43,11 @@ void test01()
   }
 
   {
-    auto const at = std::chrono::system_clock::now() + dur;
+    // Set the base time T0 first, so that even if there's a delay before the
+    // deadline AT is computed, it won't shrink the measured DIFF to the point
+    // of making it seem shorter than the required wait DURation.
     auto const t0 = std::chrono::steady_clock::now();
+    auto const at = std::chrono::system_clock::now() + dur;
     VERIFY( !s.try_acquire_until(at) );
     auto const diff = std::chrono::steady_clock::now() - t0;
     VERIFY( diff >= dur );
