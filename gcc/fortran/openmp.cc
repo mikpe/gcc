@@ -180,12 +180,11 @@ gfc_match_omp_eos_error (void)
 void
 gfc_free_omp_clauses (gfc_omp_clauses *c)
 {
-  int i;
   if (c == NULL)
     return;
 
   gfc_free_expr (c->if_expr);
-  for (i = 0; i < OMP_IF_LAST; i++)
+  for (int i = 0; i < OMP_IF_LAST; i++)
     gfc_free_expr (c->if_exprs[i]);
   gfc_free_expr (c->self_expr);
   gfc_free_expr (c->final_expr);
@@ -214,12 +213,9 @@ gfc_free_omp_clauses (gfc_omp_clauses *c)
   gfc_free_expr (c->num_gangs_expr);
   gfc_free_expr (c->num_workers_expr);
   gfc_free_expr (c->vector_length_expr);
-  for (i = 0; i < OMP_LIST_NUM; i++)
-    gfc_free_omp_namelist (c->lists[i],
-			   i == OMP_LIST_AFFINITY || i == OMP_LIST_DEPEND,
-			   i == OMP_LIST_ALLOCATE,
-			   i == OMP_LIST_USES_ALLOCATORS,
-			   i == OMP_LIST_INIT);
+  for (enum gfc_omp_list_type t = OMP_LIST_FIRST; t < OMP_LIST_NUM;
+       t = gfc_omp_list_type (t + 1))
+    gfc_free_omp_namelist (c->lists[t], t);
   gfc_free_expr_list (c->wait_list);
   gfc_free_expr_list (c->tile_list);
   gfc_free_expr_list (c->sizes_list);
@@ -349,8 +345,7 @@ gfc_free_omp_declare_variant_list (gfc_omp_declare_variant *list)
       gfc_omp_declare_variant *current = list;
       list = list->next;
       gfc_free_omp_set_selector_list (current->set_selectors);
-      gfc_free_omp_namelist (current->adjust_args_list, false, false, false,
-			     false);
+      gfc_free_omp_namelist (current->adjust_args_list, OMP_LIST_NONE);
       free (current);
     }
 }
@@ -618,7 +613,7 @@ syntax:
   gfc_error ("Syntax error in OpenMP variable list at %C");
 
 cleanup:
-  gfc_free_omp_namelist (head, false, false, false, false);
+  gfc_free_omp_namelist (head, OMP_LIST_NONE);
   gfc_current_locus = old_loc;
   return MATCH_ERROR;
 }
@@ -708,7 +703,7 @@ syntax:
   gfc_error ("Syntax error in OpenMP variable list at %C");
 
 cleanup:
-  gfc_free_omp_namelist (head, false, false, false, false);
+  gfc_free_omp_namelist (head, OMP_LIST_NONE);
   gfc_current_locus = old_loc;
   return MATCH_ERROR;
 }
@@ -820,7 +815,7 @@ syntax:
   gfc_error ("Syntax error in OpenMP SINK dependence-type list at %C");
 
 cleanup:
-  gfc_free_omp_namelist (head, false, false, false, false);
+  gfc_free_omp_namelist (head, OMP_LIST_DEPEND);
   gfc_current_locus = old_loc;
   return MATCH_ERROR;
 }
@@ -1461,7 +1456,7 @@ gfc_match_omp_clause_reduction (char pc, gfc_omp_clauses *c, bool openacc,
     return MATCH_NO;
 
   locus old_loc = gfc_current_locus;
-  int list_idx = 0;
+  enum gfc_omp_list_type list_idx = OMP_LIST_NONE;
 
   if (pc == 'r' && !openacc)
     {
@@ -1471,13 +1466,13 @@ gfc_match_omp_clause_reduction (char pc, gfc_omp_clauses *c, bool openacc,
 	list_idx = OMP_LIST_REDUCTION_TASK;
       else if (gfc_match ("default") == MATCH_YES)
 	list_idx = OMP_LIST_REDUCTION;
-      if (list_idx != 0 && gfc_match (", ") != MATCH_YES)
+      if (list_idx != OMP_LIST_NONE && gfc_match (", ") != MATCH_YES)
 	{
 	  gfc_error ("Comma expected at %C");
 	  gfc_current_locus = old_loc;
 	  return MATCH_NO;
 	}
-      if (list_idx == 0)
+      if (list_idx == OMP_LIST_NONE)
 	list_idx = OMP_LIST_REDUCTION;
     }
   else if (pc == 'i')
@@ -1593,7 +1588,7 @@ gfc_match_omp_clause_reduction (char pc, gfc_omp_clauses *c, bool openacc,
       *head = NULL;
       gfc_error_now ("!$OMP DECLARE REDUCTION %s not found at %L",
 		     buffer, &old_loc);
-      gfc_free_omp_namelist (n, false, false, false, false);
+      gfc_free_omp_namelist (n, OMP_LIST_NONE);
     }
   else
     for (n = *head; n; n = n->next)
@@ -1909,7 +1904,7 @@ parse_next:
   return MATCH_YES;
 
 error:
-  gfc_free_omp_namelist (head, false, false, true, false);
+  gfc_free_omp_namelist (head, OMP_LIST_USES_ALLOCATORS);
   return MATCH_ERROR;
 }
 
@@ -2447,7 +2442,7 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 
 	      if (end_colon && gfc_match (" %e )", &alignment) != MATCH_YES)
 		{
-		  gfc_free_omp_namelist (*head, false, false, false, false);
+		  gfc_free_omp_namelist (*head, OMP_LIST_ALIGNED);
 		  gfc_current_locus = old_loc;
 		  *head = NULL;
 		  break;
@@ -3487,7 +3482,7 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 		    end_colon = true;
 		  else if (gfc_match (" )") != MATCH_YES)
 		    {
-		      gfc_free_omp_namelist (*head, false, false, false, false);
+		      gfc_free_omp_namelist (*head, OMP_LIST_LINEAR);
 		      gfc_current_locus = old_loc;
 		      *head = NULL;
 		      break;
@@ -3498,7 +3493,7 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 		{
 		  if (gfc_match (" %e )", &step) != MATCH_YES)
 		    {
-		      gfc_free_omp_namelist (*head, false, false, false, false);
+		      gfc_free_omp_namelist (*head, OMP_LIST_LINEAR);
 		      gfc_current_locus = old_loc;
 		      *head = NULL;
 		      goto error;
@@ -3641,7 +3636,7 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 		    }
 		  if (has_error)
 		    {
-		      gfc_free_omp_namelist (*head, false, false, false, false);
+		      gfc_free_omp_namelist (*head, OMP_LIST_LINEAR);
 		      *head = NULL;
 		      goto error;
 		    }
@@ -5319,7 +5314,7 @@ gfc_match_omp_allocate (void)
 	  gfc_error ("Unexpected expression as list item at %L in ALLOCATE "
 		     "directive", &n->expr->where);
 
-	gfc_free_omp_namelist (vars, false, true, false, false);
+	gfc_free_omp_namelist (vars, OMP_LIST_ALLOCATE);
 	goto error;
       }
 
@@ -5740,14 +5735,14 @@ gfc_match_omp_flush (void)
     {
       gfc_error ("List specified together with memory order clause in FLUSH "
 		 "directive at %C");
-      gfc_free_omp_namelist (list, false, false, false, false);
+      gfc_free_omp_namelist (list, OMP_LIST_NONE);
       gfc_free_omp_clauses (c);
       return MATCH_ERROR;
     }
   if (gfc_match_omp_eos () != MATCH_YES)
     {
       gfc_error ("Unexpected junk after $OMP FLUSH statement at %C");
-      gfc_free_omp_namelist (list, false, false, false, false);
+      gfc_free_omp_namelist (list, OMP_LIST_NONE);
       gfc_free_omp_clauses (c);
       return MATCH_ERROR;
     }
@@ -6195,7 +6190,7 @@ gfc_match_omp_declare_target (void)
   locus old_loc;
   match m;
   gfc_omp_clauses *c = NULL;
-  int list;
+  enum gfc_omp_list_type list;
   gfc_omp_namelist *n;
   gfc_symbol *s;
 
@@ -6238,7 +6233,7 @@ gfc_match_omp_declare_target (void)
 
   gfc_buffer_error (false);
 
-  static const int to_enter_link_lists[]
+  static const enum gfc_omp_list_type to_enter_link_lists[]
     = { OMP_LIST_TO, OMP_LIST_ENTER, OMP_LIST_LINK, OMP_LIST_LOCAL };
   for (size_t listn = 0; listn < ARRAY_SIZE (to_enter_link_lists)
 			 && (list = to_enter_link_lists[listn], true); ++listn)
@@ -8882,7 +8877,7 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 {
   gfc_omp_namelist *n, *last;
   gfc_expr_list *el;
-  int list;
+  enum gfc_omp_list_type list;
   int ifc;
   bool if_without_mod = false;
   gfc_omp_linear_op linear_op = OMP_LINEAR_DEFAULT;
@@ -9136,7 +9131,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 
   /* Check that no symbol appears on multiple clauses, except that
      a symbol can appear on both firstprivate and lastprivate.  */
-  for (list = 0; list < OMP_LIST_NUM; list++)
+  for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+       list = gfc_omp_list_type (list + 1))
     for (n = omp_clauses->lists[list]; n; n = n->next)
       {
 	if (!n->sym)  /* omp_all_memory.  */
@@ -9224,7 +9220,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 		   "REDUCTION clause at %L", loc);
     }
 
-  for (list = 0; list < OMP_LIST_NUM; list++)
+  for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+       list = gfc_omp_list_type (list + 1))
     if (list != OMP_LIST_FIRSTPRIVATE
 	&& list != OMP_LIST_LASTPRIVATE
 	&& list != OMP_LIST_ALIGNED
@@ -9331,7 +9328,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 	  }
     }
   if (code && (code->op == EXEC_OMP_INTEROP || code->op == EXEC_OMP_DISPATCH))
-    for (list = OMP_LIST_INIT; list <= OMP_LIST_INTEROP; list++)
+    for (list = OMP_LIST_INIT; list <= OMP_LIST_INTEROP;
+	 list = gfc_omp_list_type (list + 1))
       for (n = omp_clauses->lists[list]; n; n = n->next)
 	{
 	  if (n->sym->ts.type != BT_INTEGER
@@ -9363,7 +9361,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 		 n->sym->name, &n->where);
 
   gcc_assert (OMP_LIST_LASTPRIVATE == OMP_LIST_FIRSTPRIVATE + 1);
-  for (list = OMP_LIST_FIRSTPRIVATE; list <= OMP_LIST_LASTPRIVATE; list++)
+  for (list = OMP_LIST_FIRSTPRIVATE; list <= OMP_LIST_LASTPRIVATE;
+       list = gfc_omp_list_type (list + 1))
     for (n = omp_clauses->lists[list]; n; n = n->next)
       if (n->sym->data_mark || n->sym->gen_mark || n->sym->dev_mark)
 	{
@@ -9476,7 +9475,7 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 		{
 		  prev->next = n->next;
 		  n->next = NULL;
-		  gfc_free_omp_namelist (n, false, true, false, false);
+		  gfc_free_omp_namelist (n, OMP_LIST_ALLOCATE);
 		  n = prev->next;
 		}
 	      continue;
@@ -9489,7 +9488,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
       /* Non-composite constructs.  */
       if (code && code->op < EXEC_OMP_DO_SIMD)
 	{
-	  for (list = 0; list < OMP_LIST_NUM; list++)
+	  for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+	       list = gfc_omp_list_type (list + 1))
 	    switch (list)
 	    {
 	      case OMP_LIST_PRIVATE:
@@ -9679,7 +9679,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
     }
 
   bool has_inscan = false, has_notinscan = false;
-  for (list = 0; list < OMP_LIST_NUM; list++)
+  for (enum gfc_omp_list_type list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+       list = gfc_omp_list_type (list + 1))
     if ((n = omp_clauses->lists[list]) != NULL)
       {
 	const char *name = clause_names[list];
@@ -11567,7 +11568,6 @@ gfc_resolve_omp_parallel_blocks (gfc_code *code, gfc_namespace *ns)
   struct fortran_omp_context ctx;
   gfc_omp_clauses *omp_clauses = code->ext.omp_clauses;
   gfc_omp_namelist *n;
-  int list;
 
   ctx.code = code;
   ctx.sharing_clauses = new hash_set<gfc_symbol *>;
@@ -11576,7 +11576,8 @@ gfc_resolve_omp_parallel_blocks (gfc_code *code, gfc_namespace *ns)
   ctx.is_openmp = true;
   omp_current_ctx = &ctx;
 
-  for (list = 0; list < OMP_LIST_NUM; list++)
+  for (enum gfc_omp_list_type list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+       list = gfc_omp_list_type (list + 1))
     switch (list)
       {
       case OMP_LIST_SHARED:
@@ -12224,7 +12225,7 @@ static void
 resolve_omp_do (gfc_code *code)
 {
   gfc_code *do_code, *next;
-  int list, i, count, non_generated_count;
+  int i, count, non_generated_count;
   gfc_omp_namelist *n;
   gfc_symbol *dovar;
   const char *name;
@@ -12435,7 +12436,8 @@ resolve_omp_do (gfc_code *code)
 	  errorp = true;
 	}
       if (code->ext.omp_clauses)
-	for (list = 0; list < OMP_LIST_NUM; list++)
+	for (enum gfc_omp_list_type list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+	     list = gfc_omp_list_type (list + 1))
 	  if (!is_simd || code->ext.omp_clauses->collapse > 1
 	      ? (list != OMP_LIST_PRIVATE && list != OMP_LIST_LASTPRIVATE
 		  && list != OMP_LIST_ALLOCATE)
@@ -13114,7 +13116,6 @@ gfc_resolve_oacc_blocks (gfc_code *code, gfc_namespace *ns)
   fortran_omp_context ctx;
   gfc_omp_clauses *omp_clauses = code->ext.omp_clauses;
   gfc_omp_namelist *n;
-  int list;
 
   resolve_oacc_loop_blocks (code);
 
@@ -13125,7 +13126,8 @@ gfc_resolve_oacc_blocks (gfc_code *code, gfc_namespace *ns)
   ctx.is_openmp = false;
   omp_current_ctx = &ctx;
 
-  for (list = 0; list < OMP_LIST_NUM; list++)
+  for (enum gfc_omp_list_type list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+       list = gfc_omp_list_type (list + 1))
     switch (list)
       {
       case OMP_LIST_PRIVATE:
@@ -13176,7 +13178,7 @@ resolve_oacc_loop (gfc_code *code)
 void
 gfc_resolve_oacc_declare (gfc_namespace *ns)
 {
-  int list;
+  enum gfc_omp_list_type list;
   gfc_omp_namelist *n;
   gfc_oacc_declare *oc;
 
@@ -13185,7 +13187,8 @@ gfc_resolve_oacc_declare (gfc_namespace *ns)
 
   for (oc = ns->oacc_declare; oc; oc = oc->next)
     {
-      for (list = 0; list < OMP_LIST_NUM; list++)
+      for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+	   list = gfc_omp_list_type (list + 1))
 	for (n = oc->clauses->lists[list]; n; n = n->next)
 	  {
 	    n->sym->mark = 0;
@@ -13224,7 +13227,8 @@ gfc_resolve_oacc_declare (gfc_namespace *ns)
 
   for (oc = ns->oacc_declare; oc; oc = oc->next)
     {
-      for (list = 0; list < OMP_LIST_NUM; list++)
+      for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+	   list = gfc_omp_list_type (list + 1))
 	for (n = oc->clauses->lists[list]; n; n = n->next)
 	  {
 	    if (n->sym->mark)
@@ -13240,7 +13244,8 @@ gfc_resolve_oacc_declare (gfc_namespace *ns)
 
   for (oc = ns->oacc_declare; oc; oc = oc->next)
     {
-      for (list = 0; list < OMP_LIST_NUM; list++)
+      for (list = OMP_LIST_FIRST; list < OMP_LIST_NUM;
+	   list = gfc_omp_list_type (list + 1))
 	for (n = oc->clauses->lists[list]; n; n = n->next)
 	  n->sym->mark = 0;
     }

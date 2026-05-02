@@ -1466,7 +1466,7 @@ gfc_omp_namelist;
 
 #define gfc_get_omp_namelist() XCNEW (gfc_omp_namelist)
 
-enum
+enum gfc_omp_list_type
 {
   OMP_LIST_FIRST,
   OMP_LIST_PRIVATE = OMP_LIST_FIRST,
@@ -1508,7 +1508,8 @@ enum
   OMP_LIST_DESTROY,
   OMP_LIST_INTEROP,
   OMP_LIST_ADJUST_ARGS,
-  OMP_LIST_NUM /* Must be the last.  */
+  OMP_LIST_NUM, /* Must be the last (together with OMP_LIST_NONE).  */
+  OMP_LIST_NONE = OMP_LIST_NUM
 };
 
 /* Because a symbol can belong to multiple namelists, they must be
@@ -3914,7 +3915,7 @@ void gfc_free_iterator (gfc_iterator *, int);
 void gfc_free_forall_iterator (gfc_forall_iterator *);
 void gfc_free_alloc_list (gfc_alloc *);
 void gfc_free_namelist (gfc_namelist *);
-void gfc_free_omp_namelist (gfc_omp_namelist *, bool, bool, bool, bool);
+void gfc_free_omp_namelist (gfc_omp_namelist *, enum gfc_omp_list_type);
 void gfc_free_equiv (gfc_equiv *);
 void gfc_free_equiv_until (gfc_equiv *, gfc_equiv *);
 void gfc_free_data (gfc_data *);
