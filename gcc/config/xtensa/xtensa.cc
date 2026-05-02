@@ -48,6 +48,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "varasm.h"
 #include "alias.h"
 #include "explow.h"
+#include "expmed.h"
 #include "expr.h"
 #include "langhooks.h"
 #include "gimplify.h"
@@ -201,6 +202,10 @@ static rtx_insn *xtensa_md_asm_adjust (vec<rtx> &, vec<rtx> &,
 				       vec<machine_mode> &, vec<const char *> &,
 				       vec<rtx> &, vec<rtx> &, HARD_REG_SET &,
 				       location_t);
+static bool xtensa_addr_space_subset_p (addr_space_t, addr_space_t);
+static rtx xtensa_addr_space_convert (rtx, tree, tree);
+static bool xtensa_addr_space_legitimate_address_p (machine_mode, rtx, bool,
+						    addr_space_t, code_helper);
 
 
 
@@ -292,7 +297,7 @@ static rtx_insn *xtensa_md_asm_adjust (vec<rtx> &, vec<rtx> &,
 #define TARGET_CANNOT_FORCE_CONST_MEM xtensa_cannot_force_const_mem
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
-#define TARGET_LEGITIMATE_ADDRESS_P	xtensa_legitimate_address_p
+#define TARGET_LEGITIMATE_ADDRESS_P xtensa_legitimate_address_p
 
 #undef TARGET_FRAME_POINTER_REQUIRED
 #define TARGET_FRAME_POINTER_REQUIRED xtensa_frame_pointer_required
@@ -374,6 +379,16 @@ static rtx_insn *xtensa_md_asm_adjust (vec<rtx> &, vec<rtx> &,
 
 #undef TARGET_MD_ASM_ADJUST
 #define TARGET_MD_ASM_ADJUST xtensa_md_asm_adjust
+
+#undef TARGET_ADDR_SPACE_SUBSET_P
+#define TARGET_ADDR_SPACE_SUBSET_P xtensa_addr_space_subset_p
+
+#undef TARGET_ADDR_SPACE_CONVERT
+#define TARGET_ADDR_SPACE_CONVERT xtensa_addr_space_convert
+
+#undef TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P
+#define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P	\
+	xtensa_addr_space_legitimate_address_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -2594,6 +2609,70 @@ xtensa_emit_add_imm (rtx dst, rtx src, HOST_WIDE_INT imm, rtx scratch,
     }
 
   return retval;
+}
+
+
+/* Expand a 1- or 2-byte width memory load into an aligned 4-byte width
+   load with bit-extraction of the required bytes.  */
+
+bool
+xtensa_expand_load_force_l32 (rtx *operands, machine_mode dest_mode,
+			      machine_mode src_mode, int unsignedp)
+{
+  rtx dest, src, addr, temp, x;
+
+  gcc_assert (src_mode == QImode || src_mode == HImode);
+
+  /* Reject sub-word store to memory within the __force_l32 address space.  */
+  if (mem_operand (dest = operands[0], dest_mode)
+      && MEM_ADDR_SPACE (dest) == ADDR_SPACE_FORCE_L32)
+    {
+      error ("Storing 1- and 2-byte quantities to memory within the "
+	     "%<__force_l32%> address space is not supported");
+      return false;
+    }
+
+  /* Exclude insns that do not load memory.  */
+  if (! register_operand (dest, dest_mode)
+      || ! mem_operand (src = operands[1], src_mode))
+    return false;
+
+  /* Exclude insns that do not perform memory loading with "force_l32".  */
+  if (MEM_ADDR_SPACE (src) != ADDR_SPACE_FORCE_L32)
+    return false;
+
+  /* Addressing in the __force_l32 address space is only valid with a base
+     register without offset.  */
+  addr = XEXP (src, 0);
+  gcc_assert (REG_P (addr));
+
+  /* First, Load the aligned SImode memory containing the desired [HQ]Imode
+     value.  */
+  emit_insn (gen_andsi3 (temp = gen_reg_rtx (Pmode),
+			 addr, force_reg (SImode, GEN_INT (-4))));
+  x = gen_rtx_MEM (SImode, temp);
+  MEM_VOLATILE_P (x) = MEM_VOLATILE_P (src);
+  emit_insn (gen_rtx_SET (temp, x));
+
+  /* Then, shift the bit-image of the desired [HQ]Imode value to bit-
+     position 0, ie., the least significant side for little-endian, the
+     most significant side for big-endian.
+     This process requires a shift of 8-times the amount, ie., a per-byte
+     shift instruction.  Therefore, with the implementation of this, the
+     instruction is modified to be usable regardless of whether optimization
+     and/or debugging is enabled or disabled (see "*shift_per_byte" insn
+     pattern in xtensa.md).  */
+  x = gen_rtx_ASHIFT (SImode, addr, GEN_INT (3));
+  x = BITS_BIG_ENDIAN ? gen_rtx_ASHIFT (SImode, temp, x)
+		      : gen_rtx_LSHIFTRT (SImode, temp, x);
+  emit_insn (gen_rtx_SET (temp, x));
+
+  /* Finally, extract the necessary part from the shifted result.  */
+  x = extract_bit_field (temp, GET_MODE_BITSIZE (src_mode), 0, unsignedp,
+			 NULL_RTX, dest_mode, dest_mode, false, NULL);
+  emit_insn (gen_rtx_SET (dest, x));
+
+  return true;
 }
 
 
@@ -5477,6 +5556,68 @@ xtensa_md_asm_adjust (vec<rtx> &outputs ATTRIBUTE_UNUSED,
       }
 
   return NULL;
+}
+
+/* Implement TARGET_ADDR_SPACE_SUBSET_P.  */
+
+static bool
+xtensa_addr_space_subset_p (addr_space_t subset, addr_space_t superset)
+{
+  /* Just obvious.  */
+  if (subset == superset)
+     return true;
+
+  /* A __force_l32 pointer can point to any location in the generic
+     address space, though its efficiency is another matter.  */
+  if (superset == ADDR_SPACE_FORCE_L32 && subset == ADDR_SPACE_GENERIC)
+    return true;
+
+  return false;
+}
+
+/* Implement TARGET_ADDR_SPACE_CONVERT.  */
+
+static rtx
+xtensa_addr_space_convert (rtx op, tree from_type, tree to_type)
+{
+  addr_space_t from_as = TYPE_ADDR_SPACE (TREE_TYPE (from_type));
+  addr_space_t to_as = TYPE_ADDR_SPACE (TREE_TYPE (to_type));
+
+  /* A __force_l32 pointer can point to any location in the generic
+     address space, though its efficiency is another matter.  */
+  if (to_as == ADDR_SPACE_FORCE_L32 && from_as == ADDR_SPACE_GENERIC)
+    ;
+  /* However, the reverse conversion carries risks.  */
+  else if (to_as == ADDR_SPACE_GENERIC && from_as == ADDR_SPACE_FORCE_L32)
+    warning (0, "converting from the %<__force_l32%> address space to the "
+		"generic one is generally not safe");
+  /* Unimplemented conversions are of course not supported.  */
+  else
+    error ("conversion between those address spaces is not supported");
+
+  return op;
+}
+
+/* Implement TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P.  */
+
+static bool
+xtensa_addr_space_legitimate_address_p (machine_mode mode, rtx addr,
+					bool strict, addr_space_t as,
+					code_helper ch)
+{
+  switch (as)
+    {
+    case ADDR_SPACE_FORCE_L32:
+      /* The __force_l32 address space.  */
+
+      while (SUBREG_P (addr))
+	addr = SUBREG_REG (addr);
+
+      /* Only valid with a base register without offset.  */
+      return REG_P (addr) && BASE_REG_P (addr, strict);
+    }
+
+  return xtensa_legitimate_address_p (mode, addr, strict, ch);
 }
 
 /* Machine-specific pass in order to replace all assignments of large

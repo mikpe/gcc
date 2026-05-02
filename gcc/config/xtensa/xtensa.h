@@ -317,6 +317,13 @@ along with GCC; see the file COPYING3.  If not see
    call an address kept in a register.  */
 #define NO_FUNCTION_CSE 1
 
+/* Named address spaces.  */
+#define ADDR_SPACE_FORCE_L32 1
+#define REGISTER_TARGET_PRAGMAS()					\
+  do {									\
+    c_register_addr_space ("__force_l32", ADDR_SPACE_FORCE_L32);	\
+  } while (0)
+
 /* Xtensa processors have "register windows".  GCC does not currently
    take advantage of the possibility for variable-sized windows; instead,
    we use a fixed window size of 8.  */

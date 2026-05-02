@@ -919,7 +919,19 @@
 
 ;; Zero-extend instructions.
 
-(define_insn "zero_extend<mode>si2"
+(define_expand "zero_extend<mode>si2"
+  [(set (match_operand:SI 0 "register_operand")
+	(zero_extend:SI (match_operand:HQI 1 "nonimmed_operand")))]
+  ""
+{
+  if (xtensa_expand_load_force_l32 (operands, SImode, <MODE>mode, true))
+    ;
+  else
+    emit_insn (gen_zero_extend<mode>si2_internal (operands[0], operands[1]));
+  DONE;
+})
+
+(define_insn "zero_extend<mode>si2_internal"
   [(set (match_operand:SI 0 "register_operand")
 	(zero_extend:SI (match_operand:HQI 1 "nonimmed_operand")))]
   ""
@@ -937,7 +949,9 @@
 	(sign_extend:SI (match_operand:HI 1 "register_operand" "")))]
   ""
 {
-  if (sext_operand (operands[1], HImode))
+  if (xtensa_expand_load_force_l32 (operands, SImode, HImode, false))
+    ;
+  else if (sext_operand (operands[1], HImode))
     emit_insn (gen_extendhisi2_internal (operands[0], operands[1]));
   else
     xtensa_extend_reg (operands[0], operands[1]);
@@ -959,7 +973,9 @@
 	(sign_extend:SI (match_operand:QI 1 "register_operand" "")))]
   ""
 {
-  if (TARGET_SEXT)
+  if (xtensa_expand_load_force_l32 (operands, SImode, QImode, false))
+    ;
+  else if (TARGET_SEXT)
     emit_insn (gen_extendqisi2_internal (operands[0], operands[1]));
   else
     xtensa_extend_reg (operands[0], operands[1]);
@@ -1302,6 +1318,8 @@
 	(match_operand:HI 1 "general_operand" ""))]
   ""
 {
+  if (xtensa_expand_load_force_l32 (operands, HImode, HImode, true))
+    DONE;
   if (xtensa_emit_move_sequence (operands, HImode))
     DONE;
 })
@@ -1331,6 +1349,8 @@
 	(match_operand:QI 1 "general_operand" ""))]
   ""
 {
+  if (xtensa_expand_load_force_l32 (operands, QImode, QImode, true))
+    DONE;
   if (xtensa_emit_move_sequence (operands, QImode))
     DONE;
 })
@@ -1621,7 +1641,7 @@
 		[(match_operand:SI 1 "register_operand" "r")
 		 (ashift:SI (match_operand:SI 2 "register_operand" "r")
 			    (const_int 3))]))]
-  "!optimize_debug && optimize"
+  ""
 {
   switch (GET_CODE (operands[3]))
     {
