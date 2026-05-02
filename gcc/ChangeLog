@@ -1,3 +1,54 @@
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	Revert:
+	2026-05-01  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR rtl-optimization/123967
+	* match.pd(`if (cond) (A | CST1) : (A & ~CST1)`)`: New pattern.
+
+2026-05-01  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR rtl-optimization/123967
+	* match.pd(`if (cond) (A | CST1) : (A & ~CST1)`)`: New pattern.
+
+2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* tree-ssa-strlen.cc (get_string_length): Transform
+	__strcat_chk (x, y, z) when we need strlen (x) afterwards into
+	l1 = strlen (x); l = __stpcpy_chk (x + l1, y, z - l1) - x;
+	where l is the strlen (x), instead of using z as last __stpcpy_chk
+	argument.
+
+2026-05-01  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-05-01  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125117
+	* config/i386/i386-expand.cc (ix86_expand_movmem): Generate
+	last_4x_vec_label when min_size <= 4 * MOVE_MAX.
+
+2026-05-01  Soumya AR  <soumyaa@nvidia.com>
+
+	Backported from master:
+	2026-04-27  Soumya AR  <soumyaa@nvidia.com>
+
+	* config/aarch64/tuning_models/generic.h: Update br_mispredict_factor
+	to 7.
+
+2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	Backported from master:
+	2026-04-25  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124984
+	* config/riscv/thead.cc (th_memidx_classify_address_index): Extract
+	constant multiplicand value from the right object.
+
 2026-04-30  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

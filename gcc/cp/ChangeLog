@@ -1,3 +1,56 @@
+2026-05-01  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-01  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125115
+	* module.cc (trees_in::is_matching_decl): Turn e_type into a
+	reference and use it instead of TREE_TYPE (e_inner).  Always
+	use build_exception_variant to propagate an already-instantiated
+	noexcept.
+
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-04-23  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124926
+	* pt.cc (tsubst_qualified_id): Rename name_lookup_p parameter to
+	reflecting_p.  Check !reflecting_p instead of name_lookup_p.  Do
+	not give the "instantiation yields a type" error when reflecting_p
+	is true.
+	(tsubst_expr) <case REFLECT_EXPR>: Adjust the call to
+	tsubst_qualified_id.
+
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-04-23  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124989
+	* pt.cc (tsubst_splice_expr): Turn off access checking for the
+	build_offset_ref call.
+
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-04-28  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124756
+	* reflect.cc (get_reflection): Give an error when taking the
+	reflection of a block-scope extern.
+
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125096
+	* pt.cc (tsubst_splice_scope): Don't return early for
+	dependent_splice_p.  Propagate cv-qualifiers from the
+	SPLICE_SCOPE to the result.
+	* reflect.cc (valid_splice_scope_p): Accept SPLICE_SCOPE.
+
 2026-04-30  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
