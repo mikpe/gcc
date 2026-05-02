@@ -1593,7 +1593,7 @@ See Cygwin and MinGW Options.
 @gccoptlist{-mconst16  -mforce-no-pic  -mno-serialize-volatile
 -mtext-section-literals  -mauto-litpools  -mno-target-align
 -mlongcalls  -mabi=@var{abi-type}
--mextra-l32r-costs=@var{cycles}  -mstrict-align}
+-mextra-l32r-costs=@var{cycles}  -mstrict-align  -mforce-l32}
 
 @emph{zSeries Options}
 See S/390 and zSeries Options.
@@ -37517,6 +37517,19 @@ object boundary as described in the architecture specification.
 The default is @option{-mno-strict-align} for cores that support both
 unaligned loads and stores in hardware and @option{-mstrict-align} for all
 other cores.
+
+@opindex mforce-l32
+@opindex mno-force-l32
+@item -mforce-l32
+@itemx -mno-force-l32
+When this option is enabled, GCC performs 1- or 2-byte loads in the generic
+address space (ie., default memory references) by bit-extracting the desired
+portion from the result of an aligned 4-byte load, instead of the instructions
+originally provided for those purposes.  This option does not affect memory
+stores of such byte width, or the placement of those memory sections (see
+also @code{__force_l32} address spaces described in
+@ref{Xtensa Named Address Spaces}, and @code{force_l32} attribute described
+in @ref{Xtensa Attributes}).  The default is @option{-mno-force-l32}.
 
 @end table
 

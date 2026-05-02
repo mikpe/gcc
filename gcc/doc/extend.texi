@@ -1379,7 +1379,7 @@ As an extension, GNU C supports named address spaces as
 defined in the N1275 draft of ISO/IEC DTR 18037.  Support for named
 address spaces in GCC will evolve as the draft technical report
 changes.  Calling conventions for any target might also change.  At
-present, only the AVR, M32C, PRU, RL78, and x86 targets support
+present, only the AVR, M32C, PRU, RL78, x86 and Xtensa targets support
 address spaces other than the generic address space.
 
 Address space identifiers may be used exactly like any other C type
@@ -1617,6 +1617,55 @@ that it installed previously.
 The preprocessor symbols @code{__SEG_FS} and @code{__SEG_GS} are
 defined when these address spaces are supported.
 @end table
+
+@anchor{Xtensa Named Address Spaces}
+@subsection Xtensa Named Address Spaces
+@cindex @code{__force_l32} Xtensa Named Address Spaces
+
+On the Xtensa target, when a variable qualified with @code{__force_l32}
+is loaded from memory, it is always read aligned to a 4-byte width
+regardless of whether its width is 1 or 2 bytes, and a bit-extraction
+instruction is applied to the read to obtain the desired result; writing
+with a width of 1 or 2 bytes is not supported (see also @code{force_l32}
+attribute described in @ref{Xtensa Attributes}, and command-line option
+@option{-mforce-l32} described in @ref{Xtensa Options}).
+
+@smallexample
+char *strcpy_irom (char *dst, __force_l32 const char *src)
+@{
+  char *p = dst;
+  /* "*src" is always read as an aligned 4-byte width, and then
+     the desired one byte is extracted using bitwise operations.  */
+  while (*p = *src)
+    ++p, ++src;
+  return dst;
+@}
+@end smallexample
+
+Qualifying a variable with @code{__force_l32} affects how that variable
+is read as mentioned above, but it does not affect the memory section in
+which the variable is placed (this can be specified separately using the
+@code{section} attribute).
+
+@smallexample
+/* Instruction ROM reading requires aligned 4-byte width access.  */
+__force_l32 const char IROM_message[] __attribute__((section(".irom.text")))
+    = "placed within the instruction ROM area.";
+@end smallexample
+
+A pointer qualified with @code{__force_l32} can read memory regions in
+the generic address space (though not very efficiently), but not vice
+versa.  Therefore, the conversion from a pointer for the generic address
+space to a pointer qualified with @code{__force_l32} is implicit, but not
+the other way around.
+
+@smallexample
+extern char *strcpy_irom (char *, __force_l32 const char *);
+char buf[80], alt_buf[80];
+
+strcpy_irom (buf, IROM_message);
+strcpy_irom (alt_buf, "placed within read-only RAM area.");
+@end smallexample
 
 @anchor{Function Attributes}
 @anchor{Variable Attributes}
@@ -5729,6 +5778,7 @@ The default for the attribute is controlled by @option{-fzero-call-used-regs}.
 * Visium Attributes::
 * x86 Attributes::
 * Xstormy16 Attributes::
+* Xtensa Attributes::
 @end menu
 
 @anchor{AArch64 Function Attributes}
@@ -9810,6 +9860,27 @@ placed in either the @code{.bss_below100} section or the
 @code{.data_below100} section.
 @end table
 
+@node Xtensa Attributes
+@subsubsection Xtensa Attributes
+
+These attributes are supported by the Xtensa back end:
+
+@table @code
+@atindex @code{force_l32}, Xtensa
+@item force_l32
+This attribute can be applied to variables, function parameters and
+types.
+
+When this attribute is specified in a declaration, any memory loads of 1-
+or 2-byte width objects for the type (in the declaration) itself and all
+the underlying types contained within it are performed by a combination
+of aligned 4-byte load and bit-extraction instructions, rather than by
+instructions dedicated to those objects; storing memory with a width of 1
+or 2 bytes is not supported (see also @code{__force_l32} address spaces
+described in @ref{Xtensa Named Address Spaces}, and command-line option
+@option{-mforce-l32} described in @ref{Xtensa Options}).
+
+@end table
 
 @node Attribute Syntax
 @subsection GNU Attribute Syntax
