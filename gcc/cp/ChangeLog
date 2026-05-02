@@ -1,3 +1,12 @@
+2026-05-01  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-03-01  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/123143
+	* pt.cc (tsubst_expr) <case COMPONENT_REF>: Check identifier_p
+	before doing lookup for a template function.
+
 2026-04-16  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
