@@ -1464,3 +1464,25 @@
   [(set (match_dup 4) (and:X (not:X (match_dup 2)) (match_dup 1)))
    (set (match_dup 0) (xor:X (match_dup 4) (match_dup 3)))])
 
+
+;; This would typically be a 3 instruction sequence.  Two shifts plus
+;; the rotate.  But with bits 32..63 defined by value in bit 31, we can
+;; use the sign extending shifts/rotates.  And with the number of low bits
+;; masked off by the AND matching the final shift count we can turn this mess
+;; into simple "w" mode left shift.
+(define_insn "rotate_with_masking_to_shift"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+        (sign_extend:DI (and:SI (rotatert:SI (match_operand:SI 1 "register_operand" "r")
+                                             (match_operand 2 "const_int_operand" "i"))
+                                (match_operand 3 "consecutive_bits_operand" "i"))))]
+  "(TARGET_64BIT && (TARGET_ZBB || TARGET_ZBKB)
+    && INTVAL (operands[2]) < 32
+    && (INTVAL (operands[3]) & HOST_WIDE_INT_C (0xffffffff80000000)) == HOST_WIDE_INT_C (0xffffffff80000000)
+    && ctz_hwi (INTVAL (operands[3])) == 32 - INTVAL (operands[2]))"
+{
+  operands[2] = GEN_INT (32 - INTVAL (operands[2]));
+  return "slliw\t%0,%1,%2";
+}
+  [(set_attr "type" "shift")
+   (set_attr "mode" "DI")])
+
