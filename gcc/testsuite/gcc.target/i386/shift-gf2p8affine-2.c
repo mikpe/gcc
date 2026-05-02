@@ -151,12 +151,10 @@ FUNC (N5)
   func##N##ref (array2, len);				\
   if (memcmp (array, array2, len)) __builtin_abort ()
 
-int main ()
+__attribute__ ((noipa))
+void
+do_test (void)
 {
-  __builtin_cpu_init ();
-  if (!__builtin_cpu_supports ("gfni"))
-    return 0;
-
   const unsigned long len = 256;
   char array[len], array2[len];
   unsigned char filler = FILLER;
@@ -195,6 +193,11 @@ int main ()
   TEST (N5, sbyteshiftr);
   TEST (N5, ubyteror);
   TEST (N5, ubyterol);
+}
 
+int main ()
+{
+  if (__builtin_cpu_supports ("gfni"))
+    do_test ();
   return 0;
 }
