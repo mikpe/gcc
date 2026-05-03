@@ -5828,9 +5828,8 @@ riscv_expand_conditional_move (rtx dest, rtx op, rtx cons, rtx alt)
        && GET_MODE_CLASS (cond_mode) == MODE_INT)
        || TARGET_COND_MOV)
     {
+      canonicalize_comparands (code, &op0, &op1);
       machine_mode mode0 = GET_MODE (op0);
-
-      canonicalize_comparands (code,&op0,&op1);
 
       /* In the fallback generic case use DST_MODE rather than WORD_MODE
 	 for the output of the SCC instruction, to match the mode of the NEG
