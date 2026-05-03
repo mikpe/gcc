@@ -403,3 +403,69 @@
   "operands[4] = gen_reg_rtx (word_mode);
    operands[5] = gen_reg_rtx (word_mode);")
 
+;; We want to select between 2^n and 0.  Use an sCC insn to generate 1/0, then
+;; left shift that by N to get the final result
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+	(if_then_else:X
+	 (scc_0:X (match_operand:X 1 "register_operand")
+		  (const_int 0))
+	 (match_operand 2 "const_int_operand")
+	 (const_int 0)))
+   (clobber (match_operand:X 3 "register_operand"))]
+  "exact_log2 (INTVAL (operands[2])) >= 0"
+  [(set (match_dup 3) (scc_0:X (match_dup 1) (const_int 0)))
+   (set (match_dup 0) (ashift:X (match_dup 3) (match_dup 4)))]
+  { operands[4] = GEN_INT (exact_log2 (INTVAL (operands[2]))); })
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+	(if_then_else:X
+	 (any_gt:X (match_operand:X 1 "register_operand")
+		   (match_operand:X 2 "reg_or_0_operand"))
+	 (match_operand 3 "const_int_operand")
+	 (const_int 0)))
+   (clobber (match_operand:X 4 "register_operand"))]
+  "exact_log2 (INTVAL (operands[3])) >= 0"
+  [(set (match_dup 4) (any_gt:X (match_dup 1) (match_dup 2)))
+   (set (match_dup 0) (ashift:X (match_dup 4) (match_dup 5)))]
+  { operands[5] = GEN_INT (exact_log2 (INTVAL (operands[3]))); })
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+	(if_then_else:X
+	 (any_ge:X (match_operand:X 1 "register_operand")
+		   (const_int 1))
+	 (match_operand 2 "const_int_operand")
+	 (const_int 0)))
+   (clobber (match_operand:X 3 "register_operand"))]
+  "exact_log2 (INTVAL (operands[2])) >= 0"
+  [(set (match_dup 3) (any_gt:X (match_dup 1) (const_int 1)))
+   (set (match_dup 0) (ashift:X (match_dup 3) (match_dup 4)))]
+  { operands[4] = GEN_INT (exact_log2 (INTVAL (operands[2]))); })
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+	(if_then_else:X
+	 (any_lt:X (match_operand:X 1 "register_operand")
+		   (match_operand:X 2 "arith_operand"))
+	 (match_operand 3 "const_int_operand")
+	 (const_int 0)))
+   (clobber (match_operand:X 4 "register_operand"))]
+  "exact_log2 (INTVAL (operands[3])) >= 0"
+  [(set (match_dup 4) (any_lt:X (match_dup 1) (match_dup 2)))
+   (set (match_dup 0) (ashift:X (match_dup 4) (match_dup 5)))]
+  { operands[5] = GEN_INT (exact_log2 (INTVAL (operands[3]))); })
+
+(define_split
+  [(set (match_operand:X 0 "register_operand")
+	(if_then_else:X
+	 (any_le:X (match_operand:X 1 "register_operand")
+		   (match_operand:X 2 "sle_operand"))
+	 (match_operand 3 "const_int_operand")
+	 (const_int 0)))
+   (clobber (match_operand:X 4 "register_operand"))]
+  "exact_log2 (INTVAL (operands[3])) >= 0"
+  [(set (match_dup 4) (any_le:X (match_dup 1) (match_dup 2)))
+   (set (match_dup 0) (ashift:X (match_dup 4) (match_dup 5)))]
+  { operands[5] = GEN_INT (exact_log2 (INTVAL (operands[3]))); })
