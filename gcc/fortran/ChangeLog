@@ -1,3 +1,20 @@
+2026-05-02  Tobias Burnus  <tburnus@baylibre.com>
+	    Julian Brown  <julian@codesourcery.com>
+
+	* gfortran.h (enum gfc_omp_list_type): Add this name
+	to the existing OMP_LIST... enum; add OMP_LIST_NONE.
+	(gfc_free_omp_namelist): Take that enum as arg instead of bool args.
+	* match.cc (gfc_free_omp_namelist): Update.
+	* openmp.cc (gfc_free_omp_clauses, gfc_free_omp_declare_variant_list,
+	gfc_match_omp_clause_reduction, gfc_match_omp_clauses,
+	gfc_match_omp_allocate, gfc_match_omp_flush,
+	gfc_match_omp_declare_target, resolve_omp_clauses,
+	gfc_resolve_omp_parallel_blocks, resolve_omp_do,
+	gfc_resolve_oacc_blocks, gfc_resolve_oacc_declare): Update
+	gfc_free_omp_namelist call and used enum type instead of
+	int.
+	* st.cc (gfc_free_statement): Likewise.
+
 2026-04-29  Andre Vehreschild  <vehre@gcc.gnu.org>
 
 	PR fortran/125021

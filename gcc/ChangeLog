@@ -1,3 +1,23 @@
+2026-05-02  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* tree-ssa-phiopt.cc (pass_phiopt::execute): Set cfgcleanup
+	if cselim_limited returns true.
+
+2026-05-02  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/109038
+	* config/riscv/bitmanip.md (rotate_with_masking_to_shift): New pattern.
+
+2026-05-02  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	* config/riscv/riscv.opt.urls: Add temp fix for -mmpy-option.
+
+2026-05-02  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/125139
+	* match.pd (`(A>>bool) EQ 0 -> (unsigned)A LE bool`): Enable
+	only for INTEGRAL_TYPE_P types.
+
 2026-05-01  Sam James  <sam@gentoo.org>
 
 	* Makefile.in (MOSTLYCLEANFILES): Fix typo of '$(exeext)'.
