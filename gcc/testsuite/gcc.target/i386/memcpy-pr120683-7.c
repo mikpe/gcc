@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "64b Darwin does not support non-PIC" *-*-darwin* } */
 /* { dg-options "-O2 -march=x86-64-v4 -mmemcpy-strategy=vector_loop:2048:noalign,libcall:-1:noalign -fno-pie" } */
 /* { dg-add-options check_function_bodies } */
 /* Keep labels and directives ('.cfi_startproc', '.cfi_endproc').  */
