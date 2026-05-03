@@ -1389,10 +1389,11 @@ or1k_trampoline_init (rtx m_tramp, tree fndecl, rtx chain)
 static bool
 or1k_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 {
-  /* For OpenRISC, GENERAL_REGS can hold anything, while
-     FLAG_REGS are really single bits within SP[SR].  */
+  /* For OpenRISC, GENERAL_REGS can hold anything, while FLAG_REGS are
+     really single bits within SP[SR].  Also allow condition flag register
+     in SImode to match or1k_can_change_mode_class.  */
   if (REGNO_REG_CLASS (regno) == FLAG_REGS)
-    return mode == BImode;
+    return mode == BImode || mode == SImode;
   return true;
 }
 
