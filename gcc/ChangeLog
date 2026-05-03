@@ -1,3 +1,9 @@
+2026-05-02  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* tree-ssa-strlen.cc (get_string_length): Don't overwrite
+	lenstmt variable with another stmt.
+
 2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
 
 	Revert:
