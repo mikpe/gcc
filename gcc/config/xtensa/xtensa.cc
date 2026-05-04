@@ -2340,8 +2340,9 @@ xtensa_legitimize_address (rtx x,
 			   rtx oldx ATTRIBUTE_UNUSED,
 			   machine_mode mode)
 {
-  rtx plus0, plus1, temp;
-  HOST_WIDE_INT offset, mem_offset, addmi_offset;
+  rtx plus0, plus1, temp0, temp1;
+  HOST_WIDE_INT offset, mem_disp, delta, offset2;
+  int mode_size;
 
   if (xtensa_tls_symbol_p (x))
     return xtensa_legitimize_tls_address (x);
@@ -2353,33 +2354,57 @@ xtensa_legitimize_address (rtx x,
   if (! REG_P (plus0) && REG_P (plus1))
     std::swap (plus0, plus1);
 
-  /* Try to split up the offset to use up to two ADDMI instructions.  */
-  if (REG_P (plus0) && CONST_INT_P (plus1)
-      && ! xtensa_mem_offset (offset = INTVAL (plus1), mode)
-      && ! xtensa_simm8 (offset)
-      && xtensa_mem_offset (mem_offset = offset & 0xff, mode))
+  /* Try to split up the offset to use up to two ADDMI instructions;
+     The two ADDMIs are slightly more efficient than "L32R w/litpool + ADD"
+     or "CONST16 pair + ADD", if applicable.  */
+  if (! REG_P (plus0) || ! CONST_INT_P (plus1)
+      || xtensa_mem_offset (offset = INTVAL (plus1), mode)
+      || xtensa_simm8 (offset)
+      || ! xtensa_mem_offset (mem_disp = offset & 0xff, mode))
+    return x;
+
+  /* The above assumes that the displacement within the load/store instruc-
+     tion is unsigned 8 bits, regardless of the load/store width.  However,
+     in actual 2- or 4-byte width load/store instructions, a displacement
+     shifted by 1 or 2 bits, respectively, is added to the base register.
+     Here, determine the amount of displacement delta that these instructions
+     can cover extra range.  */
+  delta = (mode_size = GET_MODE_SIZE (mode)) >= 4 ? 768 :
+	  mode_size == 2 ? 256 : 0;
+
+  /* The upper limit of the ADDMI instruction's addition is allowed to be
+     widened by the delta amount calculated above, and the excess is later
+     renormalized to the displacement of the load/store instrution.  */
+  offset2 = offset & ~0xff, offset = 0;
+  if (! IN_RANGE (offset2, -32768, 32512 + delta))
     {
-      /* The two ADDMIs are slightly more efficient than
-	 "L32R w/litpool + ADD" or "CONST16 pair + ADD", if applicable.  */
-      addmi_offset = offset & ~0xff;
-      if (addmi_offset > 32512)
-	offset = 32512, addmi_offset -= 32512;
-      else if (addmi_offset < -32768)
-	offset = -32768, addmi_offset += 32768;
-      else
-	offset = 0;
+      if (offset2 > 32512)
+	offset = 32512, offset2 -= 32512;
+      else if (offset2 < -32768)
+	offset = -32768, offset2 += 32768;
 
-      if (xtensa_simm8x256 (addmi_offset))
-	{
-	  emit_insn (gen_addsi3 (temp = gen_reg_rtx (Pmode),
-				 plus0, GEN_INT (addmi_offset)));
-	  if (offset)
-	    emit_insn (gen_addsi3 (temp, temp, GEN_INT (offset)));
-	  return gen_rtx_PLUS (Pmode, temp, GEN_INT (mem_offset));
-	}
+      /* If two ADDMIs are not enough, the process will be canceled.  */
+      if (! IN_RANGE (offset2, -32768, 32512 + delta))
+	return x;
     }
+  if (offset2 > 32512)
+    mem_disp += offset2 - 32512, offset2 = 32512;
 
-  return x;
+  /* Emit one or two ADDMI instructions, and then return an address RTX
+     with the remaining offset.
+     By adding the offset with the largest absolute value first via
+     temporary pseudos, the likelihood of those pseudos being consolidated
+     by the CSE increases.  */
+  temp0 = gen_reg_rtx (Pmode);
+  if (offset)
+    {
+      emit_insn (gen_addsi3 (temp1 = gen_reg_rtx (Pmode),
+			     plus0, GEN_INT (offset)));
+      emit_insn (gen_addsi3 (temp0, temp1, GEN_INT (offset2)));
+    }
+  else
+    emit_insn (gen_addsi3 (temp0, plus0, GEN_INT (offset2)));
+  return gen_rtx_PLUS (Pmode, temp0, GEN_INT (mem_disp));
 }
 
 /* Worker function for TARGET_MODE_DEPENDENT_ADDRESS_P.
