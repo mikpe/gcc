@@ -1,3 +1,8 @@
+2026-05-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c++/119567
+	* error.cc (dump_expr): Treat EXACT_DIV_EXPR the same as FLOOR_DIV_EXPR.
+
 2026-05-01  Patrick Palka  <ppalka@redhat.com>
 
 	PR c++/125115

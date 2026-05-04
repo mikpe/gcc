@@ -1,3 +1,32 @@
+2026-05-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* tree-chrec.cc (chrec_fold_plus_poly_poly): Move
+	rtype definition to right before the use.
+
+2026-05-03  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	PR tree-optimization/122569
+	* tree-ssa-forwprop.cc (simplify_count_zeroes): Avoid
+	shift-by-HOST_BITS_PER_WIDE_INT UB when computing the all-ones
+	value for the CLZ validator.
+
+2026-05-03  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124009
+	* config/riscv/iterators.md (scc_0): Add any_lt.
+	* config/riscv/zicond.md: Add splitters to select between 2^n and 0.
+
+2026-05-03  Collin Funk  <collin.funk1@gmail.com>
+
+	* glimits.h (__STDC_VERSION_LIMITS_H__): Only define the macro
+	if it was not already defined.
+
+2026-05-03  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/125152
+	* config/riscv/riscv.cc (riscv_expand_conditional_move): Extract the
+	mode after operand canonicalization.
+
 2026-05-02  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	* tree-ssa-phiopt.cc (pass_phiopt::execute): Set cfgcleanup

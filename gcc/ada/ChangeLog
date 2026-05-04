@@ -1,3 +1,9 @@
+2026-05-03  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR ada/125168
+	* libgnat/s-dorepr__freebsd.adb (Two_Prod): Adjust to renaming.
+	(Two_Sqr): Likewise.
+
 2026-05-01  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/87936

@@ -1,3 +1,19 @@
+2026-05-03  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	PR tree-optimization/122569
+	* gcc.dg/tree-ssa/pr122569-1.c: New test.
+	* gcc.dg/tree-ssa/pr122569-2.c: New test.
+
+2026-05-03  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124009
+	* gcc.target/riscv/pr124009.c: New test.
+
+2026-05-03  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/125152
+	* gcc.target/riscv/pr125152.c: New test.
+
 2026-05-02  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	* gcc.dg/tree-ssa/cselim-5.c: New test.
