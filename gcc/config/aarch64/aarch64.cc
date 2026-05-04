@@ -27344,8 +27344,9 @@ aarch64_expand_sve_vec_perm (rtx target, rtx op0, rtx op1, rtx sel)
   rtx sel_reg = force_reg (sel_mode, sel);
 
   /* Check if the sel only references the first values vector.  */
-  if (CONST_VECTOR_P (sel)
-      && aarch64_const_vec_all_in_range_p (sel, 0, nunits - 1))
+  if (GET_MODE_MASK (GET_MODE_INNER (sel_mode)) <= nunits - 1U
+      || (CONST_VECTOR_P (sel)
+	  && aarch64_const_vec_all_in_range_p (sel, 0, nunits - 1)))
     {
       emit_unspec2 (target, UNSPEC_TBL, op0, sel_reg);
       return;
