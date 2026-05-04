@@ -35,3 +35,6 @@ UrlSuffix(gcc/Xtensa-Options.html#index-mabi_003dwindowed)
 mstrict-align
 UrlSuffix(gcc/Xtensa-Options.html#index-mstrict-align-6)
 
+mforce-l32
+UrlSuffix(gcc/Xtensa-Options.html#index-mforce-l32)
+
