@@ -454,8 +454,7 @@ static_assert (is_accessible (N::ra, gctx));
 static_assert (!is_accessible (N::rb, gctx));
 static_assert (!is_accessible (N::rc, gctx));
 static_assert (is_accessible (N::ra, N::ctx));
-// TODO: This case ICEs.
-//static_assert (is_accessible (N::rb, N::ctx));
+static_assert (is_accessible (N::rb, N::ctx));
 static_assert (is_accessible (N::rc, N::ctx));
 static_assert (is_accessible (N::ra, N::ctx.via (^^N)));
 static_assert (is_accessible (N::rb, N::ctx.via (^^N)));

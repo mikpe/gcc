@@ -936,6 +936,8 @@ accessible_p (tree type, tree decl, bool consider_local_p)
   /* Anonymous unions don't have their own access.  */
   if (ANON_AGGR_TYPE_P (type))
     type = type_context_for_name_lookup (type);
+  if (ANON_AGGR_TYPE_P (otype))
+    otype = type_context_for_name_lookup (otype);
 
   /* [class.access.base]
 
