@@ -1,3 +1,12 @@
+2026-05-03  Marian Buschsieweke  <maribu@users.noreply.github.com>
+
+	Backported from master:
+	2026-04-21  Marian Buschsieweke  <maribu@users.noreply.github.com>
+
+	PR sanitizer/124248
+	* sanitizer_common/sanitizer_platform_limits_posix.cpp (struct_sock_fprog_sz):
+	Make available on non-glibc Linux systems.
+
 2026-04-30  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
