@@ -6665,6 +6665,15 @@ simplify_context::simplify_relational_operation_1 (rtx_code code,
       return simplify_gen_relational (code, mode, cmp_mode, x, tem);
     }
 
+  /* (eq/ne (plus (x) (y)) y) simplifies to (eq/ne x 0).  */
+  if ((code == EQ || code == NE)
+      && op0code == PLUS
+      && rtx_equal_p (XEXP (op0, 1), op1)
+      && !side_effects_p (op1)
+      && (INTEGRAL_MODE_P (cmp_mode) || flag_unsafe_math_optimizations))
+    return simplify_gen_relational (code, mode, cmp_mode,
+				    XEXP (op0, 0), CONST0_RTX (cmp_mode));
+
   /* (ne:SI (zero_extract:SI FOO (const_int 1) BAR) (const_int 0))) is
      the same as (zero_extract:SI FOO (const_int 1) BAR).  */
   scalar_int_mode int_mode, int_cmp_mode;
