@@ -1,3 +1,11 @@
+2026-05-03  Collin Funk  <collin.funk1@gmail.com>
+
+	Backported from master:
+	2026-05-03  Collin Funk  <collin.funk1@gmail.com>
+
+	* glimits.h (__STDC_VERSION_LIMITS_H__): Only define the macro
+	if it was not already defined.
+
 2026-05-02  Jakub Jelinek  <jakub@redhat.com>
 
 	PR tree-optimization/125079
