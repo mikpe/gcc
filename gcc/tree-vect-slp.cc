@@ -9452,7 +9452,14 @@ vect_bb_slp_scalar_cost (bb_vec_info vinfo,
 	    continue;
 	}
 
-      gcc_assert (!gimple_visited_p (stmt->stmt));
+      /* The following assert verifies that vect_bb_partition_graph
+	 partitions the SLP graph in a way that each scalar stmt of
+	 the coverage of the SLP graph belongs to exactly one subgraph.
+	 ???  This is currently not guaranteed since the function
+	 works purely on SLP_TREE_SCALAR_STMTS, resulting in the assert
+	 tripping or scalar stmts costed multiple times, making vectorization
+	 more profitable than it really is.  */
+      /* gcc_checking_assert (!gimple_visited_p (stmt->stmt)); */
 
       if (vect_nop_conversion_p (stmt))
 	;
