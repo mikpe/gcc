@@ -1,3 +1,273 @@
+2026-05-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR c/121911
+	* target.def (stack_protect_guard_symbol_p): New target hook.
+	* targhooks.cc (default_stack_protect_guard): Use the type of
+	uintptr_t, instead of ptr_type_node, if the
+	stack_protect_guard_symbol_p hook returns true.
+	* config/i386/i386.cc (ix86_stack_protect_guard_symbol_p): New.
+	(TARGET_STACK_PROTECT_GUARD_SYMBOL_P): Likewise.
+	* doc/tm.texi: Regenerated.
+	* doc/tm.texi.in (TARGET_STACK_PROTECT_GUARD_SYMBOL_P): New.
+
+2026-05-04  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config/m32c/*: Delete entire directory.
+	* attr-urls.def: Remove references to m32c.
+	* config.gcc: Likewise.
+	* config/msp430/msp430.cc (msp430_expand_epilogue): Likewise.
+	* configure: Regenerate.
+	* configure.ac: Remove references to m32c.
+	* doc/extend.texi: Likewise.
+	* doc/install.texi: Likewise.
+	* doc/invoke.texi: Likewise.
+	* doc/md.texi: Likewise.
+	* explow.cc (promote_mode): Likewise.
+	* regenerate-opt-urls.py: Likewise.
+	* config/microblaze/microblaze.opt.urls: Regenerate.
+	* config/msp430/msp430.opt.urls: Regenerate.
+	* config/nds32/nds32.opt.urls: Regenerate.
+	* config/rl78/rl78.opt.urls: Regenerate.
+	* config/rs6000/sysv4.opt.urls: Regenerate.
+	* config/rx/elf.opt.urls: Regenerate.
+	* config/stormy16/stormy16.opt.urls: Regenerate.
+	* config/visium/visium.opt.urls: Regenerate.
+
+2026-05-04  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/aarch64/aarch64.cc (aarch64_expand_sve_vec_perm): Check
+	whether all indices of a variable selector refer to the first
+	values vector.
+
+2026-05-04  Mark Wielaard  <mark@klomp.org>
+
+	* config/xtensa/xtensa.opt.urls: Regenerated.
+
+2026-05-04  Nathan Myers  <ncm@cantrip.org>
+
+	* doc/invoke.texi: insert "result" in comment text
+
+2026-05-04  Artemiy Volkov  <artemiy.volkov@arm.com>
+
+	PR tree-optimization/122679
+	* tree-ssa-forwprop.cc (simplify_vector_constructor): Check the
+	PROP_gimple_lvec property before returning false.
+
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/116823
+	* tree-ssa-phiprop.cc (can_handle_load): Skip past
+	clobbers for !aggregate.
+
+2026-05-04  David Malcolm  <dmalcolm@redhat.com>
+
+	* data-streamer-in.cc (streamer_read_value_range): Update for
+	renaming of value_range::set_type to value_range::set_range_class.
+	* gimple-range-gori.cc (gori_compute::compute_operand_range):
+	Likewise.
+	(gori_compute::compute_operand1_and_operand2_range): Likewise.
+	(gori_stmt_info::gori_stmt_info): Likewise.
+	(gori_calc_operands): Likewise.
+	(gori_name_helper): Likewise.
+	* ipa-cp.cc (ipcp_vr_lattice::set_to_bottom): Likewise.
+	* ipa-cp.h (ipcp_vr_lattice::init): Likewise.
+	* ipa-fnsummary.cc (evaluate_properties_for_edge): Likewise.
+	* ipa-prop.cc (ipa_vr::get_vrange): Likewise.
+	* range-op.h (range_cast): Likewise.
+	* value-range.h (value_range::set_type): Rename to...
+	(value_range::set_range_class): ...this, and add a note to the
+	leading comment that it doesn't set the type of the underlying
+	vrange.
+	(value_range::init): Add a similar note to the leading comment.
+
+2026-05-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* gimple-range-cache.cc (ranger_cache::range_of_expr): Handle
+	NULL statement.
+
+2026-05-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* gimple-range-fold.cc (fold_using_range::fold_stmt): Move
+	range_of_address call into nested 'if' with other routines.
+
+2026-05-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* gimple-range-cache.cc (ranger_cache::ranger_cache): Allocate bitmap.
+	(ranger_cache::~ranger_cache): Free bitmap.
+	(ranger_cache::mark_stale): New.
+	(ranger_cache::get_global_range): Check if NAME is marked stale.
+	* gimple-range-cache.h (ranger_cache::mark_stale): New.
+	* gimple-range.cc (gimple_ranger::update_range_info): New variant.
+	* gimple-range.h (update_range_info): New prototype.
+	* gimple.h (gimple_set_modified): Call update_range_info.
+	* value-query.cc (range_query::update_range_info): New variant.
+	* value-query.h (range_query::update_range_info): New prototype.
+
+2026-05-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* value-range.cc (irange::intersect): Snap bounds as they are created.
+
+2026-05-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* value-query.cc (range_query::get_tree_range): Check if return
+	range R supports the expression type.
+
+2026-05-04  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/i386/i386.md (*bt<SWI48:mode>_mask): Use
+	int248_register_operand for operand 1 predicate.
+	(*jcc_bt<mode>_mask): Use nonimmediate_operand for operand 1 predicate.
+	(*jcc_bt<SWI48:mode>_mask_1): Use nonimmediate_operand for operand 1
+	predicate and int248_register_operand for operand 2 predicate.
+	(BT followed by CMOV splitter): Use nonimmediate_operand
+	for operand 1 predicate.
+	(*bt<mode>_setcqi): Ditto.
+	(*bt<mode>_setncqi): Ditto.
+	(*bt<mode>_setnc<mode>): Ditto.
+	(*bt<mode>_setncqi_2): Ditto.
+	(*bt<mode>_setc<mode>_mask): Use nonimmediate_operand for operand 1
+	predicate and int248_register_operand for operand 2 predicate.
+
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/123120
+	PR tree-optimization/116823
+	* tree-ssa-phiprop.cc (phiprop_insert_phi): Add other_vuse
+	argument, use it instead of the vuse on the use_stmt.
+	(can_handle_load): Add aggregate argument. Also return the vuse
+	of the load/store when the insert is allowed.
+	Skipping over one non-modifying store for !aggregate.
+	(propagate_with_phi): Update call to can_handle_load
+	and phiprop_insert_phi.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2025-04-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* tree-ssa-threadbackward.cc (back_threader::find_paths_to_names):
+	Allow block re-use but do not enlarge the path beyond such a
+	re-use.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125156
+	* tree-cfgcleanup.cc (cleanup_control_expr_graph): Clear
+	EDGE_TRUE_VALUE and EDGE_FALSE_VALUE edge flags only.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125146
+	* gimple-fold.cc (fold_stmt_1): Discard stmts in seq
+	after failed gimple_simplify as well.
+
+2026-05-04  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* config.gcc (powerpc*-*-*): Add support for supporting
+	--with-cpu=future.
+	* config/rs6000/aix71.h (ASM_CPU_SPEC): Pass -mfuture to the assembler
+	if the user used the -mcpu=future option.
+	* config/rs6000/aix72.h (ASM_CPU_SPEC): Likewise.
+	* config/rs6000/aix73.h (ASM_CPU_SPEC): Likewise.
+	* config/rs6000/rs6000-builtin.cc (rs6000_invalid_builtin): Handle
+	ENB_FUTURE and issue diagnostic requiring -mcpu=future.
+	(rs6000_builtin_is_supported): Return TARGET_FUTURE for
+	ENB_FUTURE built-ins.
+	* config/rs6000/rs6000-c.cc (rs6000_target_modify_macros): Define
+	_ARCH_FUTURE if -mcpu=future.
+	* config/rs6000/rs6000-cpus.def (FUTURE_MASKS_SERVER): New macro.
+	(POWERPC_MASKS): Add OPTION_MASK_FUTURE.
+	(rs6000_cpu_opt_value): New entry for 'future' via the RS6000_CPU macro.
+	* config/rs6000/rs6000-gen-builtins.cc (enum bif_stanza): Add
+	BSTZ_FUTURE for future.
+	(write_decls): Add ENB_FUTURE in bif_enable enum of generated header
+	file.
+	* config/rs6000/rs6000-opts.h (PROCESSOR_FUTURE): New macro.
+	* config/rs6000/rs6000-tables.opt: Regenerate.
+	* config/rs6000/rs6000.cc (rs6000_machine_from_flags) If -mcpu=future,
+	set the .machine directive to "future".
+	(rs6000_opt_masks): Add entry for -mfuture.
+	* config/rs6000/rs6000.h (ASM_CPU_SPEC): Pass -mfuture to the assembler
+	if the user used the -mcpu=future option.
+	* config/rs6000/rs6000.opt (-mfuture): New option.
+	* doc/invoke.texi (IBM RS/6000 and PowerPC Options): Document
+	-mcpu=future.
+
+2026-05-04  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+
+	* doc/extend.texi (Xtensa Named Address Spaces):
+	Document '__force_l32'.
+	(Xtensa Attributes): Document 'force_l32'.
+	* doc/invoke.texi (Xtensa Options):
+	Document '-m[no-]force-l32'.
+
+2026-05-04  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+
+	* config/xtensa/xtensa.cc (xtensa_expand_load_force_l32_2):
+	New sub-function for inspecting pseudos that clearly point to the
+	function's stack frame.
+	(xtensa_expand_load_force_l32):
+	Add handling for loading from the generic address space when the
+	"-mforce-l32" option is enabled, however, obvious references to
+	function stack frames are excluded.
+	* config/xtensa/xtensa.opt (mforce-l32):
+	New target-specific option definition.
+
+2026-05-04  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+
+	* config/xtensa/xtensa.cc (xtensa_attribute_table,
+	TARGET_ATTRIBUTE_TABLE):
+	New definitions for target-specific attributes.
+	(xtensa_expand_load_force_l32_1): New sub-function for inspecting
+	the attribute from the specified MEM rtx.
+	(xtensa_expand_load_force_l32): Add handlings for for addresses
+	with offsets.
+	(xtensa_handle_force_l32_attribute_1,
+	xtensa_handle_force_l32_attribute):
+	New functions for handling the attribute.
+
+2026-05-04  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+
+	* config/xtensa/xtensa-protos.h
+	(xtensa_expand_load_force_l32): New function prototype.
+	* config/xtensa/xtensa.cc (#include): Add "expmed.h".
+	(TARGET_LEGITIMATE_ADDRESS_P):
+	Change a whitespace delimiter from HTAB to SPACE.
+	(TARGET_ADDR_SPACE_SUBSET_P, TARGET_ADDR_SPACE_CONVERT,
+	TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P):
+	New macro definitions for named address space.
+	(xtensa_addr_space_subset_p, xtensa_addr_space_convert,
+	xtensa_addr_space_legitimate_address_p):
+	New hook function prototypes and definitions required for
+	implementing the named address space.
+	(xtensa_expand_load_force_l32): New function that generates RTXes
+	that perform loads from memory belonging to the named address
+	space.
+	* config/xtensa/xtensa.h (ADDR_SPACE_FORCE_L32):
+	New macro for the ID# of the named address space.
+	(REGISTER_TARGET_PRAGMAS): New hook for registering C language
+	identifier for the named address space.
+	* config/xtensa/xtensa.md
+	(zero_extend<mode>si2_internal): Rename from zero_extend<mode>si2.
+	(zero_extend<mode>si2): New RTL generation pattern that calls
+	xtensa_expand_load_force_l32().
+	(extendhisi2, extendqisi2, movhi, movqi):
+	Change to call xtensa_expand_load_force_l32() first.
+	(*shift_per_byte): Delete the insn condition.
+
+2026-05-04  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR rtl-optimization/124766
+	* simplify-rtx.cc (simplify_context::simplify_relational_operation_1):
+	Simplify x + y == y constructs.
+
+2026-05-04  Avinal Kumar  <avinal.xlvii@gmail.com>
+
+	PR tree-optimization/116700
+	* match.pd: (A > B ? ABS(A) : B -> MAX(A, B)): New pattern
+	for non-negative B.
+
 2026-05-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	* tree-chrec.cc (chrec_fold_plus_poly_poly): Move

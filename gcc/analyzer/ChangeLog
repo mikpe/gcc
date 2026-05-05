@@ -1,3 +1,9 @@
+2026-05-04  David Malcolm  <dmalcolm@redhat.com>
+
+	* svalue.cc (binop_svalue::maybe_get_value_range): Update for
+	renaming of value_range::set_type to value_range::set_range_class.
+	(unaryop_svalue::maybe_get_value_range): Likewise.
+
 2026-04-28  David Malcolm  <dmalcolm@redhat.com>
 
 	PR analyzer/124217

@@ -1,3 +1,19 @@
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c++/65271
+	* parser.cc (cp_parser_class_specifier): Accept &&.
+
+2026-05-04  yxj-github-437  <2457369732@qq.com>
+
+	* constexpr.cc (cxx_eval_constant_expression): Do not cache
+	result with contract violation.
+
+2026-05-04  chzn@mail.ustc.edu.cn  <chzn@mail.ustc.edu.cn>
+
+	PR c++/124241
+	* search.cc (accessible_p): Call type_context_for_name_lookup
+	for otype if it's anonymous union.
+
 2026-05-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	PR c++/119567

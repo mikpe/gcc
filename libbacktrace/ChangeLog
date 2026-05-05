@@ -1,3 +1,10 @@
+2026-05-04  Ian Lance Taylor  <iant@golang.org>
+
+	* elf.c (elf_zstd_decompress_frame): New static function,
+	broken out of elf_zstd_decompress.
+	(elf_zstd_decompress): Call elf_zstd_decompress_frame in a loop.
+	* zstdtest.c (test_large): Compress the file in chunks.
+
 2025-12-29  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* configure: Regenerate.

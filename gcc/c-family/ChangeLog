@@ -1,3 +1,10 @@
+2026-05-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR c/121911
+	* c-common.cc (c_common_nodes_and_builtins): If the
+	stack_protect_guard_symbol_p hook returns true, declare a global
+	symbol for stack protection guard.
+
 2026-04-29  Julian Brown  <julian@codesourcery.com>
 
 	* c-common.h (c_omp_region_type): Add C_ORT_EXIT_DATA,

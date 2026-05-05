@@ -1,3 +1,137 @@
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c++/65271
+	* g++.dg/cpp0x/rv-decl1.C: New test.
+
+2026-05-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR c/121911
+	* g++.target/i386/ssp-global-1.C: New test.
+	* g++.target/i386/ssp-global-2.C: Likewise.
+	* g++.target/i386/ssp-global-3.C: Likewise.
+	* g++.target/i386/ssp-global-hidden-1.C: Likewise.
+	* g++.target/i386/ssp-global-hidden-2.C: Likewise.
+	* g++.target/i386/ssp-global-hidden-3.C: Likewise.
+	* gcc.target/i386/ssp-global-2.c: Likewise.
+	* gcc.target/i386/ssp-global-3.c: Likewise.
+	* gcc.target/i386/ssp-global-4.c: Likewise.
+	* gcc.target/i386/ssp-global-hidden-1.c: Likewise.
+	* gcc.target/i386/ssp-global-hidden-2.c: Likewise.
+	* gcc.target/i386/ssp-global-hidden-3.c: Likewise.
+	* gcc.target/i386/ssp-global.c: Include <stdint.h>.
+	(__stack_chk_guard): Change its type to uintptr_t.
+
+2026-05-04  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* gcc.c-torture/compile/20000804-1.c: Remove references to m32c.
+	* gcc.c-torture/compile/20001226-1.c: Likewise.
+	* gcc.c-torture/compile/limits-stringlit.c: Likewise.
+	* gcc.c-torture/execute/20020404-1.c: Likewise.
+	* gcc.dg/20020312-2.c: Likewise.
+	* gcc.dg/max-1.c: Likewise.
+	* gcc.dg/torture/pr26565.c: Likewise.
+	* gcc.dg/tree-ssa/reassoc-32.c: Likewise.
+	* gcc.dg/tree-ssa/reassoc-33.c: Likewise.
+	* gcc.dg/tree-ssa/reassoc-34.c: Likewise.
+	* gcc.dg/tree-ssa/reassoc-35.c: Likewise.
+	* gcc.dg/tree-ssa/reassoc-36.c: Likewise.
+	* gcc.dg/utf-array-short-wchar.c: Likewise.
+	* gcc.dg/utf-array.c: Likewise.
+	* lib/target-supports.exp: Likewise.
+
+2026-05-04  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gcc.target/aarch64/sve/vec_perm_2.c: New test.
+	* gcc.target/aarch64/sve/vec_perm_3.c: Likewise.
+
+2026-05-04  yxj-github-437  <2457369732@qq.com>
+
+	* g++.dg/contracts/cpp26/basic.contract.eval.p8-3.C: New test.
+
+2026-05-04  chzn@mail.ustc.edu.cn  <chzn@mail.ustc.edu.cn>
+
+	PR c++/124241
+	* g++.dg/reflect/is_accessible2.C: Completed the TODO of the PR.
+
+2026-05-04  Artemiy Volkov  <artemiy.volkov@arm.com>
+
+	PR tree-optimization/122679
+	* gcc.dg/tree-ssa/forwprop-43.c: Remove the vect_int check.
+
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/116823
+	* g++.dg/tree-ssa/phiprop-2.C: New test.
+	* g++.dg/tree-ssa/phiprop-4.C: New test.
+	* g++.dg/tree-ssa/phiprop-5.C: New test.
+
+2026-05-04  Uros Bizjak  <ubizjak@gmail.com>
+
+	* gcc.target/i386/bt-8.c: New test.
+
+2026-05-04  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* gcc.target/i386/builtin-memmove-12.c: Skip for Darwin.
+	* gcc.target/i386/memcpy-pr120683-2.c: Likewise.
+	* gcc.target/i386/memcpy-pr120683-3.c: Likewise.
+	* gcc.target/i386/memcpy-pr120683-4.c: Likewise.
+	* gcc.target/i386/memcpy-pr120683-5.c: Likewise.
+	* gcc.target/i386/memcpy-pr120683-6.c: Likewise.
+	* gcc.target/i386/memcpy-pr120683-7.c: Likewise.
+	* gcc.target/i386/memset-pr120683-13.c: Likewise.
+	* gcc.target/i386/memset-pr120683-17.c: Likewise.
+	* gcc.target/i386/memset-pr120683-18.c: Likewise.
+	* gcc.target/i386/memset-pr120683-19.c: Likewise.
+	* gcc.target/i386/memset-pr120683-22.c: Likewise.
+	* gcc.target/i386/memset-pr120683-23.c: Likewise.
+	* gcc.target/i386/memset-pr70308-1b.c: Likewise.
+
+2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/123120
+	PR tree-optimization/116823
+	* gcc.dg/tree-ssa/phiprop-8.c: New test.
+	* gcc.dg/tree-ssa/phiprop-9.c: New test.
+	* gcc.dg/tree-ssa/phiprop-10.c: New test.
+	* gcc.dg/tree-ssa/phiprop-11.c: New test.
+	* gcc.dg/tree-ssa/phiprop-12.c: New test.
+	* g++.dg/tree-ssa/phiprop-3.C: New test.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125153
+	* gcc.dg/torture/pr125153.c: New testcase.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* gcc.dg/tree-ssa/ssa-thread-23.c: New testcase.
+	* gcc.dg/tree-ssa/ssa-dom-thread-7.c: Adjust.
+
+2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125156
+	* gcc.dg/torture/pr125156.c: New testcase.
+
+2026-05-04  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* gcc.target/powerpc/future-1.c: New test.
+	* gcc.target/powerpc/future-2.c: Likewise.
+
+2026-05-04  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR rtl-optimization/124766
+	* gcc.target/riscv/pr124766.c: New test.
+
+2026-05-04  Avinal Kumar  <avinal.xlvii@gmail.com>
+
+	PR tree-optimization/116700
+	* gcc.dg/pr116700.c: New test.
+	* gcc.dg/tree-ssa/phi-opt-48.c: New test.
+
 2026-05-03  Philipp Tomsich  <philipp.tomsich@vrull.eu>
 
 	PR tree-optimization/122569

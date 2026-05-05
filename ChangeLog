@@ -1,3 +1,7 @@
+2026-05-04  Vijay Shankar  <vijay@linux.ibm.com>
+
+	* MAINTAINERS: Add myself to write after approval.
+
 2026-05-01  Manuel Jacob  <me@manueljacob.de>
 
 	* configure.ac: Set default for CPP_FOR_BUILD environment variable in all cases.
