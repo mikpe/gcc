@@ -513,57 +513,52 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline void
     _Sp_counted_ptr<nullptr_t, _S_atomic>::_M_dispose() noexcept { }
 
-  // FIXME: once __has_cpp_attribute(__no_unique_address__)) is true for
-  // all supported compilers we can greatly simplify _Sp_ebo_helper.
+#if ! __has_cpp_attribute(__no_unique_address__)
+#error "support for [[__no_unique_address__]] attribute is required"
+#endif
+
+#if ! _GLIBCXX_INLINE_VERSION
   // N.B. unconditionally applying the attribute could change layout for
   // final types, which currently cannot use EBO so have a unique address.
-
-  template<int _Nm, typename _Tp,
-	   bool __use_ebo = !__is_final(_Tp) && __is_empty(_Tp)>
+  template<typename _Tp, bool = !__is_final(_Tp) && __is_empty(_Tp)>
     struct _Sp_ebo_helper;
+#else
+  template<typename _Tp, bool = true>
+    struct _Sp_ebo_helper;
+#endif
 
-  /// Specialization using EBO.
-  template<int _Nm, typename _Tp>
-    struct _Sp_ebo_helper<_Nm, _Tp, true> : private _Tp
+  /// Specialization using [[no_unique_address]].
+  template<typename _Tp>
+    struct _Sp_ebo_helper<_Tp, true>
     {
-      explicit _Sp_ebo_helper(const _Tp& __tp) : _Tp(__tp) { }
-      explicit _Sp_ebo_helper(_Tp&& __tp) : _Tp(std::move(__tp)) { }
-
-      static _Tp&
-      _S_get(_Sp_ebo_helper& __eboh) { return static_cast<_Tp&>(__eboh); }
+      [[__no_unique_address__]] _Tp _M_obj;
     };
 
-  /// Specialization not using EBO.
-  template<int _Nm, typename _Tp>
-    struct _Sp_ebo_helper<_Nm, _Tp, false>
+#if ! _GLIBCXX_INLINE_VERSION
+  /// Specialization not using [[no_unique_address]].
+  template<typename _Tp>
+    struct _Sp_ebo_helper<_Tp, false>
     {
-      explicit _Sp_ebo_helper(const _Tp& __tp) : _M_tp(__tp) { }
-      explicit _Sp_ebo_helper(_Tp&& __tp) : _M_tp(std::move(__tp)) { }
-
-      static _Tp&
-      _S_get(_Sp_ebo_helper& __eboh)
-      { return __eboh._M_tp; }
-
-    private:
-      _Tp _M_tp;
+      _Tp _M_obj;
     };
+#endif
 
   // Support for custom deleter and/or allocator
   template<typename _Ptr, typename _Deleter, typename _Alloc, _Lock_policy _Lp>
     class _Sp_counted_deleter final : public _Sp_counted_base<_Lp>
     {
-      class _Impl : _Sp_ebo_helper<0, _Deleter>, _Sp_ebo_helper<1, _Alloc>
+      class _Impl
       {
-	typedef _Sp_ebo_helper<0, _Deleter>	_Del_base;
-	typedef _Sp_ebo_helper<1, _Alloc>	_Alloc_base;
+	[[__no_unique_address__]] _Sp_ebo_helper<_Deleter> _M_d;
+	[[__no_unique_address__]] _Sp_ebo_helper<_Alloc>   _M_a;
 
       public:
 	_Impl(_Ptr __p, _Deleter __d, const _Alloc& __a) noexcept
-	: _Del_base(std::move(__d)), _Alloc_base(__a), _M_ptr(__p)
+	: _M_d{std::move(__d)}, _M_a{__a}, _M_ptr(__p)
 	{ }
 
-	_Deleter& _M_del() noexcept { return _Del_base::_S_get(*this); }
-	_Alloc& _M_alloc() noexcept { return _Alloc_base::_S_get(*this); }
+	_Deleter& _M_del() noexcept { return _M_d._M_obj; }
+	_Alloc& _M_alloc() noexcept { return _M_a._M_obj; }
 
 	_Ptr _M_ptr;
       };
@@ -645,14 +640,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp, typename _Alloc, _Lock_policy _Lp>
     class _Sp_counted_ptr_inplace final : public _Sp_counted_base<_Lp>
     {
-      class _Impl : _Sp_ebo_helper<0, _Alloc>
+      class _Impl
       {
-	typedef _Sp_ebo_helper<0, _Alloc>	_A_base;
+	[[__no_unique_address__]] _Sp_ebo_helper<_Alloc> _M_a;
 
       public:
-	explicit _Impl(_Alloc __a) noexcept : _A_base(__a) { }
+	explicit _Impl(_Alloc __a) noexcept : _M_a{std::move(__a)} { }
 
-	_Alloc& _M_alloc() noexcept { return _A_base::_S_get(*this); }
+	_Alloc& _M_alloc() noexcept { return _M_a._M_obj; }
 
 	__gnu_cxx::__aligned_buffer<__remove_cv_t<_Tp>> _M_storage;
       };
