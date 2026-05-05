@@ -2879,7 +2879,7 @@ public:
 void
 kf_strcasecmp::impl_call_post (const call_details &cd) const
 {
-  if (tree lhs_type = cd.get_lhs_type ())
+  if (cd.get_lhs_type ())
     {
       const svalue *result_val
 	= cd.get_or_create_conjured_svalue (cd.get_lhs_region ());
