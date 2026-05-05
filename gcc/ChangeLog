@@ -1,3 +1,10 @@
+2026-05-04  Nathan Myers  <ncm@cantrip.org>
+
+	Backported from master:
+	2026-05-04  Nathan Myers  <ncm@cantrip.org>
+
+	* doc/invoke.texi: insert "result" in comment text
+
 2026-05-03  Collin Funk  <collin.funk1@gmail.com>
 
 	Backported from master:
