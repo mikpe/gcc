@@ -1912,7 +1912,7 @@ elf_out::create_mapping (unsigned ext, bool extending)
     {
 #ifdef HAVE_POSIX_FALLOCATE
       int result = posix_fallocate (fd, offset, length);
-      if (result != EINVAL)
+      if (result != EINVAL && result != ENOTSUP)
 	return result == 0;
       /* Not supported by the underlying filesystem, fallback to ftruncate.  */
 #endif
