@@ -8,10 +8,10 @@
 # Roland Illig <roland.illig@gmx.de>, 2015, 2017-2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: gcc 16.1-b20260329\n"
+"Project-Id-Version: gcc 16.1.0\n"
 "Report-Msgid-Bugs-To: https://gcc.gnu.org/bugs/\n"
 "POT-Creation-Date: 2026-04-22 17:18+0000\n"
-"PO-Revision-Date: 2026-03-30 21:36+0200\n"
+"PO-Revision-Date: 2026-05-03 23:11+0200\n"
 "Last-Translator: Roland Illig <roland.illig@gmx.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "Language: de\n"
@@ -5728,7 +5728,7 @@ msgstr "Umgehung von Erratum 843419 für ARM-Cortex-A53."
 #: config/aarch64/aarch64.opt:108
 #, no-c-format
 msgid "Enable narrowing of 64-bit general purpose register writes to 32-bit when upper 32 bits of the register are unused."
-msgstr ""
+msgstr "Einschalten, dass bei Schreibzugriffen auf 64-Bit-Allzweck-Register nur die unteren 32 Bit geschrieben werden, soweit die oberen 32 Bit ungenutzt sind."
 
 #: config/aarch64/aarch64.opt:121
 #, no-c-format
@@ -11259,7 +11259,7 @@ msgstr "Schleifenvektorisierung von Gleitkommabefehlen einschalten."
 #: params.opt:1300
 #, no-c-format
 msgid "Enable vectorization of loops that may not be profitable according to the cost model but still perform costing between vector modes."
-msgstr ""
+msgstr "Einschalten der Vektorisierung von Schleifen, die nach dem Kostenmodell möglicherweise nicht rentabel sind, aber dennoch eine Kostenberechnung zwischen den Vektormodi durchführen."
 
 #: params.opt:1304
 #, no-c-format
@@ -22282,10 +22282,8 @@ msgid "At global scope:"
 msgstr "Im globalen Gültigkeitsbereich:"
 
 #: cp/reflect.cc:408
-#, fuzzy
-#| msgid "reflect_constant failed"
 msgid "reflect_constant_array failed"
-msgstr "reflect_constant fehlgeschlagen"
+msgstr "reflect_constant_array fehlgeschlagen"
 
 #: cp/reflect.cc:424 cp/reflect.cc:659 cp/reflect.cc:4039
 msgid "reflect_constant failed"
@@ -22392,22 +22390,16 @@ msgid "u8identifier_of not representable in UTF-8"
 msgstr "u8identifier_of ist nicht in UTF-8 darstellbar"
 
 #: cp/reflect.cc:3777
-#, fuzzy
-#| msgid "identifier_of not representable in ordinary literal encoding"
 msgid "display_string_of not representable in ordinary literal encoding"
-msgstr "identifier_of ist im gewöhnlichen Encoding für Literale nicht darstellbar"
+msgstr "display_string_of ist im gewöhnlichen Encoding für Literale nicht darstellbar"
 
 #: cp/reflect.cc:3782
-#, fuzzy
-#| msgid "u8identifier_of not representable in UTF-8"
 msgid "u8display_string_of not representable in UTF-8"
-msgstr "u8identifier_of ist nicht in UTF-8 darstellbar"
+msgstr "u8display_string_of ist nicht in UTF-8 darstellbar"
 
 #: cp/reflect.cc:3922
-#, fuzzy
-#| msgid "reflection does not represent a type, type alias, variable, function, namespace, enumerator, direct base class relationship, or non-static data member"
 msgid "reflection does not represent a type, type alias, variable, function, function parameter, namespace, enumerator, direct base class relationship, or non-static data member"
-msgstr "Reflexion stellt weder Typ noch Typalias, Variable, Funktion, Namespace, Enumerator, direkte Basisklassenbeziehung oder nicht statisches Datenelement dar"
+msgstr "Reflektion stellt weder Typ noch Typalias, Variable, Funktion, Funktionsparameter, Namespace, Enumerator, direkte Basisklassenbeziehung oder nicht statisches Datenelement dar"
 
 #: cp/reflect.cc:3935
 msgid "reflection does not represent a complete type or type alias"
@@ -22487,7 +22479,7 @@ msgstr "weder Name noch bit_width angegeben"
 
 #: cp/reflect.cc:5997
 msgid "no name and non-empty annotations specified"
-msgstr ""
+msgstr "weder Name noch nichtleere Annotationen angegeben"
 
 #: cp/reflect.cc:6003
 msgid "bit_width specified with non-integral and non-enumeration type"
@@ -22510,16 +22502,12 @@ msgid "bit_width is negative"
 msgstr "bit_width ist negativ"
 
 #: cp/reflect.cc:6026
-#, fuzzy
-#| msgid "alignment specified for type name in cast"
 msgid "name unspecified and type is const"
-msgstr "Ausrichtung für Typnamen in Cast angegeben"
+msgstr "Name nicht angegeben und Typ ist konstant"
 
 #: cp/reflect.cc:6030
-#, fuzzy
-#| msgid "alignment specified for type name in cast"
 msgid "name unspecified and type is volatile"
-msgstr "Ausrichtung für Typnamen in Cast angegeben"
+msgstr "Name nicht angegeben und Typ ist volatil"
 
 #: cp/reflect.cc:6038
 msgid "alignment is not power of two"
@@ -22534,22 +22522,16 @@ msgid "alignment is smaller than alignment_of"
 msgstr "Alignment ist kleiner als alignment_of"
 
 #: cp/reflect.cc:6062
-#, fuzzy
-#| msgid "reflection does not have a type"
 msgid "reflection does not have non-array object type"
-msgstr "Reflektion hat keinen Typen"
+msgstr "Reflektion muss einen Objekttypen außer Array haben"
 
 #: cp/reflect.cc:6506
-#, fuzzy
-#| msgid "reflection does not represent a type"
 msgid "current scope does not represent a function"
-msgstr "Reflektion repräsentiert keinen Typen"
+msgstr "aktueller Gültigkeitsbereich repräsentiert keine Funktion"
 
 #: cp/reflect.cc:6526
-#, fuzzy
-#| msgid "reflection does not represent parameter of current function"
 msgid "current scope does not represent a class nor a member function"
-msgstr "Reflektion repräsentiert keinen Parameter der aktuellen Funktion"
+msgstr "aktueller Gültigkeitsbereich repräsentiert weder eine Klassen- noch eine Memberfunktion"
 
 #: cp/reflect.cc:6685
 msgid "incomplete parent class"
@@ -55030,15 +55012,14 @@ msgid "Somebody asked for the field %s.%s, which does not exist"
 msgstr "Interner Fehler: Somebody asked for the field %s.%s, which does not exist"
 
 #: cobol/gengen.cc:1276
-#, fuzzy, gcc-internal-format, gfc-internal-format
-#| msgid "%qs is not supported with %qs"
+#, gcc-internal-format, gfc-internal-format
 msgid "%s:%d: Must not call here with %s"
-msgstr "%qs wird mit %qs nicht unterstützt"
+msgstr "%s:%d: Darf nicht mit %s aufgerufen werden"
 
 #: cobol/gengen.cc:1294
 #, gcc-internal-format, gfc-internal-format
 msgid "%s:%d: Must not call here with non-%s"
-msgstr ""
+msgstr "%s:%d: Darf nicht mit nicht-%s aufgerufen werden"
 
 #: cobol/gengen.cc:2017 cobol/gengen.cc:2070 cobol/gengen.cc:2897
 #: cobol/gengen.cc:2952
@@ -58018,10 +57999,9 @@ msgid "%qT is not a volatile type"
 msgstr "%qT ist kein %<volatile%>-Typ"
 
 #: cp/constraint.cc:3363
-#, fuzzy, gcc-internal-format
-#| msgid "%qT is not a literal type"
+#, gcc-internal-format
 msgid "%qT is not a structural type"
-msgstr "%qT ist kein literaler Typ"
+msgstr "%qT ist kein struktureller Typ"
 
 #: cp/constraint.cc:3367
 #, gcc-internal-format
@@ -58387,10 +58367,9 @@ msgid "%qs used outside of constant expressions"
 msgstr "%qs wird außerhalb von konstanten Ausdrücken verwendet"
 
 #: cp/cp-gimplify.cc:999
-#, fuzzy, gcc-internal-format
-#| msgid "expected declaration"
+#, gcc-internal-format
 msgid "unexpected %<std::%s%> declaration"
-msgstr "Deklaration erwartet"
+msgstr "unerwartete Deklaration von %<std::%s%>"
 
 #: cp/cp-gimplify.cc:1317
 #, gcc-internal-format
@@ -61445,16 +61424,14 @@ msgid "unnamed field is neither function nor member function; cannot be declared
 msgstr "unbenanntes Feld ist weder eine Funktion noch Elementfunktion; kann nicht als %<friend%> deklariert werden"
 
 #: cp/decl.cc:16674
-#, fuzzy, gcc-internal-format
-#| msgid "%qE attribute applied to extern \"C\" declaration %qD"
+#, gcc-internal-format
 msgid "annotation applied to non-defining friend declaration %qD"
-msgstr "Attribut %qE wird auf »extern \"C\"«-Deklaration %qD angewendet"
+msgstr "Annotation wird auf nicht-definierende Freund-Deklaration %qD angewendet"
 
 #: cp/decl.cc:16682
-#, fuzzy, gcc-internal-format
-#| msgid "defining explicit specialization %qD in friend declaration"
+#, gcc-internal-format
 msgid "annotation applied to parameter %qD of non-defining friend declaration"
-msgstr "Definition der expliziten Spezialisierung %qD in friend-Deklaration"
+msgstr "Annotation wird auf Parameter %qD einer nicht-definierenden Freund-Deklaration angewendet"
 
 #: cp/decl.cc:16694 cp/parser.cc:23742 cp/parser.cc:31131
 #, gcc-internal-format
@@ -61977,10 +61954,9 @@ msgid "using %qs"
 msgstr "%qs wird verwendet"
 
 #: cp/decl.cc:21329
-#, fuzzy, gcc-internal-format
-#| msgid "%qs used with %<auto%>"
+#, gcc-internal-format
 msgid "%qs used without %qs declaration"
-msgstr "%qs mit %<auto%> verwendet"
+msgstr "%qs ohne %qs-Deklaration verwendet"
 
 #: cp/decl.cc:21341
 #, gcc-internal-format
@@ -64473,16 +64449,14 @@ msgid "declaration of %qD shadows a member of %qT"
 msgstr "Deklaration von %qD überdeckt ein Element von %qT"
 
 #: cp/name-lookup.cc:3698
-#, fuzzy, gcc-internal-format
-#| msgid "annotation applied to a label"
+#, gcc-internal-format
 msgid "annotation applied to block scope extern %qD"
-msgstr "Annotation bezieht sich auf eine Sprungmarke"
+msgstr "Annotation bezieht sich auf eine block-externe Deklaration von %qD"
 
 #: cp/name-lookup.cc:3705
-#, fuzzy, gcc-internal-format
-#| msgid "declaration for parameter %qD but no such parameter"
+#, gcc-internal-format
 msgid "annotation applied to parameter %qD of block scope extern"
-msgstr "Deklaration für nicht vorhandenen Parameter %qD"
+msgstr "Annotation bezieht sich auf Parameter %qD einer block-externen Deklaration"
 
 #: cp/name-lookup.cc:4170
 #, gcc-internal-format
@@ -65715,13 +65689,12 @@ msgstr "%<constexpr%>-Lambda ist nur mit %<-std=c++17%> oder %<-std=gnu++17%> ve
 #: cp/parser.cc:13752
 #, gcc-internal-format
 msgid "%qE is not implicitly captured by a contract assertion"
-msgstr ""
+msgstr "%qE wird nicht implizit von einer Vertragszusicherung erfasst"
 
 #: cp/parser.cc:13754
-#, fuzzy, gcc-internal-format
-#| msgid "%qE declared here"
+#, gcc-internal-format
 msgid "%q#E declared here"
-msgstr "%qE ist hier deklariert"
+msgstr "%q#E ist hier deklariert"
 
 #: cp/parser.cc:14379
 #, gcc-internal-format
@@ -68525,10 +68498,9 @@ msgid "redeclaration of %qD with different constraints"
 msgstr "Redeklaration von %qD mit unterschiedlichen Einschränkungen"
 
 #: cp/pt.cc:6386
-#, fuzzy, gcc-internal-format
-#| msgid "lambda-expression in template parameter type"
+#, gcc-internal-format
 msgid "local class in lambda in template parameter list"
-msgstr "Lambda-Ausdruck in Template-Parameter-Typ"
+msgstr "lokale Klasse in Lambda-Ausdruck in Template-Parameter-Liste"
 
 #: cp/pt.cc:6461
 #, gcc-internal-format
@@ -69566,10 +69538,9 @@ msgid "cannot take the reflection of an overload set"
 msgstr "die Reflexion einer Überlagerungsmenge ist nicht übernehmbar"
 
 #: cp/reflect.cc:363 cp/reflect.cc:7729
-#, fuzzy, gcc-internal-format
-#| msgid "passing %qT to argument %d of %qE, which expects %qT"
+#, gcc-internal-format
 msgid "incorrect %qT type of argument %d, expected %qT"
-msgstr "Übergabe von %qT an Argument %d von %qE, das jedoch %qT erwartet"
+msgstr "fehlerhafter Typ %qT an Argument %d, stattdessen %qT erwartet"
 
 #: cp/reflect.cc:476
 #, gcc-internal-format
@@ -69592,10 +69563,9 @@ msgid "%<reflect_constant_array%> argument with %qT which is not copy constructi
 msgstr "%<reflect_constant_array%>-Argument mit %qT, aber das ist nicht kopiererzeugbar"
 
 #: cp/reflect.cc:595
-#, fuzzy, gcc-internal-format
-#| msgid "%<reflect_constant_array%> argument with %qT which is not constructible from %qT %<std::ranges::range_reference_t%>"
+#, gcc-internal-format
 msgid "%<reflect_constant_array%> argument with %qT which is not compatible with %qT %<std::ranges::range_reference_t%>"
-msgstr "%<reflect_constant_array%>-Argument mit %qT, aber das ist nicht von %qT %<std::ranges::range_reference_t%> erzeugbar"
+msgstr "%<reflect_constant_array%>-Argument mit %qT, aber das ist nicht kompatibel mit %qT %<std::ranges::range_reference_t%>"
 
 #: cp/reflect.cc:606
 #, gcc-internal-format
@@ -69784,10 +69754,9 @@ msgid "%<define_aggregate%> evaluated from %<consteval%> block enclosed by %qT w
 msgstr "das %<define_aggregate%>, das aus dem %<consteval%>-Block heraus ausgewertet wird und von %qT umschlossen ist, während Typ %qT gerade definiert wird, ist von %qT umschlossen"
 
 #: cp/reflect.cc:6472
-#, fuzzy, gcc-internal-format
-#| msgid "%<access_context::current%> used outside of manifestly constant-evaluation"
+#, gcc-internal-format
 msgid "%qs used outside of manifestly constant-evaluation"
-msgstr "%<access_context::current%> wird außerhalb der manifesten Konstantenauswertung verwendet"
+msgstr "%qs wird außerhalb der manifesten Konstantenauswertung verwendet"
 
 #: cp/reflect.cc:6585
 #, gcc-internal-format
@@ -69810,22 +69779,19 @@ msgid "unexpected argument to %qs"
 msgstr "unerwartetes Argument für %qs"
 
 #: cp/reflect.cc:7726
-#, fuzzy, gcc-internal-format
-#| msgid "passing %qT to argument %d of %qE, which expects %qs"
+#, gcc-internal-format
 msgid "incorrect %qT type of argument %d, expected %qs"
-msgstr "Übergabe von %qT an das Argument %d von %qE, das jedoch %qs erwartet"
+msgstr "fehlerhafter Typ %qT an Argument %d, stattdessen %qs erwartet"
 
 #: cp/reflect.cc:7799
-#, fuzzy, gcc-internal-format
-#| msgid "vector type expected in %qs"
+#, gcc-internal-format
 msgid "incorrect %qT return type, expected %qs"
-msgstr "Vektortypen erwartet in %qs"
+msgstr "fehlerhafter Rückgabetyp %qT, stattdessen %qs erwartet"
 
 #: cp/reflect.cc:7802
-#, fuzzy, gcc-internal-format
-#| msgid "vector type expected in %qs"
+#, gcc-internal-format
 msgid "incorrect %qT return type, expected %qT"
-msgstr "Vektortypen erwartet in %qs"
+msgstr "fehlerhafter Rückgabetyp %qT, stattdessen %qT erwartet"
 
 #: cp/reflect.cc:7826
 #, gcc-internal-format
@@ -69838,21 +69804,19 @@ msgid "splice argument must be an expression of type %qs"
 msgstr "das %<splice%>-Argument muss ein Ausdruck vom Typ %qs sein"
 
 #: cp/reflect.cc:8530
-#, fuzzy, gcc-internal-format
-#| msgid "cannot call a concept as a function"
+#, gcc-internal-format
 msgid "cannot splice a null reflection"
-msgstr "ein Konzept kann nicht wie eine Funktion aufgerufen werden"
+msgstr "eine Nullreflexion kann nicht gespleißt werden"
 
 #: cp/reflect.cc:8540
-#, fuzzy, gcc-internal-format
-#| msgid "cannot use a data member specification in a splice expression"
+#, gcc-internal-format
 msgid "cannot use %qD function parameter reflection in a splice expression"
-msgstr "eine Datenelementangabe kann nicht in einem Spleißausdruck verwendet werden"
+msgstr "eine Reflektion des Funktionsparameters %qD kann nicht in einem Spleißausdruck verwendet werden"
 
 #: cp/reflect.cc:8544
 #, gcc-internal-format
 msgid "apply %<std::meta::variable_of%> on it before splicing"
-msgstr ""
+msgstr "wenden Sie %<std::meta::variable_of%> darauf an, vor dem Spleißen"
 
 #: cp/reflect.cc:8803
 #, gcc-internal-format
@@ -69900,16 +69864,14 @@ msgid "cannot implicitly reference a class member %qD through a splice"
 msgstr "das Klassenelement %qD kann nicht implizit aus einem Spleißausdruck heraus referenziert werden"
 
 #: cp/reflect.cc:9034
-#, fuzzy, gcc-internal-format
-#| msgid "invalid cast to abstract class type %qT"
+#, gcc-internal-format
 msgid "invalid class member access of type template %qE"
-msgstr "ungültige Umwandlung in abstrakte Klasse %qT"
+msgstr "ungültiger Zugriff auf Klassenmember vom Typ Template %qE"
 
 #: cp/reflect.cc:9042
-#, fuzzy, gcc-internal-format
-#| msgid "cannot use %qs as a call-used register"
+#, gcc-internal-format
 msgid "cannot use %qE to access a class member"
-msgstr "%qs kann nicht als ein rufverwendetes Register verwendet werden"
+msgstr "%qE kann nicht verwendet werden, um auf ein Klassenmember zuzugreifen"
 
 #: cp/reflect.cc:9056
 #, gcc-internal-format
@@ -69937,10 +69899,9 @@ msgid "expected a reflection of a function template"
 msgstr "Reflexion eines Funktionstemplates erwartet"
 
 #: cp/reflect.cc:9130
-#, fuzzy, gcc-internal-format
-#| msgid "expected a reflection of a function template"
+#, gcc-internal-format
 msgid "expected a reflection of a function or variable template"
-msgstr "Reflexion eines Funktionstemplates erwartet"
+msgstr "Reflektion eines Templates für eine Funktion oder eine Variable erwartet"
 
 #: cp/rtti.cc:308
 #, gcc-internal-format
@@ -71398,10 +71359,9 @@ msgid "%<%D::%D%> is not a member of %qT"
 msgstr "%<%D::%D%> ist kein Element von %qT"
 
 #: cp/typeck.cc:3605
-#, fuzzy, gcc-internal-format
-#| msgid "%qD is not a member of %qT"
+#, gcc-internal-format
 msgid "%q#D is not a member of %qT"
-msgstr "%qD ist kein Element von %qT"
+msgstr "%q#D ist kein Element von %qT"
 
 #: cp/typeck.cc:3781
 #, gcc-internal-format
@@ -78443,10 +78403,9 @@ msgid "Pointer-array actual argument at %L requires an assumed-shape or pointer-
 msgstr "Zeigerfeld als effektives Argument bei %L erfordert wegen VOLATILE-Attribut ein Scheinargument %qs mit vermuteter Form oder als Zeigerfeld"
 
 #: fortran/interface.cc:4153
-#, fuzzy, gcc-internal-format
-#| msgid "Assumed-type actual argument at %L requires that dummy argument %qs is of assumed type"
+#, gcc-internal-format
 msgid "ISO_C_BINDING function actual argument at %L requires dummy argument %qs to have a matching type from ISO_C_BINDING"
-msgstr "Feld mit vermutetem Rang bei %L erfordert Scheinargument %qs mit vermutetem Rang"
+msgstr "Das tatsächliche Argument der ISO_C_BINDING-Funktion an Position %L erfordert, dass das Dummy-Argument %qs einen passenden Typ gemäß ISO_C_BINDING hat"
 
 #: fortran/interface.cc:4181
 #, gcc-internal-format, gfc-internal-format
@@ -82903,12 +82862,12 @@ msgstr "!$OMP DECLARE REDUCTION »%s« für Typ %s bei %L nicht gefunden"
 #: fortran/openmp.cc:10507
 #, gcc-internal-format
 msgid "Sorry, ALLOCATABLE object %qs in LINEAR clause on worksharing-loop construct at %L is not yet supported"
-msgstr ""
+msgstr "Sorry, das ALLOCATABLE-Objekt %qs in der LINEAR-Klausel des Worksharing-Loop-Konstrukts bei %L wird noch nicht unterstützt"
 
 #: fortran/openmp.cc:10512
 #, gcc-internal-format
 msgid "Sorry, array %qs in LINEAR clause on worksharing-loop construct at %L is not yet supported"
-msgstr ""
+msgstr "Sorry, das Feld %qs in der LINEAR-Klausel im Worksharing-Loop-Konstrukt bei %L wird noch nicht unterstützt"
 
 #: fortran/openmp.cc:10526
 #, gcc-internal-format, gfc-internal-format
@@ -88511,7 +88470,7 @@ msgstr "Prozedur %s bei %L ist bereits als Prozedur %s deklariert"
 #: fortran/symbol.cc:1898
 #, gcc-internal-format
 msgid "F2008: A pointer function assignment is ambiguous if it is the first executable statement after the specification block.  Please add any other kind of executable statement before it"
-msgstr "F2008: Eine Zuweisung an eine Zeigerfunktion ist mehrdeutig, wenn dies die erste Anweisung nach dem Spezifikationsblock ist. Bitte fügen Sie davor irgend eine andere ausführbare Anweisung ein."
+msgstr "F2008: Eine Zuweisung an eine Zeigerfunktion ist mehrdeutig, wenn dies die erste Anweisung nach dem Spezifikationsblock ist. Bitte fügen Sie davor irgend eine andere ausführbare Anweisung ein"
 
 #: fortran/symbol.cc:1935
 #, gcc-internal-format, gfc-internal-format
@@ -88752,10 +88711,9 @@ msgid "Bounds checking of the elemental index at %L will cause two calls to %qs,
 msgstr "Die Überprüfung der Grenzen des Elementindexes bei %L führt zu zwei Aufrufen von %qs, das weder als PURE deklariert ist noch implizit rein ist."
 
 #: fortran/trans-array.cc:7109
-#, fuzzy, gcc-internal-format, gfc-internal-format
-#| msgid "Array %qs at %L is a variable, which does not reduce to a constant expression"
+#, gcc-internal-format, gfc-internal-format
 msgid "Array initializer at %L does not reduce to a constant expression"
-msgstr "Feld %qs bei %L ist eine Variable, die nicht zu konstantem Ausdruck reduziert"
+msgstr "Der Feldinitialisierer bei %L ist nicht zu einem konstanten Ausdruck reduzierbar"
 
 #. Problems occur when we get something like
 #. integer :: a(lots) = (/(i, i=1, lots)/)
