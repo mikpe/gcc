@@ -257,7 +257,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    auto& __pi = _M_smart._M_refcount._M_pi;
 
 	    if (_Sp __ptr = _M_smart.get())
-	      static_cast<_Scd*>(__pi)->_M_impl._M_ptr = __ptr;
+	      static_cast<_Scd*>(__pi)->_M_ptr = __ptr;
 	    else // Destroy the control block manually without invoking deleter.
 	      std::__exchange(__pi, nullptr)->_M_destroy();
 	  }

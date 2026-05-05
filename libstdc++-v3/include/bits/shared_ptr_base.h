@@ -547,32 +547,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Ptr, typename _Deleter, typename _Alloc, _Lock_policy _Lp>
     class _Sp_counted_deleter final : public _Sp_counted_base<_Lp>
     {
-      class _Impl
-      {
-	[[__no_unique_address__]] _Sp_ebo_helper<_Deleter> _M_d;
-	[[__no_unique_address__]] _Sp_ebo_helper<_Alloc>   _M_a;
-
-      public:
-	_Impl(_Ptr __p, _Deleter __d, const _Alloc& __a) noexcept
-	: _M_d{std::move(__d)}, _M_a{__a}, _M_ptr(__p)
-	{ }
-
-	_Deleter& _M_del() noexcept { return _M_d._M_obj; }
-	_Alloc& _M_alloc() noexcept { return _M_a._M_obj; }
-
-	_Ptr _M_ptr;
-      };
-
     public:
       using __allocator_type = __alloc_rebind<_Alloc, _Sp_counted_deleter>;
 
       // __d(__p) must not throw.
       _Sp_counted_deleter(_Ptr __p, _Deleter __d) noexcept
-      : _M_impl(__p, std::move(__d), _Alloc()) { }
+      : _M_del{std::move(__d)}, _M_alloc{}, _M_ptr(__p) { }
 
       // __d(__p) must not throw.
       _Sp_counted_deleter(_Ptr __p, _Deleter __d, const _Alloc& __a) noexcept
-      : _M_impl(__p, std::move(__d), __a) { }
+      : _M_del{std::move(__d)}, _M_alloc{__a}, _M_ptr(__p) { }
 
 #pragma GCC diagnostic push // PR tree-optimization/122197
 #pragma GCC diagnostic ignored "-Wfree-nonheap-object"
@@ -582,12 +566,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       virtual void
       _M_dispose() noexcept
-      { _M_impl._M_del()(_M_impl._M_ptr); }
+      { _M_del._M_obj(_M_ptr); }
 
       virtual void
       _M_destroy() noexcept
       {
-	__allocator_type __a(_M_impl._M_alloc());
+	__allocator_type __a(_M_alloc._M_obj);
 	__allocated_ptr<__allocator_type> __guard_ptr{ __a, this };
 	this->~_Sp_counted_deleter();
       }
@@ -598,19 +582,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #if __cpp_rtti
 	// _GLIBCXX_RESOLVE_LIB_DEFECTS
 	// 2400. shared_ptr's get_deleter() should use addressof()
-        return __ti == typeid(_Deleter)
-	  ? std::__addressof(_M_impl._M_del())
-	  : nullptr;
-#else
-        return nullptr;
+	if (__ti == typeid(_Deleter))
+	  return std::__addressof(_M_del._M_obj);
 #endif
+	return nullptr;
       }
 
     private:
 #ifdef __glibcxx_out_ptr
       template<typename, typename, typename...> friend class out_ptr_t;
 #endif
-      _Impl _M_impl;
+
+      [[__no_unique_address__]] _Sp_ebo_helper<_Deleter> _M_del;
+      [[__no_unique_address__]] _Sp_ebo_helper<_Alloc>   _M_alloc;
+      _Ptr _M_ptr;
     };
 
   // helpers for make_shared / allocate_shared
@@ -640,25 +625,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp, typename _Alloc, _Lock_policy _Lp>
     class _Sp_counted_ptr_inplace final : public _Sp_counted_base<_Lp>
     {
-      class _Impl
-      {
-	[[__no_unique_address__]] _Sp_ebo_helper<_Alloc> _M_a;
-
-      public:
-	explicit _Impl(_Alloc __a) noexcept : _M_a{std::move(__a)} { }
-
-	_Alloc& _M_alloc() noexcept { return _M_a._M_obj; }
-
-	__gnu_cxx::__aligned_buffer<__remove_cv_t<_Tp>> _M_storage;
-      };
-
     public:
       using __allocator_type = __alloc_rebind<_Alloc, _Sp_counted_ptr_inplace>;
 
       // Alloc parameter is not a reference so doesn't alias anything in __args
       template<typename... _Args>
 	_Sp_counted_ptr_inplace(_Alloc __a, _Args&&... __args)
-	: _M_impl(__a)
+	: _M_alloc{__a}
 	{
 	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
 	  // 2070.  allocate_shared should use allocator_traits<A>::construct
@@ -674,14 +647,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       virtual void
       _M_dispose() noexcept
       {
-	allocator_traits<_Alloc>::destroy(_M_impl._M_alloc(), _M_ptr());
+	allocator_traits<_Alloc>::destroy(_M_alloc._M_obj, _M_ptr());
       }
 
       // Override because the allocator needs to know the dynamic type
       virtual void
       _M_destroy() noexcept
       {
-	__allocator_type __a(_M_impl._M_alloc());
+	__allocator_type __a(_M_alloc._M_obj);
 	__allocated_ptr<__allocator_type> __guard_ptr{ __a, this };
 	this->~_Sp_counted_ptr_inplace();
       }
@@ -711,9 +684,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
       __remove_cv_t<_Tp>*
-      _M_ptr() noexcept { return _M_impl._M_storage._M_ptr(); }
+      _M_ptr() noexcept { return _M_storage._M_ptr(); }
 
-      _Impl _M_impl;
+      [[__no_unique_address__]] _Sp_ebo_helper<_Alloc> _M_alloc;
+      __gnu_cxx::__aligned_buffer<__remove_cv_t<_Tp>> _M_storage;
     };
 
 #ifdef __glibcxx_smart_ptr_for_overwrite // C++ >= 20 && HOSTED
