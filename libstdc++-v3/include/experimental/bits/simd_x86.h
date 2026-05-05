@@ -426,11 +426,14 @@ template <typename _Tp>
   constexpr bool
   __is_x86_pd()
   {
-#if __LDBL_MANT_DIG == __DBL_MANT_DIG
-    if constexpr (is_same_v<_Tp, long double>)
+    if constexpr (is_same_v<_Tp, double>)
+      return true;
+#if __LDBL_MANT_DIG__ == __DBL_MANT_DIG__
+    else if constexpr (is_same_v<_Tp, long double>)
       return true;
 #endif
-    return is_same_v<_Tp, double>;
+    else
+      return false;
   }
 
 template <typename _Tp, size_t _Np>
