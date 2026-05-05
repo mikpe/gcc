@@ -171,7 +171,7 @@ CC_FOR_BUILD=${CC_FOR_BUILD:-gcc}
 AC_SUBST(CC_FOR_BUILD)
 
 # Check whether the target supports hidden visibility.
-LIBGA68_CHECK_ATTRIBUTE_VISIBILITY
+GCC_CHECK_ATTRIBUTE_VISIBILITY
 
 # Search for needed functions in host libraries.
 AC_SEARCH_LIBS([malloc], [c])
