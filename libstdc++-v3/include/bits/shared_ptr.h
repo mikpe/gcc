@@ -114,38 +114,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #if __glibcxx_shared_ptr_arrays >= 201707L
   // Constraint for overloads taking array types with unknown bound, U[].
-#if __cpp_concepts
   template<typename _Tp>
     requires is_array_v<_Tp> && (extent_v<_Tp> == 0)
     using _UnboundedArray = _Tp;
-#else
-  template<typename _Tp>
-    using _UnboundedArray
-      = __enable_if_t<__is_array_unknown_bounds<_Tp>::value, _Tp>;
-#endif
 
   // Constraint for overloads taking array types with known bound, U[N].
-#if __cpp_concepts
   template<typename _Tp>
     requires (extent_v<_Tp> != 0)
     using _BoundedArray = _Tp;
-#else
-  template<typename _Tp>
-    using _BoundedArray
-      = __enable_if_t<__is_array_known_bounds<_Tp>::value, _Tp>;
-#endif
 
 #if __glibcxx_smart_ptr_for_overwrite
   // Constraint for overloads taking either non-array or bounded array, U[N].
-#if __cpp_concepts
   template<typename _Tp>
     requires (!is_array_v<_Tp>) || (extent_v<_Tp> != 0)
     using _NotUnboundedArray = _Tp;
-#else
-  template<typename _Tp>
-    using _NotUnboundedArray
-      = __enable_if_t<!__is_array_unknown_bounds<_Tp>::value, _Tp>;
-#endif
 #endif // smart_ptr_for_overwrite
 #endif // shared_ptr_arrays
 

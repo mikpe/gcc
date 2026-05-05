@@ -727,14 +727,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // Partial specialization used for make_shared_for_overwrite<non-array>().
   // This partial specialization is used when the allocator's value type
   // is the special _Sp_overwrite_tag type.
-#if __cpp_concepts
   template<typename _Tp, typename _Alloc, _Lock_policy _Lp>
     requires is_same_v<typename _Alloc::value_type, _Sp_overwrite_tag>
     class _Sp_counted_ptr_inplace<_Tp, _Alloc, _Lp> final
-#else
-  template<typename _Tp, template<typename> class _Alloc, _Lock_policy _Lp>
-    class _Sp_counted_ptr_inplace<_Tp, _Alloc<_Sp_overwrite_tag>, _Lp> final
-#endif
     : public _Sp_counted_base<_Lp>
     {
       [[no_unique_address]] _Alloc _M_alloc;
