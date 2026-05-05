@@ -429,7 +429,7 @@ extern GTY(()) tree cp_global_trees[CPTI_MAX];
       TARGET_EXPR_IMPLICIT_P (in TARGET_EXPR)
       TEMPLATE_PARM_PARAMETER_PACK (in TEMPLATE_PARM_INDEX)
       ATTR_IS_DEPENDENT (in the TREE_LIST for an attribute)
-      ABI_TAG_IMPLICIT (in the TREE_LIST for the argument of abi_tag)
+      ABI_TAG_NOT_MANGLED (in the TREE_LIST for the argument of abi_tag)
       LAMBDA_CAPTURE_EXPLICIT_P (in a TREE_LIST in LAMBDA_EXPR_CAPTURE_LIST)
       PARENTHESIZED_LIST_P (in the TREE_LIST for a parameter-declaration-list)
       CONSTRUCTOR_IS_DIRECT_INIT (in CONSTRUCTOR)
@@ -480,6 +480,7 @@ extern GTY(()) tree cp_global_trees[CPTI_MAX];
       BASELINK_FUNCTIONS_MAYBE_INCOMPLETE_P (in BASELINK)
       BIND_EXPR_VEC_DTOR (in BIND_EXPR)
       ATOMIC_CONSTR_EXPR_FROM_CONCEPT_P (in ATOMIC_CONSTR)
+      ABI_TAG_INHERITED (in the TREE_LIST for the argument of abi_tag)
       STATIC_INIT_DECOMP_BASE_P (in the TREE_LIST for {static,tls}_aggregates)
       MUST_NOT_THROW_THROW_P (in MUST_NOT_THROW_EXPR)
       LAMBDA_EXPR_CONST_QUAL_P (in LAMBDA_EXPR)
@@ -3962,8 +3963,14 @@ struct GTY(()) lang_decl {
 #define ATTR_IS_DEPENDENT(NODE) TREE_LANG_FLAG_0 (TREE_LIST_CHECK (NODE))
 
 /* In a TREE_LIST in the argument of attribute abi_tag, indicates that the tag
-   was inherited from a template parameter, not explicitly indicated.  */
-#define ABI_TAG_IMPLICIT(NODE) TREE_LANG_FLAG_0 (TREE_LIST_CHECK (NODE))
+   was inherited from a template parameter, not explicitly indicated.
+   These are not mangled because they're already represented in the mangling
+   of the template argument.  */
+#define ABI_TAG_NOT_MANGLED(NODE) TREE_LANG_FLAG_0 (TREE_LIST_CHECK (NODE))
+
+/* In a TREE_LIST in the argument of attribute abi_tag, indicates that the tag
+ * was added by check_abi_tags, not explicitly specified.  */
+#define ABI_TAG_INHERITED(NODE) TREE_LANG_FLAG_1 (TREE_LIST_CHECK (NODE))
 
 /* In a TREE_LIST for a parameter-declaration-list, indicates that all the
    parameters in the list have declarators enclosed in ().  */
@@ -9123,7 +9130,7 @@ extern void mangle_module_substitution		(int);
 extern int mangle_module_component		(tree id, bool partition);
 extern tree mangle_module_global_init		(int);
 extern unsigned HOST_WIDE_INT range_expr_nelts	(tree);
-extern bool equal_abi_tags			(tree, tree);
+extern bool equal_abi_tags			(tree, tree, bool);
 
 /* in dump.cc */
 extern bool cp_dump_tree			(void *, tree);

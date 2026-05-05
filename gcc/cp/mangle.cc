@@ -1645,7 +1645,7 @@ write_unqualified_name (tree decl)
 
 	  if (!G.need_abi_warning
 	      && abi_warn_or_compat_version_crosses (11)
-	      && !equal_abi_tags (dtags, mtags))
+	      && !equal_abi_tags (dtags, mtags, /*ignore_inherited_p=*/false))
 	    G.need_abi_warning = 1;
 
 	  if (!abi_version_at_least (10))
@@ -1709,13 +1709,14 @@ tree_string_cmp (const void *p1, const void *p2)
 /* Return the TREE_LIST of TAGS as a sorted VEC.  */
 
 static vec<tree, va_gc> *
-sorted_abi_tags (tree tags)
+sorted_abi_tags (tree tags, bool ignore_inherited_p)
 {
   vec<tree, va_gc> * vec = make_tree_vector();
 
   for (tree t = tags; t; t = TREE_CHAIN (t))
     {
-      if (ABI_TAG_IMPLICIT (t))
+      if (ABI_TAG_NOT_MANGLED (t)
+	  || (ignore_inherited_p && ABI_TAG_INHERITED (t)))
 	continue;
       tree str = TREE_VALUE (t);
       vec_safe_push (vec, str);
@@ -1735,7 +1736,7 @@ write_abi_tags (tree tags)
   if (tags == NULL_TREE)
     return;
 
-  vec<tree, va_gc> * vec = sorted_abi_tags (tags);
+  vec<tree, va_gc> * vec = sorted_abi_tags (tags, /*ignore_inherited_p=*/false);
 
   unsigned i; tree str;
   FOR_EACH_VEC_ELT (*vec, i, str)
@@ -1751,10 +1752,10 @@ write_abi_tags (tree tags)
 /* True iff the TREE_LISTS T1 and T2 of ABI tags are equivalent.  */
 
 bool
-equal_abi_tags (tree t1, tree t2)
+equal_abi_tags (tree t1, tree t2, bool ignore_inherited_p)
 {
-  releasing_vec v1 = sorted_abi_tags (t1);
-  releasing_vec v2 = sorted_abi_tags (t2);
+  releasing_vec v1 = sorted_abi_tags (t1, ignore_inherited_p);
+  releasing_vec v2 = sorted_abi_tags (t2, ignore_inherited_p);
 
   unsigned len1 = v1->length();
   if (len1 != v2->length())
