@@ -12542,8 +12542,13 @@ trees_in::check_abi_tags (tree existing, tree decl, tree &eattr, tree &dattr)
       if (dtags)
 	dtags = TREE_VALUE (dtags);
 
-      /* We only error if mangling wouldn't consider the tags equivalent.  */
-      if (!equal_abi_tags (etags, dtags))
+      /* We only error if mangling wouldn't consider the tags equivalent.
+	 Since tags might have been inherited during mangling, ignore
+	 inherited tags if there's a mangled-ness mismatch.  */
+      bool ignore_inherited_p
+	= (DECL_ASSEMBLER_NAME_SET_P (STRIP_TEMPLATE (existing))
+	   != DECL_ASSEMBLER_NAME_SET_P (STRIP_TEMPLATE (decl)));
+      if (!equal_abi_tags (etags, dtags, ignore_inherited_p))
 	{
 	  auto_diagnostic_group d;
 	  if (dtags)

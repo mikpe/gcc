@@ -1711,11 +1711,12 @@ check_tag (tree tag, tree id, tree *tp, abi_tag_data *p)
 	  /* Don't inherit this tag multiple times.  */
 	  IDENTIFIER_MARKED (id) = true;
 
+	  ABI_TAG_INHERITED (p->tags) = true;
 	  if (TYPE_P (p->t))
 	    {
 	      /* Tags inherited from type template arguments are only used
 		 to avoid warnings.  */
-	      ABI_TAG_IMPLICIT (p->tags) = true;
+	      ABI_TAG_NOT_MANGLED (p->tags) = true;
 	      return;
 	    }
 	  /* For functions and variables we want to warn, too.  */
