@@ -917,6 +917,7 @@ read_logical (st_parameter_dt *dtp, int length)
   if (parse_repeat (dtp))
     return;
 
+next:
   c = safe_tolower (next_char (dtp));
   l_push_char (dtp, c);
   switch (c)
@@ -961,6 +962,9 @@ read_logical (st_parameter_dt *dtp, int length)
     case '!':
       if (!dtp->u.p.namelist_mode)
         goto bad_logical;
+      eat_line (dtp);
+      eat_spaces (dtp);
+      goto next;
 
     CASE_SEPARATORS:
     case EOF:
@@ -1076,6 +1080,7 @@ read_integer (st_parameter_dt *dtp, int length, bt type)
   int c, negative;
   negative = 0;
 
+next:
   c = next_char (dtp);
   switch (c)
     {
@@ -1091,6 +1096,9 @@ read_integer (st_parameter_dt *dtp, int length, bt type)
     case '!':
       if (!dtp->u.p.namelist_mode)
         goto bad_integer;
+      eat_line (dtp);
+      eat_spaces (dtp);
+      goto next;
 
     CASE_SEPARATORS:		/* Single null.  */
       unget_char (dtp, c);
@@ -1260,6 +1268,7 @@ read_character (st_parameter_dt *dtp, int length __attribute__ ((unused)))
 
   quote = ' ';			/* Space means no quote character.  */
 
+next:
   if ((c = next_char (dtp)) == EOF)
     goto eof;
   if (c == ';')
@@ -1283,6 +1292,15 @@ read_character (st_parameter_dt *dtp, int length __attribute__ ((unused)))
     case '\'':
       quote = c;
       goto get_string;
+
+    case '!':
+      if (dtp->u.p.namelist_mode)
+	{
+	  eat_line (dtp);
+	  eat_spaces (dtp);
+	  goto next;
+	}
+      /* Fall through...  */
 
     default:
       if (dtp->u.p.namelist_mode)
@@ -1703,6 +1721,7 @@ read_complex (st_parameter_dt *dtp, void *dest, int kind, size_t size)
   if (parse_repeat (dtp))
     return;
 
+next:
   c = next_char (dtp);
   switch (c)
     {
@@ -1712,6 +1731,9 @@ read_complex (st_parameter_dt *dtp, void *dest, int kind, size_t size)
     case '!':
       if (!dtp->u.p.namelist_mode)
 	goto bad_complex;
+      eat_line (dtp);
+      eat_spaces (dtp);
+      goto next;
 
     CASE_SEPARATORS:
     case EOF:
@@ -1813,6 +1835,7 @@ read_real (st_parameter_dt *dtp, void *dest, int length)
 
   seen_dp = 0;
 
+next:
   c = next_char (dtp);
   if (dtp->u.p.current_unit->decimal_status == DECIMAL_COMMA)
     {
@@ -1844,6 +1867,9 @@ read_real (st_parameter_dt *dtp, void *dest, int length)
     case '!':
       if (!dtp->u.p.namelist_mode)
 	goto bad_real;
+      eat_line (dtp);
+      eat_spaces (dtp);
+      goto next;
 
     CASE_SEPARATORS:
       unget_char (dtp, c);		/* Single null.  */
