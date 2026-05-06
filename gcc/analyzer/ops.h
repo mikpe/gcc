@@ -76,11 +76,9 @@ struct operation_context
 
 struct rewind_context
 {
-  rewind_context (const exploded_edge &eedge,
-		  logger *logger,
+  rewind_context (logger *logger,
 		  diagnostic_state input_state)
-  : m_eedge (eedge),
-    m_logger (logger),
+  : m_logger (logger),
     m_input (input_state),
     m_output (input_state)
   {
@@ -92,13 +90,18 @@ struct rewind_context
   void
   on_data_flow (tree src, tree dst);
 
+  virtual const region_model &
+  get_src_region_model () const = 0;
+
+  virtual const region_model &
+  get_dst_region_model () const = 0;
+
   virtual bool
   could_be_affected_by_write_p (tree lhs) = 0;
 
   virtual void
   add_state_transition (std::unique_ptr<state_transition>) = 0;
 
-  const exploded_edge &m_eedge;
   logger *m_logger;
   diagnostic_state m_input;
   diagnostic_state m_output;

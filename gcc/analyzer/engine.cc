@@ -1694,11 +1694,10 @@ interprocedural_call::try_to_rewind_data_flow (rewind_context &ctxt) const
   // Rewind from params to arguments
   if (ctxt.m_input.m_region_holding_value)
     {
-      const region_model *dst_enode_model
-	= ctxt.m_eedge.m_dest->get_state ().m_region_model;
+      const region_model &dst_enode_model = ctxt.get_dst_region_model ();
       tree dst_tree
-	= dst_enode_model->get_representative_tree
-	(ctxt.m_input.m_region_holding_value);
+	= dst_enode_model.get_representative_tree
+	    (ctxt.m_input.m_region_holding_value);
       if (dst_tree)
 	{
 	  callsite_expr expr;
@@ -1708,10 +1707,9 @@ interprocedural_call::try_to_rewind_data_flow (rewind_context &ctxt) const
 						   &expr);
 	  if (src_tree)
 	    {
-	      const region_model *src_enode_model
-		= ctxt.m_eedge.m_src->get_state ().m_region_model;
+	      const region_model &src_enode_model = ctxt.get_src_region_model ();
 	      ctxt.m_output.m_region_holding_value
-		= src_enode_model->get_lvalue (src_tree, nullptr);
+		= src_enode_model.get_lvalue (src_tree, nullptr);
 
 	      ctxt.add_state_transition
 		(std::make_unique<state_transition_at_call> (expr));
@@ -1796,9 +1794,8 @@ interprocedural_return::try_to_rewind_data_flow (rewind_context &ctxt) const
   if (!lhs)
     return true;
 
-  const region_model *src_enode_model
-    = ctxt.m_eedge.m_src->get_state ().m_region_model;
-  tree fndecl = src_enode_model->get_current_function ()->decl;
+  const region_model &src_enode_model = ctxt.get_src_region_model ();
+  tree fndecl = src_enode_model.get_current_function ()->decl;
   tree fn_result = DECL_RESULT (fndecl);
 
   ctxt.on_data_flow (DECL_RESULT (fndecl), lhs);

@@ -1,8 +1,5 @@
 /* { dg-additional-options "-fno-analyzer-state-merge" } */
 
-/* TODO: we shouldn't need this:  */
-/* { dg-additional-options "-fno-analyzer-state-purge" } */
-
 struct foo { int x; int y; };
 
 void

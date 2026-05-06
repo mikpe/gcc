@@ -217,10 +217,9 @@ void
 rewind_context::on_data_origin (tree dst_tree)
 {
   gcc_assert (dst_tree);
-  const region_model *dst_enode_model
-    = m_eedge.m_dest->get_state ().m_region_model;
+  const region_model &dst_enode_model = get_dst_region_model ();
   const region *dst_reg_in_dst_enode
-    = dst_enode_model->get_lvalue (dst_tree, nullptr);
+    = dst_enode_model.get_lvalue (dst_tree, nullptr);
   if (m_input.m_region_holding_value == dst_reg_in_dst_enode)
     {
       if (m_logger)
@@ -236,18 +235,16 @@ rewind_context::on_data_flow (tree src_tree, tree dst_tree)
 {
   gcc_assert (src_tree);
   gcc_assert (dst_tree);
-  const region_model *dst_enode_model
-    = m_eedge.m_dest->get_state ().m_region_model;
+  const region_model &dst_enode_model = get_dst_region_model ();
   const region *dst_reg_in_dst_enode
-    = dst_enode_model->get_lvalue (dst_tree, nullptr);
+    = dst_enode_model.get_lvalue (dst_tree, nullptr);
   if (m_input.m_region_holding_value == dst_reg_in_dst_enode)
     {
       if (m_logger)
 	m_logger->log ("rewinding from %qE to %qE", dst_tree, src_tree);
-      const region_model *src_enode_model
-	= m_eedge.m_src->get_state ().m_region_model;
+      const region_model &src_enode_model = get_src_region_model ();
       const region *src_reg_in_src_enode
-	= src_enode_model->get_lvalue (src_tree, nullptr);
+	= src_enode_model.get_lvalue (src_tree, nullptr);
       m_output.m_region_holding_value = src_reg_in_src_enode;
 
       if (TREE_CODE (src_tree) == RESULT_DECL)
@@ -864,9 +861,8 @@ greturn_op::try_to_rewind_data_flow (rewind_context &ctxt) const
 
   if (get_retval ())
     {
-      const region_model *src_enode_model
-	= ctxt.m_eedge.m_src->get_state ().m_region_model;
-      tree fndecl = src_enode_model->get_current_function ()->decl;
+      const region_model &src_enode_model = ctxt.get_src_region_model ();
+      tree fndecl = src_enode_model.get_current_function ()->decl;
       ctxt.on_data_flow (get_retval (), DECL_RESULT (fndecl));
     }
 

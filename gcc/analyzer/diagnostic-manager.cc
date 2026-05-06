@@ -1087,6 +1087,9 @@ public:
 
   const state_machine *get_sm () const { return m_sd.m_sm; }
 
+  const supergraph &
+  get_supergraph () const { return m_eg.get_supergraph (); }
+
 private:
   typedef reachability<eg_traits> enode_reachability;
 
@@ -1648,18 +1651,84 @@ diagnostic_manager::get_logical_location_manager () const
   return *mgr;
 }
 
+/* Dump C to this logger, indenting each line by the current
+   indentation level.  */
+
+void
+logger::log_canvas (const text_art::canvas &c)
+{
+  std::string per_line_prefix (m_indent_level, ' ');
+  c.print_to_pp (get_printer (), per_line_prefix.c_str ());
+  pp_flush (get_printer ());
+}
+
+/* Dump OBJ to LOGGER, using OBJ's make_dump_widget member function.  */
+
+template <typename T>
+void
+dump_to_logger (const T &obj,
+		logger *logger,
+		const char *label)
+{
+  if (!logger)
+    return;
+  text_art::theme *theme = global_dc->get_diagram_theme ();
+  if (!theme)
+    return;
+
+  logger->log ("%s:", label);
+  logger->inc_indent ();
+
+  text_art::style_manager sm;
+  text_art::style tree_style (text_art::get_style_from_color_cap_name ("note"));
+
+  text_art::style::id_t tree_style_id (sm.get_or_create_id (tree_style));
+
+  text_art::dump_widget_info dwi (sm, *theme, tree_style_id);
+  if (auto w = obj.make_dump_widget (dwi))
+    {
+      text_art::canvas c (w->to_canvas (dwi.m_sm));
+      logger->log_canvas (c);
+    }
+
+  logger->dec_indent ();
+}
+
+static void
+log_region_model (logger *logger,
+		  const char *label,
+		  const region_model &model)
+{
+  dump_to_logger<region_model> (model, logger, label);
+}
+
 class epath_rewind_context : public rewind_context
 {
 public:
-  epath_rewind_context (const exploded_edge &eedge,
-			logger *logger,
+  epath_rewind_context (logger *logger,
 			diagnostic_state input_state,
 			state_transition *&last_state_transition,
-			exploded_path::element_t &epath_element)
-  : rewind_context (eedge, logger, input_state),
+			exploded_path::element_t &epath_element,
+			const region_model &src_model,
+			const region_model &dst_model)
+  : rewind_context (logger, input_state),
     m_last_state_transition (last_state_transition),
-    m_epath_element (epath_element)
+    m_epath_element (epath_element),
+    m_src_model (src_model),
+    m_dst_model (dst_model)
   {
+  }
+
+  const region_model &
+  get_src_region_model () const final override
+  {
+    return m_src_model;
+  }
+
+  const region_model &
+  get_dst_region_model () const final override
+  {
+    return m_dst_model;
   }
 
   bool
@@ -1700,7 +1769,108 @@ public:
 private:
   state_transition *&m_last_state_transition;
   exploded_path::element_t &m_epath_element;
+  const region_model &m_src_model;
+  const region_model &m_dst_model;
 };
+
+/* Return a region_model for the state after any operation/custom_edge_info
+   on EEDGE, but without state purging or state merging.  Use SRC_MODEL as
+   the source state.
+
+   We do this to make it easier to rewind state transitions in
+   diagnostic_manager::annotate_exploded_path.  */
+
+static region_model
+make_raw_dst_region_model (logger *logger,
+			   const exploded_edge *eedge,
+			   const region_model &src_model,
+			   const supergraph &sg)
+{
+  LOG_SCOPE (logger);
+
+  region_model_context *const ctxt = nullptr;
+
+  if (logger)
+    {
+      log_region_model (logger, "src_model", src_model);
+      log_region_model (logger, "dst_model",
+			*eedge->m_dest->get_state ().m_region_model);
+    }
+
+  if (eedge->m_custom_info)
+    {
+      if (logger)
+	{
+	  logger->start_log_line ();
+	  eedge->m_custom_info->print (logger->get_printer ());
+	  logger->end_log_line ();
+	}
+      region_model new_model (src_model);
+      eedge->m_custom_info->update_model (&new_model, eedge, ctxt);
+      if (logger)
+	log_region_model (logger, "new model after custom_info", new_model);
+      return new_model;
+    }
+  else
+    {
+      const superedge *sedge = eedge->m_sedge;
+      if (sedge)
+	{
+	  if (logger)
+	    {
+	      label_text desc (sedge->get_description (false));
+	      logger->log ("  sedge: SN:%i -> SN:%i %s",
+			   sedge->m_src->m_id,
+			   sedge->m_dest->m_id,
+			   desc.get ());
+	    }
+
+	  if (auto op = sedge->get_op ())
+	    {
+	      if (logger)
+		{
+		  logger->start_log_line ();
+		  op->print_as_edge_label (logger->get_printer (), false);
+		  logger->end_log_line ();
+		}
+	      feasibility_state fs (src_model, sg);
+	      op->execute_for_feasibility (*eedge,
+					   fs,
+					   ctxt,
+					   nullptr);
+	      log_region_model (logger, "after operation, fs model",
+				fs.get_model ());
+	      return fs.get_model ();
+	    }
+	  else
+	    {
+	      if (logger)
+		logger->log ("null operation, using src_model");
+	      return src_model;
+	    }
+	}
+      else
+	{
+	  /* Special-case the initial eedge from the origin node to the
+	     initial function by pushing a frame for it.  */
+	  if (eedge->m_src->m_index == 0)
+	    {
+	      function *fun = eedge->m_dest->get_function ();
+	      gcc_assert (fun);
+	      region_model new_model (src_model);
+	      new_model.push_frame (*fun, nullptr, nullptr, ctxt);
+	      if (logger)
+		{
+		  logger->log ("  pushing frame for %qD", fun->decl);
+		  log_region_model (logger, "new model", new_model);
+		}
+	      return new_model;
+	    }
+	}
+    }
+
+  return src_model;
+}
 
 /* Populate the elements of EPATH with diagnostic_state and state_transition
    information pertinent to the pending diagnostic.  */
@@ -1724,7 +1894,32 @@ diagnostic_manager::annotate_exploded_path (const path_builder &pb,
   if (interest.m_read_regions.size () > 0)
     curr_state = interest.m_read_regions[0];
 
-  // Walk epath backwards, propagating annotation information
+  /* Walk EPATH forwards, generating region_model instances for the elements
+     of EPATH without state purging or merging, so that we can reliably
+     rewind state.  */
+  std::vector<region_model> src_models;
+  std::vector<region_model> dst_models;
+  for (int idx = 0; idx < epath.m_elements.size (); ++idx)
+    {
+      auto eedge = epath.m_elements[idx].m_eedge;
+      if (logger)
+	logger->log ("edge[%i]: considering EN %i -> EN %i",
+		     idx,
+		     eedge->m_src->m_index,
+		     eedge->m_dest->m_index);
+      region_model src_model (pb.get_ext_state ().get_model_manager ());
+      if (idx > 0)
+	src_model = dst_models[idx - 1];
+      src_models.push_back (src_model);
+      dst_models.push_back
+	(make_raw_dst_region_model (logger,
+				    eedge,
+				    src_model,
+				    pb.get_supergraph ()));
+    }
+
+  /* Walk EPATH backwards, using the region_models we just built,
+     propagating annotation information backwards.  */
   for (int idx = epath.m_elements.size () - 1; idx >= 0; --idx)
     {
       exploded_path::element_t &iter_element = epath.m_elements[idx];
@@ -1743,8 +1938,9 @@ diagnostic_manager::annotate_exploded_path (const path_builder &pb,
       const exploded_edge *eedge = iter_element.m_eedge;
       gcc_assert (eedge);
 
-      epath_rewind_context ctxt (*eedge, logger, curr_state,
-				 last_state_transition, iter_element);
+      epath_rewind_context ctxt (logger, curr_state,
+				 last_state_transition, iter_element,
+				 src_models[idx], dst_models[idx]);
       if (eedge->m_custom_info)
 	{
 	  if (logger)

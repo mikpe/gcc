@@ -1,8 +1,5 @@
 /* { dg-additional-options "-fno-analyzer-state-merge" } */
 
-/* TODO: we shouldn't need this:  */
-/* { dg-additional-options "-fno-analyzer-state-purge" } */
-
 int
 maybe_get_zero (int flag)
 {

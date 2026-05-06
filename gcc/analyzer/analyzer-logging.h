@@ -25,6 +25,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "diagnostic-core.h"
 
+namespace text_art { class canvas; }
+
 namespace ana {
 
 /* A logger encapsulates a logging stream: a way to send
@@ -49,6 +51,8 @@ class logger
   void log_va_partial (const char *fmt, va_list *ap)
     ATTRIBUTE_GCC_DIAG(2, 0);
   void end_log_line ();
+
+  void log_canvas (const text_art::canvas &);
 
   void enter_scope (const char *scope_name);
   void enter_scope (const char *scope_name, const char *fmt, va_list *ap)
