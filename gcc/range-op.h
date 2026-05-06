@@ -304,7 +304,7 @@ public:
   range_op_handler ();
   range_op_handler (unsigned);
   operator bool () const;
-  range_operator *range_op () const;
+  const range_operator *range_op () const;
 
   bool fold_range (vrange &r, tree type,
 		   const vrange &lh,
@@ -338,7 +338,7 @@ protected:
   void discriminator_fail (const vrange &,
 			   const vrange &,
 			   const vrange &) const;
-  range_operator *m_operator;
+  const range_operator *m_operator;
 };
 
 // Cast the range in R to TYPE if R supports TYPE.
@@ -404,19 +404,19 @@ class range_op_table
 {
 public:
   range_op_table ();
-  inline range_operator *operator[] (unsigned code)
+  inline const range_operator *operator[] (unsigned code) const
     {
       gcc_checking_assert (code < RANGE_OP_TABLE_SIZE);
       return m_range_tree[code];
     }
 protected:
-  inline void set (unsigned code, range_operator &op)
+  inline void set (unsigned code, const range_operator &op)
     {
       gcc_checking_assert (code < RANGE_OP_TABLE_SIZE);
       gcc_checking_assert (m_range_tree[code] == NULL);
       m_range_tree[code] = &op;
     }
-  range_operator *m_range_tree[RANGE_OP_TABLE_SIZE];
+  const range_operator *m_range_tree[RANGE_OP_TABLE_SIZE];
   void initialize_integral_ops ();
   void initialize_pointer_ops ();
   void initialize_float_ops ();

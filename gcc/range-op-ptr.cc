@@ -318,7 +318,8 @@ public:
 					  relation_kind) const final override;
   void update_bitmask (prange &r, const prange &lh, const irange &rh) const
     { update_known_bitmask (r, POINTER_PLUS_EXPR, lh, rh); }
-} op_pointer_plus;
+};
+static const pointer_plus_operator op_pointer_plus;
 
 bool
 pointer_plus_operator::fold_range (prange &r, tree type,
@@ -475,7 +476,8 @@ class operator_pointer_diff : public range_operator
   void update_bitmask (irange &r,
 		       const prange &lh, const prange &rh) const final override
   { update_known_bitmask (r, POINTER_DIFF_EXPR, lh, rh); }
-} op_pointer_diff;
+};
+static const operator_pointer_diff op_pointer_diff;
 
 bool
 operator_pointer_diff::fold_range (irange &r, tree type,

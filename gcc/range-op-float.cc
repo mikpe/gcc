@@ -1356,7 +1356,8 @@ public:
   {
     return op1_range (r, type, lhs, op1, rel.swap_op1_op2 ());
   }
-} fop_unordered;
+};
+static const foperator_unordered fop_unordered;
 
 bool
 foperator_unordered::fold_range (irange &r, tree type,
@@ -1430,7 +1431,8 @@ public:
   {
     return op1_range (r, type, lhs, op1, rel.swap_op1_op2 ());
   }
-} fop_ordered;
+};
+static const foperator_ordered fop_ordered;
 
 bool
 foperator_ordered::fold_range (irange &r, tree type,
@@ -1652,7 +1654,8 @@ public:
 		  const irange &lhs,
 		  const frange &op1,
 		  relation_trio trio) const final override;
-} fop_unordered_lt;
+};
+static const foperator_unordered_lt fop_unordered_lt;
 
 bool
 foperator_unordered_lt::op1_range (frange &r, tree type,
@@ -1762,7 +1765,8 @@ public:
   bool op2_range (frange &r, tree type,
 		  const irange &lhs, const frange &op1,
 		  relation_trio = TRIO_VARYING) const final override;
-} fop_unordered_le;
+};
+static const foperator_unordered_le fop_unordered_le;
 
 bool
 foperator_unordered_le::op1_range (frange &r, tree type,
@@ -1870,7 +1874,8 @@ public:
   bool op2_range (frange &r, tree type,
 		  const irange &lhs, const frange &op1,
 		  relation_trio = TRIO_VARYING) const final override;
-} fop_unordered_gt;
+};
+static const foperator_unordered_gt fop_unordered_gt;
 
 bool
 foperator_unordered_gt::op1_range (frange &r,
@@ -1982,7 +1987,8 @@ public:
   bool op2_range (frange &r, tree type,
 		  const irange &lhs, const frange &op1,
 		  relation_trio = TRIO_VARYING) const final override;
-} fop_unordered_ge;
+};
+static const foperator_unordered_ge fop_unordered_ge;
 
 bool
 foperator_unordered_ge::op1_range (frange &r,
@@ -2096,7 +2102,8 @@ public:
   {
     return op1_range (r, type, lhs, op1, rel.swap_op1_op2 ());
   }
-} fop_unordered_equal;
+};
+static const foperator_unordered_equal fop_unordered_equal;
 
 bool
 foperator_unordered_equal::op1_range (frange &r, tree type,
@@ -2178,7 +2185,8 @@ public:
   {
     return op1_range (r, type, lhs, op1, rel.swap_op1_op2 ());
   }
-} fop_ltgt;
+};
+static const foperator_ltgt fop_ltgt;
 
 bool
 foperator_ltgt::op1_range (frange &r, tree type,
@@ -2900,7 +2908,8 @@ private:
     gcc_checking_assert (!real_isnan (&ub));
     r.set (type, lb, ub, nan_state (maybe_nan));
   }
-} fop_div;
+};
+static const foperator_div fop_div;
 
 bool
 operator_cast::fold_range (frange &r, tree type, const frange &op1,

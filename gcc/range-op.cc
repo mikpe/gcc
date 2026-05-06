@@ -51,31 +51,31 @@ along with GCC; see the file COPYING3.  If not see
 
 // Instantiate the operators which apply to multiple types here.
 
-operator_equal op_equal;
-operator_not_equal op_not_equal;
-operator_lt op_lt;
-operator_le op_le;
-operator_gt op_gt;
-operator_ge op_ge;
-operator_identity op_ident;
-operator_cst op_cst;
-operator_cast op_cast;
-operator_view op_view;
-operator_plus op_plus;
-operator_abs op_abs;
-operator_minus op_minus;
-operator_negate op_negate;
-operator_mult op_mult;
-operator_addr_expr op_addr;
-operator_bitwise_not op_bitwise_not;
-operator_bitwise_xor op_bitwise_xor;
-operator_bitwise_and op_bitwise_and;
-operator_bitwise_or op_bitwise_or;
-operator_min op_min;
-operator_max op_max;
+static const operator_equal op_equal;
+static const operator_not_equal op_not_equal;
+static const operator_lt op_lt;
+static const operator_le op_le;
+static const operator_gt op_gt;
+static const operator_ge op_ge;
+static const operator_identity op_ident;
+static const operator_cst op_cst;
+static const operator_cast op_cast;
+static const operator_view op_view;
+static const operator_plus op_plus;
+static const operator_abs op_abs;
+static const operator_minus op_minus;
+static const operator_negate op_negate;
+static const operator_mult op_mult;
+static const operator_addr_expr op_addr;
+static const operator_bitwise_not op_bitwise_not;
+static const operator_bitwise_xor op_bitwise_xor;
+static const operator_bitwise_and op_bitwise_and;
+static const operator_bitwise_or op_bitwise_or;
+static const operator_min op_min;
+static const operator_max op_max;
 
-// Instantaite a range operator table.
-range_op_table operator_table;
+// Instantiate a range operator table.
+static range_op_table operator_table;
 
 // Invoke the initialization routines for each class of range.
 
@@ -126,7 +126,7 @@ range_op_handler::range_op_handler ()
   m_operator = &default_operator;
 }
 
-// Create a range_op_handler for CODE.  Use a default operatoer if CODE
+// Create a range_op_handler for CODE.  Use a default operator if CODE
 // does not have an entry.
 
 range_op_handler::range_op_handler (unsigned code)
@@ -144,15 +144,15 @@ range_op_handler::operator bool () const
 }
 
 // Return a pointer to the range operator assocaited with this handler.
-// If it is a default operator, return NULL.
+// If it is a default operator, return nullptr.
 // This is the equivalent of indexing the range table.
 
-range_operator *
+const range_operator *
 range_op_handler::range_op () const
 {
   if (m_operator != &default_operator)
     return m_operator;
-  return NULL;
+  return nullptr;
 }
 
 // Create a dispatch pattern for value range discriminators LHS, OP1, and OP2.
@@ -171,18 +171,18 @@ dispatch_trio (unsigned lhs, unsigned op1, unsigned op2)
 // Reminder, single operand instructions use the LHS type for op2, even if
 // unused.  So FLOAT = INT would be RO_FIF.
 
-const unsigned RO_III =	dispatch_trio (VR_IRANGE, VR_IRANGE, VR_IRANGE);
-const unsigned RO_IFI = dispatch_trio (VR_IRANGE, VR_FRANGE, VR_IRANGE);
-const unsigned RO_IFF = dispatch_trio (VR_IRANGE, VR_FRANGE, VR_FRANGE);
-const unsigned RO_FFF = dispatch_trio (VR_FRANGE, VR_FRANGE, VR_FRANGE);
-const unsigned RO_FIF = dispatch_trio (VR_FRANGE, VR_IRANGE, VR_FRANGE);
-const unsigned RO_FII = dispatch_trio (VR_FRANGE, VR_IRANGE, VR_IRANGE);
-const unsigned RO_PPP = dispatch_trio (VR_PRANGE, VR_PRANGE, VR_PRANGE);
-const unsigned RO_PPI = dispatch_trio (VR_PRANGE, VR_PRANGE, VR_IRANGE);
-const unsigned RO_IPP = dispatch_trio (VR_IRANGE, VR_PRANGE, VR_PRANGE);
-const unsigned RO_IPI = dispatch_trio (VR_IRANGE, VR_PRANGE, VR_IRANGE);
-const unsigned RO_PIP = dispatch_trio (VR_PRANGE, VR_IRANGE, VR_PRANGE);
-const unsigned RO_PII = dispatch_trio (VR_PRANGE, VR_IRANGE, VR_IRANGE);
+static const unsigned RO_III = dispatch_trio (VR_IRANGE, VR_IRANGE, VR_IRANGE);
+static const unsigned RO_IFI = dispatch_trio (VR_IRANGE, VR_FRANGE, VR_IRANGE);
+static const unsigned RO_IFF = dispatch_trio (VR_IRANGE, VR_FRANGE, VR_FRANGE);
+static const unsigned RO_FFF = dispatch_trio (VR_FRANGE, VR_FRANGE, VR_FRANGE);
+static const unsigned RO_FIF = dispatch_trio (VR_FRANGE, VR_IRANGE, VR_FRANGE);
+static const unsigned RO_FII = dispatch_trio (VR_FRANGE, VR_IRANGE, VR_IRANGE);
+static const unsigned RO_PPP = dispatch_trio (VR_PRANGE, VR_PRANGE, VR_PRANGE);
+static const unsigned RO_PPI = dispatch_trio (VR_PRANGE, VR_PRANGE, VR_IRANGE);
+static const unsigned RO_IPP = dispatch_trio (VR_IRANGE, VR_PRANGE, VR_PRANGE);
+static const unsigned RO_IPI = dispatch_trio (VR_IRANGE, VR_PRANGE, VR_IRANGE);
+static const unsigned RO_PIP = dispatch_trio (VR_PRANGE, VR_IRANGE, VR_PRANGE);
+static const unsigned RO_PII = dispatch_trio (VR_PRANGE, VR_IRANGE, VR_IRANGE);
 
 // Return a dispatch value for parameter types LHS, OP1 and OP2.
 
@@ -2497,10 +2497,10 @@ protected:
   tree_code m_code;
 };
 
-static operator_div op_trunc_div (TRUNC_DIV_EXPR);
-static operator_div op_floor_div (FLOOR_DIV_EXPR);
-static operator_div op_round_div (ROUND_DIV_EXPR);
-static operator_div op_ceil_div (CEIL_DIV_EXPR);
+static const operator_div op_trunc_div (TRUNC_DIV_EXPR);
+static const operator_div op_floor_div (FLOOR_DIV_EXPR);
+static const operator_div op_round_div (ROUND_DIV_EXPR);
+static const operator_div op_ceil_div (CEIL_DIV_EXPR);
 
 // Set OP2 to non-zero if the LHS isn't UNDEFINED.
 bool
