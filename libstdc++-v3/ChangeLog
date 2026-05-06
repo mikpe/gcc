@@ -1,3 +1,31 @@
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/124657
+	* include/experimental/bits/simd_x86.h (__is_x86_pd): Fix macro
+	names and refactor to reduce instantiations.
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/109965
+	* doc/doxygen/mainpage.html: Link to topics.html instead of
+	modules.html
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/unique_ptr.h (unique_ptr::_Nothrow_deref): New
+	helper for pre-C++20.
+	(unique_ptr::operator*): Either constrain or use _Nothrow_deref.
+	* testsuite/20_util/unique_ptr/lwg4324.cc: New test.
+
+2026-05-05  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/std/mdspan: Replace eight spaces with tabs.
+	(__mdspan::__is_constant_wrapper): Remove.
+	(__mdspan::__acceptable_slice_type, __mdspan::__static_slice_extent)
+	(__mdspan::__is_unit_stride_slice, __mdspan::__canonical_range_slice)
+	(__mdspan::__check_inrange_index, __mdspan::__check_valid_index)
+	(__mdspan::__check_valid_slice): Use std::__is_constant_wrapper_v.
+
 2026-05-02  Alexandre Oliva  <oliva@adacore.com>
 
 	* testsuite/30_threads/semaphore/try_acquire_until.cc

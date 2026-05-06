@@ -1,3 +1,12 @@
+2026-05-05  Pietro Monteiro  <pietro@sociotechnical.xyz>
+
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Delete LIBGFOR_CHECK_ATTRIBUTE_VISIBILITY.
+	* aclocal.m4: Regenerate.
+	* configure: Likewise.
+	* configure.ac: Use GCC_CHECK_ATTRIBUTE_VISIBILITY istead of
+	LIBGFOR_CHECK_ATTRIBUTE_VISIBILITY.
+
 2026-04-17  Steven G. Kargl  <kargl@gcc.gnu.org>
 
 	PR libfortran/120431

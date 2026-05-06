@@ -1,3 +1,13 @@
+2026-05-05  Pietro Monteiro  <pietro@sociotechnical.xyz>
+
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Delete LIBAT_CHECK_ATTRIBUTE_VISIBILITY.
+	* aclocal.m4: Regenerate.
+	* configure: Likewise.
+	* configure.ac: Use GCC_CHECK_ATTRIBUTE_VISIBILITY instead of
+	LIBAT_CHECK_ATTRIBUTE_VISIBILITY.
+	* testsuite/Makefile.in: Regenerate.
+
 2026-02-21  Jakub Jelinek  <jakub@redhat.com>
 
 	* Makefile.am (all-local): Depend on stmp-libatomic and otherwise

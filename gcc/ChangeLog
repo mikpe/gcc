@@ -1,3 +1,47 @@
+2026-05-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/120587
+	PR target/125155
+	* config/or1k/or1k.cc (or1k_hard_regno_mode_ok): Allow condition
+	condition flag register in SImode.
+
+2026-05-05  wangzicong  <wangzicong@masscore.cn>
+
+	* config/riscv/riscv.cc (riscv_modes_tieable_p): Make tuple modes
+	not tieable to some modes.
+
+2026-05-05  Gaius Mulley  <gaiusmod2@gmail.com>
+
+	PR modula2/120189
+	* doc/gm2.texi (Building a shared library): Rewrite the
+	description of the shared library and include complete code into
+	the example.
+
+2026-05-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125185
+	* tree-vect-slp.cc (vect_analyze_slp_reduc_chain): Guard
+	first vect_slp_linearize_chain call.
+
+2026-05-05  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+
+	* config/xtensa/xtensa.cc (xtensa_legitimize_address):
+	Modify to extend the upper limit of the coverable offset if the
+	address displacement of the corresponding machine instruction is
+	greater than 255.
+
+2026-05-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125180
+	* config/i386/i386.md (HI/SI test -> QI test splitter): Punt if
+	operands[2] is a volatile MEM.
+
+2026-05-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125124
+	* tree-vect-slp.cc (vect_bb_slp_scalar_cost): Disable
+	BB SLP partitioning sanity-check.
+
 2026-05-04  H.J. Lu  <hjl.tools@gmail.com>
 
 	PR c/121911

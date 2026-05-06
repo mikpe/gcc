@@ -1,3 +1,7 @@
+2026-05-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* kf.cc (kf_strcasecmp::impl_call_post): Remove unused variable.
+
 2026-05-04  David Malcolm  <dmalcolm@redhat.com>
 
 	* svalue.cc (binop_svalue::maybe_get_value_range): Update for

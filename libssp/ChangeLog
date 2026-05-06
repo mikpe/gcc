@@ -1,3 +1,9 @@
+2026-05-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR c/121911
+	* ssp.c: Include <stdint.h>.  Change __stack_chk_guard to
+	uintptr_t.
+
 2025-12-29  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* configure: Regenerate.

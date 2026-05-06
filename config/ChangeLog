@@ -1,3 +1,7 @@
+2026-05-05  Pietro Monteiro  <pietro@sociotechnical.xyz>
+
+	* visibility.m4: New file.
+
 2026-04-13  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	PR target/69639

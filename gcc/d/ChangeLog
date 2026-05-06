@@ -1,3 +1,12 @@
+2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/125089
+	* types.cc (finish_aggregate_mode): Explicitly set TYPE_MODE of
+	non-POD types here.
+	(finish_aggregate_type): Propagate TREE_ADDRESSABLE to all variants.
+	(TypeVisitor::visit (TypeStruct *)): Set TREE_ADDRESSABLE before
+	visiting struct members.
+
 2026-04-21  Iain Buclaw  <ibuclaw@gdcproject.org>
 
 	* dmd/MERGE: Merge upstream dmd d1fbbb1a2f.

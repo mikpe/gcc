@@ -1,3 +1,13 @@
+2026-05-05  Pietro Monteiro  <pietro@sociotechnical.xyz>
+
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Delete LIGOMP_CHECK_ATTRIBUTE_VISIBILITY.
+	* aclocal.m4: Regenerate.
+	* configure: Likewise.
+	* configure.ac: Use GCC_CHECK_ATTRIBUTE_VISIBILITY instead of
+	LIGOMP_CHECK_ATTRIBUTE_VISIBILITY.
+	* testsuite/Makefile.in: Regenerate.
+
 2026-04-28  Tobias Burnus  <tburnus@baylibre.com>
 
 	* testsuite/libgomp.fortran/map-subarray-6.f90: Fix, extend, and
