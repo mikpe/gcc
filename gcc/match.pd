@@ -5078,6 +5078,32 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (if (!HONOR_NANS (@0))
    (neeq @0 @1))))
 
+/* min (a & CST0, a & CST1) -> a & CST0 IFF CST0 & CST1 == CST0 */
+/* max (a & CST0, a & CST1) -> a & CST0 IFF CST0 & CST1 == CST1 */
+/* If signed a, then both the constants should have same sign. */
+(for minmax (min max)
+ (simplify
+  (minmax (bit_and@3 @0 INTEGER_CST@1) (bit_and@4 @0 INTEGER_CST@2))
+   (if (TYPE_UNSIGNED (type)
+        || (tree_int_cst_sgn (@1) == tree_int_cst_sgn (@2)))
+    (with { auto andvalue = wi::to_wide (@1) & wi::to_wide (@2); }
+     (if (andvalue == ((minmax == MIN_EXPR)
+		        ? wi::to_wide (@1) : wi::to_wide (@2)))
+      @3
+      (if (andvalue == ((minmax != MIN_EXPR)
+			 ? wi::to_wide (@1) : wi::to_wide (@2)))
+       @4))))))
+
+/* min (a, a & CST) --> a & CST */
+/* max (a, a & CST) --> a */
+(for minmax (min max)
+ (simplify
+  (minmax @0 (bit_and@1 @0 INTEGER_CST@2))
+   (if (TYPE_UNSIGNED(type))
+    (if (minmax == MIN_EXPR)
+     @1
+     @0))))
+
 /* Simplify min (&var[off0], &var[off1]) etc. depending on whether
    the addresses are known to be less, equal or greater.  */
 (for minmax (min max)
