@@ -1,3 +1,19 @@
+2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/125089
+	* gdc.dg/pr125089.d: New test.
+
+2026-05-05  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125180
+	* gcc.target/i386/pr125180.c: New test.
+
 2026-05-01  Jeff Law  <jeffrey.law@oss.qualcomm.com>
 
 	Revert:

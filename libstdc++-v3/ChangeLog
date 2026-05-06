@@ -1,3 +1,37 @@
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/109965
+	* doc/doxygen/mainpage.html: Link to topics.html instead of
+	modules.html
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/unique_ptr.h (unique_ptr::_Nothrow_deref): New
+	helper for pre-C++20.
+	(unique_ptr::operator*): Either constrain or use _Nothrow_deref.
+	* testsuite/20_util/unique_ptr/lwg4324.cc: New test.
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/121919
+	* include/bits/ranges_algo.h (__sample_fn, __shuffle_fn): Use
+	decltype(__g()) instead of remove_reference_t<_G>::result_type.
+	* include/bits/uniform_int_dist.h
+	(uniform_int_distribution::operator()): Use decltype(__urng())
+	instead of _UniformRandomBitGenerator::result_type
+	(uniform_int_distribution::__generate_impl): Likewise.
+	* testsuite/25_algorithms/sample/121919.cc: New test.
+	* testsuite/25_algorithms/shuffle/121919.cc: New test.
+
 2026-04-30  Felix Morgner  <felix.morgner@gmail.com>
 
 	Backported from master:
