@@ -1,3 +1,27 @@
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/109965
+	* doc/doxygen/mainpage.html: Link to topics.html instead of
+	modules.html
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/unique_ptr.h (unique_ptr::_Nothrow_deref): New
+	helper for pre-C++20.
+	(unique_ptr::operator*): Either constrain or use _Nothrow_deref.
+	* testsuite/20_util/unique_ptr/lwg4324.cc: New test.
+
+2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2023.xml: Update status table.
+	* doc/html/manual/status.html: Regenerate.
+
 2026-04-16  Tomasz Kamiński  <tkaminsk@redhat.com>
 
 	Backported from master:
