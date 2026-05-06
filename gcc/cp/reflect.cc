@@ -8561,47 +8561,26 @@ splice (tree refl)
   return refl;
 }
 
-/* A walker for consteval_only_p.  It cannot be a lambda, because we
-   have to call this recursively, sigh.  */
+/* A cache of the known boolean result of consteval_only_p_walker::walk
+   for class types.  */
 
-static tree
-consteval_only_type_r (tree *tp, int *walk_subtrees, void *data)
+static GTY((cache)) type_tree_cache_map *consteval_only_class_cache;
+
+struct consteval_only_p_walker
 {
-  tree t = *tp;
-  /* Types can contain themselves recursively, hence this.  */
-  auto visited = static_cast<hash_set<tree> *>(data);
+  /* The set of class types we've seen.  */
+  hash_set<tree> class_seen;
+  /* The number of class types we're recursively inside.  */
+  int class_depth = 0;
+  /* True if we've optimistically assumed an already-seen
+     consteval-unknown class type is not consteval.  */
+  bool optimistic_p = false;
 
-  if (!TYPE_P (t))
-    return NULL_TREE;
+  tristate walk (tree);
+};
 
-  if (REFLECTION_TYPE_P (t))
-    return t;
-
-  if (typedef_variant_p (t))
-    /* Tell cp_walk_subtrees to look through typedefs.  */
-    *walk_subtrees = 2;
-
-  if (RECORD_OR_UNION_TYPE_P (t))
-    {
-      /* Don't walk template arguments; A<info>::type isn't a consteval-only
-	 type.  */
-      *walk_subtrees = 0;
-      /* So we have to walk the fields manually.  */
-      for (tree member = TYPE_FIELDS (t);
-	   member; member = DECL_CHAIN (member))
-	if (TREE_CODE (member) == FIELD_DECL)
-	  if (tree r = cp_walk_tree (&TREE_TYPE (member),
-				     consteval_only_type_r, visited, visited))
-	    return r;
-    }
-
-  return NULL_TREE;
-}
-
-/* True if T is a consteval-only type as per [basic.types.general]:
-   "A type is consteval-only if it is either std::meta::info or a type
-   compounded from a consteval-only type", or something that has
-   a consteval-only type.  */
+/* True if T is a consteval-only type as per [basic.types.general]/12,
+   or is a declaration with such a type, or a TREE_VEC thereof.  */
 
 bool
 consteval_only_p (tree t)
@@ -8612,7 +8591,7 @@ consteval_only_p (tree t)
   if (!TYPE_P (t))
     t = TREE_TYPE (t);
 
-  if (!t)
+  if (!t || t == error_mark_node)
     return false;
 
   if (TREE_CODE (t) == TREE_VEC)
@@ -8634,9 +8613,83 @@ consteval_only_p (tree t)
      which could be consteval-only, depending on T.  */
   t = complete_type (t);
 
-  /* Classes with std::meta::info members are also consteval-only.  */
-  hash_set<tree> visited;
-  return !!cp_walk_tree (&t, consteval_only_type_r, &visited, &visited);
+  consteval_only_p_walker walker;
+  return walker.walk (t).is_true ();
+}
+
+/* Recursive workhorse of consteval_only_p.  Returns true if T is definitely
+   consteval-only, false if it's definitely not, and unknown if we saw an
+   incomplete type and therefore don't know.  */
+
+tristate
+consteval_only_p_walker::walk (tree t)
+{
+  t = TYPE_MAIN_VARIANT (t);
+
+  if (REFLECTION_TYPE_P (t))
+    return true;
+  else if (INDIRECT_TYPE_P (t))
+    return walk (TREE_TYPE (t));
+  else if (TREE_CODE (t) == ARRAY_TYPE)
+    return walk (TREE_TYPE (t));
+  else if (FUNC_OR_METHOD_TYPE_P (t))
+    {
+      tristate r = walk (TREE_TYPE (t));
+      for (tree parm = TYPE_ARG_TYPES (t);
+	   parm != NULL_TREE && parm != void_list_node;
+	   parm = TREE_CHAIN (parm))
+	{
+	  if (r.is_true ())
+	    break;
+	  r = r || walk (TREE_VALUE (parm));
+	}
+      return r;
+    }
+  else if (RECORD_OR_UNION_TYPE_P (t))
+    {
+      if (tree *slot = hash_map_safe_get (consteval_only_class_cache, t))
+	return *slot == boolean_true_node;
+
+      if (!COMPLETE_TYPE_P (t) && LAMBDA_TYPE_P (t))
+	/* Defer until we've definitely gone through prune_lambda_captures.  */
+	return tristate::unknown ();
+
+      if (class_seen.add (t))
+	{
+	  /* Optimistically assume this already seen consteval-unknown class is
+	     not consteval-only, for sake of mutually recursive classes.  */
+	  optimistic_p = true;
+	  return false;
+	}
+      ++class_depth;
+
+      tristate r = COMPLETE_TYPE_P (t) ? false : tristate::unknown ();
+      for (tree member = TYPE_FIELDS (t); member; member = DECL_CHAIN (member))
+	if (TREE_CODE (member) == FIELD_DECL)
+	  {
+	    r = r || walk (TREE_TYPE (member));
+	    if (r.is_true ())
+	      break;
+	  }
+
+      if (r.is_true ())
+	hash_map_safe_put<hm_ggc> (consteval_only_class_cache,
+				   t, boolean_true_node);
+      else if (r.is_false ()
+	       /* The optimistic assumption above is at odds with caching
+		  'false' results for a nested class type.  */
+	       && (class_depth == 1 || !optimistic_p))
+	hash_map_safe_put<hm_ggc> (consteval_only_class_cache,
+				   t, boolean_false_node);
+
+      --class_depth;
+      return r;
+    }
+  else if (TYPE_PTRMEM_P (t))
+    return (walk (TYPE_PTRMEM_CLASS_TYPE (t))
+	    || walk (TYPE_PTRMEM_POINTED_TO_TYPE (t)));
+  else
+    return false;
 }
 
 /* A walker for check_out_of_consteval_use_r.  It cannot be a lambda, because
