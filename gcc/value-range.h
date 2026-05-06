@@ -767,7 +767,7 @@ public:
 //
 // Using any of the various constructors initializes the object
 // appropriately, but the default constructor is uninitialized and
-// must be initialized either with set_range_class() or by assigning into /it.
+// must be initialized either with set_range_class() or by assigning into it.
 //
 // Assigning between incompatible types is allowed.  For example if a
 // temporary holds an irange, you can assign an frange into it, and
