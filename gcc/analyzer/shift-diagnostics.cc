@@ -35,8 +35,9 @@ class shift_count_negative_diagnostic
 : public pending_diagnostic_subclass<shift_count_negative_diagnostic>
 {
 public:
-  shift_count_negative_diagnostic (const gassign *assign, tree count_cst)
-  : m_assign (assign), m_count_cst (count_cst)
+  shift_count_negative_diagnostic (const gassign *assign, tree count_cst,
+				   const region *src_region)
+  : m_assign (assign), m_count_cst (count_cst), m_src_region (src_region)
   {}
 
   const char *get_kind () const final override
@@ -70,15 +71,24 @@ public:
     return true;
   }
 
+  void
+  mark_interesting_stuff (interesting_t *interest)
+  {
+    interest->add_read_region (m_src_region, "shift count value");
+  }
+
 private:
   const gassign *m_assign;
   tree m_count_cst;
+  const region *m_src_region;
 };
 
 std::unique_ptr<pending_diagnostic>
-make_shift_count_negative_diagnostic (const gassign *assign, tree count_cst)
+make_shift_count_negative_diagnostic (const gassign *assign, tree count_cst,
+				      const region *src_region)
 {
-  return std::make_unique<shift_count_negative_diagnostic> (assign, count_cst);
+  return std::make_unique<shift_count_negative_diagnostic>
+    (assign, count_cst, src_region);
 }
 
 /* A subclass of pending_diagnostic for complaining about shifts
@@ -90,9 +100,11 @@ class shift_count_overflow_diagnostic
 public:
   shift_count_overflow_diagnostic (const gassign *assign,
 				   int operand_precision,
-				   tree count_cst)
+				   tree count_cst,
+				   const region *src_region)
   : m_assign (assign), m_operand_precision (operand_precision),
-    m_count_cst (count_cst)
+    m_count_cst (count_cst),
+    m_src_region (src_region)
   {}
 
   const char *get_kind () const final override
@@ -128,19 +140,27 @@ public:
     return true;
   }
 
+  void
+  mark_interesting_stuff (interesting_t *interest)
+  {
+    interest->add_read_region (m_src_region, "shift count value");
+  }
+
 private:
   const gassign *m_assign;
   int m_operand_precision;
   tree m_count_cst;
+  const region *m_src_region;
 };
 
 std::unique_ptr<pending_diagnostic>
 make_shift_count_overflow_diagnostic (const gassign *assign,
 				      int operand_precision,
-				      tree count_cst)
+				      tree count_cst,
+				      const region *src_region)
 {
   return std::make_unique<shift_count_overflow_diagnostic>
-    (assign, operand_precision, count_cst);
+    (assign, operand_precision, count_cst, src_region);
 }
 
 } // namespace ana

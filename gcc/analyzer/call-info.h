@@ -33,7 +33,8 @@ public:
   void print (pretty_printer *pp) const override;
   void add_events_to_path (checker_path *emission_path,
 			   const exploded_edge &eedge,
-			   pending_diagnostic &pd) const override;
+			   pending_diagnostic &pd,
+			   const state_transition *state_trans) const override;
 
   const gcall &get_call_stmt () const { return m_call_stmt; }
   tree get_fndecl () const { return m_fndecl; }

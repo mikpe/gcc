@@ -45,6 +45,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "analyzer/constraint-manager.h"
 #include "analyzer/checker-event.h"
 #include "analyzer/exploded-graph.h"
+#include "analyzer/callsite-expr.h"
+#include "analyzer/state-transition.h"
 
 #if ENABLE_ANALYZER
 
@@ -67,6 +69,8 @@ event_kind_to_string (enum event_kind ek)
       return "stmt";
     case event_kind::region_creation:
       return "region_creation";
+    case event_kind::state_transition:
+      return "state_transition";
     case event_kind::function_entry:
       return "function_entry";
     case event_kind::state_change:
@@ -301,6 +305,94 @@ statement_event::print_desc (pretty_printer &pp) const
   pp_gimple_stmt_1 (&pp, m_stmt, 0, (dump_flags_t)0);
 }
 
+/* class state_transition_event : public checker_event.  */
+
+void
+state_transition_event::print_desc (pretty_printer &pp) const
+{
+  gcc_assert (m_state_trans);
+  switch (m_state_trans->get_kind ())
+    {
+    default:
+      gcc_unreachable ();
+    case state_transition::kind::origin:
+      {
+	const state_transition_origin &state_trans
+	  = *static_cast <const state_transition_origin *> (m_state_trans);
+	if (m_pending_diagnostic)
+	  {
+	    evdesc::origin_of_state evd (state_trans.m_dst_reg_expr);
+	    if (m_pending_diagnostic->describe_origin_of_state (pp, evd))
+	      return;
+	  }
+	pp_printf (&pp, "value originates here");
+      }
+      break;
+
+    case state_transition::kind::at_call:
+    case state_transition::kind::at_return:
+      // These should be handled by call_event and return_event
+      gcc_unreachable ();
+      break;
+
+    case state_transition::kind::copy:
+      {
+	const state_transition_copy &state_trans
+	  = *static_cast <const state_transition_copy *> (m_state_trans);
+	if (m_pending_diagnostic)
+	  {
+	    evdesc::copy_of_state evd (state_trans.m_src_reg_expr,
+				       state_trans.get_src_event_id (),
+				       state_trans.m_dst_reg_expr);
+	    if (m_pending_diagnostic->describe_copy_of_state (pp, evd))
+	      return;
+	  }
+	auto event_id = state_trans.get_src_event_id ();
+	if (event_id.known_p ())
+	  pp_printf (&pp, "copying value from %@ from %qE to %qE",
+		     &event_id,
+		     state_trans.m_src_reg_expr,
+		     state_trans.m_dst_reg_expr);
+	else
+	  pp_printf (&pp, "copying value from %qE to %qE",
+		     state_trans.m_src_reg_expr,
+		     state_trans.m_dst_reg_expr);
+      }
+      break;
+    case state_transition::kind::use:
+      {
+	const state_transition_use &state_trans
+	  = *static_cast <const state_transition_use *> (m_state_trans);
+	if (m_pending_diagnostic)
+	  {
+	    evdesc::use_of_state evd (state_trans.m_src_reg_expr,
+				      state_trans.get_src_event_id ());
+	    if (m_pending_diagnostic->describe_use_of_state (pp, evd))
+	      return;
+	  }
+	auto event_id = state_trans.get_src_event_id ();
+	if (state_trans.get_src_event_id ().known_p ())
+	  pp_printf (&pp, "using value from %@ from %qE",
+		     &event_id,
+		     state_trans.m_src_reg_expr);
+	else
+	  pp_printf (&pp, "using value from %qE",
+		     state_trans.m_src_reg_expr);
+      }
+      break;
+    }
+}
+
+void
+state_transition_event::
+prepare_for_emission (checker_path *path,
+		      pending_diagnostic *pd,
+		      diagnostics::paths::event_id_t emission_id)
+{
+  checker_event::prepare_for_emission (path, pd, emission_id);
+  const_cast<state_transition *> (m_state_trans)->m_event_id = emission_id;
+}
+
 /* class region_creation_event : public checker_event.  */
 
 region_creation_event::region_creation_event (const event_loc_info &loc_info)
@@ -376,16 +468,6 @@ region_creation_event_debug::print_desc (pretty_printer &pp) const
 
 /* class function_entry_event : public checker_event.  */
 
-function_entry_event::function_entry_event (const program_point &dst_point,
-					    const program_state &state)
-: checker_event (event_kind::function_entry,
-		 event_loc_info (dst_point.get_location (),
-				 dst_point.get_fndecl (),
-				 dst_point.get_stack_depth ())),
-  m_state (state)
-{
-}
-
 /* Implementation of diagnostics::paths::event::print_desc vfunc for
    function_entry_event.
 
@@ -394,6 +476,25 @@ function_entry_event::function_entry_event (const program_point &dst_point,
 void
 function_entry_event::print_desc (pretty_printer &pp) const
 {
+  if (m_state_trans)
+    {
+      callsite_expr expr = m_state_trans->get_callsite_expr ();
+      if (tree parm = expr.get_param_tree (m_effective_fndecl))
+	{
+	  auto src_event_id = m_state_trans->get_src_event_id ();
+	  if (src_event_id.known_p ())
+	    pp_printf (&pp,
+		       "entry to %qE with problematic value from %@ for %qE",
+		       m_effective_fndecl,
+		       &src_event_id,
+		       parm);
+	  else
+	    pp_printf (&pp, "entry to %qE with problematic value for %qE",
+		       m_effective_fndecl, parm);
+	  return;
+	}
+    }
+
   pp_printf (&pp, "entry to %qE", m_effective_fndecl);
 }
 
@@ -404,6 +505,17 @@ diagnostics::paths::event::meaning
 function_entry_event::get_meaning () const
 {
   return meaning (verb::enter, noun::function);
+}
+
+void
+function_entry_event::
+prepare_for_emission (checker_path *path,
+		      pending_diagnostic *pd,
+		      diagnostics::paths::event_id_t emission_id)
+{
+  checker_event::prepare_for_emission (path, pd, emission_id);
+  if (m_state_trans)
+    const_cast<state_transition_at_call *> (m_state_trans)->m_event_id = emission_id;
 }
 
 /* class state_change_event : public checker_event.  */
@@ -730,8 +842,10 @@ catch_cfg_edge_event::get_meaning () const
 /* call_event's ctor.  */
 
 call_event::call_event (const exploded_edge &eedge,
-			const event_loc_info &loc_info)
-: superedge_event (event_kind::call_, eedge, loc_info)
+			const event_loc_info &loc_info,
+			const state_transition_at_call *state_trans)
+: superedge_event (event_kind::call_, eedge, loc_info),
+  m_state_trans (state_trans)
 {
    m_src_snode = eedge.m_src->get_supernode ();
    m_dest_snode = eedge.m_dest->get_supernode ();
@@ -751,16 +865,50 @@ call_event::call_event (const exploded_edge &eedge,
 void
 call_event::print_desc (pretty_printer &pp) const
 {
-  if (m_critical_state.m_state && m_pending_diagnostic)
+  if (m_pending_diagnostic)
     {
-      gcc_assert (m_critical_state.m_var);
-      tree var = fixup_tree_for_diagnostic (m_critical_state.m_var);
-      evdesc::call_with_state evd (m_src_snode->m_fun->decl,
-				   m_dest_snode->m_fun->decl,
-				   var,
-				   m_critical_state.m_state);
-      if (m_pending_diagnostic->describe_call_with_state (pp, evd))
-	return;
+      if (m_critical_state.m_state)
+	{
+	  gcc_assert (m_critical_state.m_var);
+	  tree var = fixup_tree_for_diagnostic (m_critical_state.m_var);
+	  evdesc::call_with_state evd (m_src_snode->m_fun->decl,
+				       m_dest_snode->m_fun->decl,
+				       var,
+				       m_critical_state.m_state,
+				       m_state_trans);
+	  if (m_pending_diagnostic->describe_call_with_state (pp, evd))
+	    return;
+	}
+      else if (m_state_trans)
+	{
+	  evdesc::call_with_state evd (m_src_snode->m_fun->decl,
+				       m_dest_snode->m_fun->decl,
+				       NULL_TREE, nullptr,
+				       m_state_trans);
+	  if (m_pending_diagnostic->describe_call_with_state (pp, evd))
+	    return;
+	  callsite_expr expr = m_state_trans->get_callsite_expr ();
+	  if (expr.param_p ())
+	    {
+	      auto src_event_id = m_state_trans->get_src_event_id ();
+	      if (src_event_id.known_p ())
+		pp_printf (&pp,
+			   "passing problematic value from %@ from %qE to %qE"
+			   " via parameter %i",
+			   &src_event_id,
+			   get_caller_fndecl (),
+			   get_callee_fndecl (),
+			   expr.param_num ());
+	      else
+		pp_printf (&pp,
+			   "passing problematic value from %qE to %qE"
+			   " via parameter %i",
+			   get_caller_fndecl (),
+			   get_callee_fndecl (),
+			   expr.param_num ());
+	      return;
+	    }
+	}
     }
 
   pp_printf (&pp,
@@ -806,14 +954,26 @@ call_event::get_program_state () const
   return &m_eedge.m_src->get_state ();
 }
 
+void
+call_event::prepare_for_emission (checker_path *path,
+				  pending_diagnostic *pd,
+				  diagnostics::paths::event_id_t emission_id)
+{
+  checker_event::prepare_for_emission (path, pd, emission_id);
+  if (m_state_trans)
+    const_cast<state_transition_at_call *> (m_state_trans)->m_event_id = emission_id;
+}
+
 /* class return_event : public checker_event.  */
 
 /* return_event's ctor.  */
 
 return_event::return_event (const exploded_edge &eedge,
-			    const event_loc_info &loc_info)
+			    const event_loc_info &loc_info,
+			    const state_transition_at_return *state_trans)
 : checker_event (event_kind::return_, loc_info),
-  m_eedge (eedge)
+  m_eedge (eedge),
+  m_state_trans (state_trans)
 {
   m_src_snode = eedge.m_src->get_supernode ();
   m_dest_snode = eedge.m_dest->get_supernode ();
@@ -839,14 +999,28 @@ return_event::print_desc (pretty_printer &pp) const
       state involved in the pending diagnostic, give the pending
       diagnostic a chance to describe this return (in terms of
       itself).  */
-  if (m_critical_state.m_state && m_pending_diagnostic)
+  if (m_pending_diagnostic)
     {
-      evdesc::return_of_state evd (m_dest_snode->m_fun->decl,
-				   m_src_snode->m_fun->decl,
-				   m_critical_state.m_state);
-      if (m_pending_diagnostic->describe_return_of_state (pp, evd))
-	return;
+      if (m_critical_state.m_state)
+	{
+	  evdesc::return_of_state evd (m_dest_snode->m_fun->decl,
+				       m_src_snode->m_fun->decl,
+				       m_critical_state.m_state,
+				       nullptr);
+	  if (m_pending_diagnostic->describe_return_of_state (pp, evd))
+	    return;
+	}
+      else if (m_state_trans)
+	{
+	  evdesc::return_of_state evd (m_dest_snode->m_fun->decl,
+				       m_src_snode->m_fun->decl,
+				       nullptr,
+				       m_state_trans);
+	  if (m_pending_diagnostic->describe_return_of_state (pp, evd))
+	    return;
+	}
     }
+
   pp_printf (&pp,
 	     "returning to %qE from %qE",
 	     m_dest_snode->m_fun->decl,
@@ -874,6 +1048,16 @@ const program_state *
 return_event::get_program_state () const
 {
   return &m_eedge.m_dest->get_state ();
+}
+
+void
+return_event::prepare_for_emission (checker_path *path,
+				    pending_diagnostic *pd,
+				    diagnostics::paths::event_id_t emission_id)
+{
+  checker_event::prepare_for_emission (path, pd, emission_id);
+  if (m_state_trans)
+    const_cast<state_transition_at_return *> (m_state_trans)->m_event_id = emission_id;
 }
 
 /* class start_consolidated_cfg_edges_event : public checker_event.  */

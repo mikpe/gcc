@@ -58,6 +58,15 @@ interesting_t::add_region_creation (const region *reg)
   m_region_creation.safe_push (reg);
 }
 
+/* Mark the value read from REG as being interesting.  */
+
+void
+interesting_t::add_read_region (const region *reg, std::string debug_desc)
+{
+  gcc_assert (reg);
+  m_read_regions.push_back (diagnostic_state (std::move (debug_desc), reg));
+}
+
 void
 interesting_t::dump_to_pp (pretty_printer *pp, bool simple) const
 {
@@ -69,6 +78,14 @@ interesting_t::dump_to_pp (pretty_printer *pp, bool simple) const
       if (i > 0)
 	pp_string (pp, ", ");
       reg->dump_to_pp (pp, simple);
+    }
+  pp_string (pp, "], read regions: [");
+  for (i = 0; i < m_read_regions.size (); ++i)
+    {
+      auto &ann = m_read_regions[i];
+      if (i > 0)
+	pp_string (pp, ", ");
+      ann.dump_to_pp (pp);
     }
   pp_string (pp, "]}");
 }
@@ -199,14 +216,21 @@ pending_diagnostic::fixup_location (location_t loc, bool) const
 
 void
 pending_diagnostic::add_function_entry_event (const exploded_edge &eedge,
-					      checker_path *emission_path)
+					      checker_path *emission_path,
+					      const state_transition_at_call *state_trans)
 {
   const exploded_node *dst_node = eedge.m_dest;
   const program_point &dst_point = dst_node->get_point ();
   const program_state &dst_state = dst_node->get_state ();
+
+  /* If we have STATE_TRANS with a specific param, put the event on
+     that parameter, otherwise put in on the function name.  */
+  auto loc_info {event_loc_info_for_function_entry (dst_point, state_trans)};
+
   emission_path->add_event
-    (std::make_unique<function_entry_event> (dst_point,
-					     dst_state));
+    (std::make_unique<function_entry_event> (loc_info,
+					     dst_state,
+					     state_trans));
 }
 
 /* Base implementation of pending_diagnostic::add_call_event.
@@ -215,11 +239,13 @@ pending_diagnostic::add_function_entry_event (const exploded_edge &eedge,
 void
 pending_diagnostic::add_call_event (const exploded_edge &eedge,
 				    const gcall &,
-				    checker_path &emission_path)
+				    checker_path &emission_path,
+				    const state_transition_at_call *state_trans)
 {
   emission_path.add_event
     (std::make_unique<call_event> (eedge,
-				   event_loc_info (eedge.m_src)));
+				   event_loc_info (eedge.m_src),
+				   state_trans));
 }
 
 /* Base implementation of pending_diagnostic::add_region_creation_events.

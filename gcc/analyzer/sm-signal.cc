@@ -221,7 +221,8 @@ public:
 
   void add_events_to_path (checker_path *emission_path,
 			   const exploded_edge &eedge ATTRIBUTE_UNUSED,
-			   pending_diagnostic &)
+			   pending_diagnostic &,
+			   const state_transition *)
     const final override
   {
     emission_path->add_event

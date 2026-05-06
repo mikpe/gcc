@@ -7,7 +7,7 @@ test_1 ()
 static float __attribute__((noinline))
 get_zero ()
 {
-  return 0.f;
+  return 0.f; /* { dg-message "value originates here" } */
 }
 
 float

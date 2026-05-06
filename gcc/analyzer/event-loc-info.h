@@ -39,6 +39,10 @@ struct event_loc_info
   int m_depth;
 };
 
+extern event_loc_info
+event_loc_info_for_function_entry (const program_point &point,
+				   const state_transition_at_call *state_trans);
+
 } // namespace ana
 
 #endif /* GCC_ANALYZER_EVENT_LOC_INFO_H */

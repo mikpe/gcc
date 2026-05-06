@@ -775,7 +775,8 @@ public:
      adding a custom call_event subclass.  */
   void add_call_event (const exploded_edge &eedge,
 		       const gcall &call_stmt,
-		       checker_path &emission_path) override
+		       checker_path &emission_path,
+		       const state_transition_at_call *state_trans) override
   {
     /* As per call_event, but show the number of variadic arguments
        in the call.  */
@@ -785,7 +786,7 @@ public:
       va_arg_call_event (const exploded_edge &eedge,
 			 const event_loc_info &loc_info,
 			 int num_variadic_arguments)
-      : call_event (eedge, loc_info),
+      : call_event (eedge, loc_info, nullptr),
 	m_num_variadic_arguments (num_variadic_arguments)
       {
       }
@@ -819,7 +820,8 @@ public:
 	    num_variadic_arguments));
       }
     else
-      pending_diagnostic::add_call_event (eedge, call_stmt, emission_path);
+      pending_diagnostic::add_call_event (eedge, call_stmt, emission_path,
+					  state_trans);
   }
 
 protected:

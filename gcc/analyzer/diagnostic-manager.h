@@ -101,7 +101,7 @@ public:
   }
 
   bool calc_best_epath (epath_finder *pf);
-  const exploded_path *get_best_epath () const { return m_best_epath.get (); }
+  exploded_path *get_best_epath () const { return m_best_epath.get (); }
   unsigned get_epath_length () const;
 
   void add_duplicate (saved_diagnostic *other);
@@ -201,6 +201,10 @@ private:
   const diagnostics::logical_locations::manager &
   get_logical_location_manager () const;
 
+  void
+  annotate_exploded_path (const path_builder &pb,
+			  exploded_path &epath) const;
+
   void build_emission_path (const path_builder &pb,
 			    const exploded_path &epath,
 			    checker_path *emission_path) const;
@@ -213,7 +217,8 @@ private:
   void add_events_for_eedge (const path_builder &pb,
 			     const exploded_edge &eedge,
 			     checker_path *emission_path,
-			     interesting_t *interest) const;
+			     interesting_t *interest,
+			     const state_transition *state_trans) const;
 
   bool significant_edge_p (const path_builder &pb,
 			   const exploded_edge &eedge) const;

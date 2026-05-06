@@ -1383,6 +1383,7 @@ ANALYZER_OBJS = \
 	analyzer/sm-signal.o \
 	analyzer/sm-taint.o \
 	analyzer/state-purge.o \
+	analyzer/state-transition.o \
 	analyzer/store.o \
 	analyzer/supergraph.o \
 	analyzer/supergraph-fixup-locations.o \

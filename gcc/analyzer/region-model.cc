@@ -69,6 +69,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "analyzer/feasible-graph.h"
 #include "analyzer/record-layout.h"
 #include "analyzer/function-set.h"
+#include "analyzer/state-transition.h"
 
 #if ENABLE_ANALYZER
 
@@ -855,12 +856,57 @@ private:
   const region *m_base_reg_b;
 };
 
+/* Locate the parameter with the given index within FNDECL.
+   ARGNUM is zero based, -1 indicates the `this' argument of a method.
+   Return the location of the FNDECL itself if there are problems.  */
+
+bool
+callsite_expr::maybe_get_param_location (tree fndecl,
+					 location_t *out_loc) const
+{
+  gcc_assert (fndecl);
+
+  if (DECL_ARTIFICIAL (fndecl))
+    return false;
+
+  tree param = get_param_tree (fndecl);
+  if (!param)
+    return false;
+
+  *out_loc = DECL_SOURCE_LOCATION (param);
+  return true;
+}
+
+/* If this callsite_expr refers to a parameter, get the PARM_DECL from
+   FNDECL.
+   Return NULL_TREE on any problems.  */
+
+tree
+callsite_expr::get_param_tree (tree fndecl) const
+{
+  if (!param_p ())
+    return NULL_TREE;
+
+  int i;
+  tree param;
+
+  /* Locate param by index within DECL_ARGUMENTS (fndecl).  */
+  for (i = 1, param = DECL_ARGUMENTS (fndecl);
+       i < param_num () && param;
+       i++, param = TREE_CHAIN (param))
+    ;
+
+  return param;
+}
+
 class div_by_zero_diagnostic
 : public pending_diagnostic_subclass<div_by_zero_diagnostic>
 {
 public:
-  div_by_zero_diagnostic (const gassign *assign)
-  : m_assign (assign)
+  div_by_zero_diagnostic (const gassign *assign,
+			  const region *divisor_reg)
+  : m_assign (assign),
+    m_divisor_reg (divisor_reg)
   {}
 
   const char *get_kind () const final override
@@ -891,8 +937,142 @@ public:
     return true;
   }
 
+  void
+  mark_interesting_stuff (interesting_t *interest)
+  {
+    interest->add_read_region (m_divisor_reg, "divisor zero value");
+  }
+
+  void
+  add_function_entry_event (const exploded_edge &eedge,
+			    checker_path *emission_path,
+			    const state_transition_at_call *state_trans)
+  {
+    class custom_function_entry_event : public function_entry_event
+    {
+    public:
+      custom_function_entry_event (const event_loc_info &loc_info,
+				   const program_state &state,
+				   const state_transition_at_call *state_trans)
+      : function_entry_event (loc_info,
+			      state,
+			      state_trans)
+      {
+      }
+
+      void print_desc (pretty_printer &pp) const override
+      {
+	if (auto state_trans = get_state_transition_at_call ())
+	  {
+	    auto expr = state_trans->get_callsite_expr ();
+	    if (tree parm = expr.get_param_tree (m_effective_fndecl))
+	      {
+		auto src_event_id = state_trans->get_src_event_id ();
+		if (src_event_id.known_p ())
+		  pp_printf (&pp, "entry to %qE with zero from %@ for %qE",
+			     m_effective_fndecl,
+			     &src_event_id,
+			     parm);
+		else
+		  pp_printf (&pp, "entry to %qE with zero for %qE",
+			     m_effective_fndecl, parm);
+		return;
+	      }
+	  }
+	return function_entry_event::print_desc (pp);
+      }
+    };
+
+    const exploded_node *dst_node = eedge.m_dest;
+    const program_point &dst_point = dst_node->get_point ();
+    const program_state &dst_state = dst_node->get_state ();
+    auto loc_info {event_loc_info_for_function_entry (dst_point, state_trans)};
+    emission_path->add_event
+      (std::make_unique<custom_function_entry_event> (loc_info,
+						      dst_state,
+						      state_trans));
+  }
+
+  bool
+  describe_origin_of_state (pretty_printer &pp,
+			    const evdesc::origin_of_state &) final override
+  {
+    pp_printf (&pp, "zero value originates here");
+    return true;
+  }
+
+  bool
+  describe_call_with_state (pretty_printer &pp,
+			    const evdesc::call_with_state &evd) final override
+  {
+    if (evd.m_state_trans)
+      {
+	callsite_expr expr = evd.m_state_trans->get_callsite_expr ();
+	if (expr.param_p ())
+	  {
+	    if (evd.m_src_event_id.known_p ())
+	      pp_printf (&pp, "passing zero from %@ from %qE to %qE via parameter %i",
+			 &evd.m_src_event_id,
+			 evd.m_caller_fndecl,
+			 evd.m_callee_fndecl,
+			 expr.param_num ());
+	    else
+	      pp_printf (&pp, "passing zero from %qE to %qE via parameter %i",
+			 evd.m_caller_fndecl,
+			 evd.m_callee_fndecl,
+			 expr.param_num ());
+	    return true;
+	  }
+      }
+
+    return false;
+  }
+
+  bool
+  describe_return_of_state (pretty_printer &pp,
+			    const evdesc::return_of_state &evd) final override
+  {
+    if (evd.m_src_event_id.known_p ())
+      pp_printf (&pp, "returning zero from %@ from %qE here",
+		 &evd.m_src_event_id,
+		 evd.m_callee_fndecl);
+    else
+      pp_printf (&pp, "returning zero from %qE here",
+	       evd.m_callee_fndecl);
+    return true;
+  }
+
+  bool
+  describe_copy_of_state (pretty_printer &pp,
+			  const evdesc::copy_of_state &evd) final override
+  {
+    if (evd.m_src_event_id.known_p ())
+      pp_printf (&pp, "copying zero value from %@ from %qE to %qE",
+		 &evd.m_src_event_id,
+		 evd.m_src_reg_expr, evd.m_dst_reg_expr);
+    else
+      pp_printf (&pp, "copying zero value from %qE to %qE",
+		 evd.m_src_reg_expr, evd.m_dst_reg_expr);
+    return true;
+  }
+
+  bool
+  describe_use_of_state (pretty_printer &pp,
+			 const evdesc::use_of_state &evd) final override
+  {
+    if (evd.m_src_event_id.known_p ())
+      pp_printf (&pp, "using zero value from %@ from %qE",
+		 &evd.m_src_event_id,
+		 evd.m_src_reg_expr);
+    else
+      pp_printf (&pp, "using zero value from %qE",
+		 evd.m_src_reg_expr);
+    return true;
+  }
+
 private:
   const gassign *m_assign;
+  const region *m_divisor_reg;
 };
 
 /* Check the pointer subtraction SVAL_A - SVAL_B at ASSIGN and add
@@ -1101,15 +1281,26 @@ region_model::get_gassign_result (const gassign *assign,
 		  && INTEGRAL_TYPE_P (TREE_TYPE (rhs1)))
 		{
 		  if (tree_int_cst_sgn (rhs2_cst) < 0)
-		    ctxt->warn
-		      (make_shift_count_negative_diagnostic (assign, rhs2_cst));
+		    {
+		      const region *rhs2_reg
+			= get_lvalue (gimple_assign_rhs2 (assign), nullptr);
+		      ctxt->warn
+			(make_shift_count_negative_diagnostic (assign,
+							       rhs2_cst,
+							       rhs2_reg));
+		    }
 		  else if (compare_tree_int (rhs2_cst,
 					     TYPE_PRECISION (TREE_TYPE (rhs1)))
 			   >= 0)
-		    ctxt->warn (make_shift_count_overflow_diagnostic
-				(assign,
-				 int (TYPE_PRECISION (TREE_TYPE (rhs1))),
-				 rhs2_cst));
+		    {
+		      const region *rhs2_reg
+			= get_lvalue (gimple_assign_rhs2 (assign), nullptr);
+		      ctxt->warn (make_shift_count_overflow_diagnostic
+				  (assign,
+				   int (TYPE_PRECISION (TREE_TYPE (rhs1))),
+				   rhs2_cst,
+				   rhs2_reg));
+		    }
 		}
 	  }
 
@@ -1130,8 +1321,11 @@ region_model::get_gassign_result (const gassign *assign,
 		{
 		  if (ctxt)
 		    {
+		      const region *rhs2_reg
+			= get_lvalue (gimple_assign_rhs2 (assign), nullptr);
 		      ctxt->warn
-			(std::make_unique<div_by_zero_diagnostic> (assign));
+			(std::make_unique<div_by_zero_diagnostic> (assign,
+								   rhs2_reg));
 		      ctxt->terminate_path ();
 		    }
 		  return nullptr;
@@ -1935,7 +2129,8 @@ public:
   void
   add_events_to_path (checker_path *emission_path,
 		      const exploded_edge &eedge,
-		      pending_diagnostic &) const final override
+		      pending_diagnostic &,
+		      const state_transition *) const final override
   {
     const exploded_node *dst_node = eedge.m_dest;
     const program_point &dst_point = dst_node->get_point ();

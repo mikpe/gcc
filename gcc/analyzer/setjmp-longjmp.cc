@@ -469,7 +469,8 @@ rewind_info_t::update_model (region_model *model,
 void
 rewind_info_t::add_events_to_path (checker_path *emission_path,
 				   const exploded_edge &eedge,
-				   pending_diagnostic &) const
+				   pending_diagnostic &,
+				   const state_transition *) const
 {
   const exploded_node *src_node = eedge.m_src;
   const program_point &src_point = src_node->get_point ();

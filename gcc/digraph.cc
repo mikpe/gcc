@@ -96,6 +96,9 @@ struct test_cluster : public cluster<test_graph_traits>
 
 struct test_path
 {
+  void append_edge (const test_edge *edge) { m_edges.safe_push (edge); }
+  void reverse () { m_edges.reverse (); }
+
   auto_vec<const test_edge *> m_edges;
 };
 

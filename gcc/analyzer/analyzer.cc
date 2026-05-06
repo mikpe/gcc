@@ -29,6 +29,16 @@ along with GCC; see the file COPYING3.  If not see
 
 namespace ana {
 
+bool
+printable_expr_p (const_tree expr)
+{
+  if (TREE_CODE (expr) == SSA_NAME
+      && !SSA_NAME_VAR (expr))
+    return false;
+
+  return true;
+}
+
 /* Workaround for missing location information for some stmts,
    which ultimately should be solved by fixing the frontends
    to provide the locations (TODO).  */

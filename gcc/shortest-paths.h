@@ -187,7 +187,7 @@ get_shortest_path (const node_t *other_node) const
 
   while (m_best_edge[other_node->m_index])
     {
-      result.m_edges.safe_push (m_best_edge[other_node->m_index]);
+      result.append_edge (m_best_edge[other_node->m_index]);
       if (m_sense == SPS_FROM_GIVEN_ORIGIN)
 	other_node = m_best_edge[other_node->m_index]->m_src;
       else
@@ -195,7 +195,7 @@ get_shortest_path (const node_t *other_node) const
     }
 
   if (m_sense == SPS_FROM_GIVEN_ORIGIN)
-    result.m_edges.reverse ();
+    result.reverse ();
 
   return result;
 }

@@ -323,40 +323,6 @@ private:
   ::edge m_cfg_edge;
 };
 
-/* An ID representing an expression at a callsite:
-   either a parameter index, or the return value (or unknown).  */
-
-class callsite_expr
-{
- public:
-  callsite_expr () : m_val (-1) {}
-
-  static callsite_expr from_zero_based_param (int idx)
-  {
-    return callsite_expr (idx + 1);
-  }
-
-  static callsite_expr from_return_value ()
-  {
-    return callsite_expr (0);
-  }
-
-  bool param_p () const
-  {
-    return m_val > 0;
-  }
-
-  bool return_value_p () const
-  {
-    return m_val == 0;
-  }
-
- private:
-  callsite_expr (int val) : m_val (val) {}
-
-  int m_val; /* 1-based parm, 0 for return value, or -1 for "unknown".  */
-};
-
 /* Base class for adding additional content to the .dot output
    for a supergraph.  */
 

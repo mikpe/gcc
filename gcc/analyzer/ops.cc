@@ -38,6 +38,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "analyzer/call-summary.h"
 #include "analyzer/call-info.h"
 #include "analyzer/analysis-plan.h"
+#include "analyzer/callsite-expr.h"
+#include "analyzer/state-transition.h"
 
 #if ENABLE_ANALYZER
 
@@ -64,6 +66,25 @@ event_loc_info::event_loc_info (const program_point &point)
   m_loc = point.get_location ();
   m_fndecl = point.get_fndecl ();
   m_depth = point.get_stack_depth ();
+}
+
+/* Make an event_loc_info suitable for a function_entry_event at POINT.
+   If STATE_TRANS is non-null, then try to extract the pertinent parameter
+   from it and use the location of that parameter, rather than that of the
+   function name.  */
+
+event_loc_info
+event_loc_info_for_function_entry (const program_point &point,
+				   const state_transition_at_call *state_trans)
+{
+  event_loc_info result (point);
+  if (state_trans)
+    {
+      callsite_expr expr = state_trans->get_callsite_expr ();
+      expr.maybe_get_param_location (point.get_fndecl (),
+				     &result.m_loc);
+    }
+  return result;
 }
 
 // struct operation_context
@@ -189,6 +210,56 @@ private:
     bool m_terminate_path;
   } m_path_context;
 };
+
+// struct rewind_context
+
+void
+rewind_context::on_data_origin (tree dst_tree)
+{
+  gcc_assert (dst_tree);
+  const region_model *dst_enode_model
+    = m_eedge.m_dest->get_state ().m_region_model;
+  const region *dst_reg_in_dst_enode
+    = dst_enode_model->get_lvalue (dst_tree, nullptr);
+  if (m_input.m_region_holding_value == dst_reg_in_dst_enode)
+    {
+      if (m_logger)
+	m_logger->log ("data origin, into %qE", dst_tree);
+      m_output.m_region_holding_value = nullptr;
+      add_state_transition
+	(std::make_unique<state_transition_origin> (dst_tree));
+    }
+}
+
+void
+rewind_context::on_data_flow (tree src_tree, tree dst_tree)
+{
+  gcc_assert (src_tree);
+  gcc_assert (dst_tree);
+  const region_model *dst_enode_model
+    = m_eedge.m_dest->get_state ().m_region_model;
+  const region *dst_reg_in_dst_enode
+    = dst_enode_model->get_lvalue (dst_tree, nullptr);
+  if (m_input.m_region_holding_value == dst_reg_in_dst_enode)
+    {
+      if (m_logger)
+	m_logger->log ("rewinding from %qE to %qE", dst_tree, src_tree);
+      const region_model *src_enode_model
+	= m_eedge.m_src->get_state ().m_region_model;
+      const region *src_reg_in_src_enode
+	= src_enode_model->get_lvalue (src_tree, nullptr);
+      m_output.m_region_holding_value = src_reg_in_src_enode;
+
+      if (TREE_CODE (src_tree) == RESULT_DECL)
+	add_state_transition (std::make_unique<state_transition_at_return> ());
+      else if (auto state_trans
+		 = state_transition::make (m_output.m_region_holding_value,
+					   src_tree,
+					   m_input.m_region_holding_value,
+					   dst_tree))
+	add_state_transition (std::move (state_trans));
+    }
+}
 
 // class gimple_stmt_op : public operation
 
@@ -663,7 +734,57 @@ gimple_stmt_op::add_any_events_for_eedge (const exploded_edge &eedge,
     }
 }
 
+// class gasm_op : public gimple_stmt_op
+
 // class gassign_op : public gimple_stmt_op
+
+bool
+gassign_op::try_to_rewind_data_flow (rewind_context &ctxt) const
+{
+  auto logger = ctxt.m_logger;
+  LOG_SCOPE (logger);
+  if (logger)
+    {
+      logger->start_log_line ();
+      pp_gimple_stmt_1 (logger->get_printer (), &get_stmt (), 0,
+			(dump_flags_t)0);
+      logger->end_log_line ();
+    }
+
+  const gassign &assign = get_gassign ();
+  tree lhs = gimple_assign_lhs (&assign);
+
+  if (!ctxt.could_be_affected_by_write_p (lhs))
+    return true;
+
+  tree rhs1 = gimple_assign_rhs1 (&assign);
+  enum tree_code op = gimple_assign_rhs_code (&assign);
+
+  switch (op)
+    {
+    default:
+      return false;
+
+    case NOP_EXPR:
+    case SSA_NAME:
+    case VAR_DECL:
+    case PARM_DECL:
+    case COMPONENT_REF:
+      ctxt.on_data_flow (rhs1, lhs);
+      break;
+
+    case INTEGER_CST:
+    case REAL_CST:
+      if (logger)
+	logger->log ("value comes from here");
+      ctxt.on_data_origin (lhs);
+      break;
+    }
+
+  return true;
+}
+
+// class predict_op : public gimple_stmt_op
 
 // class greturn_op : public gimple_stmt_op
 
@@ -732,6 +853,24 @@ greturn_op::add_any_events_for_eedge (const exploded_edge &,
 				      checker_path &) const
 {
   // No-op.
+}
+
+
+bool
+greturn_op::try_to_rewind_data_flow (rewind_context &ctxt) const
+{
+  auto logger = ctxt.m_logger;
+  LOG_SCOPE (logger);
+
+  if (get_retval ())
+    {
+      const region_model *src_enode_model
+	= ctxt.m_eedge.m_src->get_state ().m_region_model;
+      tree fndecl = src_enode_model->get_current_function ()->decl;
+      ctxt.on_data_flow (get_retval (), DECL_RESULT (fndecl));
+    }
+
+  return true;
 }
 
 // class call_and_return_op : public gimple_stmt_op
@@ -839,7 +978,7 @@ call_and_return_op::execute (operation_context &op_ctxt) const
 	    const program_point dst_point
 	      (callee_entry_snode, *dst_call_string);
 	    auto edge_info
-	      = std::make_unique<interprocedural_call> (get_gcall (),
+	      = std::make_unique<interprocedural_call> (*this,
 							*callee_fun);
 	    edge_info->update_state (&dst_state, nullptr, &ctxt);
 	    op_ctxt.add_outcome (dst_point, dst_state, false, nullptr,
@@ -1021,6 +1160,13 @@ replay_call_summaries (operation_context &op_ctxt,
       gcc_assert (summary);
       replay_call_summary (op_ctxt, called_fn, *summary, ctxt);
     }
+}
+
+bool
+call_and_return_op::try_to_rewind_data_flow (rewind_context &ctxt) const
+{
+  LOG_SCOPE (ctxt.m_logger);
+  return true;
 }
 
 /* A concrete call_info subclass representing a replay of a call summary.  */
@@ -2348,6 +2494,16 @@ phis_for_edge_op::add_any_events_for_eedge (const exploded_edge &,
 					    checker_path &) const
 {
   // No-op
+}
+
+bool
+phis_for_edge_op::try_to_rewind_data_flow (rewind_context &ctxt) const
+{
+  auto logger = ctxt.m_logger;
+  LOG_SCOPE (logger);
+  for (auto iter : m_pairs)
+    ctxt.on_data_flow (iter.m_src, iter.m_dst);
+  return true;
 }
 
 // class resx_op : public gimple_stmt_op

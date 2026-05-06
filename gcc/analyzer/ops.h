@@ -74,6 +74,36 @@ struct operation_context
   const superedge &m_sedge;
 };
 
+struct rewind_context
+{
+  rewind_context (const exploded_edge &eedge,
+		  logger *logger,
+		  diagnostic_state input_state)
+  : m_eedge (eedge),
+    m_logger (logger),
+    m_input (input_state),
+    m_output (input_state)
+  {
+  }
+
+  void
+  on_data_origin (tree dst);
+
+  void
+  on_data_flow (tree src, tree dst);
+
+  virtual bool
+  could_be_affected_by_write_p (tree lhs) = 0;
+
+  virtual void
+  add_state_transition (std::unique_ptr<state_transition>) = 0;
+
+  const exploded_edge &m_eedge;
+  logger *m_logger;
+  diagnostic_state m_input;
+  diagnostic_state m_output;
+};
+
 /* Abstract base class for an operation along a superedge.  */
 
 class operation
@@ -162,6 +192,12 @@ class operation
   dyn_cast_phis_for_edge_op () const { return nullptr; }
 
   enum kind get_kind () const { return m_kind; }
+
+  virtual bool
+  try_to_rewind_data_flow (rewind_context &) const
+  {
+    return false;
+  }
 
 protected:
   operation (enum kind kind_)
@@ -279,6 +315,9 @@ public:
   {
     return *as_a <const gassign *> (&get_stmt ());
   }
+
+  bool
+  try_to_rewind_data_flow (rewind_context &ctxt) const final override;
 };
 
 /* An operation subclass for a GIMPLE_PREDICT stmt.
@@ -299,6 +338,12 @@ public:
   clone () const final override
   {
     return std::make_unique<predict_op> (get_stmt ());
+  }
+
+  bool
+  try_to_rewind_data_flow (rewind_context &) const final override
+  {
+    return true;
   }
 };
 
@@ -350,6 +395,9 @@ public:
   {
     return gimple_return_retval (&get_greturn ());
   }
+
+  bool
+  try_to_rewind_data_flow (rewind_context &ctxt) const final override;
 };
 
 /* A concrete operation subclass representing the effect of a GIMPLE_CALL stmt.
@@ -427,6 +475,9 @@ public:
 
   const known_function *
   maybe_get_known_function (const call_details &cd) const;
+
+  bool
+  try_to_rewind_data_flow (rewind_context &ctxt) const final override;
 
 private:
   cgraph_edge *
@@ -637,6 +688,12 @@ public:
   int back_edge_p () const { return get_flags () & EDGE_DFS_BACK; }
 
   const gimple &get_ctrlflow_stmt () const { return m_ctrlflow_stmt; }
+
+  bool
+  try_to_rewind_data_flow (rewind_context &) const final override
+  {
+    return true;
+  }
 
 protected:
   control_flow_op (enum kind kind_,
@@ -982,6 +1039,9 @@ public:
   void
   add_any_events_for_eedge (const exploded_edge &eedge,
 			    checker_path &out_path) const final override;
+
+  bool
+  try_to_rewind_data_flow (rewind_context &ctxt) const final override;
 
   const std::vector<pair> &get_pairs () const { return m_pairs; }
 

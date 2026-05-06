@@ -37,6 +37,7 @@ enum class event_kind
   custom,
   stmt,
   region_creation,
+  state_transition,
   function_entry,
   state_change,
   start_cfg_edge,
@@ -68,6 +69,7 @@ extern const char *event_kind_to_string (enum event_kind ek);
        custom_event (event_kind::custom)
 	 precanned_custom_event
        statement_event (event_kind::stmt)
+       state_transition_event (event_kind::data_flow)
        region_creation_event (event_kind::region_creation)
        function_entry_event (event_kind::function_entry)
        state_change_event (event_kind::state_change)
@@ -245,6 +247,31 @@ public:
   const program_state m_dst_state;
 };
 
+/* A concrete checker_event subclass referencing a state_transition,
+   for cases where the state_transition doesn't already have its own event.  */
+
+class state_transition_event : public checker_event
+{
+public:
+  state_transition_event (const event_loc_info &loc_info,
+			  const state_transition *state_trans)
+  : checker_event (event_kind::state_transition, loc_info),
+    m_state_trans (state_trans)
+  {
+    gcc_assert (m_state_trans);
+  }
+
+  void print_desc (pretty_printer &) const final override;
+
+  void prepare_for_emission (checker_path *path,
+			     pending_diagnostic *pd,
+			     diagnostics::paths::event_id_t emission_id) final override;
+
+private:
+  // borrowed from the exploded_path
+  const state_transition *m_state_trans;
+};
+
 /* An abstract event subclass describing the creation of a region that
    is significant for a diagnostic.
 
@@ -352,14 +379,13 @@ class function_entry_event : public checker_event
 {
 public:
   function_entry_event (const event_loc_info &loc_info,
-			const program_state &state)
+			const program_state &state,
+			const state_transition_at_call *state_trans)
   : checker_event (event_kind::function_entry, loc_info),
-    m_state (state)
+    m_state (state),
+    m_state_trans (state_trans)
   {
   }
-
-  function_entry_event (const program_point &dst_point,
-			const program_state &state);
 
   void print_desc (pretty_printer &pp) const override;
   meaning get_meaning () const override;
@@ -372,8 +398,17 @@ public:
     return &m_state;
   }
 
+  void
+  prepare_for_emission (checker_path *path,
+			pending_diagnostic *pd,
+			diagnostics::paths::event_id_t emission_id) final override;
+
+  const state_transition_at_call *
+  get_state_transition_at_call () const { return m_state_trans; }
+
 private:
   const program_state &m_state;
+  const state_transition_at_call *m_state_trans;
 };
 
 /* Subclass of checker_event describing a state change.  */
@@ -558,7 +593,8 @@ class call_event : public superedge_event
 {
 public:
   call_event (const exploded_edge &eedge,
-	      const event_loc_info &loc_info);
+	      const event_loc_info &loc_info,
+	      const state_transition_at_call *state_trans);
 
   void print_desc (pretty_printer &pp) const override;
   meaning get_meaning () const override;
@@ -567,6 +603,11 @@ public:
 
   const program_state *
   get_program_state () const final override;
+
+  void
+  prepare_for_emission (checker_path *path,
+			pending_diagnostic *pd,
+			diagnostics::paths::event_id_t emission_id) final override;
 
   /* Mark this edge event as being either an interprocedural call or
      return in which VAR is in STATE, and that this is critical to the
@@ -577,6 +618,9 @@ public:
     m_critical_state = critical_state (var, state);
   }
 
+  const state_transition_at_call *
+  get_state_transition_at_call () const { return m_state_trans; }
+
 protected:
   tree get_caller_fndecl () const;
   tree get_callee_fndecl () const;
@@ -584,6 +628,7 @@ protected:
   const supernode *m_src_snode;
   const supernode *m_dest_snode;
   critical_state m_critical_state;
+  const state_transition_at_call *m_state_trans;
 };
 
 /* A concrete event subclass for an interprocedural return.  */
@@ -592,7 +637,8 @@ class return_event : public checker_event
 {
 public:
   return_event (const exploded_edge &eedge,
-		const event_loc_info &loc_info);
+		const event_loc_info &loc_info,
+		const state_transition_at_return *state_trans);
 
   void print_desc (pretty_printer &pp) const final override;
   meaning get_meaning () const override;
@@ -608,6 +654,11 @@ public:
   const program_state *
   get_program_state () const override;
 
+  void
+  prepare_for_emission (checker_path *path,
+			pending_diagnostic *pd,
+			diagnostics::paths::event_id_t emission_id) final override;
+
   /* Mark this edge event as being either an interprocedural call or
      return in which VAR is in STATE, and that this is critical to the
      diagnostic (so that print_desc can attempt to get a better description
@@ -622,6 +673,7 @@ public:
   const supernode *m_dest_snode;
   const call_and_return_op *m_call_and_return_op;
   critical_state m_critical_state;
+  const state_transition_at_return *m_state_trans;
 };
 
 /* A concrete event subclass for the start of a consolidated run of CFG

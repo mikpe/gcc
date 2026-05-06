@@ -26,18 +26,29 @@ along with GCC; see the file COPYING3.  If not see
 
 namespace ana {
 
-/* class exploded_path.  */
+// struct diagnostic_state
 
-/* Copy ctor.  */
-
-exploded_path::exploded_path (const exploded_path &other)
-: m_edges (other.m_edges.length ())
+void
+diagnostic_state::dump_to_pp (pretty_printer *pp) const
 {
-  int i;
-  const exploded_edge *eedge;
-  FOR_EACH_VEC_ELT (other.m_edges, i, eedge)
-    m_edges.quick_push (eedge);
+  pp_printf (pp, "%s: {", m_debug_desc.c_str ());
+  if (m_region_holding_value)
+    {
+      pp_string (pp, "region holding value: ");
+      m_region_holding_value->dump_to_pp (pp, false);
+    }
+  pp_string (pp, "}");
 }
+
+void
+diagnostic_state::dump () const
+{
+  tree_dump_pretty_printer pp (stderr);
+  dump_to_pp (&pp);
+  pp_newline (&pp);
+}
+
+/* class exploded_path.  */
 
 /* Look for the last use of SEARCH_STMT within this path.
    If found write the edge's index to *OUT_IDX and return true, otherwise
@@ -47,31 +58,33 @@ bool
 exploded_path::find_stmt_backwards (const gimple *search_stmt,
 				    int *out_idx) const
 {
-  int i;
-  const exploded_edge *eedge;
-  FOR_EACH_VEC_ELT_REVERSE (m_edges, i, eedge)
-    if (search_stmt->code == GIMPLE_PHI)
-      {
-	/* Each phis_for_edge_op instance handles multiple phi stmts
-	   at once, so we have to special-case the search for a phi stmt.  */
-	if (auto op = eedge->maybe_get_op ())
-	  if (auto phis_op = op->dyn_cast_phis_for_edge_op ())
-	    if (phis_op->defines_ssa_name_p (gimple_phi_result (search_stmt)))
+  for (int i = m_elements.size () - 1; i >= 0; --i)
+    {
+      const element_t *element = &m_elements[i];
+      const exploded_edge *eedge = element->m_eedge;
+      if (search_stmt->code == GIMPLE_PHI)
+	{
+	  /* Each phis_for_edge_op instance handles multiple phi stmts
+	     at once, so we have to special-case the search for a phi stmt.  */
+	  if (auto op = eedge->maybe_get_op ())
+	    if (auto phis_op = op->dyn_cast_phis_for_edge_op ())
+	      if (phis_op->defines_ssa_name_p (gimple_phi_result (search_stmt)))
+		{
+		  *out_idx = i;
+		  return true;
+		}
+	}
+      else
+	{
+	  /* Non-phi stmt.  */
+	  if (const gimple *stmt = eedge->maybe_get_stmt ())
+	    if (stmt == search_stmt)
 	      {
 		*out_idx = i;
 		return true;
 	      }
-      }
-    else
-      {
-	/* Non-phi stmt.  */
-	if (const gimple *stmt = eedge->maybe_get_stmt ())
-	  if (stmt == search_stmt)
-	    {
-	      *out_idx = i;
-	      return true;
-	    }
-      }
+	}
+    }
   return false;
 }
 
@@ -80,8 +93,8 @@ exploded_path::find_stmt_backwards (const gimple *search_stmt,
 exploded_node *
 exploded_path::get_final_enode () const
 {
-  gcc_assert (m_edges.length () > 0);
-  return m_edges[m_edges.length () - 1]->m_dest;
+  gcc_assert (m_elements.size () > 0);
+  return m_elements.back ().m_eedge->m_dest;
 }
 
 /* Check state along this path, returning true if it is feasible.
@@ -99,9 +112,9 @@ exploded_path::feasible_p (logger *logger,
 			   eg->get_supergraph ());
 
   /* Traverse the path, updating this state.  */
-  for (unsigned edge_idx = 0; edge_idx < m_edges.length (); edge_idx++)
+  for (unsigned edge_idx = 0; edge_idx < m_elements.size (); ++edge_idx)
     {
-      const exploded_edge *eedge = m_edges[edge_idx];
+      const exploded_edge *eedge = m_elements[edge_idx].m_eedge;
       if (logger)
 	logger->log ("considering edge %i: EN:%i -> EN:%i",
 		     edge_idx,
@@ -140,13 +153,20 @@ void
 exploded_path::dump_to_pp (pretty_printer *pp,
 			   const extrinsic_state *ext_state) const
 {
-  for (unsigned i = 0; i < m_edges.length (); i++)
+  for (unsigned i = 0; i < m_elements.size (); ++i)
     {
-      const exploded_edge *eedge = m_edges[i];
-      pp_printf (pp, "m_edges[%i]: EN %i -> EN %i",
+      const element_t &element = m_elements[i];
+      const exploded_edge *eedge = element.m_eedge;
+      pp_printf (pp, "m_elements[%i]: EN %i -> EN %i",
 		 i,
 		 eedge->m_src->m_index,
 		 eedge->m_dest->m_index);
+      if (element.m_state_transition)
+	{
+	  pp_string (pp, " {");
+	  element.m_state_transition->dump_to_pp (pp);
+	  pp_string (pp, "}");
+	}
       pp_newline (pp);
 
       if (ext_state)
@@ -186,6 +206,49 @@ exploded_path::dump_to_file (const char *filename,
   dump_to_pp (&pp, &ext_state);
   pp_flush (&pp);
   fclose (fp);
+}
+
+/* Print a multiline form of this path to LOGGER, prefixing it with DESC.  */
+
+void
+exploded_path::maybe_log (logger *logger, const char *desc) const
+{
+  if (!logger)
+    return;
+  logger->start_log_line ();
+  logger->log_partial ("%s: ", desc);
+  logger->end_log_line ();
+  for (unsigned idx = 0; idx < m_elements.size (); idx++)
+    {
+      const exploded_edge &eedge = *m_elements[idx].m_eedge;
+      const exploded_node *src_node = eedge.m_src;
+      const program_point &src_point = src_node->get_point ();
+      const exploded_node *dst_node = eedge.m_dest;
+      const program_point &dst_point = dst_node->get_point ();
+
+      pretty_printer *pp = logger->get_printer ();
+      logger->start_log_line ();
+      pp_printf (pp, "  [%i] EN %i -> EN %i: ",
+		 idx,
+		 src_node->m_index,
+		 dst_node->m_index);
+      src_point.print (pp, format (false));
+      pp_string (pp, " -> ");
+      dst_point.print (pp, format (false));
+      if (auto state_trans = m_elements[idx].m_state_transition.get ())
+	{
+	  pp_string (pp, " {");
+	  state_trans->dump_to_pp (pp);
+	  pp_string (pp, "}");
+	}
+      logger->end_log_line ();
+    }
+}
+
+void
+exploded_path::reverse ()
+{
+  std::reverse (m_elements.begin (), m_elements.end ());
 }
 
 } // namespace ana

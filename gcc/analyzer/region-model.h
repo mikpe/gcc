@@ -1338,12 +1338,14 @@ make_poisoned_value_diagnostic (tree expr, enum poison_kind pkind,
 
 extern std::unique_ptr<pending_diagnostic>
 make_shift_count_negative_diagnostic (const gassign *assign,
-				      tree count_cst);
+				      tree count_cst,
+				      const region *src_region);
 
 extern std::unique_ptr<pending_diagnostic>
 make_shift_count_overflow_diagnostic (const gassign *assign,
 				      int operand_precision,
-				      tree count_cst);
+				      tree count_cst,
+				      const region *src_region);
 
 extern std::unique_ptr<pending_diagnostic>
 make_write_to_const_diagnostic (const region *dest_reg, tree decl);

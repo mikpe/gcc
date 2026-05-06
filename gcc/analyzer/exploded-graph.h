@@ -381,9 +381,9 @@ private:
 class interprocedural_call : public custom_edge_info
 {
 public:
-  interprocedural_call (const gcall &call_stmt,
+  interprocedural_call (const call_and_return_op &op,
 			function &callee_fun)
-  : m_call_stmt (call_stmt),
+  : m_op (op),
     m_callee_fun (callee_fun)
   {}
 
@@ -402,10 +402,16 @@ public:
 
   void add_events_to_path (checker_path *emission_path,
 			   const exploded_edge &eedge,
-			   pending_diagnostic &pd) const final override;
+			   pending_diagnostic &pd,
+			   const state_transition *state_trans) const final override;
+
+  bool
+  try_to_rewind_data_flow (rewind_context &) const final override;
+
+  const gcall &get_gcall () const;
 
 private:
-  const gcall &m_call_stmt;
+  const call_and_return_op &m_op;
   function &m_callee_fun;
 };
 
@@ -434,7 +440,11 @@ public:
 
   void add_events_to_path (checker_path *emission_path,
 			   const exploded_edge &eedge,
-			   pending_diagnostic &pd) const final override;
+			   pending_diagnostic &pd,
+			   const state_transition *state_trans) const final override;
+
+  bool
+  try_to_rewind_data_flow (rewind_context &) const final override;
 
 private:
   const gcall &m_call_stmt;
@@ -463,7 +473,8 @@ public:
 
   void add_events_to_path (checker_path *emission_path,
 			   const exploded_edge &eedge,
-			   pending_diagnostic &pd) const final override;
+			   pending_diagnostic &pd,
+			   const state_transition *state_trans) const final override;
 
   program_point
   get_point_before_setjmp () const

@@ -23,23 +23,31 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "diagnostics/metadata.h"
 #include "analyzer/sm.h"
+#include "analyzer/state-transition.h"
 
 namespace ana {
 
 /* A bundle of information about things that are of interest to a
-   pending_diagnostic.
+   pending_diagnostic:
 
-   For now, merely the set of regions that are pertinent to the
+   * a set of regions that are pertinent to the
    diagnostic, so that we can notify the user about when they
-   were created.  */
+   were created.
+
+   * a set of regions that a pertinent value for the diagnostic was
+   read from, so that we can notify the user about where those values
+   came from.  */
 
 struct interesting_t
 {
   void add_region_creation (const region *reg);
 
+  void add_read_region (const region *reg, std::string debug_desc);
+
   void dump_to_pp (pretty_printer *pp, bool simple) const;
 
   auto_vec<const region *> m_region_creation;
+  std::vector<diagnostic_state> m_read_regions;
 };
 
 /* Various bundles of information used for generating more precise
@@ -74,23 +82,42 @@ struct state_change
   const state_change_event &m_event;
 };
 
+/* For use by pending_diagnostic::describe_origin_of_state.  */
+
+struct origin_of_state
+{
+  origin_of_state (tree dst_reg_expr)
+  : m_dst_reg_expr (dst_reg_expr)
+  {
+    gcc_assert (m_dst_reg_expr);
+  }
+
+  tree m_dst_reg_expr;
+};
+
 /* For use by pending_diagnostic::describe_call_with_state.  */
 
 struct call_with_state
 {
   call_with_state (tree caller_fndecl, tree callee_fndecl,
-		   tree expr, state_machine::state_t state)
+		   tree expr, state_machine::state_t state,
+		   const state_transition_at_call *state_trans)
   : m_caller_fndecl (caller_fndecl),
     m_callee_fndecl (callee_fndecl),
     m_expr (expr),
-    m_state (state)
+    m_state (state),
+    m_state_trans (state_trans)
   {
+    if (state_trans)
+      m_src_event_id = state_trans->get_src_event_id ();
   }
 
   tree m_caller_fndecl;
   tree m_callee_fndecl;
   tree m_expr;
   state_machine::state_t m_state;
+  const state_transition_at_call *m_state_trans;
+  diagnostics::paths::event_id_t m_src_event_id;
 };
 
 /* For use by pending_diagnostic::describe_return_of_state.  */
@@ -98,16 +125,58 @@ struct call_with_state
 struct return_of_state
 {
   return_of_state (tree caller_fndecl, tree callee_fndecl,
-		   state_machine::state_t state)
+		   state_machine::state_t state,
+		   const state_transition_at_return *state_trans)
   : m_caller_fndecl (caller_fndecl),
     m_callee_fndecl (callee_fndecl),
-    m_state (state)
+    m_state (state),
+    m_state_trans (state_trans)
   {
+    if (state_trans)
+      m_src_event_id = state_trans->get_src_event_id ();
   }
 
   tree m_caller_fndecl;
   tree m_callee_fndecl;
   state_machine::state_t m_state;
+  const state_transition_at_return *m_state_trans;
+  diagnostics::paths::event_id_t m_src_event_id;
+};
+
+/* For use by pending_diagnostic::describe_copy_of_state.  */
+
+struct copy_of_state
+{
+  copy_of_state (tree src_reg_expr,
+		 diagnostics::paths::event_id_t src_event_id,
+		 tree dst_reg_expr)
+  : m_src_reg_expr (src_reg_expr),
+    m_src_event_id (src_event_id),
+    m_dst_reg_expr (dst_reg_expr)
+  {
+    gcc_assert (m_src_reg_expr);
+    gcc_assert (m_dst_reg_expr);
+  }
+
+  tree m_src_reg_expr;
+  diagnostics::paths::event_id_t m_src_event_id;
+  tree m_dst_reg_expr;
+};
+
+/* For use by pending_diagnostic::describe_use_of_state.  */
+
+struct use_of_state
+{
+  use_of_state (tree src_reg_expr,
+		diagnostics::paths::event_id_t src_event_id)
+  : m_src_reg_expr (src_reg_expr),
+    m_src_event_id (src_event_id)
+  {
+    gcc_assert (m_src_reg_expr);
+  }
+
+  tree m_src_reg_expr;
+  diagnostics::paths::event_id_t m_src_event_id;
 };
 
 /* For use by pending_diagnostic::describe_final_event.  */
@@ -268,6 +337,20 @@ class pending_diagnostic
     return diagnostics::paths::event::meaning ();
   }
 
+  /* Precision-of-wording vfunc for use in describing state_transition_event
+     instances of state_transition::kind::origin.
+     Return true if a description of the event was printed to the
+     pretty-printer, or false otherwise.
+     For example, a divide-by-zero diagnostic might use:
+       "zero value originates here"
+     at the point where the zero comes from.  */
+  virtual bool describe_origin_of_state (pretty_printer &,
+					 const evdesc::origin_of_state &)
+  {
+    /* Default no-op implementation.  */
+    return false;
+  }
+
   /* Precision-of-wording vfunc for describing an interprocedural call
      carrying critial state for the diagnostic, from caller to callee.
 
@@ -299,6 +382,32 @@ class pending_diagnostic
     return false;
   }
 
+  /* Precision-of-wording vfunc for use in describing state_transition_event
+     instances of state_transition::kind::copy.
+     Return true if a description of the event was printed to the
+     pretty-printer, or false otherwise.
+     For example, a divide-by-zero diagnostic might use:
+     "copying zero value from (3) from 'x' to 'y'".  */
+  virtual bool describe_copy_of_state (pretty_printer &,
+				       const evdesc::copy_of_state &)
+  {
+    /* Default no-op implementation.  */
+    return false;
+  }
+
+  /* Precision-of-wording vfunc for use in describing state_transition_event
+     instances of state_transition::kind::use.
+     Return true if a description of the event was printed to the
+     pretty-printer, or false otherwise.
+     For example, a divide-by-zero diagnostic might use:
+     "using zero value from (7) from 'y'".  */
+  virtual bool describe_use_of_state (pretty_printer &,
+				      const evdesc::use_of_state &)
+  {
+    /* Default no-op implementation.  */
+    return false;
+  }
+
   /* Precision-of-wording vfunc for describing the final event within a
      diagnostic path.
 
@@ -322,7 +431,8 @@ class pending_diagnostic
 
   virtual void
   add_function_entry_event (const exploded_edge &eedge,
-			    checker_path *emission_path);
+			    checker_path *emission_path,
+			    const state_transition_at_call *state_trans);
 
   /* Vfunc for extending/overriding creation of the events for an
      exploded_edge, allowing for custom events to be created that are
@@ -343,7 +453,8 @@ class pending_diagnostic
      the variadic arguments.  */
   virtual void add_call_event (const exploded_edge &,
 			       const gcall &call_stmt,
-			       checker_path &emission_path);
+			       checker_path &emission_path,
+			       const state_transition_at_call *state_trans);
 
   /* Vfunc for adding any events for the creation of regions identified
      by the mark_interesting_stuff vfunc.

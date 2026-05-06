@@ -98,7 +98,8 @@ public:
 
   void
   add_function_entry_event (const exploded_edge &eedge,
-			    checker_path *emission_path) final override
+			    checker_path *emission_path,
+			    const state_transition_at_call *state_trans) final override
   {
     /* Subclass of function_entry_event for use when reporting both
        the initial and subsequent entries to the function of interest,
@@ -111,7 +112,9 @@ public:
 				      const program_state &dst_state,
 				      const infinite_recursion_diagnostic &pd,
 				      bool topmost)
-      : function_entry_event (dst_point, dst_state),
+      : function_entry_event (event_loc_info (dst_point),
+			      dst_state,
+			      nullptr),
 	m_pd (pd),
 	m_topmost (topmost)
       {
@@ -161,7 +164,8 @@ public:
 	(std::make_unique<recursive_function_entry_event>
 	 (dst_point, dst_node->get_state (), *this, true));
     else
-      pending_diagnostic::add_function_entry_event (eedge, emission_path);
+      pending_diagnostic::add_function_entry_event (eedge, emission_path,
+						    state_trans);
   }
 
   /* Customize the location where the warning_event appears, putting

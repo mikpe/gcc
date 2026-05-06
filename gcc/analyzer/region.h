@@ -22,7 +22,8 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_ANALYZER_REGION_H
 
 #include "analyzer/symbol.h"
-#include "text-art/widget.h"
+#include "analyzer/store.h"
+#include "text-art/tree-widget.h"
 
 namespace ana {
 

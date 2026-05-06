@@ -22,6 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_ANALYZER_COMMON_H
 
 #include "config.h"
+#define INCLUDE_ALGORITHM
 #define INCLUDE_LIST
 #define INCLUDE_MAP
 #define INCLUDE_SET
@@ -139,6 +140,9 @@ class call_summary;
 class call_summary_replay;
 struct per_function_data;
 struct interesting_t;
+class state_transition;
+  class state_transition_at_call;
+  class state_transition_at_return;
 class uncertainty_t;
 
 class feasible_node;
@@ -155,6 +159,7 @@ extern void dump_tree (pretty_printer *pp, tree t);
 extern void dump_quoted_tree (pretty_printer *pp, tree t);
 extern void print_quoted_type (pretty_printer *pp, tree t);
 extern void print_expr_for_user (pretty_printer *pp, tree t);
+extern bool printable_expr_p (const_tree expr);
 extern int readability_comparator (const void *p1, const void *p2);
 extern int tree_cmp (const void *p1, const void *p2);
 extern tree fixup_tree_for_diagnostic (tree);
@@ -374,6 +379,44 @@ enum class access_direction
   write
 };
 
+/* State tracked along an execution path that's pertinent to a specific
+   diagnostic (e.g. for a divide-by-zero warning where the zero value
+   comes from).  */
+
+struct diagnostic_state
+{
+  diagnostic_state ()
+  : m_region_holding_value (nullptr)
+  {
+  }
+
+  diagnostic_state (std::string debug_desc,
+		   const region *region_holding_value)
+  : m_debug_desc (std::move (debug_desc)),
+    m_region_holding_value (region_holding_value)
+  {
+  }
+
+  void dump_to_pp (pretty_printer *) const;
+  void dump () const;
+
+  bool
+  operator== (const diagnostic_state &other) const
+  {
+    return m_region_holding_value == other.m_region_holding_value;
+  }
+  bool
+  operator!= (const diagnostic_state &other) const
+  {
+    return !(*this == other);
+  }
+
+  std::string m_debug_desc;
+  const region *m_region_holding_value;
+};
+
+struct rewind_context;
+
 /* Abstract base class for associating custom data with an
    exploded_edge, for handling non-standard edges such as
    rewinding from a longjmp, signal handlers, etc.
@@ -406,13 +449,20 @@ public:
 
   virtual void add_events_to_path (checker_path *emission_path,
 				   const exploded_edge &eedge,
-				   pending_diagnostic &pd) const = 0;
+				   pending_diagnostic &pd,
+				   const state_transition *state_trans) const = 0;
 
   virtual exploded_node *create_enode (exploded_graph &eg,
 				       const program_point &point,
 				       program_state &&state,
 				       exploded_node *enode_for_diag,
 				       region_model_context *ctxt) const;
+
+  virtual bool
+  try_to_rewind_data_flow (rewind_context &) const
+  {
+    return false;
+  }
 };
 
 /* Abstract base class for splitting state.

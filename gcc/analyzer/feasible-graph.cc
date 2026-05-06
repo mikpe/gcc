@@ -187,12 +187,12 @@ feasible_graph::make_epath (feasible_node *fnode) const
       gcc_assert (fnode->m_preds.length () == 1);
       feasible_edge *pred_fedge
 	= static_cast <feasible_edge *> (fnode->m_preds[0]);
-      epath->m_edges.safe_push (pred_fedge->get_inner_edge ());
+      epath->m_elements.push_back (pred_fedge->get_inner_edge ());
       fnode = static_cast <feasible_node *> (pred_fedge->m_src);
     }
 
   /* Now reverse it.  */
-  epath->m_edges.reverse ();
+  epath->reverse ();
 
   return epath;
 }

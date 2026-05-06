@@ -155,7 +155,10 @@ public:
   void mark_interesting_stuff (interesting_t *interest) final override
   {
     if (m_src_region)
-      interest->add_region_creation (m_src_region);
+      {
+	interest->add_region_creation (m_src_region);
+	interest->add_read_region (m_src_region, "poisoned value");
+      }
   }
 
   /* Attempt to suppress false positives.

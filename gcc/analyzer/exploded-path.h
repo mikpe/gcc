@@ -22,6 +22,8 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_ANALYZER_EXPLODED_PATH_H
 
 #include "analyzer/exploded-graph.h"
+#include "analyzer/checker-event.h"
+#include "analyzer/state-transition.h"
 
 namespace ana {
 
@@ -30,10 +32,45 @@ namespace ana {
 class exploded_path
 {
 public:
-  exploded_path () : m_edges () {}
-  exploded_path (const exploded_path &other);
+  struct element_t
+  {
+    element_t (const exploded_edge *eedge)
+    : m_eedge (eedge)
+    {
+    }
+    element_t (const element_t &other)
+    : m_eedge (other.m_eedge),
+      m_state_at_src (other.m_state_at_src),
+      m_state_at_dst (other.m_state_at_dst),
+      m_state_transition (nullptr)
+    {
+      if (other.m_state_transition)
+	m_state_transition = other.m_state_transition->clone ();
+    }
 
-  unsigned length () const { return m_edges.length (); }
+    element_t (element_t &&other) = default;
+
+    element_t &operator= (const element_t &other)
+    {
+      m_eedge = other.m_eedge;
+      m_state_at_src = other.m_state_at_src;
+      m_state_at_dst = other.m_state_at_dst;
+      m_state_transition = (other.m_state_transition
+			    ? other.m_state_transition->clone ()
+			    : nullptr);
+      return *this;
+    }
+
+    const exploded_edge *m_eedge;
+    diagnostic_state m_state_at_src;
+    diagnostic_state m_state_at_dst;
+    std::unique_ptr<state_transition> m_state_transition;
+  };
+
+  exploded_path () = default;
+  exploded_path (const exploded_path &other) = default;
+
+  unsigned length () const { return m_elements.size (); }
 
   bool find_stmt_backwards (const gimple *search_stmt,
 			    int *out_idx) const;
@@ -47,10 +84,21 @@ public:
   void dump_to_file (const char *filename,
 		     const extrinsic_state &ext_state) const;
 
+  void maybe_log (logger *logger, const char *desc) const;
+
   bool feasible_p (logger *logger, std::unique_ptr<feasibility_problem> *out,
 		    engine *eng, const exploded_graph *eg) const;
 
-  auto_vec<const exploded_edge *> m_edges;
+  void
+  append_edge (const exploded_edge *edge)
+  {
+    m_elements.push_back (edge);
+  }
+
+  void
+  reverse ();
+
+  std::vector<element_t> m_elements;
 };
 
 /* Finding the shortest exploded_path within an exploded_graph.  */

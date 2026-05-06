@@ -43,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "analyzer/exploded-graph.h"
 #include "analyzer/call-details.h"
 #include "analyzer/call-info.h"
+#include "analyzer/state-transition.h"
 
 #if ENABLE_ANALYZER
 
@@ -96,7 +97,8 @@ call_info::print (pretty_printer *pp) const
 void
 call_info::add_events_to_path (checker_path *emission_path,
 			       const exploded_edge &eedge,
-			       pending_diagnostic &) const
+			       pending_diagnostic &,
+			       const state_transition *) const
 {
   class call_event : public custom_event
   {
@@ -120,6 +122,10 @@ call_info::add_events_to_path (checker_path *emission_path,
   const program_point &src_point = src_node->get_point ();
   tree caller_fndecl = src_point.get_fndecl ();
   const int stack_depth = src_point.get_stack_depth ();
+
+  /* TODO: we don't yet make use of the state_transition (if any), as
+     doing so presumably requires a combinatorial explosion of
+     known functions vs pending diagnostics.  */
 
   emission_path->add_event
     (std::make_unique<call_event> (event_loc_info (get_call_stmt ().location,

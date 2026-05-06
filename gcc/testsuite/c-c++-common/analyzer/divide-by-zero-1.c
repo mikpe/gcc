@@ -3,7 +3,7 @@
 static int __attribute__((noipa))
 return_zero (void)
 {
-  return 0;
+  return 0; /* { dg-message "value originates here" } */
 }
 
 void

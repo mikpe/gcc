@@ -71,7 +71,8 @@ public:
   }
   ~tree_dump_pretty_printer ()
   {
-    pp_flush (this);
+    if (pp_buffer (this)->m_stream)
+      pp_flush (this);
   }
 };
 
