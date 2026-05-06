@@ -157,6 +157,18 @@ value_range::dump (FILE *out) const
     fprintf (out, "NULL");
 }
 
+void
+value_range::print (pretty_printer *pp) const
+{
+  if (m_vrange)
+    {
+      vrange_printer vrange_pp (pp);
+      m_vrange->accept (vrange_pp);
+    }
+  else
+    pp_string (pp, "NULL");
+}
+
 DEBUG_FUNCTION void
 debug (const value_range &r)
 {

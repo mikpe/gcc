@@ -227,6 +227,14 @@ svalue::make_dump_widget (const text_art::dump_widget_info &dwi,
 
   print_dump_widget_label (&pp);
 
+  value_range out;
+  if (maybe_get_value_range (out))
+    {
+      pp_printf (&pp, " value range: {"),
+	out.print (&pp);
+      pp_string (&pp, "}");
+    }
+
   std::unique_ptr<text_art::tree_widget> w
     (text_art::tree_widget::make (dwi, &pp));
 

@@ -792,6 +792,7 @@ public:
   operator vrange &();
   operator const vrange &() const;
   void dump (FILE *) const;
+  void print (pretty_printer *) const;
   static bool supports_type_p (const_tree type);
 
   tree type () { return m_vrange->type (); }
