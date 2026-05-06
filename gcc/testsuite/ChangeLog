@@ -1,3 +1,11 @@
+2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/125089
+	* gdc.dg/pr125089.d: New test.
+
 2026-04-30  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/task6.ads, gnat.dg/task6.adb: New test.
