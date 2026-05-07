@@ -1,3 +1,10 @@
+2026-05-06  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124985
+	* c-decl.cc (pushtag): Update comment.
+	(declspecs_add_type): Mark TYPE_STUB_DECL as used.
+	* c-typeck.cc (function_to_pointer_conversion): Fix grammar in comment.
+
 2026-05-01  Martin Uecker  <uecker@tugraz.at>
 
 	PR c/124576

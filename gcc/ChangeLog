@@ -1,3 +1,153 @@
+2026-05-06  Jason Merrill  <jason@redhat.com>
+
+	* Makefile.in (TAGS): Add diagnostics/ and text-art/.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* range-op-float.cc (fop_unordered): Make static and const.
+	(fop_ordered): Likewise.
+	(fop_unordered_lt): Likewise.
+	(fop_unordered_le): Likewise.
+	(fop_unordered_gt): Likewise.
+	(fop_unordered_ge): Likewise.
+	(fop_unordered_equal): Likewise.
+	(fop_ltgt): Likewise.
+	(fop_div): Likewise.
+	* range-op-ptr.cc (op_pointer_plus): Likewise.
+	(op_pointer_diff): Likewise.
+	* range-op.cc (op_equal): Likewise.
+	(op_not_equal): Likewise.
+	(op_lt): Likewise.
+	(op_le): Likewise.
+	(op_gt): Likewise.
+	(op_ge): Likewise.
+	(op_ident): Likewise.
+	(op_cst): Likewise.
+	(op_cast): Likewise.
+	(op_view): Likewise.
+	(op_plus): Likewise.
+	(op_abs): Likewise.
+	(op_minus): Likewise.
+	(op_negate): Likewise.
+	(op_mult): Likewise.
+	(op_addr): Likewise.
+	(op_bitwise_not): Likewise.
+	(op_bitwise_xor): Likewise.
+	(op_bitwise_and): Likewise.
+	(op_bitwise_or): Likewise.
+	(op_min): Likewise.
+	(op_max): Likewise.
+	(operator_table): Make static.  Fix typo in comment.
+	(range_op_handler::range_op_handler): Fix typo in leading comment.
+	(range_op_handler::range_op): Make returned ptr const.  Use
+	nullptr.
+	(RO_III): Make static.
+	(RO_IFI): Likewise.
+	(RO_IFF): Likewise.
+	(RO_FFF): Likewise.
+	(RO_FIF): Likewise.
+	(RO_FII): Likewise.
+	(RO_PPP): Likewise.
+	(RO_PPI): Likewise.
+	(RO_IPP): Likewise.
+	(RO_IPI): Likewise.
+	(RO_PIP): Likewise.
+	(RO_PII): Likewise.
+	(op_trunc_div): Make const.
+	(op_floor_div): Likewise.
+	(op_round_div): Likewise.
+	(op_ceil_div): Likewise.
+	* range-op.h (range_op_handler::range_op): Make returned ptr
+	const.
+	(range_op_handler::m_operator): Make const.
+	(range_op_table::operator[]): Make const.  Make returned ptr
+	const.
+	(range_op_table::set): Make range_operator const.
+	(range_op_table::m_range_tree): Make ptrs const.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* value-range.cc (value_range::print): New, based on
+	value_range::dump.
+	* value-range.h (value_range::print): New decl.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* value-range.h: Remove stray slash in comment.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* Makefile.in (ANALYZER_OBJS): Add analyzer/state-transition.o.
+	* digraph.cc (test_path::append_edge): New.
+	(test_path::reverse): New.
+	* shortest-paths.h (get_shortest_path): Use append_edge and
+	reverse.
+	* tree-diagnostic.h
+	(tree_dump_pretty_printer::~tree_dump_pretty_printer): Only flush
+	when the buffer's stream is non-null.
+
+2026-05-06  Andrew MacLeod  <amacleod@redhat.com>
+
+	* value-range-storage.cc (prange_storage::alloc): Use prange_format.
+	(prange_storage::prange_storage): Likewise.
+	(prange_format::prange_format): New.
+	(prange_storage::set_prange): Use prange_foramt and only write
+	required words to storage.
+	(prange_storage::get_prange): Only read required words.
+	(prange_storage::equal_p): Adjust for new enum.
+	(prange_storage::fits_p): Use prange_format to determine size.
+	* value-range-storage.h (enum prange_kind): New.
+	(class prange_format): New.
+	(get_low, get_high, get_value, get_mask): Replace with get_word.
+	(set_low, set_high, set_value, set_mask): Replace with set_word.
+	(get_word): New.
+	(set_word): New.
+
+2026-05-06  Andrew MacLeod  <amacleod@redhat.com>
+
+	* gimple-fold.cc (get_maxval_strlen): Return the same value if
+	passed a constant.
+
+2026-05-06  Zhongyao Chen  <chenzhongyao.hit@gmail.com>
+
+	PR target/122558
+	* config/riscv/riscv-vector-costs.cc (get_lmul_cost_scaling):
+	New function to calculate multiplicative scaling factors.
+	(costs::adjust_stmt_cost): Apply LMUL scaling uniformly to all
+	vector statements.
+
+2026-05-06  Lulu Cheng  <chenglulu@loongson.cn>
+
+	* config/loongarch/loongarch.cc (loongarch_rtx_costs): Add
+	RTX cost handling for the ORDERED RTX code.
+
+2026-05-06  Lulu Cheng  <chenglulu@loongson.cn>
+
+	PR target/125057
+	* config/loongarch/loongarch.cc
+	(loongarch_split_vector_move): Complete the split condition.
+	* config/loongarch/loongarch.h (LSX_REG_RTX_P): Delete.
+	(LASX_REG_RTX_P): Delete.
+	(GP_REG_RTX_P): Define macro.
+
+2026-05-06  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	* config/riscv/riscv-protos.h (whole_reg_to_reg_move_p):
+	Rename from this...
+	(whole_reg_move_p): ...to this.
+	(whole_reg_loadstore_p): Declare.
+	* config/riscv/riscv-v.cc (whole_reg_to_reg_move_p): Ditto.
+	(whole_reg_move_p): Ditto.
+	(whole_reg_loadstore_p): New function.
+	* config/riscv/thead-vector.md: Use renamed function.
+	* config/riscv/vector.md (@pred_store<mode>): Use new function.
+
+2026-05-06  Richard Biener  <rguenther@suse.de>
+
+	* config/i386/x86-tune.def (avx512_two_epilogues): Enable
+	for m_ZNVER6.
+	(avx512_masked_epilogues): Likewise.
+
 2026-05-05  H.J. Lu  <hjl.tools@gmail.com>
 
 	PR target/120587

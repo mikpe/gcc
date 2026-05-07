@@ -1,3 +1,265 @@
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* svalue.cc (svalue::make_dump_widget): Show value ranges in
+	svalue dumps.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* analyzer-logging.h (class text_art::canvas): New forward decl.
+	(logger::log_canvas): New decl.
+	* diagnostic-manager.cc (path_builder::get_supergraph): New.
+	(logger::log_canvas): New.
+	(dump_to_logger): New.
+	(log_region_model): New.
+	(epath_rewind_context::epath_rewind_context): Add params
+	src_model and dst_model, using them to initialize m_src_model and
+	m_dst_model.
+	(epath_rewind_context::get_src_region_model): New.
+	(epath_rewind_context::get_dst_region_model): New.
+	(epath_rewind_context::m_src_model): New.
+	(epath_rewind_context::m_dst_model): New.
+	(make_raw_dst_region_model): New.
+	(diagnostic_manager::annotate_exploded_path): Walk EPATH forwards,
+	populating new vectors src_models and dst_models without state
+	purging or merging, so that we can reliably rewind state.  Pass
+	these models to epath_rewind_context when rewinding state.
+	* engine.cc (interprocedural_call::try_to_rewind_data_flow): Get
+	src and dst region_model instances via vfuncs of ctxt, rather than
+	accessing the eedge.
+	* ops.cc (rewind_context::on_data_origin): Get src and dst
+	region_model instances via vfuncs of ctxt, rather than accessing
+	the eedge.
+	(greturn_op::try_to_rewind_data_flow): Likewise.
+	* ops.h (rewind_context::rewind_context): Drop param "eedge".
+	(rewind_context::get_src_region_model): New vfunc.
+	(rewind_context::get_dst_region_model): New vfunc.
+	(rewind_context::m_eedge): Drop field.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* analyzer.cc (printable_expr_p): New.
+	* call-info.cc: Include "analyzer/state-transition.h".
+	(call_info::add_events_to_path): Add state_transition param.
+	* call-info.h (call_info::add_events_to_path): Likewise.
+	* callsite-expr.h: New file, based on material from supergraph.h.
+	(class callsite_expr_element): New.
+	* checker-event.cc: Include "analyzer/callsite-expr.h" and
+	"analyzer/state-transition.h".
+	(event_kind_to_string): Handle event_kind::state_transition.
+	(state_transition_event::print_desc): New.
+	(state_transition_event::prepare_for_emission): New.
+	(function_entry_event::function_entry_event): Drop.
+	(function_entry_event::print_desc): Use any m_state_trans.
+	(function_entry_event::prepare_for_emission): New.
+	(call_event::call_event): Add "state_trans" param and store it in
+	m_state_trans.
+	(call_event::print_desc): Use m_state_trans if present to call
+	describe_call_with_state, adding a fallback wording for
+	pending_diagnostic subclasses that don't implement it.
+	(call_event::prepare_for_emission): New, storing event id into
+	state_transition.
+	(return_event::return_event): Add "state_trans" param and store it
+	in m_state_trans.
+	(return_event::print_desc): Use m_state_trans if present to call
+	describe_return_of_state.
+	(return_event::prepare_for_emission): New, storing event id into
+	state_transition.
+	* checker-event.h (enum class event_kind): Add state_transition.
+	(class state_transition_event): New.
+	(function_entry_event::function_entry_event): Add "state_trans"
+	param and store it in m_state_trans.  Drop 2nd ctor.
+	(function_entry_event::prepare_for_emission): New decl.
+	(function_entry_event::get_state_transition_at_call): New.
+	(function_entry_event::m_state_trans): New.
+	(call_event::call_event): Add "state_trans" param.
+	(call_event::prepare_for_emission): New decl.
+	(call_event::get_state_transition_at_call): New.
+	(call_event::m_state_trans): New.
+	(return_event::return_event): Add "state_trans" param.
+	(return_event::prepare_for_emission): New decl.
+	(return_event::m_state_trans): New.
+	* common.h: Define INCLUDE_ALGORITHM.
+	(class state_transition): New forward decl
+	(class state_transition_at_call): New forward decl
+	(class state_transition_at_return): New forward decl
+	(printable_expr_p): New decl.
+	(struct diagnostic_state): New.
+	(struct rewind_context): New forward decl.
+	(custom_edge_info::add_events_to_path): Add "state_trans" param.
+	(try_to_rewind_data_flow): New vfunc.
+	* diagnostic-manager.cc (compatible_epath_p): Update for change
+	from m_edges to m_elements.
+	(diagnostic_manager::emit_saved_diagnostic):  Make "epath"
+	non-const.  Call annotate_exploded_path on it and log before and
+	after.  Update for new param to add_events_for_eedge.
+	(class epath_rewind_context): New.
+	(diagnostic_manager::annotate_exploded_path): New.
+	(diagnostic_manager::build_emission_path): Update for change from
+	m_edges to m_elements.  Pass any state transition to
+	add_events_for_eedge.
+	(diagnostic_manager::add_events_for_eedge): Add "state_trans"
+	parameter.  Pass it when creating events, and if we don't create
+	an event referencing it, make a state_transition_event for it.
+	(diagnostic_manager::prune_for_sm_diagnostic): Handl
+	event_kind::state_transition.
+	* diagnostic-manager.h (saved_diagnostic::get_best_epath): Drop
+	"const" from return value.
+	(diagnostic_manager::annotate_exploded_path): New decl.
+	(diagnostic_manager::add_events_for_eedge): Add "state_trans"
+	param.
+	* engine.cc: Include "pretty-print-markup.h".
+	(leak_ploc_fixer_for_epath::fixup_for_epath): Update for change
+	from m_edges to m_elements.
+	(throw_custom_edge::add_events_to_path): Add state_transition
+	param.
+	(unwind_custom_edge::add_events_to_path): Likewise.
+	(interprocedural_call::print): Use get_gcall.
+	(interprocedural_call::update_model): Likewise.
+	(interprocedural_call::add_events_to_path): Likewise.  Pass
+	state_transition if of correct subclass.
+	(interprocedural_call::try_to_rewind_data_flow): New.
+	(interprocedural_call::get_gcall): New.
+	(interprocedural_return::add_events_to_path): Add state_transition
+	param and pass if of correct subclass.
+	(interprocedural_return::try_to_rewind_data_flow): New.
+	(tainted_args_function_info::add_events_to_path): Add
+	state_transition param.
+	(tainted_args_call_info::add_events_to_path): Likewise.
+	* event-loc-info.h (event_loc_info_for_function_entry): New decl.
+	* exploded-graph.h (interprocedural_call::interprocedural_call):
+	Pass and store call_and_return_op rather than gcall.
+	(interprocedural_call::add_events_to_path): Add state_trans param.
+	(interprocedural_call::try_to_rewind_data_flow): New.
+	(interprocedural_call::m_call_stmt): Replace with...
+	(interprocedural_call::m_op): ...this.
+	(interprocedural_return::add_events_to_path): Add state_trans
+	param.
+	(interprocedural_return::try_to_rewind_data_flow): New.
+	(rewind_info_t::add_events_to_path): New.
+	* exploded-path.cc (exploded_path::exploded_path): Drop explicit
+	copy ctor.
+	(diagnostic_state::dump_to_pp): New.
+	(diagnostic_state::dump): New.
+	(exploded_path::find_stmt_backwards): Update for change from
+	m_edges to m_elements.
+	(exploded_path::get_final_enode): Likewise.
+	(exploded_path::feasible_p): Likewise.
+	(exploded_path::dump_to_pp): Likewise.  Dump state transitions.
+	(exploded_path::maybe_log): New.
+	(exploded_path::reverse): New.
+	* exploded-path.h: Include "analyzer/checker-event.h" and
+	"analyzer/state-transition.h".
+	(struct exploded_path::element_t): New.
+	(exploded_path::exploded_path): Replace ctors with "= default".
+	(exploded_path::length): Reimplement.
+	(exploded_path::maybe_log): New decl.
+	(exploded_path::append_edge): New.
+	(exploded_path::reverse): New.
+	(exploded_path::m_edges): Replace with...
+	(exploded_path::m_elements): ...this, using std::vector rather
+	than auto_vec.
+	* feasible-graph.cc (feasible_graph::make_epath): Update for
+	change from m_edges to m_elements.
+	* infinite-recursion.cc
+	(infinite_recursion_diagnostic::add_function_entry_event): Add
+	"state_trans" param and pass it to base class call.
+	(recursive_function_entry_event::recursive_function_entry_event):
+	Pass nullptr for state transition.
+	* ops.cc: Include "analyzer/callsite-expr.h" and
+	"analyzer/state-transition.h".
+	(event_loc_info_for_function_entry): New.
+	(rewind_context::on_data_origin): New.
+	(rewind_context::on_data_flow): New.
+	(gassign_op::try_to_rewind_data_flow): New.
+	(greturn_op::try_to_rewind_data_flow): New.
+	(call_and_return_op::execute): Update for change to
+	interprocedural_call.
+	(call_and_return_op::try_to_rewind_data_flow): New.
+	(phis_for_edge_op::try_to_rewind_data_flow): New.
+	* ops.h (struct rewind_context): New.
+	(operation::try_to_rewind_data_flow): New vfunc.
+	(gassign_op::try_to_rewind_data_flow): New.
+	(predict_op::try_to_rewind_data_flow): New.
+	(greturn_op::try_to_rewind_data_flow): New.
+	(call_and_return_op::try_to_rewind_data_flow): New.
+	(control_flow_op::try_to_rewind_data_flow): New.
+	(phis_for_edge_op::try_to_rewind_data_flow): New.
+	* pending-diagnostic.cc (interesting_t::add_read_region): New.
+	(interesting_t::dump_to_pp): Dump m_read_regions.
+	(pending_diagnostic::add_function_entry_event): Add "state_trans"
+	param and pass it to function_entry_event.  Call
+	event_loc_info_for_function_entry.
+	(pending_diagnostic::add_call_event): Add "state_trans" param and
+	pass it to call_event.
+	* pending-diagnostic.h: Include "analyzer/state-transition.h".
+	(struct interesting_t): Update leading comment.
+	(interesting_t::add_read_region): New.
+	(interesting_t::m_read_regions): New.
+	(struct origin_of_state): New.
+	(call_with_state::call_with_state): Add state_trans param and use
+	it to initialize m_state_trans and m_src_event_id.
+	(call_with_state::m_state_trans): New field.
+	(call_with_state::m_src_event_id): New field.
+	(return_of_state::return_of_state): Add state_trans param and use
+	it to initialize m_state_trans and m_src_event_id.
+	(return_of_state::m_state_trans): New field.
+	(return_of_state::m_src_event_id): New field.
+	(struct copy_of_state): New.
+	(struct use_of_state): New.
+	(pending_diagnostic::describe_origin_of_state): New vfunc.
+	(pending_diagnostic::describe_copy_of_state): New vfunc.
+	(pending_diagnostic::describe_use_of_state): New vfunc.
+	(pending_diagnostic::add_function_entry_event): Add "state_trans"
+	param.
+	(pending_diagnostic::add_call_event): Likewise.
+	* poisoned-value-diagnostic.cc
+	(poisoned_value_diagnostic::mark_interesting_stuff): Add call to
+	add_read_region.
+	* region-model.cc: Include "analyzer/state-transition.h".
+	(callsite_expr::maybe_get_param_location): New.
+	(callsite_expr::get_param_tree): New.
+	(div_by_zero_diagnostic::div_by_zero_diagnostic): Add
+	"divisor_reg" param and use it to initialize m_divisor_reg.
+	(div_by_zero_diagnostic::mark_interesting_stuff): New.
+	(div_by_zero_diagnostic::add_function_entry_event): New.
+	(div_by_zero_diagnostic::describe_origin_of_state): New.
+	(div_by_zero_diagnostic::describe_call_with_state): New.
+	(div_by_zero_diagnostic::describe_return_of_state): New.
+	(div_by_zero_diagnostic::describe_copy_of_state): New.
+	(div_by_zero_diagnostic::describe_use_of_state): New.
+	(div_by_zero_diagnostic::m_divisor_reg): New field.
+	(region_model::get_gassign_result): Pass region to calls to
+	make_shift_count_negative_diagnostic,
+	make_shift_count_overflow_diagnostic, and
+	div_by_zero_diagnostic.
+	(exception_thrown_from_unrecognized_call::add_events_to_path): Add
+	state_transition param.
+	* region-model.h (make_shift_count_negative_diagnostic): Add
+	"src_region" param.
+	(make_shift_count_overflow_diagnostic): Likewise.
+	* region.h: Include "analyzer/store.h" and
+	"text-art/tree-widget.h".
+	* setjmp-longjmp.cc (rewind_info_t::add_events_to_path): Add
+	state_transition param.
+	* shift-diagnostics.cc
+	(shift_count_negative_diagnostic::shift_count_negative_diagnostic):
+	Add src_region param and use it to initialize m_src_region.
+	(shift_count_negative_diagnostic::mark_interesting_stuff): New.
+	(shift_count_negative_diagnostic::m_src_region): New.
+	(make_shift_count_negative_diagnostic): Add src_region param.
+	(shift_count_overflow_diagnostic::shift_count_overflow_diagnostic):
+	Add src_region param and use it to initialize m_src_region.
+	(shift_count_overflow_diagnostic::mark_interesting_stuff): New.
+	(shift_count_overflow_diagnostic::m_src_region): New field.
+	(make_shift_count_overflow_diagnostic): Add src_region param.
+	* sm-signal.cc (signal_delivery_edge_info_t::add_events_to_path):
+	Add state_transition param.
+	* state-transition.cc: New file.
+	* state-transition.h: New file.
+	* supergraph.h (class callsite_expr): Move to callsite-expr.h.
+	* varargs.cc (va_arg_diagnostic::add_call_event): Add state_trans
+	param.
+
 2026-05-05  Jakub Jelinek  <jakub@redhat.com>
 
 	* kf.cc (kf_strcasecmp::impl_call_post): Remove unused variable.

@@ -1,3 +1,62 @@
+2026-05-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR libfortran/125095
+	* gfortran.dg/namelist_102.f90: New test.
+
+2026-05-06  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124985
+	* gcc.dg/Wreturn-nested-3.c: New test.
+	* gcc.dg/pr124985.c: New test.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* gcc.dg/analyzer/divide-by-zero-4.c: Drop option.
+	-fno-analyzer-state-merge.
+	* gcc.dg/analyzer/divide-by-zero-5.c: Likewise.
+	* gcc.dg/analyzer/divide-by-zero-6.c: Likewise.
+
+2026-05-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* c-c++-common/analyzer/divide-by-zero-1.c: Add expected message
+	for origin of zero value.
+	* c-c++-common/analyzer/divide-by-zero-2.c: New test.
+	* c-c++-common/analyzer/divide-by-zero-3.c: New test.
+	* c-c++-common/analyzer/invalid-shift-1.c: Add expected messages
+	about call to op3 and about pertinent param of op3.
+	* c-c++-common/analyzer/invalid-shift-2.c: New test.
+	* c-c++-common/analyzer/invalid-shift-3.c: New test.
+	* c-c++-common/analyzer/invalid-shift-4.c: New test.
+	* g++.dg/analyzer/divide-by-zero-7.C: New test.
+	* gcc.dg/analyzer/divide-by-zero-4.c: New test.
+	* gcc.dg/analyzer/divide-by-zero-5.c: New test.
+	* gcc.dg/analyzer/divide-by-zero-6.c: New test.
+	* gcc.dg/analyzer/divide-by-zero-float.c: Add expected message
+	for origin of zero value.
+
+2026-05-06  Zhongyao Chen  <chenzhongyao.hit@gmail.com>
+
+	PR target/122558
+	* gcc.target/riscv/rvv/autovec/pr122558.c: New test.
+	* gcc.target/riscv/rvv/autovec/dyn-lmul-conv-1.c: Update expected
+	dump counts after VLA LMUL cost scaling.
+	* gcc.target/riscv/rvv/autovec/dyn-lmul-conv-2.c: Likewise.
+	* gcc.target/riscv/rvv/autovec/partial/slp-16.c: Likewise.
+	* gcc.target/riscv/rvv/autovec/partial/slp-5.c: Likewise.
+	* gcc.dg/vect/costmodel/riscv/rvv/pr113112-4.c: Likewise.
+
+2026-05-06  Lulu Cheng  <chenglulu@loongson.cn>
+
+	PR target/125057
+	* gcc.target/loongarch/vector/lasx/pr125057.c: New test.
+	* gcc.target/loongarch/vector/lsx/lsx-mov-2.c: New test.
+
+2026-05-06  Robin Dapp  <rdapp@oss.qualcomm.com>
+
+	* gcc.target/riscv/rvv/autovec/reduc/reduc_call-4.c: Disable
+	instruction scheduling.
+	* gcc.target/riscv/rvv/base/vle-vl1r.c: New test.
+
 2026-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
 
 	PR d/125089

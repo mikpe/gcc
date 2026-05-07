@@ -1,3 +1,12 @@
+2026-05-06  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125179
+	* reflect.cc: (consteval_only_type_r): Remove this cp_walk_tree
+	callback and replace with ...
+	(consteval_only_walker): ... this recursive memoized
+	implementation.
+	(consteval_only_p): Define in terms of consteval_only_walker.
+
 2026-05-05  Patrick Palka  <ppalka@redhat.com>
 
 	PR c++/124957

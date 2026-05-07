@@ -1,3 +1,81 @@
+2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/out_ptr.h (out_ptr_t::_Impl::~_Impl): Adjust
+	access to shared_ptr internals.
+	* include/bits/shared_ptr_base.h (_Sp_counted_deleter): Remove
+	_Impl class and replace _M_impl with the data members it
+	contained.
+	(_Sp_counted_ptr_inplace): Likewise.
+
+2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/shared_ptr_base.h (_Sp_ebo_helper): Simplify by
+	using [[__no_unique_address__]] instead of EBO. Use the
+	attribute unconditionally for the unstable ABI.
+	(_Sp_counted_deleter::_Impl): Adjust uses of _Sp_ebo_helper.
+	(_Sp_counted_ptr_inplace::_Impl): Likewise.
+	* include/std/tuple (_Head_base): Remove implementation for
+	compilers that don't support [[__no_unique_address__]]. Use the
+	attribute unconditionally for the unstable ABI.
+
+2026-05-06  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/std/format (range_formatter::format): Format all
+	contiguous ranges as span<__format::__maybe_const<_Tp, _CharT>>.
+
+2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/shared_ptr.h (_UnboundedArray, _BoundedArray)
+	(_NotUnboundedArray): Remove fallback definition for C++20
+	compilers that don't define __cpp_concepts.
+	* include/bits/shared_ptr_base.h (_Sp_counted_ptr_inplace):
+	Remove fallback declaration of _Sp_overwrite_tag partial
+	specialization.
+
+2026-05-06  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/119126
+	* include/bits/funcwrap.h : (__polyfunc::__invoker_of):
+	Updated to use _Invoker::_Signature and mark as constexpr.
+	(__polyfunc::_base_of): Mark as constexpr.
+	(__std:::__is_function_ref_v, __polyfunc::_Ref_base)
+	(__polyfunc::__is_funcref_assignable): Define.
+	* include/bits/funcref_impl.h (std::function_ref): Add base class
+	of type__polyfunc::_Ref_base. Befriend __invoker_of, __base_of,
+	__is_invoker_convertible, __is_invoker_convertible.
+	(function_ref::_Base): Define.
+	(function_ref::_M_init, function_ref::_M_ptrs): Move to base class.
+	(function_ref::function_ref(_Fn&&), function_ref::operator=): Handle
+	specializations of function_ref with compatible signatures.
+	(function_ref::function_ref): Init base class before _M_invoke
+	consistently, and remove setting of _M_nullptr.
+	* include/bits/cpyfunc_impl.h (copyable_function): Udpdated friend
+	declarations.
+	(copyable_function::_Signature): Remove.
+	* include/bits/mofunc_impl.h (move_only_function): Udpdated friend
+	declarations.
+	(move_only_function::_Signature): Remove.
+	* include/bits/version.def (function_ref): Bump to 202604.
+	* include/bits/version.h: Regnerate.
+	* testsuite/20_util/function_ref/cons.cc: Updated checked FTM value.
+	* testsuite/20_util/function_ref/conv.cc: Updated test to illustrate
+	that double indirection is avoided.
+	* testsuite/20_util/function_ref/dangling.cc: Test for initializing
+	from function_ref with compatible signature.
+	* testsuite/20_util/function_ref/dangling_neg.cc: Test for
+	initializing from function_ref with incompatible signature.
+
+2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++20/atomic.cc (__waitable_state::_S_align): Remove.
+	(__waitable_state::_M_waiters, __waitable_state::_M_ver): Use
+	std::hardware_destructive_interference_size for alignment.
+
+2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/97001
+	* include/bits/range_access.h: Improve Doxygen comments.
+
 2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
 
 	PR libstdc++/124657

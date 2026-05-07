@@ -1,3 +1,12 @@
+2026-05-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR libfortran/125095
+	* io/list_read.c (read_logical): Eat comments in namelist read mode.
+	(read_integer): Likewise.
+	(read_character): Likewise.
+	(read_complex): Likewise.
+	(read_real): Likewise.
+
 2026-05-05  Pietro Monteiro  <pietro@sociotechnical.xyz>
 
 	* Makefile.in: Regenerate.
