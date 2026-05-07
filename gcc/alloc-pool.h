@@ -499,10 +499,11 @@ public:
 
   /* Allocate memory for instance of type T and call a default constructor.  */
 
-  inline T *
-  allocate () ATTRIBUTE_MALLOC
+  template<typename... Ts>
+  inline ATTRIBUTE_MALLOC T *
+  allocate (Ts... args)
   {
-    return ::new (m_allocator.allocate ()) T;
+    return ::new (m_allocator.allocate ()) T (std::forward<Ts> (args)...);
   }
 
   /* Allocate memory for instance of type T and return void * that
