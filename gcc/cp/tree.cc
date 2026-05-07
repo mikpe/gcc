@@ -2155,12 +2155,9 @@ strip_typedefs_expr (tree t, bool *remove_attributes, unsigned int flags)
 
     case LAMBDA_EXPR:
     case STMT_EXPR:
-      return t;
-
+    /* ^^alias represents the alias itself, not the underlying type.  */
     case REFLECT_EXPR:
-      /* ^^alias represents the alias itself, not the underlying type.  */
-      if (TYPE_P (REFLECT_EXPR_HANDLE (t)))
-	return t;
+      return t;
 
     default:
       break;
