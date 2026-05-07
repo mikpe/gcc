@@ -1,3 +1,22 @@
+2026-05-06  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-05  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/109788
+	* iresolve.cc (copy_intrinsic_sym): New helper.
+	(gfc_resolve_spread): Copy the intrinsic descriptor before
+	specializing the character formal argument type.
+
+2026-05-06  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-07  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/102430
+	* openmp.cc (resolve_omp_clauses): Reject array/allocatable LINEAR on
+	worksharing-loop constructs.
+
 2026-04-17  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
