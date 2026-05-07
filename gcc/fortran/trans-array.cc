@@ -3910,7 +3910,7 @@ abridged_ref_name (gfc_expr * expr, gfc_array_ref * ar)
 /* Generate code to perform an array index bound check.  */
 
 static tree
-trans_array_bound_check (gfc_se * se, gfc_ss *ss, tree index, int n,
+trans_array_bound_check (stmtblock_t *block, gfc_ss *ss, tree index, int n,
 			 locus * where, bool check_upper,
 			 const char *compname = NULL)
 {
@@ -3927,7 +3927,7 @@ trans_array_bound_check (gfc_se * se, gfc_ss *ss, tree index, int n,
 
   descriptor = ss->info->data.array.descriptor;
 
-  index = gfc_evaluate_now (index, &se->pre);
+  index = gfc_evaluate_now (index, block);
 
   /* We find a name for the error message.  */
   name = ss->info->expr->symtree->n.sym->name;
@@ -3961,13 +3961,13 @@ trans_array_bound_check (gfc_se * se, gfc_ss *ss, tree index, int n,
 
       fault = fold_build2_loc (input_location, LT_EXPR, logical_type_node,
 			       index, tmp_lo);
-      gfc_trans_runtime_check (true, false, fault, &se->pre, where, msg,
+      gfc_trans_runtime_check (true, false, fault, block, where, msg,
 			       fold_convert (long_integer_type_node, index),
 			       fold_convert (long_integer_type_node, tmp_lo),
 			       fold_convert (long_integer_type_node, tmp_up));
       fault = fold_build2_loc (input_location, GT_EXPR, logical_type_node,
 			       index, tmp_up);
-      gfc_trans_runtime_check (true, false, fault, &se->pre, where, msg,
+      gfc_trans_runtime_check (true, false, fault, block, where, msg,
 			       fold_convert (long_integer_type_node, index),
 			       fold_convert (long_integer_type_node, tmp_lo),
 			       fold_convert (long_integer_type_node, tmp_up));
@@ -3986,7 +3986,7 @@ trans_array_bound_check (gfc_se * se, gfc_ss *ss, tree index, int n,
 
       fault = fold_build2_loc (input_location, LT_EXPR, logical_type_node,
 			       index, tmp_lo);
-      gfc_trans_runtime_check (true, false, fault, &se->pre, where, msg,
+      gfc_trans_runtime_check (true, false, fault, block, where, msg,
 			       fold_convert (long_integer_type_node, index),
 			       fold_convert (long_integer_type_node, tmp_lo));
       free (msg);
@@ -4023,7 +4023,7 @@ gfc_expr_contains_impure_fcn (gfc_expr *e)
 /* Generate code for bounds checking for elemental dimensions.  */
 
 static void
-array_bound_check_elemental (gfc_se * se, gfc_ss * ss, gfc_expr * expr)
+array_bound_check_elemental (stmtblock_t *block, gfc_ss * ss, gfc_expr * expr)
 {
   gfc_array_ref *ar;
   gfc_ref *ref;
@@ -4052,8 +4052,8 @@ array_bound_check_elemental (gfc_se * se, gfc_ss * ss, gfc_expr * expr)
 		      gfc_init_se (&indexse, NULL);
 		      gfc_conv_expr_type (&indexse, ar->start[dim],
 					  gfc_array_index_type);
-		      gfc_add_block_to_block (&se->pre, &indexse.pre);
-		      trans_array_bound_check (se, ss, indexse.expr, dim,
+		      gfc_add_block_to_block (block, &indexse.pre);
+		      trans_array_bound_check (block, ss, indexse.expr, dim,
 					       &ar->where,
 					       ar->as->type != AS_ASSUMED_SIZE
 					       || dim < ar->dimen - 1,
@@ -4098,7 +4098,7 @@ conv_array_index_offset (gfc_se * se, gfc_ss * ss, int dim, int i,
 	  /* We've already translated this value outside the loop.  */
 	  index = info->subscript[dim]->info->data.scalar.value;
 
-	  index = trans_array_bound_check (se, ss, index, dim, &ar->where,
+	  index = trans_array_bound_check (&se->pre, ss, index, dim, &ar->where,
 					   ar->as->type != AS_ASSUMED_SIZE
 					   || dim < ar->dimen - 1);
 	  break;
@@ -4127,7 +4127,7 @@ conv_array_index_offset (gfc_se * se, gfc_ss * ss, int dim, int i,
 	  index = fold_convert (gfc_array_index_type, index);
 
 	  /* Do any bounds checking on the final info->descriptor index.  */
-	  index = trans_array_bound_check (se, ss, index, dim, &ar->where,
+	  index = trans_array_bound_check (&se->pre, ss, index, dim, &ar->where,
 					   ar->as->type != AS_ASSUMED_SIZE
 					   || dim < ar->dimen - 1);
 	  break;
@@ -8652,7 +8652,7 @@ gfc_conv_expr_descriptor (gfc_se *se, gfc_expr *expr)
 
   /* Add bounds-checking for elemental dimensions.  */
   if ((gfc_option.rtcheck & GFC_RTCHECK_BOUNDS) && !expr->no_bounds_check)
-    array_bound_check_elemental (se, ss, expr);
+    array_bound_check_elemental (&se->pre, ss, expr);
 
   if (need_tmp)
     {
