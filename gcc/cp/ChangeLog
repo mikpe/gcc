@@ -1,3 +1,36 @@
+2026-05-06  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-06  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125179
+	* reflect.cc: (consteval_only_type_r): Remove this cp_walk_tree
+	callback and replace with ...
+	(consteval_only_walker): ... this recursive memoized
+	implementation.
+	(consteval_only_p): Define in terms of consteval_only_walker.
+
+2026-05-06  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-05  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124957
+	* class.cc (check_tag): Set ABI_TAG_INHERITED on the TREE_LIST
+	of an inherited tag.  Adjust after ABI_TAG_IMPLICIT renaming.
+	* cp-tree.h (ABI_TAG_IMPLICIT): Rename to ...
+	(ABI_TAG_NOT_MANGLED): ... this.
+	(equal_abi_tags): Adjust forward declaration.
+	* mangle.cc (write_unqualified_name): Adjust equal_abi_tags call.
+	(sorted_abi_tags): New ignore_inherited_p parameter, for ignoring
+	ABI_TAG_INHERITED tags.  Adjust after ABI_TAG_INHERITED renaming.
+	(write_abi_tags): Adjust sorted_abi_tags call.
+	(equal_abi_tags): New ignore_inherited_p parameter.  Pass it to
+	sorted_abi_tags.
+	* module.cc (trees_in::check_abi_tags): Pass
+	ignore_inherited_p=true to equal_abi_tags iff there's a
+	mangled-ness mismatch.
+
 2026-05-01  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
