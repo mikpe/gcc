@@ -7453,6 +7453,10 @@ extract_ref (location_t loc, const constexpr_ctx *ctx, tree T, tree r,
     {
       if (TYPE_REF_P (type))
 	type = TREE_TYPE (type);
+      if (FUNC_OR_METHOD_TYPE_P (type)
+	  || (TREE_CODE (type) == ARRAY_TYPE
+	      && TYPE_DOMAIN (type) == NULL_TREE))
+	return error_mark_node;
       type = build_cplus_array_type (type, NULL_TREE);
       return build_pointer_type (type);
     };
@@ -7462,7 +7466,11 @@ extract_ref (location_t loc, const constexpr_ctx *ctx, tree T, tree r,
     {
       /* The wording is saying that U is the type of r.  */
       tree U = TREE_TYPE (r);
-      if (is_convertible (adjust_type (U), adjust_type (T))
+      tree adju = adjust_type (U);
+      tree adjt = adjust_type (T);
+      if (adju != error_mark_node
+	  && adjt != error_mark_node
+	  && is_convertible (adju, adjt)
 	  && (!var_p || is_constant_expression (r)))
 	{
 	  if (TYPE_REF_P (TREE_TYPE (r)))
