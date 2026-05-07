@@ -8118,59 +8118,12 @@ make_compound_operation_int (scalar_int_mode mode, rtx *x_ptr,
       break;
 
     case PLUS:
-      lhs = XEXP (x, 0);
-      rhs = XEXP (x, 1);
-      lhs = make_compound_operation (lhs, next_code);
-      rhs = make_compound_operation (rhs, next_code);
-      if (GET_CODE (lhs) == MULT && GET_CODE (XEXP (lhs, 0)) == NEG)
-	{
-	  tem = simplify_gen_binary (MULT, mode, XEXP (XEXP (lhs, 0), 0),
-				     XEXP (lhs, 1));
-	  new_rtx = simplify_gen_binary (MINUS, mode, rhs, tem);
-	}
-      else if (GET_CODE (lhs) == MULT
-	       && (CONST_INT_P (XEXP (lhs, 1)) && INTVAL (XEXP (lhs, 1)) < 0))
-	{
-	  tem = simplify_gen_binary (MULT, mode, XEXP (lhs, 0),
-				     simplify_gen_unary (NEG, mode,
-							 XEXP (lhs, 1),
-							 mode));
-	  new_rtx = simplify_gen_binary (MINUS, mode, rhs, tem);
-	}
-      else
-	{
-	  SUBST (XEXP (x, 0), lhs);
-	  SUBST (XEXP (x, 1), rhs);
-	}
-      maybe_swap_commutative_operands (x);
-      return x;
-
     case MINUS:
-      lhs = XEXP (x, 0);
-      rhs = XEXP (x, 1);
-      lhs = make_compound_operation (lhs, next_code);
-      rhs = make_compound_operation (rhs, next_code);
-      if (GET_CODE (rhs) == MULT && GET_CODE (XEXP (rhs, 0)) == NEG)
-	{
-	  tem = simplify_gen_binary (MULT, mode, XEXP (XEXP (rhs, 0), 0),
-				     XEXP (rhs, 1));
-	  return simplify_gen_binary (PLUS, mode, tem, lhs);
-	}
-      else if (GET_CODE (rhs) == MULT
-	       && (CONST_INT_P (XEXP (rhs, 1)) && INTVAL (XEXP (rhs, 1)) < 0))
-	{
-	  tem = simplify_gen_binary (MULT, mode, XEXP (rhs, 0),
-				     simplify_gen_unary (NEG, mode,
-							 XEXP (rhs, 1),
-							 mode));
-	  return simplify_gen_binary (PLUS, mode, tem, lhs);
-	}
-      else
-	{
-	  SUBST (XEXP (x, 0), lhs);
-	  SUBST (XEXP (x, 1), rhs);
-	  return x;
-	}
+      lhs = make_compound_operation (XEXP (x, 0), next_code);
+      rhs = make_compound_operation (XEXP (x, 1), next_code);
+      if (lhs != XEXP (x, 0) || rhs != XEXP (x, 1))
+	return simplify_gen_binary (code, mode, lhs, rhs);
+      return x;
 
     case AND:
       /* If the second operand is not a constant, we can't do anything
