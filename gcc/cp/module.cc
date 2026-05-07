@@ -13735,9 +13735,8 @@ trees_in::read_class_def (tree defn, tree maybe_template)
 		{
 		  CLASSTYPE_BEFRIENDING_CLASSES (type_dup)
 		    = CLASSTYPE_BEFRIENDING_CLASSES (type);
-		  if (!ANON_AGGR_TYPE_P (type))
-		    CLASSTYPE_TYPEINFO_VAR (type_dup)
-		      = CLASSTYPE_TYPEINFO_VAR (type);
+		  SET_CLASSTYPE_TYPEINFO_VAR (type_dup,
+					      CLASSTYPE_TYPEINFO_VAR (type));
 		}
 	      for (tree v = type; v; v = TYPE_NEXT_VARIANT (v))
 		TYPE_LANG_SPECIFIC (v) = ls;
@@ -13778,7 +13777,7 @@ trees_in::read_class_def (tree defn, tree maybe_template)
 		       to the as-base FIELD_DECL copy.  */
 		    gcc_checking_assert (ANON_AGGR_TYPE_FIELD (anon_type));
 		  else
-		    ANON_AGGR_TYPE_FIELD (anon_type) = decl;
+		    SET_ANON_AGGR_TYPE_FIELD (anon_type, decl);
 		}
 
 	      if (TREE_CODE (decl) == USING_DECL

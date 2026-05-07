@@ -490,7 +490,7 @@ get_tinfo_decl_direct (tree type, tree name, int pseudo_ix)
 
       d = pushdecl_top_level_and_finish (d, NULL_TREE);
       if (CLASS_TYPE_P (type))
-	CLASSTYPE_TYPEINFO_VAR (TYPE_MAIN_VARIANT (type)) = d;
+	SET_CLASSTYPE_TYPEINFO_VAR (TYPE_MAIN_VARIANT (type), d);
 
       /* Add decl to the global array of tinfo decls.  */
       vec_safe_push (unemitted_tinfo_decls, d);
