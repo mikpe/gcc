@@ -5168,10 +5168,22 @@
 }
   [(set_attr "type" "branch")
    (set_attr "mode" "none")])
-					
-	
 
-;; Standard extensions and pattern for optimization
+;; We can save an instruction for this case.  Essentially we can
+;; test the (sanitized) shift count against zero.  This only comes
+;; up for 32 bit objects on rv64.
+(define_split
+  [(set (match_operand:DI 0 "register_operand")
+	(and:DI (subreg:DI
+		 (ashift:SI (const_int 1)
+			    (match_operand:QI 1 "register_operand")) 0)
+		(const_int 1)))
+   (clobber (match_operand:DI 2 "register_operand"))]
+  "TARGET_64BIT"
+  [(set (match_dup 2) (and:DI (match_dup 1) (const_int 31)))
+   (set (match_dup 0) (eq:DI (match_dup 2) (const_int 0)))]
+  { operands[1] = gen_lowpart (DImode, operands[1]); })
+
 (include "bitmanip.md")
 (include "crypto.md")
 (include "sync.md")
