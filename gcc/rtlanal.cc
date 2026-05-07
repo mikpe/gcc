@@ -3829,6 +3829,13 @@ commutative_operand_precedence (rtx op)
       /* If only one operand is a binary expression, it will be the first
          operand.  In particular,  (plus (minus (reg) (reg)) (neg (reg)))
          is canonical, although it will usually be further simplified.  */
+      return 3;
+
+    case RTX_COMM_COMPARE:
+    case RTX_COMPARE:
+      /* Give comparisons a cost between the unary expressions below
+	 and the other binary expressions above, so that we don't have
+	 a situation where the canonical order is binary, unary, binary.  */
       return 2;
 
     case RTX_UNARY:
