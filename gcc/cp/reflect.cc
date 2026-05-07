@@ -283,7 +283,7 @@ maybe_strip_typedefs (tree t)
    DECL_ARGUMENTS (DECL_CONTEXT (parm)) chain.  Return corresponding
    PARM_DECL which is in the chain.  */
 
-static tree
+tree
 maybe_update_function_parm (tree parm)
 {
   if (!OLD_PARM_DECL_P (parm))

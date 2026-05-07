@@ -3331,21 +3331,156 @@ dump_expr (cxx_pretty_printer *pp, tree t, int flags)
 
     case REFLECT_EXPR:
       {
-	pp_string (pp, "^^");
 	tree h = REFLECT_EXPR_HANDLE (t);
-	if (DECL_P (h))
-	  dump_decl (pp, h, flags);
-	else if (TYPE_P (h))
-	  dump_type (pp, h, flags);
-	else if (TREE_CODE (h) == TREE_VEC)
+	bool any;
+	switch (REFLECT_EXPR_KIND (t))
 	  {
-	    pp_format_decoder (pp) = cp_printer;
-	    pp->set_format_postprocessor
-	      (std::make_unique<cxx_format_postprocessor> ());
-	    dump_data_member_spec (pp, h);
+	  case REFLECT_ANNOTATION:
+	    pp_string (pp, "^^[[=");
+	    pp->set_padding (pp_none);
+	    dump_expr (pp, TREE_VALUE (TREE_VALUE (h)), flags);
+	    pp_string (pp, "]]");
+	    break;
+	  case REFLECT_DATA_MEMBER_SPEC:
+	    pp_cxx_ws_string (pp, "data_member_spec");
+	    pp_string (pp, "(^^");
+	    pp->set_padding (pp_none);
+	    dump_type (pp, TREE_VEC_ELT (h, 0), flags);
+	    pp_string (pp, ",{");
+	    any = false;
+	    if (TREE_VEC_ELT (h, 1))
+	      {
+		pp_string (pp, ".name=");
+		pp_doublequote (pp);
+		pp->set_padding (pp_none);
+		dump_decl (pp, TREE_VEC_ELT (h, 1), flags);
+		pp_doublequote (pp);
+		any = true;
+	      }
+	    if (TREE_VEC_ELT (h, 2))
+	      {
+		if (any)
+		  pp_comma (pp);
+		pp_string (pp, ".alignment=");
+		pp->set_padding (pp_none);
+		dump_expr (pp, TREE_VEC_ELT (h, 2), flags);
+		any = true;
+	      }
+	    if (TREE_VEC_ELT (h, 3))
+	      {
+		if (any)
+		  pp_comma (pp);
+		pp_string (pp, ".bit_width=");
+		pp->set_padding (pp_none);
+		dump_expr (pp, TREE_VEC_ELT (h, 3), flags);
+		any = true;
+	      }
+	    if (TREE_VEC_ELT (h, 4) && !integer_zerop (TREE_VEC_ELT (h, 4)))
+	      {
+		if (any)
+		  pp_comma (pp);
+		pp_string (pp, ".no_unique_address=");
+		pp->set_padding (pp_none);
+		dump_expr (pp, TREE_VEC_ELT (h, 4), flags);
+		any = true;
+	      }
+	    if (TREE_VEC_LENGTH (h) > 5)
+	      {
+		if (any)
+		  pp_comma (pp);
+		pp_string (pp, ".annotations={");
+		pp->set_padding (pp_none);
+		for (int i = 5; i < TREE_VEC_LENGTH (h); ++i)
+		  {
+		    dump_expr (pp, TREE_VEC_ELT (h, i), flags);
+		    if (i != TREE_VEC_LENGTH (h) - 1)
+		      pp_comma (pp);
+		    pp->set_padding (pp_none);
+		  }
+		pp_right_brace (pp);
+	      }
+	    pp_string (pp, "})");
+	    break;
+	  case REFLECT_BASE:
+	    {
+	      pp_cxx_ws_string (pp, "bases_of");
+	      pp_string (pp, "(^^");
+	      pp->set_padding (pp_none);
+	      tree d = direct_base_derived (h);
+	      dump_type (pp, d, flags);
+	      pp_string (pp, ",std::meta::access_context::unchecked())[");
+	      pp->set_padding (pp_none);
+	      tree binfo = TYPE_BINFO (d), base_binfo;
+	      for (unsigned i = 0; BINFO_BASE_ITERATE (binfo, i, base_binfo);
+		   i++)
+		if (base_binfo == h)
+		  {
+		    pp_wide_integer (pp, i);
+		    break;
+		  }
+	      pp_string (pp, "] {aka ");
+	      pp->set_padding (pp_none);
+	      dump_type (pp, BINFO_TYPE (h), flags);
+	      pp_right_brace (pp);
+	      break;
+	    }
+	  case REFLECT_PARM:
+	    {
+	      pp_cxx_ws_string (pp, "parameters_of");
+	      pp_string (pp, "(^^");
+	      pp->set_padding (pp_none);
+	      h = maybe_update_function_parm (h);
+	      dump_decl (pp, DECL_CONTEXT (h), flags);
+	      pp_string (pp, ")[");
+	      pp->set_padding (pp_none);
+	      unsigned int i = 0;
+	      for (tree arg = FUNCTION_FIRST_USER_PARM (DECL_CONTEXT (h));
+		   arg; arg = DECL_CHAIN (arg), ++i)
+		if (arg == h)
+		  {
+		    pp_wide_integer (pp, i);
+		    break;
+		  }
+	      pp_right_bracket (pp);
+	      if (MULTIPLE_NAMES_PARM_P (h))
+		break;
+	      if (DECL_NAME (h))
+		h = DECL_NAME (h);
+	      else if (tree opn = lookup_attribute ("old parm name",
+						    DECL_ATTRIBUTES (h)))
+		h = TREE_VALUE (TREE_VALUE (opn));
+	      else
+		break;
+	      pp_string (pp, " {aka ");
+	      dump_decl (pp, h, flags);
+	      pp_right_brace (pp);
+	      break;
+	    }
+	  case REFLECT_OBJECT:
+	    pp_cxx_ws_string (pp, "std::meta::reflect_object");
+	    pp_left_paren (pp);
+	    pp->set_padding (pp_none);
+	    dump_expr (pp, h, flags);
+	    pp_right_paren (pp);
+	    break;
+	  case REFLECT_VALUE:
+	    pp_cxx_ws_string (pp, "std::meta::reflect_constant");
+	    pp_left_paren (pp);
+	    pp->set_padding (pp_none);
+	    dump_expr (pp, h, flags);
+	    pp_right_paren (pp);
+	    break;
+	  default:
+	    pp_string (pp, "^^");
+	    pp->set_padding (pp_none);
+	    if (DECL_P (h))
+	      dump_decl (pp, h, flags);
+	    else if (TYPE_P (h))
+	      dump_type (pp, h, flags);
+	    else
+	      dump_expr (pp, h, flags);
+	    break;
 	  }
-	else
-	  dump_expr (pp, h, flags);
 	break;
       }
 

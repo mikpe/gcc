@@ -9517,6 +9517,7 @@ extern void coro_set_ramp_function		(tree, tree);
 
 /* In reflect.cc */
 extern void init_reflection ();
+extern tree maybe_update_function_parm (tree);
 extern bool metafunction_p (tree) ATTRIBUTE_PURE;
 extern tree direct_base_derived (tree) ATTRIBUTE_PURE;
 extern tree process_metafunction (const constexpr_ctx *, tree, tree,
