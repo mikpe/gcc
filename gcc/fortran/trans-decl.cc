@@ -756,16 +756,6 @@ gfc_finish_var_decl (tree decl, gfc_symbol * sym)
 		&& sym->attr.codimension && !sym->attr.allocatable)))
     TREE_STATIC (decl) = 1;
 
-  /* If derived-type variables with DTIO procedures are not made static
-     some bits of code referencing them get optimized away.
-     TODO Understand why this is so and fix it.  */
-  if (!sym->attr.use_assoc
-      && ((sym->ts.type == BT_DERIVED
-           && sym->ts.u.derived->attr.has_dtio_procs)
-	  || (sym->ts.type == BT_CLASS
-	      && CLASS_DATA (sym)->ts.u.derived->attr.has_dtio_procs)))
-    TREE_STATIC (decl) = 1;
-
   /* Treat asynchronous variables the same as volatile, for now.  */
   if (sym->attr.volatile_ || sym->attr.asynchronous)
     {

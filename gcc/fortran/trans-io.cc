@@ -416,7 +416,7 @@ gfc_build_io_library_fndecls (void)
 	integer_type_node, gfc_charlen_type_node);
 
   iocall[IOCALL_X_DERIVED] = gfc_build_library_function_decl_with_spec (
-	get_identifier (PREFIX("transfer_derived")), ". w r ",
+	get_identifier (PREFIX("transfer_derived")), ". w w ",
 	void_type_node, 2, dt_parm_type, pvoid_type_node);
 
   /* Library entry points */
