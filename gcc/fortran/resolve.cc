@@ -6578,6 +6578,13 @@ resolve_variable (gfc_expr *e)
       if (e->expr_type == EXPR_CONSTANT)
 	return true;
     }
+  else if (IS_INFERRED_TYPE (e)
+	   && sym->ts.type != BT_UNKNOWN
+	   && (sym->ts.type != e->ts.type || sym->ts.kind != e->ts.kind))
+    /* No subobject ref, but the expression's typespec was set at parse
+       time before the target's actual type/kind was known.  Refresh from
+       the now-resolved associate-name symbol.  */
+    e->ts = sym->ts;
   else if (sym->attr.select_type_temporary
 	   && sym->ns->assoc_name_inferred)
     gfc_fixup_inferred_type_refs (e);
@@ -6962,6 +6969,15 @@ gfc_fixup_inferred_type_refs (gfc_expr *e)
 					   sym->assoc->target->ts.kind);
 	  gfc_replace_expr (e, ne);
 	}
+      else if (ref && ref->type == REF_INQUIRY
+	       && (ref->u.i == INQUIRY_RE || ref->u.i == INQUIRY_IM)
+	       && sym->ts.type == BT_COMPLEX
+	       && e->ts.type == BT_REAL
+	       && e->ts.kind != sym->ts.kind)
+	/* primary.cc set the inquiry-result kind to the default real kind
+	   when the associate-name's type was inferred from %re/%im before
+	   the target was resolved.  Now use the (resolved) selector kind.  */
+	e->ts.kind = sym->ts.kind;
 
       /* Now that the references are all sorted out, set the expression rank
 	 and return.  */
@@ -10679,6 +10695,16 @@ resolve_assoc_var (gfc_symbol* sym, bool resolve_target)
 		   && CLASS_DATA (target)->as && !CLASS_DATA (sym)->as))
 	/* Confirmed to be either a derived type or misidentified to be a
 	   scalar class object, when the selector is a class array.  */
+	sym->ts = target->ts;
+      else if (sym->assoc->inferred_type
+	       && (sym->ts.type == BT_COMPLEX
+		   || sym->ts.type == BT_CHARACTER)
+	       && target->ts.type == sym->ts.type
+	       && sym->ts.kind != target->ts.kind)
+	/* The inferred type was set from a %re, %im or %len inquiry on
+	   the associate name with the default kind, before the target's
+	   actual type was known.  Now that the target has been resolved,
+	   update the kind to match.  */
 	sym->ts = target->ts;
     }
 
