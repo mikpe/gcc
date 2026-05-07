@@ -5,7 +5,7 @@ struct foo { int x; int y; };
 void
 init_foo (struct foo *f)
 {
-  __builtin_memset (f, 0, sizeof (f));
+  __builtin_memset (f, 0, sizeof (*f));
 }
 
 int
