@@ -191,7 +191,7 @@
   [(set (reg:CC CC_REG)
 	(compare:CC (match_operand:SI 0 "register_operand"  "r,r,r,r,r,r,r")
 		    (match_operand:SI 1 "rx_source_operand" "r,Uint04,Int08,Sint16,Sint24,i,Q")))]
-  "reload_completed"
+  "post_ra_split_completed"
   "cmp\t%Q1, %0"
   [(set_attr "timings" "11,11,11,11,11,11,33")
    (set_attr "length"  "2,2,3,4,5,6,5")]
@@ -255,7 +255,7 @@
 	  (and:SI (match_operand:SI 0 "register_operand"  "r,r,r")
 		  (match_operand:SI 1 "rx_source_operand" "r,i,Q"))
 	  (const_int 0)))]
-  "reload_completed"
+  "post_ra_split_completed"
   "tst\t%Q1, %0"
   [(set_attr "timings" "11,11,33")
    (set_attr "length"  "3,7,6")]
@@ -295,7 +295,7 @@
 	(compare:CC_F
 	  (match_operand:SF 0 "register_operand"  "r,r,r")
 	  (match_operand:SF 1 "rx_source_operand" "r,F,Q")))]
-  "ALLOW_RX_FPU_INSNS && reload_completed"
+  "ALLOW_RX_FPU_INSNS && post_ra_split_completed"
   "fcmp\t%1, %0"
   [(set_attr "timings" "11,11,33")
    (set_attr "length" "3,7,5")]
@@ -310,7 +310,7 @@
 	    [(reg CC_REG) (const_int 0)])
 	  (label_ref (match_operand 0 "" ""))
 	  (pc)))]
-  "reload_completed"
+  "post_ra_split_completed"
   "b%B1\t%0"
   [(set_attr "length" "8")    ;; This length is wrong, but it is
                               ;; too hard to compute statically.
@@ -702,7 +702,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(match_operator:SI 1 "comparison_operator"
 	  [(reg CC_REG) (const_int 0)]))]
-  "reload_completed"
+  "post_ra_split_completed"
   "sc%B1.L\t%0"
   [(set_attr "length" "3")]
 )
@@ -807,7 +807,7 @@
 	    [(reg CC_REG) (const_int 0)])
 	  (match_operand:SI 1 "immediate_operand" "Sint08,Sint16,Sint24,i")
 	  (match_dup 0)))]
-  "reload_completed
+  "post_ra_split_completed
    && ((GET_CODE (operands[2]) == EQ) || (GET_CODE (operands[2]) == NE))"
   {
     if (GET_CODE (operands[2]) == EQ)
@@ -826,7 +826,7 @@
 	  (match_operand:SI 1 "nonmemory_operand"
 		              "r,Uint04,Sint08,Sint16,Sint24,i")
 	  (match_dup 0)))]
-  "reload_completed"
+  "post_ra_split_completed"
   {
     PUT_CODE (operands[2], reverse_condition (GET_CODE (operands[2])));
     return "b%B2 1f\n\tmov %1, %0\n1:";
@@ -856,7 +856,7 @@
   ;; Note - although the ABS instruction does set the O bit in the processor
   ;; status word, it does not do so in a way that is comparable with the CMP
   ;; instruction.  Hence we use CC_ZSmode rather than CC_ZSOmode.
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   abs\t%0
   abs\t%1, %0"
@@ -908,7 +908,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		    0 "register_operand"  "=r,r,r,r,r,r,r,r,r,r,r,r,r,r")
 	(plus:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSCmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSCmode)"
   "@
   add\t%2, %0
   add\t%2, %0
@@ -937,6 +937,7 @@
 		     (const_int 0)))
 	      (set (match_operand:SI 0 "register_operand")
 		   (plus:SI (match_dup 1) (match_dup 2)))])]
+  "post_ra_split_completed"
 )
 
 (define_insn "adc_internal"
@@ -947,7 +948,7 @@
 	    (match_operand:SI 1 "register_operand"  "%0,0,0,0,0,0"))
 	  (match_operand:SI   2 "rx_source_operand" "r,Sint08,Sint16,Sint24,i,Q")))
     (clobber (reg:CC CC_REG))]
-  "reload_completed"
+  "post_ra_split_completed"
   "adc\t%2, %0"
   [(set_attr "timings" "11,11,11,11,11,33")
    (set_attr "length"   "3,4,5,6,7,6")]
@@ -968,7 +969,7 @@
 	    (ltu:SI (reg:CC CC_REG) (const_int 0))
 	    (match_dup 1))
 	  (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSCmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSCmode)"
   "adc\t%2, %0"
   [(set_attr "timings" "11,11,11,11,11,33")
    (set_attr "length"   "3,4,5,6,7,6")]
@@ -1136,7 +1137,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		   0 "register_operand"  "=r,r,r,r,r,r,r,r,r")
 	(and:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   and\t%2, %0
   and\t%2, %0
@@ -1367,7 +1368,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		   0 "register_operand" "=r,r")
 	(neg:SI (match_dup 1)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   neg\t%0
   neg\t%1, %0"
@@ -1391,7 +1392,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		   0 "register_operand" "=r,r")
 	(not:SI (match_dup 1)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   not\t%0
   not\t%1, %0"
@@ -1440,7 +1441,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		   0 "register_operand" "=r,r,r,r,r,r,r,r,r")
 	(ior:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   or\t%2, %0
   or\t%2, %0
@@ -1472,7 +1473,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		      0 "register_operand" "=r")
 	(rotate:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "rotl\t%2, %0"
   [(set_attr "length" "3")]
 )
@@ -1494,7 +1495,7 @@
 		 (const_int 0)))
    (set (match_operand:SI			0 "register_operand" "=r")
 	(rotatert:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "rotr\t%2, %0"
   [(set_attr "length" "3")]
 )
@@ -1519,7 +1520,7 @@
 		 (const_int 0)))
    (set (match_operand:SI              0 "register_operand" "=r,r,r")
 	(ashiftrt:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   shar\t%2, %0
   shar\t%2, %0
@@ -1547,7 +1548,7 @@
 		 (const_int 0)))
    (set (match_operand:SI			0 "register_operand" "=r,r,r")
 	(lshiftrt:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   shlr\t%2, %0
   shlr\t%2, %0
@@ -1575,7 +1576,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		      0 "register_operand" "=r,r,r")
 	(ashift:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "@
   shll\t%2, %0
   shll\t%2, %0
@@ -1609,7 +1610,7 @@
 	(unspec:SI [(match_operand:SI 1 "register_operand"  "0")
 		    (reg:CC CC_REG)]
 		   UNSPEC_BUILTIN_SAT))]
-  "reload_completed"
+  "post_ra_split_completed"
   "sat\t%0"
   [(set_attr "length" "2")]
 )
@@ -1639,7 +1640,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		     0 "register_operand" "=r,r,r,r,r")
 	(minus:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSCmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSCmode)"
   "@
   sub\t%2, %0
   sub\t%2, %0
@@ -1659,6 +1660,7 @@
 		     (const_int 0)))
 	      (set (match_operand:SI 0 "register_operand")
 		   (minus:SI (match_dup 1) (match_dup 2)))])]
+  "post_ra_split_completed"
 )
 
 (define_insn "sbb_internal"
@@ -1669,7 +1671,7 @@
 	    (match_operand:SI 2 "rx_compare_operand" " r,Q"))
 	  (geu:SI (reg:CC CC_REG) (const_int 0))))
     (clobber (reg:CC CC_REG))]
-  "reload_completed"
+  "post_ra_split_completed"
   "sbb\t%2, %0"
   [(set_attr "timings" "11,33")
    (set_attr "length"  "3,6")]
@@ -1688,7 +1690,7 @@
 	(minus:SI
 	  (minus:SI (match_dup 1) (match_dup 2))
 	  (geu:SI (reg:CC CC_REG) (const_int 0))))]
-  "reload_completed"
+  "post_ra_split_completed"
   "sbb\t%2, %0"
   [(set_attr "timings" "11,33")
    (set_attr "length"  "3,6")]
@@ -1769,7 +1771,7 @@
 		 (const_int 0)))
    (set (match_operand:SI		   0 "register_operand" "=r,r,r,r,r,r")
 	(xor:SI (match_dup 1) (match_dup 2)))]
-  "reload_completed && rx_match_ccmode (insn, CC_ZSmode)"
+  "post_ra_split_completed && rx_match_ccmode (insn, CC_ZSmode)"
   "xor\t%Q2, %0"
   [(set_attr "timings" "11,11,11,11,11,33")
    (set_attr "length" "3,4,5,6,7,6")]
@@ -1931,7 +1933,7 @@
   [(set (reg:CC CC_REG)
 	(compare:CC (match_operand:SI                               0 "register_operand" "r")
 		    (extend_types:SI (match_operand:small_int_modes 1 "rx_restricted_mem_operand" "Q"))))]
-  "(optimize < 3 || optimize_size)"
+  "post_ra_split_completed && (optimize < 3 || optimize_size)"
   "cmp\t%<extend_types:letter>1, %0"
   [(set_attr "timings" "33")
    (set_attr "length"  "5")] ;; This length is corrected in rx_adjust_insn_length
@@ -2180,7 +2182,7 @@
 	  (match_operand:SI 1 "const_int_operand" ""))
 	(match_operator:SI 2 "comparison_operator"
 	  [(reg CC_REG) (const_int 0)]))]
-  "reload_completed"
+  "post_ra_split_completed"
   "bm%B2\t%1, %0"
   [(set_attr "length" "3")]
 )

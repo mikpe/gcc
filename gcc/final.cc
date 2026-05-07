@@ -4498,6 +4498,7 @@ rest_of_clean_state (void)
 
   flag_rerun_cse_after_global_opts = 0;
   reload_completed = 0;
+  post_ra_split_completed = false;
   epilogue_completed = 0;
 #ifdef STACK_REGS
   regstack_completed = 0;
