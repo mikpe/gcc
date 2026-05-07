@@ -5010,7 +5010,8 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 (for minmax (min max)
  (simplify
   (minmax:c (plus:cs @0 @2) (plus:s @1 @2))
-   (if (TYPE_OVERFLOW_UNDEFINED (type)
+   (if (INTEGRAL_TYPE_P (type)
+	&& TYPE_OVERFLOW_UNDEFINED (type)
 	&& !TYPE_OVERFLOW_SANITIZED (type))
     (plus (minmax @0 @1) @2))))
 
@@ -5018,7 +5019,8 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 (for minmax (min max)
  (simplify
   (minmax:c (minus:s @0 @2) (minus:s @1 @2))
-   (if (TYPE_OVERFLOW_UNDEFINED (type)
+   (if (INTEGRAL_TYPE_P (type)
+	&& TYPE_OVERFLOW_UNDEFINED (type)
 	&& !TYPE_OVERFLOW_SANITIZED (type))
     (minus (minmax @0 @1) @2))))
 
