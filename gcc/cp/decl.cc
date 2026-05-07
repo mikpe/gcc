@@ -6200,7 +6200,7 @@ fixup_anonymous_aggr (tree t)
   vec_safe_truncate (vec, store);
 
   /* Wipe RTTI info.  */
-  CLASSTYPE_TYPEINFO_VAR (t) = NULL_TREE;
+  SET_CLASSTYPE_TYPEINFO_VAR (t, NULL_TREE);
 
   /* Anonymous aggregates cannot have fields with ctors, dtors or complex
      assignment operators (because they cannot have these methods themselves).

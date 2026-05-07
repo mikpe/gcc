@@ -4284,7 +4284,7 @@ finish_member_declaration (tree decl)
       && ANON_AGGR_TYPE_P (TREE_TYPE (decl)))
     {
       gcc_assert (!ANON_AGGR_TYPE_FIELD (TYPE_MAIN_VARIANT (TREE_TYPE (decl))));
-      ANON_AGGR_TYPE_FIELD (TYPE_MAIN_VARIANT (TREE_TYPE (decl))) = decl;
+      SET_ANON_AGGR_TYPE_FIELD (TYPE_MAIN_VARIANT (TREE_TYPE (decl)), decl);
     }
 
   if (TREE_CODE (decl) == USING_DECL)

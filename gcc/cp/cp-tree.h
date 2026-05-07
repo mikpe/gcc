@@ -2683,6 +2683,9 @@ struct GTY(()) lang_type {
   tree primary_base;
   vec<tree_pair_s, va_gc> *vcall_indices;
   tree vtables;
+  /* CLASSTYPE_TYPEINFO_VAR and/or ANON_AGGR_TYPE_FIELD.  If both,
+     this is a TREE_LIST with the former as TREE_VALUE and the latter
+     as TREE_PURPOSE.  */
   tree typeinfo_var;
   vec<tree, va_gc> *vbases;
   tree as_base;
@@ -3076,11 +3079,44 @@ struct GTY(()) lang_type {
 #define CLASSTYPE_VTABLES(NODE) \
   (LANG_TYPE_CLASS_CHECK (NODE)->vtables)
 
+/* Helper for CLASSTYPE_TYPEINFO_VAR.  */
+
+inline tree
+get_classtype_typeinfo_var (tree typeinfo_var)
+{
+  if (typeinfo_var == NULL_TREE)
+    return NULL_TREE;
+  if (TREE_CODE (typeinfo_var) == TREE_LIST)
+    return TREE_VALUE (typeinfo_var);
+  if (VAR_P (typeinfo_var))
+    return typeinfo_var;
+  return NULL_TREE;
+}
+
 /* The std::type_info variable representing this class, or NULL if no
    such variable has been created.  This field is only set for the
    TYPE_MAIN_VARIANT of the class.  */
 #define CLASSTYPE_TYPEINFO_VAR(NODE) \
-  (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var)
+  get_classtype_typeinfo_var (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var)
+
+/* Helper for SET_CLASSTYPE_TYPEINFO_VAR.  */
+
+inline tree &
+set_classtype_typeinfo_var (tree &typeinfo_var)
+{
+  if (typeinfo_var == NULL_TREE)
+    return typeinfo_var;
+  if (TREE_CODE (typeinfo_var) == FIELD_DECL)
+    typeinfo_var = build_tree_list (typeinfo_var, NULL_TREE);
+  if (TREE_CODE (typeinfo_var) == TREE_LIST)
+    return TREE_VALUE (typeinfo_var);
+  return typeinfo_var;
+}
+
+/* Setter for that.  */
+#define SET_CLASSTYPE_TYPEINFO_VAR(NODE, VAR) \
+  (set_classtype_typeinfo_var (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var) \
+   = (VAR))
 
 /* Accessor macros for the BINFO_VIRTUALS list.  */
 
@@ -5414,9 +5450,42 @@ get_vec_init_expr (tree t)
 #define ANON_UNION_TYPE_P(NODE) \
   (TREE_CODE (NODE) == UNION_TYPE && ANON_AGGR_TYPE_P (NODE))
 
+/* Helper for ANON_AGGR_TYPE_FIELD.  */
+
+inline tree
+get_anon_aggr_type_field (tree typeinfo_var)
+{
+  if (typeinfo_var == NULL_TREE)
+    return NULL_TREE;
+  if (TREE_CODE (typeinfo_var) == TREE_LIST)
+    return TREE_PURPOSE (typeinfo_var);
+  if (TREE_CODE (typeinfo_var) == FIELD_DECL)
+    return typeinfo_var;
+  return NULL_TREE;
+}
+
 /* For an ANON_AGGR_TYPE_P the single FIELD_DECL it is used with.  */
 #define ANON_AGGR_TYPE_FIELD(NODE) \
-  (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var)
+  get_anon_aggr_type_field (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var)
+
+/* Helper for SET_ANON_AGGR_TYPE_FIELD.  */
+
+inline tree &
+set_anon_aggr_type_field (tree &typeinfo_var)
+{
+  if (typeinfo_var == NULL_TREE)
+    return typeinfo_var;
+  if (VAR_P (typeinfo_var))
+    typeinfo_var = build_tree_list (NULL_TREE, typeinfo_var);
+  if (TREE_CODE (typeinfo_var) == TREE_LIST)
+    return TREE_PURPOSE (typeinfo_var);
+  return typeinfo_var;
+}
+
+/* Setter for that.  */
+#define SET_ANON_AGGR_TYPE_FIELD(NODE, FIELD) \
+  (set_anon_aggr_type_field (LANG_TYPE_CLASS_CHECK (NODE)->typeinfo_var) \
+   = (FIELD))
 
 /* Define fields and accessors for nodes representing declared names.  */
 
