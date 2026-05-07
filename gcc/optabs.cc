@@ -907,8 +907,16 @@ expand_doubleword_mult (machine_mode mode, rtx op0, rtx op1, rtx target,
 	return NULL_RTX;
     }
 
-  adjust = expand_binop (word_mode, smul_optab, op0_high, op1_low,
-			 NULL_RTX, 0, OPTAB_DIRECT);
+  if (op1_low == const1_rtx)
+    adjust = op0_high;
+  else if (op1_low == const0_rtx)
+    adjust = const0_rtx;
+  else if (op1_low == const2_rtx)
+    adjust = expand_binop (word_mode, add_optab, op0_high, op0_high,
+			   NULL_RTX, 0, OPTAB_DIRECT);
+  else
+    adjust = expand_binop (word_mode, smul_optab, op0_high, op1_low,
+			   NULL_RTX, 0, OPTAB_DIRECT);
   if (!adjust)
     return NULL_RTX;
 
@@ -936,8 +944,16 @@ expand_doubleword_mult (machine_mode mode, rtx op0, rtx op1, rtx target,
 	return NULL_RTX;
     }
 
-  temp = expand_binop (word_mode, smul_optab, op1_high, op0_low,
-		       NULL_RTX, 0, OPTAB_DIRECT);
+  if (op1_high == const1_rtx)
+    temp = op0_low;
+  else if (op1_high == const0_rtx)
+    temp = const0_rtx;
+  else if (op1_high == const2_rtx)
+    temp = expand_binop (word_mode, add_optab, op0_low, op0_low,
+			 NULL_RTX, 0, OPTAB_DIRECT);
+  else
+    temp = expand_binop (word_mode, smul_optab, op0_low, op1_high,
+			 NULL_RTX, 0, OPTAB_DIRECT);
   if (!temp)
     return NULL_RTX;
 
@@ -954,7 +970,9 @@ expand_doubleword_mult (machine_mode mode, rtx op0, rtx op1, rtx target,
   if (GET_MODE (op0_low) == VOIDmode && GET_MODE (op1_low) == VOIDmode)
     op0_low = force_reg (word_mode, op0_low);
 
-  if (umulp)
+  if (op1_low == const1_rtx)
+    product = convert_modes (mode, word_mode, op0_low, umulp);
+  else if (umulp)
     product = expand_binop (mode, umul_widen_optab, op0_low, op1_low,
 			    target, 1, OPTAB_DIRECT);
   else

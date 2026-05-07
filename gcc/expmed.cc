@@ -2962,6 +2962,28 @@ synth_mult (struct algorithm *alg_out, unsigned HOST_WIDE_INT t,
 		}
 	    }
 	}
+      else if (GET_MODE_BITSIZE (imode) == 2 * BITS_PER_WORD
+	       && imode == mode)
+	{
+	  q = t >> m;
+	  int op1_cost = shift_cost (speed, mode, m - BITS_PER_WORD);
+	  int op2_cost = zero_cost (speed);
+	  op_latency = MAX (op1_cost, op2_cost);
+	  op_cost = op1_cost + op2_cost;
+
+	  new_limit.cost = best_cost.cost - op_cost;
+	  new_limit.latency = best_cost.latency - op_latency;
+	  synth_mult (alg_in, q, &new_limit, mode);
+	  alg_in->cost.cost += op_cost;
+	  alg_in->cost.latency += op_latency;
+	  if (CHEAPER_MULT_COST (&alg_in->cost, &best_cost))
+	    {
+	      best_cost = alg_in->cost;
+	      std::swap (alg_in, best_alg);
+	      best_alg->log[best_alg->ops] = m;
+	      best_alg->op[best_alg->ops] = alg_shift;
+	    }
+	}
       if (cache_hit)
 	goto done;
     }
