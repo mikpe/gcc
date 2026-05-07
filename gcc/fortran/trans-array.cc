@@ -8652,7 +8652,7 @@ gfc_conv_expr_descriptor (gfc_se *se, gfc_expr *expr)
 
   /* Add bounds-checking for elemental dimensions.  */
   if ((gfc_option.rtcheck & GFC_RTCHECK_BOUNDS) && !expr->no_bounds_check)
-    array_bound_check_elemental (&se->pre, ss, expr);
+    array_bound_check_elemental (&outermost_loop (&loop)->pre, ss, expr);
 
   if (need_tmp)
     {
