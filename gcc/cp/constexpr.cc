@@ -2535,6 +2535,7 @@ cxx_eval_builtin_function_call (const constexpr_ctx *ctx, tree t, tree fun,
 
   int strops = 0;
   int strret = 0;
+  bool bos = false;
   if (fndecl_built_in_p (fun, BUILT_IN_NORMAL))
     switch (DECL_FUNCTION_CODE (fun))
       {
@@ -2576,6 +2577,10 @@ cxx_eval_builtin_function_call (const constexpr_ctx *ctx, tree t, tree fun,
 	  }
 	*non_constant_p = true;
 	return t;
+      case BUILT_IN_OBJECT_SIZE:
+      case BUILT_IN_DYNAMIC_OBJECT_SIZE:
+	bos = ctx->manifestly_const_eval == mce_true;
+	break;
       default:
 	break;
       }
@@ -2633,6 +2638,13 @@ cxx_eval_builtin_function_call (const constexpr_ctx *ctx, tree t, tree fun,
 	}
 
       args[i] = arg;
+    }
+  if (bos)
+    {
+      tree arg = args[0];
+      STRIP_NOPS (arg);
+      if (TREE_CODE (arg) == ADDR_EXPR)
+	args[0] = arg;
     }
 
   bool save_ffbcp = force_folding_builtin_constant_p;
