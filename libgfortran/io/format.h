@@ -122,7 +122,7 @@ internal_proto(unget_format);
 extern void format_error (st_parameter_dt *, const fnode *, const char *);
 internal_proto(format_error);
 
-extern void free_format_data (struct format_data *);
+extern void free_format_data (struct format_data **);
 internal_proto(free_format_data);
 
 extern void free_format (st_parameter_dt *);

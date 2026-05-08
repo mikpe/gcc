@@ -4668,7 +4668,7 @@ st_read_done_worker (st_parameter_dt *dtp, bool unlock)
 	}
       if (dtp->u.p.unit_is_internal || dtp->u.p.format_not_saved)
 	{
-	  free_format_data (dtp->u.p.fmt);
+	  free_format_data (&dtp->u.p.fmt);
 	  free_format (dtp);
 	}
     }
@@ -4764,7 +4764,7 @@ st_write_done_worker (st_parameter_dt *dtp, bool unlock)
 	}
       if (dtp->u.p.unit_is_internal || dtp->u.p.format_not_saved)
 	{
-	  free_format_data (dtp->u.p.fmt);
+	  free_format_data (&dtp->u.p.fmt);
 	  free_format (dtp);
 	}
     }
