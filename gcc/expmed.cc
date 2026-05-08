@@ -2962,7 +2962,9 @@ synth_mult (struct algorithm *alg_out, unsigned HOST_WIDE_INT t,
 		}
 	    }
 	}
-      else if (GET_MODE_BITSIZE (imode) == 2 * BITS_PER_WORD
+      else if (2 * BITS_PER_WORD <= HOST_BITS_PER_WIDE_INT
+	       && GET_MODE_BITSIZE (imode) == 2 * BITS_PER_WORD
+	       && m >= BITS_PER_WORD
 	       && imode == mode)
 	{
 	  q = t >> m;
