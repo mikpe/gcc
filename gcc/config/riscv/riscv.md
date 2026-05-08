@@ -5184,6 +5184,36 @@
    (set (match_dup 0) (eq:DI (match_dup 2) (const_int 0)))]
   { operands[1] = gen_lowpart (DImode, operands[1]); })
 
+;; The basic idea is to realize that we can get the sign extension
+;; for free when sign extracting a field shifting it such that
+;; the sign bit of the field ends up in the SI sign bit.  In that
+;; case it's just a slliw.
+;;
+;; It is tempting to do the extract+shift rewriting independent of
+;; the outer AND.  But that's shown to regress code quality in other
+;; contexts.  So we're being more conservative about trying to
+;; exploit the free sign extension opportunities that show up with
+;; shifted sign extractions
+(define_split
+  [(set (match_operand:DI 0 "register_operand")
+	(and:DI
+	 (ashift:DI (sign_extract:DI (match_operand:DI 1 "register_operand")
+				     (match_operand 2 "const_int_operand")
+				     (match_operand 3 "const_int_operand"))
+		    (match_operand 4 "const_int_operand"))
+	 (match_operand:DI 5 "const_int_operand")))
+   (clobber (match_operand:DI 6 "register_operand"))]
+  "(TARGET_64BIT
+    && INTVAL (operands[2]) + INTVAL (operands[4]) == 32
+    && SMALL_OPERAND (INTVAL (operands[5]) >> INTVAL (operands[4])))"
+  [(set (match_dup 6) (and:DI (match_dup 1) (match_dup 5)))
+   (set (match_dup 0) (sign_extend:DI (ashift:SI (match_dup 7) (match_dup 4))))]
+{
+  HOST_WIDE_INT new_mask = INTVAL (operands[5]) >> INTVAL (operands[4]);
+  operands[5] = GEN_INT (new_mask);
+  operands[7] = gen_lowpart (SImode, operands[6]);
+})
+
 (include "bitmanip.md")
 (include "crypto.md")
 (include "sync.md")
