@@ -1,3 +1,21 @@
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124770
+	* decl.cc (wrapup_namespace_globals): Give the odr-used
+	inline variable error only when !DECL_INITIAL.
+
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125206
+	* tree.cc (strip_typedefs_expr) <case REFLECT_EXPR>: Always
+	return instead of recursing.
+
 2026-05-06  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

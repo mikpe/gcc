@@ -1,3 +1,19 @@
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124770
+	* g++.dg/reflect/init18.C: New test.
+
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125206
+	* g++.dg/reflect/bases_of4.C: New test.
+
 2026-05-06  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
