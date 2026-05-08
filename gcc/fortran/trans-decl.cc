@@ -1707,14 +1707,14 @@ gfc_get_symbol_decl (gfc_symbol * sym)
       && (gfc_current_ns == sym->ns
 	  || (gfc_current_ns == sym->ns->parent
 	      && gfc_current_ns->proc_name->attr.flavor != FL_MODULE))
-      && !(sym->attr.use_assoc || sym->attr.dummy))
+      && !(sym->attr.use_assoc || sym->attr.dummy || sym->attr.result))
     gfc_defer_symbol_init (sym);
 
   if ((sym->ts.type == BT_DERIVED && sym->ts.u.derived->attr.pdt_comp)
       && (gfc_current_ns == sym->ns
 	  || (gfc_current_ns == sym->ns->parent
 	      && gfc_current_ns->proc_name->attr.flavor != FL_MODULE))
-      && !(sym->attr.use_assoc || sym->attr.dummy))
+      && !(sym->attr.use_assoc || sym->attr.dummy || sym->attr.result))
     gfc_defer_symbol_init (sym);
 
   /* Dummy PDT 'len' parameters should be checked when they are explicit.  */
@@ -8290,7 +8290,16 @@ gfc_generate_function_code (gfc_namespace * ns)
 
   finish_oacc_declare (ns, sym, false);
 
-  tmp = gfc_trans_code (ns->code);
+  if (gfc_current_ns != ns)
+    {
+      gfc_namespace *old_current_ns = gfc_current_ns;
+      gfc_current_ns = ns;
+      tmp = gfc_trans_code (ns->code);
+      gfc_current_ns = old_current_ns;
+    }
+  else
+    tmp = gfc_trans_code (ns->code);
+
   gfc_add_expr_to_block (&body, tmp);
 
   /* This permits the return value to be correctly initialized, even when the
