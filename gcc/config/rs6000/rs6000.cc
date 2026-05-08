@@ -5696,12 +5696,12 @@ rs6000_builtin_vectorized_function (unsigned int fn, tree type_out,
 	  && flag_unsafe_math_optimizations
 	  && out_mode == DFmode && out_n == 2
 	  && in_mode == DFmode && in_n == 2)
-	return rs6000_builtin_decls[RS6000_BIF_XVRDPI];
+	return rs6000_builtin_decls[RS6000_BIF_XVRDPIC];
       if (VECTOR_UNIT_VSX_P (V4SFmode)
 	  && flag_unsafe_math_optimizations
 	  && out_mode == SFmode && out_n == 4
 	  && in_mode == SFmode && in_n == 4)
-	return rs6000_builtin_decls[RS6000_BIF_XVRSPI];
+	return rs6000_builtin_decls[RS6000_BIF_XVRSPIC];
       break;
     CASE_CFN_RINT:
       if (VECTOR_UNIT_VSX_P (V2DFmode)

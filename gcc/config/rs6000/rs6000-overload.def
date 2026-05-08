@@ -2644,9 +2644,9 @@
 
 [VEC_NEARBYINT, vec_nearbyint, __builtin_vec_nearbyint]
   vf __builtin_vec_nearbyint (vf);
-    XVRSPI  XVRSPI_NBI
+    XVRSPIC XVRSPIC_NBI
   vd __builtin_vec_nearbyint (vd);
-    XVRDPI  XVRDPI_NBI
+    XVRDPIC XVRDPIC_NBI
 
 [VEC_NEG, vec_neg, __builtin_vec_neg]
   vsc __builtin_vec_neg (vsc);

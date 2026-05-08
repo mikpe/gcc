@@ -14,7 +14,7 @@
 /* { dg-final { scan-assembler "xvrspip" } } */
 /* { dg-final { scan-assembler "xvrspiz" } } */
 /* { dg-final { scan-assembler "xvrspic" } } */
-/* { dg-final { scan-assembler "xvrspi " } } */
+/* { dg-final { scan-assembler-not {\mxvrspi\M} } } */
 
 #ifndef SIZE
 #define SIZE 1024

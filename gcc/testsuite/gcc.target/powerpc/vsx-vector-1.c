@@ -14,7 +14,7 @@
 /* { dg-final { scan-assembler "xvrdpip" } } */
 /* { dg-final { scan-assembler "xvrdpiz" } } */
 /* { dg-final { scan-assembler "xvrdpic" } } */
-/* { dg-final { scan-assembler "xvrdpi " } } */
+/* { dg-final { scan-assembler-not {\mxvrdpi\M} } } */
 
 #ifndef SIZE
 #define SIZE 1024

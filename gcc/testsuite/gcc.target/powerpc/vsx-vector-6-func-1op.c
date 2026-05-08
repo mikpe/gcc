@@ -10,13 +10,11 @@
 /* { dg-final { scan-assembler-times {\mxvabssp\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvrspip\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvrspim\M} 1 } } */
-/* { dg-final { scan-assembler-times {\mxvrspi\M} 1 } } */ 
-/* { dg-final { scan-assembler-times {\mxvrspic\M} 1 } } */
+/* { dg-final { scan-assembler-times {\mxvrspic\M} 2 } } */
 /* { dg-final { scan-assembler-times {\mxvrspiz\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvabsdp\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvrdpip\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvrdpim\M} 1 } } */
-/* { dg-final { scan-assembler-times {\mxvrdpi\M} 1 } } */
-/* { dg-final { scan-assembler-times {\mxvrdpic\M} 1 } } */
+/* { dg-final { scan-assembler-times {\mxvrdpic\M} 2 } } */
 /* { dg-final { scan-assembler-times {\mxvrdpiz\M} 1 } } */
 /* { dg-final { scan-assembler-times {\mxvsqrtdp\M} 1 } } */
