@@ -14,4 +14,5 @@ foo()
   v /= f;
 }
 
-/* { dg-final { scan-rtl-dump {\(const_double:SF 0.0 \[0x0.0p\+0\]\)} "x86_cse" { target { ! ia32 } } } } */
+/* { dg-final { scan-rtl-dump {\(set \(reg:V16QI 125\)} "x86_cse" { target { ! ia32 } } } } */
+/* { dg-final { scan-rtl-dump {\(const_int 0 \[0\]\) repeated x16} "x86_cse" { target { ! ia32 } } } } */

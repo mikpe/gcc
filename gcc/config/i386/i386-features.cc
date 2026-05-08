@@ -3289,6 +3289,32 @@ ix86_place_single_vector_set (rtx dest, rtx src, bitmap bbs,
 
   if (CONST_INT_P (src))
     dest = gen_rtx_SUBREG (load->dest_mode, dest, 0);
+  else if (CONST_VECTOR_P (src))
+    {
+      /* The only possible CONST_VECTORs of SRC are CONST0_RTX and
+	 CONSTM1_RTX.  Otherwise,
+
+	 rtx set = gen_rtx_SET (dest, src);
+
+	 won't be a valid instruction.  CONST0_RTX always works.  It
+	 can comes from:
+
+	 1. remove_partial_avx_dependency with LOAD == NULL.
+	 2. X86_CSE_VEC_DUP with
+
+	 (insn 48 58 16 3 (set (reg:V4HI 123)
+		(const_vector:V4HI [
+			(const_int 0 [0]) repeated x4
+		  ])) 2065 {*movv4hi_internal} (nil))
+
+	 3. X86_CSE_CONST0_VECTOR.
+       */
+      machine_mode mode = GET_MODE (dest);
+      if (!(src == CONST0_RTX (mode)
+	    || (src == CONSTM1_RTX (mode)
+		&& load->kind == X86_CSE_CONSTM1_VECTOR)))
+	gcc_unreachable ();
+    }
   rtx set = gen_rtx_SET (dest, src);
 
   rtx_insn *insn = BB_HEAD (bb);
@@ -3903,6 +3929,7 @@ ix86_broadcast_inner (rtx op, machine_mode mode,
       return nullptr;
     }
 
+  machine_mode orig_mode = mode;
   mode = GET_MODE (op);
 
   /* Only single def chain is supported.  */
@@ -3938,13 +3965,29 @@ ix86_broadcast_inner (rtx op, machine_mode mode,
 	 Set *INSN_P to nullptr and return SET_SRC if SET_SRC is an
 	 integer constant.  */
       op = src;
-      if (SCALAR_INT_MODE_P (mode))
+      if (SCALAR_INT_MODE_P (mode) && mode != GET_MODE (reg))
+	op = gen_int_mode (INTVAL (src), mode);
+      if (op == const0_rtx)
 	{
-	  if (mode != GET_MODE (reg))
-	    op = gen_int_mode (INTVAL (src), mode);
+	   if (standard_sse_constant_p (CONST0_RTX (orig_mode),
+					orig_mode) == 1)
+	     {
+	       *scalar_mode_p = QImode;
+	       *kind_p = X86_CSE_CONST0_VECTOR;
+	       *insn_p = nullptr;
+	       return const0_rtx;
+	     }
+	   op = CONST0_RTX (mode);
 	}
-      else if (op == const0_rtx)
-	op = CONST0_RTX (mode);
+      else if (op == constm1_rtx
+	       && standard_sse_constant_p (CONSTM1_RTX (orig_mode),
+					   orig_mode) == 2)
+	{
+	  *scalar_mode_p = QImode;
+	  *kind_p = X86_CSE_CONSTM1_VECTOR;
+	  *insn_p = nullptr;
+	  return constm1_rtx;
+	}
       *insn_p = nullptr;
     }
   else
