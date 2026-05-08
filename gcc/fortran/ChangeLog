@@ -1,3 +1,31 @@
+2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/125192
+	PR fortran/125198
+	* trans-array.cc (gfc_conv_expr_descriptor): Add bounds checking
+	code to the outermost loop's preliminary block.
+
+2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
+
+	* trans-array.cc (trans_array_bound_check): Replace references
+	to SE->PRE with references to the new argument BLOCK.  Remove
+	argument SE.
+	(array_bound_check_elemental): Likewise.  Update caller.
+	(conv_array_index_offset): Update caller.
+	(gfc_conv_expr_descriptor): Update caller.
+
+2026-05-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125172
+	* resolve.cc (gfc_fixup_inferred_type_refs): Update kind for
+	INQUIRY_RE and INQUIRY_IM references on inferred complex
+	associate-name.
+	(resolve_variable): For an inferred-type associate-name with
+	no subobject ref, refresh e->ts from sym->ts.
+	(resolve_assoc_var): For an inferred-type complex/character
+	associate-name, refresh sym->ts from the resolved target when
+	only the kind differs.
+
 2026-05-02  Tobias Burnus  <tburnus@baylibre.com>
 	    Julian Brown  <julian@codesourcery.com>
 

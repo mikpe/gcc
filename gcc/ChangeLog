@@ -1,3 +1,123 @@
+2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
+
+	PR tree-optimization/109878
+	* match.pd(min/max (a & CST0, a & CST1)): New pattern.
+	(min/max (a, a & CST)): New pattern.
+
+2026-05-07  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/106244
+	* config/riscv/riscv.md ((and (ashift X Y) const_int 1)): New splitter.
+
+2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
+
+	PR tree-optimization/123514
+	* match.pd ((x - (x<0)) ^ -(x<0) into ABS_EXPR<x>): New pattern.
+
+2026-05-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* rtlanal.cc (commutative_operand_precedence): Bump the precedence
+	of non-commutative binary arithmetic to 3.  Give comparisons a
+	precedence of 2.
+
+2026-05-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* combine.cc (make_compound_operation_int): Remove PLUS and MINUS
+	simplifications and PLUS operand order swapping.  Delegate those
+	tasks to simplify_gen_binary instead.
+
+2026-05-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* alloc-pool.h (object_allocator::allocate): Generalize to handle
+	non-default constructors.
+
+2026-05-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* rtl.h (post_ra_split_completed): Declare.
+	* final.cc (rest_of_clean_state): Set it to false.
+	* recog.cc (post_ra_split_completed): New variable.
+	(split_insn): Temporarily set post_ra_split_completed while walking
+	the new instructions.
+	(split_all_insns, split_all_insns_noflow): Set post_ra_split_completed
+	after completing a post-reload split.
+	* config/rx/rx.md (*cmpsi, *tstsi, *cmpsf, *conditional_branch)
+	(*sccc, *stcc, *stcc_reg, *abssi2_flags, *addsi3_flags, adc_internal)
+	(*adc_flags, *andsi3_flags, *negsi2_flags, *one_cmplsi2_flags)
+	(*iorsi3_flags, *rotlsi3_flags, *rotrsi3_flags, *ashrsi3_flags)
+	(*lshrsi3_flags, *ashlsi3_flags, *sat, *subsi3_flags, sbb_internal)
+	(*sbb_flags, *xorsi3_flags, *bmcc): Require post_ra_split_completed
+	rather than reload_completed.
+	(comparesi3_<extend_types:code><small_int_modes:mode>, addsi3_flags)
+	(subsi3_flags): Require post_ra_split_completed.
+
+2026-05-07  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
+
+	PR tree-optimization/125214
+	* match.pd (min|max(a+|-c,b+|-c)): Add integral type check.
+
+2026-05-07  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR middle-end/122871
+	* expmed.cc (synth_mult): Handle doubleword left shifts by
+	BITS_PER_WORD bits or more, for scalar modes.
+	* optabs.cc (expand_doubleword_mult): Avoid generating multiply
+	instructions by immediate constants 0, 1 or 2.
+
+2026-05-07  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* config/rs6000/crypto.md (UNSPEC_XXAESENCP): New unspec entry.
+	(UNSPEC_XXAES128ENCP): Likewise.
+	(UNSPEC_XXAES192ENCP): Likewise.
+	(UNSPEC_XXAES256ENCP): Likewise.
+	(UNSPEC_XXAESDECP): Likewise.
+	(UNSPEC_XXAES128DECP): Likewise.
+	(UNSPEC_XXAES192DECP): Likewise.
+	(UNSPEC_XXAES256DECP): Likewise.
+	(UNSPEC_XXAESGENLKP): Likewise.
+	(UNSPEC_XXAES128GENLKP): Likewise.
+	(UNSPEC_XXAES192GENLKP): Likewise.
+	(UNSPEC_XXAES256GENLKP): Likewise.
+	(UNSPEC_XXGFMUL128): Likewise.
+	(UNSPEC_XXGFMUL128GCM): Likewise.
+	(UNSPEC_XXGFMUL128XTS): Likewise.
+	(AESACC_base_code): New iterator for xxaesencp and xxaesdecp base
+	mnemonics.
+	(AESACC_code): New iterator for xxaesencp and xxaesdecp extended
+	mnemonics.
+	(AESGENLKP_code): New iterator for xxaesgenlkp extended mnemonics.
+	(AESGF_code): New iterator for xxgfmul128 extended mnemonics.
+	(AESACC_base_insn): New attribute iterator for xxaesencp and xxaesdecp
+	base mnemonics.
+	(AESACC_insn): New attribute iterator for xxaesencp and xxaesdecp
+	extended mnemonics.
+	(AESGENLKP_insn): New attribute iterator for xxaesgenlkp extended
+	mnemonics.
+	(AESGF_insn): New attribute iterator for xxgfmul128 extended mnemonics.
+	(<AESACC_base_insn>): New define_insn for xxaesencp and xxaesdecp base
+	mnemonics.
+	(<AESACC_insn>): New define_insn for xxaesencp and xxaesdecp extended
+	mnemonics.
+	(<AESGENLKP_insn>): New define_insn for xxaesgenlkp extended mnemonics.
+	(xxaesgenlkp): New define_insn for genlkp base mnemonic.
+	(<AESGF_insn>): New define_insn for xxgfmul128 extended mnemonics.
+	(xxgfmul128): New define_insn for xxgfmul128 base mnemonic.
+	* config/rs6000/rs6000-builtins.def: Added new builtin definitions for
+	AES acceleration.
+	* doc/extend.texi: Add new section for AES acceleration builtins
+	for Future ISA.
+
+2026-05-07  Pan Li  <pan2.li@intel.com>
+
+	* config/riscv/predicates.md: Add lt to swapped operator.
+	* config/riscv/riscv-v.cc (get_swapped_cmp_rtx_code): Handle
+	the rtl as well.
+
+2026-05-07  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
+
+	PR tree-optimization/116008
+	PR tree-optimization/124560
+	* match.pd (min|max(a+|-c,b+|-c)): New patterns.
+
 2026-05-06  Jason Merrill  <jason@redhat.com>
 
 	* Makefile.in (TAGS): Add diagnostics/ and text-art/.

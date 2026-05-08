@@ -1,3 +1,27 @@
+2026-05-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78302
+	PR libstdc++/71301
+	* include/std/tuple [C++20] (tuple(tuple&&)): Add
+	requires-clause.
+	* testsuite/20_util/tuple/cons/78302.cc: New test.
+
+2026-05-07  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/105580
+	* include/bits/streambuf_iterator.h (istreambuf_iterator::_M_sbuf):
+	Remove mutable and adjust whitespace.
+	(istreambuf_iterator::_M_c): Adjust whitespace.
+	(istreambuf_iterator::operator++()): Clear _M_sbuf if next character
+	is EoF.
+	(istreambuf_iterator::operator++(int)): Use _M_sbuf->sgetc() to
+	load current character, and define in terms of ++*this.
+	(istreambuf_iterator::_M_get()): Do not clear _M_sbuf in case of EoF.
+	* include/std/streambuf (streambuf::gptr, streambuf::egptr)
+	(streambuf::gbump): Remove surrounding pragma disabling -Wnull-dereference.
+	* testsuite/24_iterators/istreambuf_iterator/2.cc: Test for using
+	multiple iterators to same rdbuf.
+
 2026-05-06  Jonathan Wakely  <jwakely@redhat.com>
 
 	* include/bits/out_ptr.h (out_ptr_t::_Impl::~_Impl): Adjust

@@ -1,3 +1,120 @@
+2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
+
+	PR tree-optimization/109878
+	* gcc.dg/tree-ssa/pr109878-1.c: New test.
+	* gcc.dg/tree-ssa/pr109878-2.c: New test.
+	* gcc.dg/tree-ssa/pr109878-3.c: New test.
+	* gcc.dg/tree-ssa/pr109878.c: New test.
+
+2026-05-07  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/106244
+	* gcc.target/riscv/pr106244.c: New test.
+
+2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
+
+	PR tree-optimization/123514
+	* gcc.dg/tree-ssa/pr123514.c: New test.
+
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124770
+	* g++.dg/reflect/init18.C: New test.
+
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125206
+	* g++.dg/reflect/bases_of4.C: New test.
+
+2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/125192
+	PR fortran/125198
+	* gfortran.dg/bounds_check_29.f90: New test.
+
+2026-05-07  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
+
+	PR tree-optimization/125214
+	* gcc.dg/tree-ssa/pr125214.c: New test.
+
+2026-05-07  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR middle-end/122871
+	* gcc.target/arm/muldi-1.c: New test case.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125007
+	* g++.dg/reflect/pr125007.C: New test.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc.dg/analyzer/divide-by-zero-6.c (init_foo): Use sizeof (*f)
+	rather than sizeof (f).
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125184
+	* g++.dg/reflect/using3.C: New test.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124347
+	* g++.dg/ext/builtin-object-size4.C: New test.
+	* g++.dg/ext/builtin-object-size5.C: New test.
+	* g++.dg/ext/builtin-object-size6.C: New test.
+
+2026-05-07  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* gcc.target/powerpc/aes-builtin-1.c: New test.
+	* gcc.target/powerpc/aes-builtin-2.c: New test.
+	* gcc.target/powerpc/aes-builtin-3.c: New test.
+
+2026-05-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125172
+	* gfortran.dg/associate_79.f90: New test.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125111
+	* g++.dg/reflect/extract12.C: New test.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124991
+	* g++.dg/reflect/anon5.C: New test.
+
+2026-05-07  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-i16.c: Add asm check
+	for vmsgt.vx.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-i32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-i64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-1-i8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-i16.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-i32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-i64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-2-i8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-i16.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-i32.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-i64.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx-3-i8.c: Ditto.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_binary.h: Add test
+	helper macros.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_binary_data.h: Add test
+	data for run test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgt-run-1-i16.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgt-run-1-i32.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgt-run-1-i64.c: New test.
+	* gcc.target/riscv/rvv/autovec/vx_vf/vx_vmsgt-run-1-i8.c: New test.
+
+2026-05-07  Pengxuan Zheng  <pengxuan.zheng@oss.qualcomm.com>
+
+	PR tree-optimization/116008
+	PR tree-optimization/124560
+	* gcc.dg/tree-ssa/pr124560.c: New test.
+
 2026-05-06  Harald Anlauf  <anlauf@gmx.de>
 
 	PR libfortran/125095

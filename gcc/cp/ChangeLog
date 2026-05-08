@@ -1,3 +1,66 @@
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/124770
+	* decl.cc (wrapup_namespace_globals): Give the odr-used
+	inline variable error only when !DECL_INITIAL.
+
+2026-05-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125206
+	* tree.cc (strip_typedefs_expr) <case REFLECT_EXPR>: Always
+	return instead of recursing.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125007
+	* cp-tree.h (maybe_update_function_parm): Declare.
+	* reflect.cc (maybe_update_function_parm): No longer static.
+	* error.cc (dump_expr) <case REFLECT_EXPR>: Improve printing
+	of various reflections.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125184
+	* reflect.cc (check_out_of_consteval_use_r): Don't walk children of
+	USING_STMTs.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124347
+	* constexpr.cc (cxx_eval_builtin_function_call): For
+	mce_true strip nops in first argument of BUILT_IN*_OBJECT_SIZE
+	if the inner expression is ADDR_EXPR.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125111
+	* reflect.cc (extract_ref): Throw instead of trying to build
+	arrays of functions, methods or arrays with NULL TYPE_DOMAIN.
+
+2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124991
+	* cp-tree.h (struct lang_type): Document typeinfo_var member.
+	(get_classtype_typeinfo_var): New inline function.
+	(CLASSTYPE_TYPEINFO_VAR): Use it.
+	(set_classtype_typeinfo_var): New inline function.
+	(SET_CLASSTYPE_TYPEINFO_VAR): Define.
+	(get_anon_aggr_type_field): New inline function.
+	(ANON_AGGR_TYPE_FIELD): Use it.
+	(set_anon_aggr_type_field): New inline function.
+	(SET_ANON_AGGR_TYPE_FIELD): Define.
+	* decl.cc (fixup_anonymous_aggr): Use SET_ANON_AGGR_TYPE_FIELD
+	instead of ANON_AGGR_TYPE_FIELD.
+	* module.cc (trees_in::read_class_def): Use
+	SET_CLASSTYPE_TYPEINFO_VAR instead of setting
+	CLASSTYPE_TYPEINFO_VAR and do it even for ANON_AGGR_TYPE_P
+	types.  Use SET_ANON_AGGR_TYPE_FIELD instead of setting
+	ANON_AGGR_TYPE_FIELD.
+	* rtti.cc (get_tinfo_decl_direct): Use SET_CLASSTYPE_TYPEINFO_VAR
+	instead of setting CLASSTYPE_TYPEINFO_VAR.
+	* semantics.cc (finish_member_declaration): Use
+	SET_ANON_AGGR_TYPE_FIELD instead of setting ANON_AGGR_TYPE_FIELD.
+
 2026-05-06  Patrick Palka  <ppalka@redhat.com>
 
 	PR c++/125179
