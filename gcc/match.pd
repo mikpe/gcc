@@ -7197,7 +7197,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
      neeqr (eq      ne)
  (simplify
   (bitop (neeql @0 @1) (neeqr (bit_ior @0 @1) integer_zerop))
-  { constant_boolean_node (bitop==BIT_AND_EXPR, type); }))
+  { constant_boolean_node (bitop == BIT_IOR_EXPR, type); }))
 #endif
 
 /* These was part of minmax phiopt.  */
