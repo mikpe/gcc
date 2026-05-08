@@ -19,7 +19,7 @@ def test_paths(html_tree):
 
     quoted_src_tr = rows[0]
     assert_quoted_line(quoted_src_tr,
-                       '   13', '  fprintf(stderr, "LOG: %s", msg); /* { dg-warning "call to \'fprintf\' from within signal handler" } */')
+                       '   14', '  fprintf(stderr, "LOG: %s", msg); /* { dg-warning "call to \'fprintf\' from within signal handler" } */')
     
     annotation_tr = rows[1]
     assert_annotation_line(annotation_tr,
