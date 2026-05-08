@@ -3854,15 +3854,17 @@ simplify_context::simplify_binary_operation_1 (rtx_code code,
 	  && (INTVAL (XEXP (op0, 1))
 	      == ~INTVAL (XEXP (op1, 1))))
 	{
-	  /* The IOR may be on both sides.  */
+	  /* The IOR/XOR may be on both sides.  */
 	  rtx top0 = NULL_RTX, top1 = NULL_RTX;
-	  if (GET_CODE (XEXP (op1, 0)) == IOR)
+	  if (GET_CODE (XEXP (op1, 0)) == IOR
+	      || GET_CODE (XEXP (op1, 0)) == XOR)
 	    top0 = op0, top1 = op1;
-	  else if (GET_CODE (XEXP (op0, 0)) == IOR)
+	  else if (GET_CODE (XEXP (op0, 0)) == IOR
+		   || GET_CODE (XEXP (op0, 0)) == XOR)
 	    top0 = op1, top1 = op0;
 	  if (top0 && top1)
 	    {
-	      /* X may be on either side of the inner IOR.  */
+	      /* X may be on either side of the inner IOR/XOR.  */
 	      rtx tem = NULL_RTX;
 	      if (rtx_equal_p (XEXP (top0, 0),
 			       XEXP (XEXP (top1, 0), 0)))
@@ -3871,7 +3873,8 @@ simplify_context::simplify_binary_operation_1 (rtx_code code,
 				    XEXP (XEXP (top1, 0), 1)))
 		tem = XEXP (XEXP (top1, 0), 0);
 	      if (tem)
-		return simplify_gen_binary (IOR, mode, XEXP (top0, 0),
+		return simplify_gen_binary (GET_CODE (XEXP (top1, 0)),
+					    mode, XEXP (top0, 0),
 					    simplify_gen_binary
 					      (AND, mode, tem, XEXP (top1, 1)));
 	    }
