@@ -9361,6 +9361,7 @@ gimple_account_profile_record (basic_block bb,
 
 struct cfg_hooks gimple_cfg_hooks = {
   "gimple",
+  IR_GIMPLE,
   gimple_verify_flow_info,
   gimple_dump_bb,		/* dump_bb  */
   gimple_dump_bb_for_graph,	/* dump_bb_for_graph  */

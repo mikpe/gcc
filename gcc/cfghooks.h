@@ -79,6 +79,7 @@ struct cfg_hooks
 {
   /* Name of the corresponding ir.  */
   const char *name;
+  enum ir_type ir;
 
   /* Debugging.  */
   bool (*verify_flow_info) (void);

@@ -86,14 +86,7 @@ set_cfg_hooks (struct cfg_hooks new_cfg_hooks)
 enum ir_type
 current_ir_type (void)
 {
-  if (cfg_hooks == &gimple_cfg_hooks)
-    return IR_GIMPLE;
-  else if (cfg_hooks == &rtl_cfg_hooks)
-    return IR_RTL_CFGRTL;
-  else if (cfg_hooks == &cfg_layout_rtl_cfg_hooks)
-    return IR_RTL_CFGLAYOUT;
-  else
-    gcc_unreachable ();
+  return cfg_hooks->ir;
 }
 
 /* Verify the CFG consistency.

@@ -5386,6 +5386,7 @@ rtl_account_profile_record (basic_block bb, struct profile_record *record)
 /* Implementation of CFG manipulation for linearized RTL.  */
 struct cfg_hooks rtl_cfg_hooks = {
   "rtl",
+  IR_RTL_CFGRTL,
   rtl_verify_flow_info,
   rtl_dump_bb,
   rtl_dump_bb_for_graph,
@@ -5429,6 +5430,7 @@ struct cfg_hooks rtl_cfg_hooks = {
 
 struct cfg_hooks cfg_layout_rtl_cfg_hooks = {
   "cfglayout mode",
+  IR_RTL_CFGLAYOUT,
   rtl_verify_flow_info_1,
   rtl_dump_bb,
   rtl_dump_bb_for_graph,
