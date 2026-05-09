@@ -1,3 +1,44 @@
+2026-05-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-05-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* g++.dg/modules/modules.exp: Replace colon with dash on
+	Windows.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125185
+	* gcc.dg/torture/pr125185.c: New testcase.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125153
+	* gcc.dg/torture/pr125153.c: New testcase.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* gcc.dg/tree-ssa/ssa-thread-23.c: New testcase.
+	* gcc.dg/tree-ssa/ssa-dom-thread-7.c: Adjust.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* gcc.dg/torture/pr125025.c: New testcase.
+
 2026-05-07  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

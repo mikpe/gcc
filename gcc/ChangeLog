@@ -1,3 +1,41 @@
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-05  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125185
+	* tree-vect-slp.cc (vect_analyze_slp_reduc_chain): Guard
+	first vect_slp_linearize_chain call.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2025-04-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* tree-ssa-threadbackward.cc (back_threader::find_paths_to_names):
+	Allow block re-use but do not enlarge the path beyond such a
+	re-use.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125146
+	* gimple-fold.cc (fold_stmt_1): Discard stmts in seq
+	after failed gimple_simplify as well.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* tree-ssa-loop-niter.cc (number_of_iterations_ne): Avoid
+	negation of most negative signed integer.
+	(number_of_iterations_lt): Likewise.
+
 2026-05-06  H.J. Lu  <hjl.tools@gmail.com>
 
 	Backported from master:
