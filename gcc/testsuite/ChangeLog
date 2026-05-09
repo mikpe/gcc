@@ -1,3 +1,87 @@
+2026-05-08  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/115181
+	PR c++/125043
+	PR c++/124979
+	* g++.dg/cpp1z/nontype-auto27.C: New test.
+	* g++.dg/cpp1z/nontype-auto28.C: New test.
+	* g++.dg/cpp2a/nontype-class75.C: New test.
+
+2026-05-08  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR middle-end/124637
+	* gcc.target/powerpc/pr124637.c: New test case.
+
+2026-05-08  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR tree-optimization/119422
+	* gcc.dg/tree-ssa/pr119422.c: New test.
+	* gcc.dg/tree-ssa/pr119422-2.c: New test.
+
+2026-05-08  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124955
+	* gcc.target/riscv/pr124955.c: New test
+
+2026-05-08  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/93504
+	* gcc.target/riscv/pr93504.c: New test.
+
+2026-05-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/111952
+	PR fortran/125059
+	* gfortran.dg/dtio_37.f90: New test.
+
+2026-05-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* lib/lto.exp: Make file listing case sensitive by doing case
+	sensitive filter after directory listing.
+
+2026-05-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* g++.dg/modules/modules.exp: Replace colon with dash on
+	Windows.
+
+2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125049
+	* gcc.target/loongarch/pr125049.c: New test.
+
+2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	* gcc.dg/pr90838.c: Adjust expectation for LoongArch.
+
+2026-05-08  Vijay Shankar  <vijay@linux.ibm.com>
+
+	PR target/113353
+	* gcc.target/powerpc/vsx-vector-1.c: Fix testcase.
+	* gcc.target/powerpc/vsx-vector-2.c: Fix testcase.
+	* gcc.target/powerpc/vsx-vector-6-func-1op.c: Fix testcase.
+
+2026-05-08  Bohan Lei  <garthlei@linux.alibaba.com>
+
+	* gcc.target/riscv/rvv/autovec/vls-vlmax/shuffle-evenodd.c:
+	Match vnsrl patterns.
+
+2026-05-08  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	* gcc.dg/plugin/diagnostic-test-paths-4.py: Adjust.
+
+2026-05-08  Soumya AR  <soumyaa@nvidia.com>
+
+	PR target/124895
+	* gcc.target/aarch64/narrow-gp-writes-8.c: New test.
+
+2026-05-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125100
+	* gcc.target/i386/pr125100-1.c: New test.
+	* gcc.target/i386/pr125100-2.c: Likewise.
+	* gcc.target/i386/pr125100-3.c: Likewise.
+	* gcc.target/i386/pr125100-4.c: Likewise.
+
 2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
 
 	PR tree-optimization/109878

@@ -1,3 +1,16 @@
+2026-05-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR libfortran/125087
+	* io/format.c (free_format_data): Change argument from pointer to
+	format_data to pointer to pointer of object.
+	(free_format_hash_table): Adjust argument passed to
+	free_format_data.
+	(save_parsed_format): Likewise.
+	* io/format.h (free_format_data): Adjust prototype.
+	* io/transfer.c (st_read_done_worker): Adjust argument passed to
+	free_format_data.
+	(st_write_done_worker): Likewise.
+
 2026-05-06  Harald Anlauf  <anlauf@gmx.de>
 
 	PR libfortran/125095

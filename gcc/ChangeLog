@@ -1,3 +1,110 @@
+2026-05-08  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR middle-end/124637
+	* calls.cc (load_register_parameters): If using store_constructor
+	to place a constant structure in a register, use a right shift to
+	align the structure/padding if required on big-endian targets.
+
+2026-05-08  Daniel Barboza  <daniel.barboza@oss.qualcomm.com>
+
+	PR tree-optimization/119422
+	* match.pd(`(bool >= A) >= A -> bool >= A`): New pattern.
+
+2026-05-08  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/124955
+	* config/riscv/riscv.md (masked shifted bitfield extraction): New
+	splitter to utilize slliw to eliminate the need for sign extnesion.
+
+2026-05-08  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR tree-optimization/93504
+	* simplify-rtx.cc (simplify_context::simplify_binary_operation_1):
+	Generalize existing code for (X & C) | ((X|Y) & ~C) to handle
+	(X & C) | ((X^Y) & ~C) as well.
+
+2026-05-08  Roger Sayle  <roger@nextmovesoftware.com>
+
+	* expmed.cc (synth_mult): Add more constraints to recent change
+	to avoid "false positive" array bounds warnings during bootstrap.
+
+2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	* config/loongarch/loongarch.cc (loongarch_print_operand): Print
+	the symbol name for SYMBOL_REF with %c.
+
+2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125049
+	* config/loongarch/predicates.md (ssp_operand): New
+	define_predicate.
+	(ssp_normal_operand): New define_predicate.
+	* config/loongarch/constraints.md (ZE): New define_constraint.
+	(ZF): New define_constraint.
+	* config/loongarch/loongarch.md (UNSPEC_SSP): New unspec.
+	(cbranch4): Add "@" to create gen_cbranch4(machine_mode, ...).
+	(@stack_protect_combined_set_normal_<mode>): New define_insn.
+	(@stack_protect_combined_set_extreme_<mode>): New define_insn.
+	(@stack_protect_combined_test_internal_<mode>): New define_insn.
+	(stack_protect_combined_set): New define_expand.
+	(stack_protect_combined_test): New define_expand.
+	* config/loongarch/loongarch-protos.h
+	(loongarch_output_asm_load_canary): Declare.
+	* config/loongarch/loongarch.cc (loongarch_print_operand): Allow
+	'v' to print d/w for DImode/SImode.
+	(loongarch_output_asm_load_canary): Implement.
+
+2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	* config/loongarch/loongarch.md (*ctzsi2_extend): New
+	define_insn.
+
+2026-05-08  Vijay Shankar  <vijay@linux.ibm.com>
+
+	PR target/113353
+	* config/rs6000/rs6000.cc (rs6000_builtin_vectorized_function):
+	Emit xvrdpic/xvrspic.
+	* config/rs6000/rs6000-overload.def (__builtin_vec_nearbyint):
+	Modified bif-id and overload-id.
+
+2026-05-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125174
+	* tree-vect-stmts.cc (vectorizable_simd_clone_call): Cost
+	the number of OMP SIMD calls number of vector stmts.
+
+2026-05-08  Bohan Lei  <garthlei@linux.alibaba.com>
+
+	* config/riscv/riscv-v.cc (shuffle_even_odd_patterns): Use vnsrl
+	when possible.
+
+2026-05-08  Soumya AR  <soumyaa@nvidia.com>
+
+	PR target/124895
+	* config/aarch64/aarch64-passes.def (pass_narrow_gp_writes): Move pass
+	before pass_free_cfg.
+
+2026-05-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125100
+	* config/i386/i386-features.cc (x86_cse_kind): Add
+	X86_CSE_CONST_VECTOR.
+	(redundant_pattern): Add dest_mode.
+	(ix86_place_single_vector_set): Handle X86_CSE_CONST_VECTOR.
+	Generate SUBREG for constant integer source.
+	(ix86_broadcast_inner): Add an INSN argument.  Use CONST_VECTOR
+	in REG_EQUAL note.  Set load kind to X86_CSE_CONST_VECTOR for
+	native and converted CONST_VECTORs.  Return CONST_VECTOR if it
+	can be converted to constant integer load.
+	(pass_x86_cse::candidate_vector_p): Add an INSN argument and
+	pass the insn to ix86_broadcast_inner.
+	(pass_x86_cse::x86_cse): Add a basic block bitmap for calls.
+	Pass the insn to candidate_vector_p.  Handle X86_CSE_CONST_VECTOR.
+	Set dest_mode.  Keep constant integer load when crossing a
+	function call.  Convert CONST_VECTOR load no larger than integer
+	register to constant integer load even if there are no redundant
+	CONST_VECTOR loads.
+
 2026-05-07  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
 
 	PR tree-optimization/109878

@@ -1,3 +1,12 @@
+2026-05-08  Pietro Monteiro  <pietro@sociotechnical.xyz>
+
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Delete LIBGA68_CHECK_ATTRIBUTE_VISIBILITY.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Use GCC_CHECK_ATTRIBUTE_VISIBILITY instead of
+	LIBGA68_CHECK_ATTRIBUTE_VISIBILITY.
+
 2026-03-21  Jose E. Marchesi  <jemarch@gnu.org>
 
 	* ga68-math.c: New file.

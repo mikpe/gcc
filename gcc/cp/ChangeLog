@@ -1,3 +1,11 @@
+2026-05-08  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/115181
+	PR c++/125043
+	PR c++/124979
+	* pt.cc (invalid_tparm_referent_p): Allow DECL_IGNORED_P in an
+	assert.
+
 2026-05-07  Marek Polacek  <polacek@redhat.com>
 
 	PR c++/124770

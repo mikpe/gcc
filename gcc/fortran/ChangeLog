@@ -1,3 +1,11 @@
+2026-05-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/111952
+	PR fortran/125059
+	* trans-decl.cc (gfc_finish_var_decl): Remove bogus code forcing
+	a DT variable with DTIO as static.
+	* trans-io.cc (gfc_build_io_library_fndecls): Fix fnspec attribute.
+
 2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
 
 	PR fortran/125192
