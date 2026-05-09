@@ -45,7 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 /* A pointer to one of the hooks containers.  */
-static struct cfg_hooks *cfg_hooks;
+static const struct cfg_hooks *cfg_hooks;
 
 /* Initialization of functions specific to the rtl IR.  */
 void
@@ -69,16 +69,16 @@ gimple_register_cfg_hooks (void)
   cfg_hooks = &gimple_cfg_hooks;
 }
 
-struct cfg_hooks
+const struct cfg_hooks *
 get_cfg_hooks (void)
 {
-  return *cfg_hooks;
+  return cfg_hooks;
 }
 
 void
-set_cfg_hooks (struct cfg_hooks new_cfg_hooks)
+set_cfg_hooks (const struct cfg_hooks *new_cfg_hooks)
 {
-  *cfg_hooks = new_cfg_hooks;
+  cfg_hooks = new_cfg_hooks;
 }
 
 /* Returns current ir type.  */

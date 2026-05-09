@@ -70,7 +70,7 @@ static vec<loop_p> loop_nests;
 static sbitmap bbs_in_loop_rgns = NULL;
 
 /* CFG hooks that are saved before changing create_basic_block hook.  */
-static struct cfg_hooks orig_cfg_hooks;
+static const struct cfg_hooks *orig_cfg_hooks;
 
 
 /* Array containing reverse topological index of function basic blocks,
@@ -5359,7 +5359,7 @@ sel_create_basic_block (void *headp, void *endp, basic_block after)
   new_bb_note = get_bb_note_from_pool ();
 
   if (new_bb_note == NULL_RTX)
-    new_bb = orig_cfg_hooks.create_basic_block (headp, endp, after);
+    new_bb = orig_cfg_hooks->create_basic_block (headp, endp, after);
   else
     {
       new_bb = create_basic_block_structure ((rtx_insn *) headp,
@@ -5709,11 +5709,11 @@ sel_register_cfg_hooks (void)
   sched_split_block = sel_split_block;
 
   orig_cfg_hooks = get_cfg_hooks ();
-  sel_cfg_hooks = orig_cfg_hooks;
+  sel_cfg_hooks = *orig_cfg_hooks;
 
   sel_cfg_hooks.create_basic_block = sel_create_basic_block;
 
-  set_cfg_hooks (sel_cfg_hooks);
+  set_cfg_hooks (&sel_cfg_hooks);
 
   sched_init_only_bb = sel_init_only_bb;
   sched_split_block = sel_split_block;

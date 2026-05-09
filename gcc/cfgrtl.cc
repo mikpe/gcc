@@ -5384,7 +5384,7 @@ rtl_account_profile_record (basic_block bb, struct profile_record *record)
 }
 
 /* Implementation of CFG manipulation for linearized RTL.  */
-struct cfg_hooks rtl_cfg_hooks = {
+const struct cfg_hooks rtl_cfg_hooks = {
   IR_RTL_CFGRTL,
   rtl_verify_flow_info,
   rtl_dump_bb,
@@ -5427,7 +5427,7 @@ struct cfg_hooks rtl_cfg_hooks = {
    This representation will hopefully become the default one in future
    version of the compiler.  */
 
-struct cfg_hooks cfg_layout_rtl_cfg_hooks = {
+const struct cfg_hooks cfg_layout_rtl_cfg_hooks = {
   IR_RTL_CFGLAYOUT,
   rtl_verify_flow_info_1,
   rtl_dump_bb,
