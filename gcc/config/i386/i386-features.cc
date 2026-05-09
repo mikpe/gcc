@@ -3988,6 +3988,27 @@ ix86_broadcast_inner (rtx op, machine_mode mode,
 	  *insn_p = nullptr;
 	  return constm1_rtx;
 	}
+
+      /* Check if we can convert:
+
+	 (insn 14 465 412 3 (set (reg:SI 507 [ j_lsm.26 ])
+		(const_int 2 [0x2])) "foo.c":10:12 discrim 2 100 {*movsi_internal} (nil))
+	 ...
+	 (insn 518 507 434 16 (set (reg:V2SI 493)
+		(vec_duplicate:V2SI (reg:SI 507 [ j_lsm.26 ]))) 2395 {*vec_dupv2si} (nil))
+
+	 to constant integer load:
+
+	 (insn 566 55 56 6 (set (subreg:DI (reg:V2SI 517) 0)
+		(const_int 8589934594 [0x200000002])) -1 (nil))
+	 ...
+	 (insn 518 507 434 16 (set (reg:V2SI 493)
+		(reg:V2SI 517)) 2066 {*movv2si_internal} (nil))
+
+       */
+      if (GET_MODE_SIZE (orig_mode) <= UNITS_PER_WORD)
+	*kind_p = X86_CSE_CONST_VECTOR;
+
       *insn_p = nullptr;
     }
   else
