@@ -1955,13 +1955,7 @@ cp_genericize_r (tree *stmt_p, int *walk_subtrees, void *data)
   if ((TREE_CODE (stmt) == VAR_DECL
        || TREE_CODE (stmt) == PARM_DECL
        || TREE_CODE (stmt) == RESULT_DECL)
-      && DECL_HAS_VALUE_EXPR_P (stmt)
-      /* Walk DECL_VALUE_EXPR mainly for benefit of xobj lambdas so that we
-	 adjust any invisiref object parm uses within the capture proxies.
-	 TODO: For GCC 17 do this walking unconditionally.  */
-      && current_function_decl
-      && DECL_XOBJ_MEMBER_FUNCTION_P (current_function_decl)
-      && LAMBDA_FUNCTION_P (current_function_decl))
+      && DECL_HAS_VALUE_EXPR_P (stmt))
     {
       tree ve = DECL_VALUE_EXPR (stmt);
       cp_walk_tree (&ve, cp_genericize_r, data, NULL);
