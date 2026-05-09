@@ -77,8 +77,7 @@ public:
 
 struct cfg_hooks
 {
-  /* Name of the corresponding ir.  */
-  const char *name;
+  /* The ir that hooks corresponds with.  */
   enum ir_type ir;
 
   /* Debugging.  */
