@@ -142,41 +142,17 @@ is_mappable_routine (const char *z)
 
   /* Math routines.  */
   ACCEPT (z, "arccos");
-  ACCEPT (z, "arccosdg");
   ACCEPT (z, "arccot");
-  ACCEPT (z, "arccotdg");
   ACCEPT (z, "arcsin");
-  ACCEPT (z, "arcsindg");
   ACCEPT (z, "arctan");
-  ACCEPT (z, "arctandg");
-  ACCEPT (z, "beta");
-  ACCEPT (z, "betainc");
-  ACCEPT (z, "cbrt");
   ACCEPT (z, "cos");
-  ACCEPT (z, "cosdg");
-  ACCEPT (z, "cospi");
-  ACCEPT (z, "cot");
-  ACCEPT (z, "cot");
-  ACCEPT (z, "cotdg");
-  ACCEPT (z, "cotpi");
-  ACCEPT (z, "curt");
-  ACCEPT (z, "erf");
-  ACCEPT (z, "erfc");
   ACCEPT (z, "exp");
-  ACCEPT (z, "gamma");
-  ACCEPT (z, "gammainc");
-  ACCEPT (z, "gammaincg");
-  ACCEPT (z, "gammaincgf");
   ACCEPT (z, "ln");
   ACCEPT (z, "log");
   ACCEPT (z, "pi");
   ACCEPT (z, "sin");
-  ACCEPT (z, "sindg");
-  ACCEPT (z, "sinpi");
   ACCEPT (z, "sqrt");
   ACCEPT (z, "tan");
-  ACCEPT (z, "tandg");
-  ACCEPT (z, "tanpi");
   /* Random generator.  */
   ACCEPT (z, "nextrandom");
   ACCEPT (z, "random");
