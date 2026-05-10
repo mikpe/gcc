@@ -1,3 +1,14 @@
+2026-05-09  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/107425
+	* trans-decl.cc (gfc_finish_var_decl): Check for
+	omp_affinity_iterators namespace before FL_LABEL BLOCK check.
+	Only route actual iterator variables through add_decl_as_local;
+	add other variables to the enclosing function.
+
 2026-05-08  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
