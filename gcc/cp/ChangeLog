@@ -1,3 +1,9 @@
+2026-05-09  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/121500
+	* cp-gimplify.cc (cp_genericize_r): Unconditionally walk
+	DECL_VALUE_EXPR.
+
 2026-05-08  Marek Polacek  <polacek@redhat.com>
 
 	PR c++/115181

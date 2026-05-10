@@ -1,3 +1,24 @@
+2026-05-09  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	PR target/125217
+	* gcc.target/riscv/ssp-zcmp.c: New test.
+
+2026-05-09  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125245
+	* gcc.target/i386/pr125245.c: New test.
+
+2026-05-09  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125239
+	* gcc.target/i386/pr124407-1.c: Adjusted.
+	* gcc.target/i386/pr125239.c: New test.
+
+2026-05-09  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/125234
+	* gcc.dg/torture/pr125234-1.c: New test.
+
 2026-05-08  Marek Polacek  <polacek@redhat.com>
 
 	PR c++/115181

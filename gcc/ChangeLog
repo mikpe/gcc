@@ -1,3 +1,87 @@
+2026-05-09  Michiel Derhaeg  <Michiel.Derhaeg@synopsys.com>
+
+	PR target/125217
+	* config/riscv/riscv.cc (riscv_gen_multi_pop_insn): Rename variable.
+	(riscv_expand_epilogue): Don't emit cm.popret with shadow stack.
+
+2026-05-09  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR middle-end/117871
+	* cfghooks.cc (cfg_hooks): Change the type
+	to be a pointer to a const struct cfg_hooks.
+	(get_cfg_hooks): Return the current pointer
+	rather the struct.
+	(set_cfg_hooks): Change the argument type and
+	set the cfg_hooks directly to it.
+	* cfghooks.h (gimple_cfg_hooks): Constify.
+	(rtl_cfg_hooks): Likewise.
+	(cfg_layout_rtl_cfg_hooks): Likewise.
+	(get_cfg_hooks): Update declration.
+	(set_cfg_hooks): Likewise.
+	* cfgrtl.cc (rtl_cfg_hooks): Constify.
+	(cfg_layout_rtl_cfg_hooks): Likewise.
+	* sel-sched-ir.cc (orig_cfg_hooks): Change to a pointer.
+	(sel_create_basic_block): Update
+	for orig_cfg_hooks being a pointer.
+	(sel_register_cfg_hooks): Update for the constification
+	of cfg_hooks.
+	* tree-cfg.cc (gimple_cfg_hooks): Constify.
+
+2026-05-09  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* cfghooks.cc (current_ir_name): New function.
+	(dump_bb_for_graph): Use current_ir_name
+	instead of accessing the name field.
+	(dump_bb_as_sarif_properties): Likewise.
+	(redirect_edge_and_branch): Likewise.
+	(can_remove_branch_p): Likewise.
+	(redirect_edge_and_branch_force): Likewise.
+	(split_block_1): Likewise.
+	(move_block_after): Likewise.
+	(delete_basic_block): Likewise.
+	(split_edge): Likewise.
+	(create_basic_block_1): Likewise.
+	(can_merge_blocks_p): Likewise.
+	(predict_edge): Likewise.
+	(predicted_by_p): Likewise.
+	(merge_blocks): Likewise.
+	(make_forwarder_block): Likewise.
+	(force_nonfallthru): Likewise.
+	(can_duplicate_block_p): Likewise.
+	(duplicate_block): Likewise.
+	(block_ends_with_call_p): Likewise.
+	(block_ends_with_condjump_p): Likewise.
+	(flow_call_edges_add): Likewise.
+	* cfghooks.h (struct cfg_hooks): Remove the name
+	field.
+	* cfgrtl.cc (rtl_cfg_hooks): Update for the removal
+	of the name field.
+	(cfg_layout_rtl_cfg_hooks): Likewise.
+	* tree-cfg.cc (struct cfg_hooks): Likewise.
+
+2026-05-09  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* cfghooks.cc (current_ir_type): Return cfghooks' ir field.
+	* cfghooks.h (struct cfg_hooks): Add ir field.
+	* cfgrtl.cc (rtl_cfg_hooks): Update for new ir field.
+	(cfg_layout_rtl_cfg_hooks): Likewise.
+	* tree-cfg.cc (gimple_cfg_hooks): Likewise.
+
+2026-05-09  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125239
+	* config/i386/i386-features.cc (ix86_place_single_vector_set):
+	For CONST_VECTOR source, check CONST0_RTX with
+	X86_CSE_CONST0_VECTOR and CONSTM1_RTX with X86_CSE_CONSTM1_VECTOR.
+	(ix86_broadcast_inner): Set x86_cse kind to X86_CSE_CONST0_VECTOR
+	for CONST0_RTX and X86_CSE_CONSTM1_VECTOR for CONSTM1_RTX.
+
+2026-05-09  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/125234
+	* match.pd (`(a !=/== b) &\| ((a|b) ==/!= 0)`): Fix
+	resulting constant form.
+
 2026-05-08  Roger Sayle  <roger@nextmovesoftware.com>
 
 	PR middle-end/124637
