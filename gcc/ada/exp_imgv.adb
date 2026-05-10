@@ -1061,11 +1061,10 @@ package body Exp_Imgv is
 
       --  Ada 2022 allows 'Image on private types, so fetch the underlying
       --  type to obtain the structure of the type. We use the base type,
-      --  not the root type for discrete types, to handle properly derived
-      --  types, but we use the root type for enumeration types, because the
-      --  literal map is attached to the root. Should be inherited ???
+      --  not the root type, for discrete types in order to handle derived
+      --  types, except for character types for which this is not needed.
 
-      if Is_Real_Type (Ptyp) or else Is_Enumeration_Type (Ptyp) then
+      if Is_Real_Type (Ptyp) or else Is_Character_Type (Ptyp) then
          Rtyp := Underlying_Type (Root_Type (Ptyp));
       else
          Rtyp := Underlying_Type (Base_Type (Ptyp));
@@ -1076,7 +1075,7 @@ package body Exp_Imgv is
 
       Enum_Case := False;
 
-      if Rtyp = Standard_Boolean then
+      if Is_Boolean_Type (Rtyp) then
          --  Use inline expansion if the -gnatd_x switch is not passed to the
          --  compiler. Otherwise expand into a call to the runtime.
 
