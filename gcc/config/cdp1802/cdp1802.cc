@@ -1,5 +1,5 @@
 /* Target Code for the RCA CDP1802 processor.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    Contributed by Mikael Pettersson <mikpelinux@gmail.com>
 
    This file is part of GCC.
@@ -137,8 +137,6 @@ cdp1802_cpu_cpp_builtins (cpp_reader *pfile)
     cpp_define (pfile, "__CDP1804__");
 }
 
-/* Storage Layout.  */
-
 /* Worker function for TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE.  */
 
 static void
@@ -186,7 +184,7 @@ cdp1802_regno_reg_class (int regno)
 
 static reg_class_t
 cdp1802_secondary_reload (bool /*in_p*/, rtx x, reg_class_t rclass,
-			    machine_mode /*reload_mode*/, secondary_reload_info */*sri*/)
+			  machine_mode /*reload_mode*/, secondary_reload_info */*sri*/)
 {
   if ((MEM_P (x)
        || ((GET_CODE (x) == SUBREG || REG_P (x))
