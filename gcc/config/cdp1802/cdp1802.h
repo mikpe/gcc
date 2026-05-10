@@ -1,5 +1,5 @@
 /* Target Macros for the RCA CDP1802 processor.
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    Contributed by Mikael Pettersson <mikpelinux@gmail.com>.
 
    This file is part of GCC.
@@ -280,8 +280,6 @@ enum reg_class
 
 #define TRAMPOLINE_SIZE 9
 #define TRAMPOLINE_ALIGNMENT 8
-
-/* Implicit Calls to Library Routines.  */
 
 /* Addressing Modes.  */
 
