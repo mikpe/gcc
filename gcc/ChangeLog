@@ -1,3 +1,22 @@
+2026-05-11  LIU Hao  <lh_mouse@126.com>
+
+	Backported from master:
+	2026-05-11  LIU Hao  <lh_mouse@126.com>
+
+	PR target/53929
+	* config/mingw/winnt.cc (mingw_pe_file_end): Use `ASM_OUTPUT_LABELREF`
+	to emit `name`.
+
+2026-05-11  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	* config/s390/s390.cc (s390_secondary_reload): Add cases for HF
+	vector modes.
+	* config/s390/s390.md: Add modes V{1,2,4,8}HF to mode iterator
+	ALL.
+
 2026-05-08  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:
