@@ -1,3 +1,29 @@
+2026-05-12  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-08  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/93715
+	* gfortran.dg/pr93715.f90: New test.
+
+2026-05-12  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-13  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/101760
+	PR fortran/102314
+	* gfortran.dg/gomp/pr101760.f90: New test.
+	* gfortran.dg/gomp/pr102314.f90: New test.
+
+2026-05-12  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/85352
+	* gfortran.dg/pr85352.f90: New test.
+
 2026-05-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/enum6.adb: New test.
