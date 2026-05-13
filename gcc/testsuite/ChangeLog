@@ -1,3 +1,24 @@
+2026-05-12  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-04-15  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/122976
+	* gcc.dg/tree-ssa/pr122976.c: New test.
+
+2026-05-12  Paul Thomas  <pault@gcc.gnu.org>
+
+	* gfortran.dg/gomp/pr101760.f90: New test.
+	* gfortran.dg/gomp/pr102314.f90: New test.
+
+2026-05-12  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/85352
+	* gfortran.dg/pr85352.f90: New test.
+
 2026-05-09  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
