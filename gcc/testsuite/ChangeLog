@@ -1,3 +1,48 @@
+2026-05-12  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-12  Jason Merrill  <jason@redhat.com>
+
+	PR c++/100903
+	* g++.dg/cpp2a/spaceship-warn1.C: New test.
+
+2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-08  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/115181
+	PR c++/125043
+	PR c++/124979
+	* g++.dg/cpp1z/nontype-auto27.C: New test.
+	* g++.dg/cpp1z/nontype-auto28.C: New test.
+	* g++.dg/cpp2a/nontype-class75.C: New test.
+
+2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	* g++.dg/reflect/bases_of5.C: Use decltype (sizeof 0) instead of
+	unsigned long.
+
+2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125208
+	* g++.dg/reflect/alias3.C: New test.
+	* g++.dg/reflect/bases_of5.C: New test.
+
+2026-05-12  Artemiy Volkov  <artemiy.volkov@arm.com>
+
+	Backported from master:
+	2026-05-12  Artemiy Volkov  <artemiy.volkov@arm.com>
+
+	PR middle-end/125259
+	* gcc.dg/tree-ssa/pr125259.c: New test.
+
 2026-05-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/enum6.adb: New test.

@@ -1,3 +1,34 @@
+2026-05-12  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-12  Jason Merrill  <jason@redhat.com>
+
+	PR c++/100903
+	* call.cc (build_over_call): Avoid -Wzero-as-null-pointer-constant
+	if the warning is disabled around the called function.
+
+2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-08  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/115181
+	PR c++/125043
+	PR c++/124979
+	* pt.cc (invalid_tparm_referent_p): Allow DECL_IGNORED_P in an
+	assert.
+
+2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-12  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125208
+	* reflect.cc (compare_reflections): Use == when comparing two
+	aliases.
+	* tree.cc (cp_tree_equal) <case REFLECT_EXPR>: Use
+	compare_reflections.
+
 2026-05-07  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
