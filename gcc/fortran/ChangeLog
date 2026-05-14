@@ -1,3 +1,36 @@
+2026-05-13  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/125192
+	PR fortran/125198
+	* trans-array.cc (gfc_conv_expr_descriptor): Add bounds checking
+	code to the outermost loop's preliminary block.
+
+2026-05-13  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-07  Mikael Morin  <mikael@gcc.gnu.org>
+
+	* trans-array.cc (trans_array_bound_check): Replace references
+	to SE->PRE with references to the new argument BLOCK.  Remove
+	argument SE.
+	(array_bound_check_elemental): Likewise.  Update caller.
+	(conv_array_index_offset): Update caller.
+	(gfc_conv_expr_descriptor): Update caller.
+
+2026-05-13  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-05-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/111952
+	PR fortran/125059
+	* trans-decl.cc (gfc_finish_var_decl): Remove bogus code forcing
+	a DT variable with DTIO as static.
+	* trans-io.cc (gfc_build_io_library_fndecls): Fix fnspec attribute.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.
