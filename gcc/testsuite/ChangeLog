@@ -1,3 +1,44 @@
+2026-05-13  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2025-08-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/120757
+	* g++.dg/cpp1y/auto-fn66.C: New test.
+
+2026-05-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-10  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/94978
+	* gfortran.dg/pr94978.f90: New test.
+
+2026-05-13  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-03-16  Paul Thomas  <pault@gcc.gnu.org>
+		    Steve Kargl  <kargls@comcast.net>
+
+	PR fortran/93832
+	* gfortran.dg/pr93832.f90: New test.
+
+2026-05-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-11  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/93814
+	* gfortran.dg/pr93814.f90: New test.
+
+2026-05-13  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-08  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/93715
+	* gfortran.dg/pr93715.f90: New test.
+
 2026-05-09  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:

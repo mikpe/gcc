@@ -1,3 +1,11 @@
+2026-05-13  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2025-08-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/120757
+	* pt.cc (tsubst_copy) [OFFSET_REF]: Don't tsubst the type.
+
 2026-03-30  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:
