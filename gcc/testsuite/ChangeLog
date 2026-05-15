@@ -1,3 +1,33 @@
+2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR target/124316
+	* gcc.target/i386/pr124316.c: New test.
+
+2026-05-14  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+
+	Backported from master:
+	2026-04-16  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+		    Jason Merrill  <jason@redhat.com>
+
+	PR c++/123346
+	* g++.dg/cpp2a/constexpr-union10.C: New test.
+
+2026-05-14  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-17  Jason Merrill  <jason@redhat.com>
+
+	PR c++/124632
+	* g++.dg/cpp23/explicit-obj-lambda2.C: Do strict GC and -Wall.
+
+2026-05-14  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-08  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/96986
+	* gfortran.dg/pr96986.f90: New test.
+
 2026-05-13  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:

@@ -1,3 +1,22 @@
+2026-05-14  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+
+	Backported from master:
+	2026-04-16  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+		    Jason Merrill  <jason@redhat.com>
+
+	PR c++/123346
+	* constexpr.cc (init_subob_ctx): Do initialize new_ctx.ctor
+	for an empty union member.
+
+2026-05-14  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-04-17  Jason Merrill  <jason@redhat.com>
+
+	PR c++/124632
+	* constexpr.cc (cxx_eval_call_expression): Unshare bindings
+	sooner.
+
 2026-03-30  Daniele Sahebi  <daniele@mkryss.me>
 
 	Backported from master:
