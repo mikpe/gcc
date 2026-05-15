@@ -1,3 +1,23 @@
+2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR target/124316
+	* config/i386/i386.md (ptwrite): Add explicit mode to
+	instruction.
+
+2026-05-14  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-05-14  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125194
+	* config/avr/avr.cc (avr_no_call_main_p): Remove variable...
+	(avr_file_end): ...and code that uses it.
+	(avr_insert_attributes): Same.  Add "used" to main attributes
+	when -mno-call-main.
+	* config/avr/gen-avr-mmcu-specs.cc (print_mcu): Emit code
+	for link_no_call_main specs.
+	* config/avr/specs.h (LINK_SPEC): Add %(link_no_call_main).
+
 2026-05-03  Collin Funk  <collin.funk1@gmail.com>
 
 	Backported from master:

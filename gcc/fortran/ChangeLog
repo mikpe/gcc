@@ -1,3 +1,12 @@
+2026-05-14  Christopher Albert  <albert@tugraz.at>
+
+	Backported from master:
+	2026-04-08  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/96986
+	* resolve.cc (resolve_global_procedure): Move entry symbol
+	lookup outside the resolved != -1 block.
+
 2026-05-13  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
