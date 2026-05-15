@@ -1,3 +1,32 @@
+2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR target/124316
+	* gcc.target/i386/pr124316.c: New test.
+
+2026-05-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125184
+	* g++.dg/reflect/using3.C: New test.
+
+2026-05-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125111
+	* g++.dg/reflect/extract12.C: New test.
+
+2026-05-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124991
+	* g++.dg/reflect/anon5.C: New test.
+
 2026-05-13  Mikael Morin  <mikael@gcc.gnu.org>
 
 	Backported from master:
