@@ -1,3 +1,10 @@
+2026-05-15  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR c/124532
+	* c-parser.cc (struct attr_state): Add reset method.
+	(c_parser_compound_statement_nostart): Rename a to astate.
+	Reset state before iterating statements.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.

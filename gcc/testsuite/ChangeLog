@@ -1,3 +1,60 @@
+2026-05-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-05-13  H.J. Lu  <hjl.tools@gmail.com>
+		    Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/120870
+	* gcc.target/i386/pr120870-1.c: New test.
+	* gcc.target/i386/pr120870-2.c: Likewise.
+
+2026-05-15  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR c/124532
+	* c-c++-common/pr124532.c: New test.
+
+2026-05-15  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-05-15  Xi Ruoyao  <xry111@xry111.site>
+
+	PR tree-optimization/125291
+	* gcc.c-torture/execute/pr125291.c: New test.
+
+2026-05-15  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* lib/lto.exp: Make file listing case sensitive by doing case
+	sensitive filter after directory listing.
+
+2026-05-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125308
+	* gcc.target/i386/pr125308.c: New test.
+
+2026-05-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125315
+	* g++.dg/cpp2a/no_unique_address16.C: New test.
+
+2026-05-15  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-14  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124628
+	* g++.dg/reflect/can_substitute2.C: New test.
+	* g++.dg/reflect/members_of14.C: New test.
+	* g++.dg/reflect/substitute3.C: Adjust test so that f<int>'s
+	return type fails to get deduced.
+	* g++.dg/reflect/type_of3.C: Also test type_of of a templated
+	member function with deduced return type.
+
 2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
 
 	PR target/124316

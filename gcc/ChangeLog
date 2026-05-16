@@ -1,3 +1,33 @@
+2026-05-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-05-13  H.J. Lu  <hjl.tools@gmail.com>
+		    Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/120870
+	* config/i386/i386.cc (ix86_save_reg): Return true for DRAP
+	register early at entry.
+	(find_drap_reg): Use R11_REG in preserve_none functions in
+	64-bit mode.
+
+2026-05-15  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-05-15  Xi Ruoyao  <xry111@xry111.site>
+
+	PR tree-optimization/125291
+	* tree-scalar-evolution.cc (simplify_peeled_chrec): Sign-extend
+	the step for peeled converted IV.
+
+2026-05-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125308
+	* config/i386/sse.md (*minmax<mode>3_4): Force also
+	operands[2] into a REG.
+
 2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
 
 	PR target/124316
