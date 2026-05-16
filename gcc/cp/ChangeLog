@@ -1,3 +1,12 @@
+2026-05-15  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125315
+	* constexpr.cc (init_subob_ctx): Allow both ctor and object
+	to be null for an empty subobject.
+
 2026-05-14  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
