@@ -1,3 +1,27 @@
+2026-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/125312
+	* acinclude.m4 (GLIBCXX_ENABLE_ATOMIC_BUILTINS): Copy header
+	into cwd instead of including it via an absolute path.
+	* configure: Regenerate.
+
+2026-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++20/tzdata.zi: Import new file from 2026a release.
+
+2026-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/shared_ptr_atomic.h: Remove trailing whitespace.
+
 2026-05-05  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
