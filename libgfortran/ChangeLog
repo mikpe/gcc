@@ -1,3 +1,15 @@
+2026-05-16  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-05-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR libfortran/125095
+	* io/list_read.c (read_logical): Eat comments in namelist read mode.
+	(read_integer): Likewise.
+	(read_character): Likewise.
+	(read_complex): Likewise.
+	(read_real): Likewise.
+
 2025-12-21  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	Backported from master:

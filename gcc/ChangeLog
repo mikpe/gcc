@@ -1,3 +1,8 @@
+2026-05-16  Gopi Kumar Bulusu  <gopi@sankhya.com>
+
+	PR target/103383
+	* config/microblaze/microblaze.md: bswaphi2: (set_attr length 8)
+
 2026-05-14  Andi Kleen  <ak@gcc.gnu.org>
 
 	PR target/124316
