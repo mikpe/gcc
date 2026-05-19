@@ -1,3 +1,11 @@
+2026-05-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/23_containers/bitset/lwg4294.cc: Move to...
+	* testsuite/20_util/bitset/cons/lwg4294.cc: ...here.
+
 2026-05-16  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
