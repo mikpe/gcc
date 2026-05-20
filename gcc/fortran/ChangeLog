@@ -1,3 +1,15 @@
+2026-05-19  Andre Vehreschild  <vehre@gcc.gnu.org>
+
+	Backported from master:
+	2026-04-29  Andre Vehreschild  <vehre@gcc.gnu.org>
+
+	PR fortran/125021
+	* coarray.cc (check_add_new_comp_handle_array): Prefix internal
+	symbols by two underscores.
+	(create_get_callback): Same.
+	(create_allocated_callback): Same.
+	(create_send_callback): Same.
+
 2026-05-16  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
