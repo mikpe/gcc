@@ -1,3 +1,32 @@
+2026-05-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-05-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125355
+	* gcc.target/i386/pr125355-2.c: New test.
+
+2026-05-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-05-18  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125355
+	* gcc.target/i386/pr125355.c: New test.
+
+2026-05-19  Andre Vehreschild  <vehre@gcc.gnu.org>
+
+	Backported from master:
+	2026-04-29  Andre Vehreschild  <vehre@gcc.gnu.org>
+
+	PR fortran/125021
+	* gfortran.dg/coarray/pr125021.f90: New test.
+
+2026-05-19  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR target/125351
+	* gcc.target/i386/pr125351.c: New test.
+
 2026-05-15  H.J. Lu  <hjl.tools@gmail.com>
 
 	Backported from master:
