@@ -1,3 +1,8 @@
+2026-05-19  Andi Kleen  <ak@gcc.gnu.org>
+
+	PR target/125351
+	* gcc.target/i386/pr125351.c: New test.
+
 2026-05-15  Antoni Boucher  <bouanto@zoho.com>
 
 	Backported from master:
