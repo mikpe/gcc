@@ -1,3 +1,28 @@
+2026-05-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++20/tzdata.zi: Import new file from 2026b release.
+
+2026-05-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/25_algorithms/pstl/alg_sorting/minmax_element.cc:
+	Reduce iterations for debug mode.
+
+2026-05-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/125369
+	* include/bits/chrono_io.h (__detail::_Parser::operator()):
+	Check for errors when parsing digits for a %z format.
+	* testsuite/std/time/parse/125369.cc: New test.
+
 2026-05-14  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
