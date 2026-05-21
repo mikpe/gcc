@@ -1,3 +1,22 @@
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125373
+	* config/i386/i386.md
+	(Convert imul by three, five and nine into lea define_peephole2s): Use
+	index_reg_operand instead of register_operand.
+
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/125348
+	* config/i386/i386-expand.cc (ix86_expand_builtin): Fix diagnostic
+	typo, forth -> fourth.
+
 2026-05-19  H.J. Lu  <hjl.tools@gmail.com>
 
 	Backported from master:

@@ -1,3 +1,38 @@
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125373
+	* gcc.c-torture/compile/pr125373.c: New test.
+
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/125348
+	* gcc.target/i386/pr117416-2.c (prefetch_test): Adjust expected
+	diagnostic spelling.
+	* gdc.test/compilable/dtoh_TemplateDeclaration.d: Fix comment
+	spelling, paramter -> parameter.
+
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125007
+	* g++.dg/reflect/pr125007.C: New test.
+
+2026-05-20  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-19  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	PR fortran/115260
+	* gfortran.dg/pr115260.f90: New test.
+
 2026-05-19  H.J. Lu  <hjl.tools@gmail.com>
 
 	Backported from master:

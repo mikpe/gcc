@@ -1,3 +1,14 @@
+2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125007
+	* cp-tree.h (maybe_update_function_parm): Declare.
+	* reflect.cc (maybe_update_function_parm): No longer static.
+	* error.cc (dump_expr) <case REFLECT_EXPR>: Improve printing
+	of various reflections.
+
 2026-05-15  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
