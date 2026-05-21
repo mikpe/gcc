@@ -1,3 +1,10 @@
+2026-05-20  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	PR fortran/115260
+	* trans-expr.cc (gfc_conv_subref_array_arg): Pass false to
+	dealloc argument of gfc_trans_scalar_assign if we are
+	converting a g77-style argument.
+
 2026-05-14  Christopher Albert  <albert@tugraz.at>
 
 	Backported from master:
