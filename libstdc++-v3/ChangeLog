@@ -1,3 +1,24 @@
+2026-05-21  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-19  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/125374
+	* include/std/flat_map (_Flat_map_impl::_M_try_emplace): Forward
+	instead of unconditionally moving __k when inserting it.
+	* testsuite/23_containers/flat_map/1.cc (test10): New test.
+
+2026-05-21  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-10  Patrick Palka  <ppalka@redhat.com>
+
+	* include/std/ranges (lazy_split_view::begin): Add
+	const _Pattern constraint on const overload as per LWG 3599.
+	(lazy_split_view::end): Likewise.
+	* testsuite/std/ranges/adaptors/lazy_split.cc (test14): New
+	test.
+
 2026-05-20  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
