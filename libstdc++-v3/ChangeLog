@@ -1,3 +1,41 @@
+2026-05-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-09-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/122062
+	* include/bits/random.tcc (__detail::__normalize): Use void cast
+	for operands of comma operator.
+	(piecewise_linear_distribution): Likewise.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/cons/122062.cc:
+	New test.
+
+2026-05-21  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-02-12  Xi Ruoyao  <xry111@xry111.site>
+		    Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/17_intro/badnames.cc (__unused): Do not define.
+	* testsuite/17_intro/names.cc [glibc == 2.43] (__unused): Undef.
+
+2026-05-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++20/tzdata.zi: Import new file from 2026b release.
+
+2026-05-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/125369
+	* include/bits/chrono_io.h (__detail::_Parser::operator()):
+	Check for errors when parsing digits for a %z format.
+	* testsuite/std/time/parse/125369.cc: New test.
+
 2026-05-14  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
