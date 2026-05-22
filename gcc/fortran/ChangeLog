@@ -1,3 +1,13 @@
+2026-05-21  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-20  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	PR fortran/106546
+	* frontend-passes.cc (create_var): Set attr->automatic on
+	new symbol.
+	(create_do_loop): Likewise on iteration variable.
+
 2026-05-20  Thomas Koenig  <tkoenig@gcc.gnu.org>
 
 	Backported from master:
