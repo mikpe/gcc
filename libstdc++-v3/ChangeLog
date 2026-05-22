@@ -1,3 +1,36 @@
+2026-05-21  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-21  Patrick Palka  <ppalka@redhat.com>
+
+	* testsuite/23_containers/flat_map/1.cc (test_constexpr):
+	If std::string isn't constexpr don't run test10.
+
+2026-05-21  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-19  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/125374
+	* include/std/flat_map (_Flat_map_impl::_M_try_emplace): Forward
+	instead of unconditionally moving __k when inserting it.
+	* testsuite/23_containers/flat_map/1.cc (test10): New test.
+
+2026-05-21  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	Backported from master:
+	2026-05-18  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/std/mdspan (layout_left_padded::is_exhaustive)
+	(layout_righ_padded::is_exhaustive): Mark as const.
+	* testsuite/23_containers/mdspan/layouts/mapping.cc: Test noexcept and
+	const-invocability for is_exhaustive, is_strided, and is_unique.
+	* testsuite/23_containers/mdspan/layouts/padded.cc: Test is_exhaustive on
+	const mapping..
+	* testsuite/23_containers/mdspan/layouts/stride.cc: Likewise.
+	* testsuite/23_containers/mdspan/mdspan.cc: Checks const-invocability
+	for is_exhaustive, is_strided, is_unique.
+
 2026-05-19  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,14 @@
+2026-05-21  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-05-21  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125320
+	* config/riscv/riscv.md (stack_protect_test_<mode>): Call
+	riscv_output_move() instead of hard coding <load>.
+	(stack_protect_set_<mode>): Call riscv_output_move() instead of
+	hard coding <load> and <store>.
+
 2026-05-20  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
