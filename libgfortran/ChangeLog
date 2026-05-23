@@ -1,3 +1,25 @@
+2026-05-22  Tobias Burnus  <tburnus@baylibre.com>
+
+	Backported from master:
+	2026-05-22  Tobias Burnus  <tburnus@baylibre.com>
+
+	* m4/matmul.m4: Fix comment typo.
+	* generated/matmul_c10.c: Regenerate.
+	* generated/matmul_c16.c: Regenerate.
+	* generated/matmul_c17.c: Regenerate.
+	* generated/matmul_c4.c: Regenerate.
+	* generated/matmul_c8.c: Regenerate.
+	* generated/matmul_i1.c: Regenerate.
+	* generated/matmul_i16.c: Regenerate.
+	* generated/matmul_i2.c: Regenerate.
+	* generated/matmul_i4.c: Regenerate.
+	* generated/matmul_i8.c: Regenerate.
+	* generated/matmul_r10.c: Regenerate.
+	* generated/matmul_r16.c: Regenerate.
+	* generated/matmul_r17.c: Regenerate.
+	* generated/matmul_r4.c: Regenerate.
+	* generated/matmul_r8.c: Regenerate.
+
 2026-05-13  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
