@@ -1,3 +1,20 @@
+2026-05-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125135
+	* pt.cc (check_non_deducible_conversions): Handle LOOKUP_DEFAULTED.
+
+2026-05-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-05-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125384
+	PR c++/113563
+	* lambda.cc (build_capture_proxy): 'this' capture proxy is const.
+
 2026-05-20  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

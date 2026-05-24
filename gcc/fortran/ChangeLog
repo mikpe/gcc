@@ -1,3 +1,14 @@
+2026-05-23  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-23  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125391
+	* trans.cc (gfc_assignment_finalizer_call): For finalization of
+	allocatable and pointer lhs before assignment, gfc_conv_expr
+	should be used with se.descriptor_only. This avoids implicit of
+	set_factored_descriptor_value by gfc_conv_expr_descriptor.
+
 2026-05-22  Tobias Burnus  <tburnus@baylibre.com>
 
 	Backported from master:
