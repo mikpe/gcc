@@ -6409,6 +6409,43 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
     { return !(__d1 == __d2); }
 #endif
 
+  namespace __detail
+  {
+#if defined(_GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS)
+    template<typename _Tp>
+      using __piecewise_distributions_storage_t = double;
+#elif defined(_GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES)
+    template<typename _Tp>
+      using __piecewise_distributions_storage_t = _Tp;
+#else
+    template<typename _Tp>
+      struct __piecewise_distributions_storage
+      { using type = _Tp; };
+
+    template<>
+      struct __piecewise_distributions_storage<float>
+      { using type = double; };
+
+# ifdef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
+    template<>
+      struct __piecewise_distributions_storage<__ibm128>
+      { using type = double; };
+
+    template<>
+      struct __piecewise_distributions_storage<__ieee128>
+      { using type = double; };
+# elif __LDBL_MANT_DIG__ != __DBL_MANT_DIG__
+    template<>
+      struct __piecewise_distributions_storage<long double>
+      { using type = double; };
+# endif
+
+    template<typename _Tp>
+       using __piecewise_distributions_storage_t
+	= typename __piecewise_distributions_storage<_Tp>::type;
+#endif // _GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES
+  }
+
   /**
    * @brief A piecewise_constant_distribution random number distribution.
    *
@@ -6430,6 +6467,9 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
     {
       static_assert(std::is_floating_point<_RealType>::value,
 		    "result_type must be a floating point type");
+
+      using _StorageType
+	= __detail::__piecewise_distributions_storage_t<_RealType>;
 
     public:
       /** The type of the range of the distribution. */
@@ -6461,7 +6501,7 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	param_type(const param_type&) = default;
 	param_type& operator=(const param_type&) = default;
 
-	std::vector<_RealType>
+	std::vector<result_type>
 	intervals() const
 	{
 	  if (_M_int.empty())
@@ -6474,9 +6514,28 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	    return _M_int;
 	}
 
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
 	std::vector<double>
 	densities() const
 	{ return _M_den.empty() ? std::vector<double>(1, 1.0) : _M_den; }
+#else
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 1439. Return from densities() functions?
+	[[__gnu__::__abi_tag__("__rt")]]
+	std::vector<result_type>
+	densities() const
+	{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++17-extensions"
+	  if (_M_den.empty())
+	    return std::vector<_RealType>(1, _RealType(1));
+	  else if constexpr (is_same<_RealType, _StorageType>::value)
+	    return _M_den;
+	  else
+	    return std::vector<_RealType>(_M_den.begin(), _M_den.end());
+#pragma GCC diagnostic pop
+	}
+#endif
 
 	friend bool
 	operator==(const param_type& __p1, const param_type& __p2)
@@ -6496,8 +6555,8 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	_M_initialize2(const _RealType* __ints, _RealType __den);
 
 	std::vector<_RealType> _M_int;
-	std::vector<double> _M_den;
-	std::vector<double> _M_cp;
+	std::vector<_StorageType> _M_den;
+	std::vector<_StorageType> _M_cp;
 
 	template<typename _RealType1, typename _CharT, typename _Traits>
 	  friend std::basic_ostream<_CharT, _Traits>&
@@ -6544,28 +6603,23 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
       /**
        * @brief Returns a vector of the intervals.
        */
-      std::vector<_RealType>
+      std::vector<result_type>
       intervals() const
-      {
-	if (_M_param._M_int.empty())
-	  {
-	    std::vector<_RealType> __tmp(2);
-	    __tmp[1] = _RealType(1);
-	    return __tmp;
-	  }
-	else
-	  return _M_param._M_int;
-      }
+      { return _M_param.intervals(); }
 
       /**
        * @brief Returns a vector of the probability densities.
        */
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
       std::vector<double>
       densities() const
-      {
-	return _M_param._M_den.empty()
-	  ? std::vector<double>(1, 1.0) : _M_param._M_den;
-      }
+      { return _M_param.densities(); }
+#else
+      [[__gnu__::__always_inline__]]
+      std::vector<result_type>
+      densities() const
+      { return _M_param.densities(); }
+#endif
 
       /**
        * @brief Returns the parameter set of the distribution.
@@ -6719,6 +6773,9 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
       static_assert(std::is_floating_point<_RealType>::value,
 		    "result_type must be a floating point type");
 
+      using _StorageType
+	= __detail::__piecewise_distributions_storage_t<_RealType>;
+
     public:
       /** The type of the range of the distribution. */
       typedef _RealType result_type;
@@ -6749,7 +6806,7 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	param_type(const param_type&) = default;
 	param_type& operator=(const param_type&) = default;
 
-	std::vector<_RealType>
+	std::vector<result_type>
 	intervals() const
 	{
 	  if (_M_int.empty())
@@ -6762,9 +6819,28 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	    return _M_int;
 	}
 
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
 	std::vector<double>
 	densities() const
 	{ return _M_den.empty() ? std::vector<double>(2, 1.0) : _M_den; }
+#else
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 1439. Return from densities() functions?
+	[[__gnu__::__abi_tag__("__rt")]]
+	std::vector<result_type>
+	densities() const
+	{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++17-extensions"
+	  if (_M_den.empty())
+	    return std::vector<_RealType>(2, _RealType(1));
+	  else if constexpr (is_same<_RealType, _StorageType>::value)
+	    return _M_den;
+	  else
+	    return std::vector<_RealType>(_M_den.begin(), _M_den.end());
+#pragma GCC diagnostic pop
+	}
+#endif
 
 	friend bool
 	operator==(const param_type& __p1, const param_type& __p2)
@@ -6784,9 +6860,9 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	_M_initialize2(const _RealType* __ints, const _RealType* __dens);
 
 	std::vector<_RealType> _M_int;
-	std::vector<double> _M_den;
-	std::vector<double> _M_cp;
-	std::vector<double> _M_m;
+	std::vector<_StorageType> _M_den;
+	std::vector<_StorageType> _M_cp;
+	std::vector<_StorageType> _M_m;
 
 	template<typename _RealType1, typename _CharT, typename _Traits>
 	  friend std::basic_ostream<_CharT, _Traits>&
@@ -6833,29 +6909,24 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
       /**
        * @brief Return the intervals of the distribution.
        */
-      std::vector<_RealType>
+      std::vector<result_type>
       intervals() const
-      {
-	if (_M_param._M_int.empty())
-	  {
-	    std::vector<_RealType> __tmp(2);
-	    __tmp[1] = _RealType(1);
-	    return __tmp;
-	  }
-	else
-	  return _M_param._M_int;
-      }
+      { return _M_param.intervals(); }
 
       /**
        * @brief Return a vector of the probability densities of the
        *        distribution.
        */
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
       std::vector<double>
       densities() const
-      {
-	return _M_param._M_den.empty()
-	  ? std::vector<double>(2, 1.0) : _M_param._M_den;
-      }
+      { return _M_param.densities(); }
+#else
+      [[__gnu__::__always_inline__]]
+      std::vector<result_type>
+      densities() const
+      { return _M_param.densities(); }
+#endif
 
       /**
        * @brief Returns the parameter set of the distribution.

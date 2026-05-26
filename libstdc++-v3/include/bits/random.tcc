@@ -3199,6 +3199,8 @@ namespace __detail
 	       piecewise_constant_distribution<_RealType>& __x)
     {
       using __ios_base = typename basic_istream<_CharT, _Traits>::ios_base;
+      using _StorageType
+	= typename piecewise_constant_distribution<_RealType>::_StorageType;
 
       const typename __ios_base::fmtflags __flags = __is.flags();
       __is.flags(__ios_base::dec | __ios_base::skipws);
@@ -3209,7 +3211,7 @@ namespace __detail
 	  std::vector<_RealType> __int_vec;
 	  if (__detail::__extract_params(__is, __int_vec, __n + 1))
 	    {
-	      std::vector<double> __den_vec;
+	      std::vector<_StorageType> __den_vec;
 	      if (__detail::__extract_params(__is, __den_vec, __n))
 		{
 		  __x.param({ __int_vec.begin(), __int_vec.end(),
@@ -3466,6 +3468,8 @@ namespace __detail
 	       piecewise_linear_distribution<_RealType>& __x)
     {
       using __ios_base = typename basic_istream<_CharT, _Traits>::ios_base;
+      using _StorageType
+	= typename piecewise_linear_distribution<_RealType>::_StorageType;
 
       const typename __ios_base::fmtflags __flags = __is.flags();
       __is.flags(__ios_base::dec | __ios_base::skipws);
@@ -3476,7 +3480,7 @@ namespace __detail
 	  vector<_RealType> __int_vec;
 	  if (__detail::__extract_params(__is, __int_vec, __n + 1))
 	    {
-	      vector<double> __den_vec;
+	      vector<_StorageType> __den_vec;
 	      if (__detail::__extract_params(__is, __den_vec, __n + 1))
 		{
 		  __x.param({ __int_vec.begin(), __int_vec.end(),
