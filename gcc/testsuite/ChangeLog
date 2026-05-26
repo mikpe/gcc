@@ -1,3 +1,19 @@
+2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125409
+	* gcc.target/avr/torture/pr125409.h: New file.
+	* gcc.target/avr/torture/pr125409-fx24-ssk.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-ssr.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-suk.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-sur.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-usk.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-usr.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-uuk.c: New test.
+	* gcc.target/avr/torture/pr125409-fx24-uur.c: New test.
+
 2026-05-23  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
