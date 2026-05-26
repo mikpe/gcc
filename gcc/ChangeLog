@@ -1,3 +1,11 @@
+2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125409
+	* config/avr/avr-fixed.md (FIXED_A, FIXED_B): Add PSI to iterators.
+
 2026-05-03  Collin Funk  <collin.funk1@gmail.com>
 
 	Backported from master:
