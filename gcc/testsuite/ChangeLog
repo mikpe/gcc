@@ -1,3 +1,19 @@
+2026-05-26  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-26  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125423
+	* g++.dg/reflect/bases_of6.C: New test.
+
+2026-05-26  Soumya AR  <soumyaa@nvidia.com>
+
+	Backported from master:
+	2026-05-08  Soumya AR  <soumyaa@nvidia.com>
+
+	PR target/124895
+	* gcc.target/aarch64/narrow-gp-writes-8.c: New test.
+
 2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:

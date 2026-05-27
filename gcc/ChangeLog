@@ -1,3 +1,12 @@
+2026-05-26  Soumya AR  <soumyaa@nvidia.com>
+
+	Backported from master:
+	2026-05-08  Soumya AR  <soumyaa@nvidia.com>
+
+	PR target/124895
+	* config/aarch64/aarch64-passes.def (pass_narrow_gp_writes): Move pass
+	before pass_free_cfg.
+
 2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
