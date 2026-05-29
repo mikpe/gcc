@@ -1,3 +1,13 @@
+2026-05-28  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* doc/gnat_rm/gnat_language_extensions.rst
+	(Generalized Finalization): Document the new restriction.
+	* sem_ch13.adb (Resolve_Finalizable_Argument): Adjust wording of
+	error message.
+	(Resolve_Finalization_Procedure.Is_Finalizable_Primitive): Require
+	the procedure to be a primitive operation.
+	* gnat_rm.texi: Regenerate.
+
 2026-05-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/125240
