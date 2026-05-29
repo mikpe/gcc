@@ -1,3 +1,11 @@
+2026-05-28  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-28  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125454
+	* typeck.cc (cp_build_array_ref): Don't recurse for array[array].
+
 2026-05-26  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

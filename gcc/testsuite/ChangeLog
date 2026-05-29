@@ -1,3 +1,19 @@
+2026-05-28  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-28  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125454
+	* g++.dg/other/array8.C: New test.
+
+2026-05-28  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-05-12  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/124151
+	* gcc.dg/tree-ssa/pr124151.c: New test.
+
 2026-05-26  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

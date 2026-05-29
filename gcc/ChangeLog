@@ -1,3 +1,20 @@
+2026-05-28  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-05-12  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/124151
+	* tree-sra.cc (build_user_friendly_ref_for_offset): Added parameters
+	CUR_SIZE and EXP_SIZE.  Added code passing the correct CUR_SIZE and
+	checking it against EXP_SIZE.  Removed unused code for the case when
+	EXP_TYPE was NULL_TREE.
+	(create_artificial_child_access): Adjusted the call to
+	build_user_friendly_ref_for_offset.
+	(propagate_subaccesses_from_rhs): Likewise.
+	(propagate_subaccesses_from_rhs): Removed a check that the size of
+	lchild is a multiple of BITS_PER_UNIT.
+	(propagate_subaccesses_from_lhs): Likewise.
+
 2026-05-27  liuhongt  <hongtao.liu@intel.com>
 
 	Backported from master:
