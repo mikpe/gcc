@@ -1,3 +1,43 @@
+2026-05-29  Marc Poulhiès  <poulhies@adacore.com>
+
+	* sysdep.c (getc_immediate_common): Read character as unsigned
+	value.
+
+2026-05-29  Piotr Trojanek  <trojanek@adacore.com>
+
+	* sem_ch4.adb (Analyze_Quantified_Expression): If there is a filter,
+	then suppress the warning.
+
+2026-05-29  Piotr Trojanek  <trojanek@adacore.com>
+
+	* sem_ch4.adb (Analyze_Quantified_Expression): Suppress warning for
+	trivial conditions.
+
+2026-05-29  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_util.adb (Statically_Names_Object) <N_Selected_Component>:
+	Return False if the selector is neither component nor discriminant.
+
+2026-05-29  Javier Miranda  <miranda@adacore.com>
+
+	* sem_ch3.adb (Build_Derived_Record_Type): Record type derivations
+	inherit Is_Unchecked_Union and Has_Unchecked_Union flags.
+	(Inherit_Component): Add discriminals to the associations list.
+	* exp_ch3.adb (Build_Record_Init_Proc): Derivations of Unchecked_Union
+	types don't need an initialization procedure; they reuse the init proc
+	of their parent type.
+
+2026-05-29  Ronan Desplanques  <desplanques@adacore.com>
+
+	* doc/gnat_ugn/building_executable_programs_with_gnat.rst: Fix
+	markup.
+	* gnat_ugn.texi: Regenerate.
+
+2026-05-29  Piotr Trojanek  <trojanek@adacore.com>
+
+	* sem_ch4.adb (Analyze_Quantified_Expression): Suppress warning for
+	variables with junk names.
+
 2026-05-28  Sebastian Poeplau  <poeplau@adacore.com>
 
 	* init.c (__gnat_alternate_stack): add alignment attribute.
