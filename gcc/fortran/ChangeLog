@@ -1,3 +1,13 @@
+2026-05-30  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-30  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/105582
+	* trans-decl.cc (get_proc_pointer_decl): Add FL_LABEL check to
+	route BLOCK-construct procedure pointers to gfc_add_decl_to_function
+	rather than gfc_add_decl_to_parent_function.
+
 2026-05-23  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
