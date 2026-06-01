@@ -3355,12 +3355,21 @@ namespace __detail
       {
 	const size_t __n = __nw == 0 ? 1 : __nw;
 	const _RealType __delta = (__xmax - __xmin) / __n;
+	const auto __cfw = [&] (_RealType __v)
+	  {
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+	    return __fw(__v + __delta);
+#else
+	    return __fw(__v);
+#endif
+	  };
+
 	if (__n == 1)
 	  {
 	    _RealType __ints[2] = { __xmin, __xmin + __delta };
 	    _RealType __dens[2];
-	    __dens[0] = __fw(__ints[0]);
-	    __dens[1] = __fw(__ints[1]);
+	    __dens[0] = __cfw(__ints[0]);
+	    __dens[1] = __cfw(__ints[1]);
 	    _M_initialize2(__ints, __dens);
 	    return;
 	  }
@@ -3370,7 +3379,7 @@ namespace __detail
 	for (size_t __k = 0; __k <= __nw; ++__k)
 	  {
 	    _M_int.push_back(__xmin + __k * __delta);
-	    _M_den.push_back(__fw(_M_int[__k] + __delta));
+	    _M_den.push_back(__cfw(_M_int[__k]));
 	  }
 
 	_M_configure();
