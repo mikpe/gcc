@@ -1,3 +1,12 @@
+2026-05-31  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
+
+	Backported from master:
+	2026-05-13  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
+
+	PR target/125215
+	* config/riscv/riscv-v.cc (expand_const_vector_interleaved_stepped_npatterns):
+	Remove hi/lo optimization and always use the merge fallback.
+
 2026-05-28  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
