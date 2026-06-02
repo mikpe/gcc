@@ -1,3 +1,58 @@
+2026-06-01  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-05-29  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125393
+	* gfortran.dg/argument_checking_28.f90: New test.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125123
+	* g++.dg/cpp26/expansion-stmt42.C: New test.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125412
+	* g++.dg/reflect/pr125412.C: New test.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125376
+	* g++.dg/coroutines/pr125376.C: New test.
+
+2026-06-01  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-06-01  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* gcc.dg/lto/toplevel-simple-asm-1_0.c: Adjust inline assembler
+	for arm-none-eabi.
+
+2026-06-01  Christophe Lyon  <christophe.lyon@arm.com>
+
+	Backported from master:
+	2026-05-19  Christophe Lyon  <christophe.lyon@arm.com>
+
+	PR target/124870
+	* gcc.target/arm/mve/intrinsics/pr124870.c: New test.
+
+2026-06-01  Hongyu Wang  <hongyu.wang@intel.com>
+
+	Backported from master:
+	2026-06-01  Hongyu Wang  <hongyu.wang@intel.com>
+
+	* gcc.target/i386/apx-zu-4.c: New test.
+
 2026-05-31  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
 
 	Backported from master:

@@ -1,3 +1,43 @@
+2026-06-01  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.cc (pa_trampoline_init): Rework to use
+	clear_cache pattern.
+	* config/pa/pa.md (dcacheflush): Use "<<" condition instead
+	of "<<=".
+	(icacheflush): Remove.
+	(icacheflush1, icacheflush2, icacheflush3): New flush patterns
+	for PA 1.x targets, PA 2.0 targets, and PA 1.x no space
+	register targets.
+	(clear_cache): Rework to flush data and instruction caches.
+	Skip flush if the start address is greater than or equal to
+	the end address.  Don't align the end address to a cacheline
+	boundary.  Handle instruction flushes for PA 1.x targets,
+	PA 2.0 targets, and PA 1.x no space register targets.
+
+2026-06-01  Christophe Lyon  <christophe.lyon@arm.com>
+
+	Backported from master:
+	2026-05-19  Christophe Lyon  <christophe.lyon@arm.com>
+
+	PR target/124870
+	* config/arm/arm-mve-builtins-base.cc (vstrq_scatter_base_impl)
+	(vldrq_gather_base_impl): Fix call_properties.
+
+2026-06-01  Hongyu Wang  <hongyu.wang@intel.com>
+
+	Backported from master:
+	2026-06-01  Hongyu Wang  <hongyu.wang@intel.com>
+
+	* config/i386/x86-tune.def (X86_TUNE_DISABLE_SETZUCC): New.
+	Enable for m_DIAMONDRAPIDS | m_NOVALAKE.
+	* config/i386/i386.h (TARGET_DISABLE_SETZUCC): New define.
+	* config/i386/i386.md (*setcc_<mode>_zu): Guard with
+	TARGET_APX_ZU && !TARGET_DISABLE_SETZUCC.
+	(*setcc_di_1, *setcc_<mode>_1_movzbl): Guard with
+	(!TARGET_APX_ZU || TARGET_DISABLE_SETZUCC).
+	(*setcc_qi, *setcc_qi_slp): Emit setzucc only when
+	TARGET_APX_ZU && !TARGET_DISABLE_SETZUCC.
+
 2026-05-31  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
 
 	Backported from master:

@@ -1,3 +1,33 @@
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125123
+	* parser.cc (cp_build_range_for_decls): If range_temp or begin
+	are static, set DECL_IGNORED_P on it.
+	* pt.cc (finish_expansion_stmt): Similarly for iter.
+	* decl.cc (cp_finish_decl): Call determine_local_discriminator
+	etc. also for DECL_ARTIFICIAL TREE_STATIC vars.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125412
+	* reflect.cc (process_metafunction): If ht is error_operand_p,
+	set *non_constant_p and return NULL_TREE.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125376
+	* coroutines.cc (register_local_var_uses): Ignore DECL_NAME for
+	name independent decls.
+
 2026-05-28  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
