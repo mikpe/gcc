@@ -1,3 +1,119 @@
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125373
+	* config/i386/i386.md
+	(Convert imul by three, five and nine into lea define_peephole2s): Use
+	index_reg_operand instead of register_operand.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* tree-ssa-strlen.cc (get_string_length): Transform
+	__strcat_chk (x, y, z) when we need strlen (x) afterwards into
+	l1 = strlen (x); l = __stpcpy_chk (x + l1, y, z - l1) - x;
+	where l is the strlen (x), instead of using z as last __stpcpy_chk
+	argument.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125039
+	* range-op-float.cc (operator_not_equal::fold_range): Call
+	empty_range_varying when not calling frelop_early_resolve.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124133
+	* config/rs6000/rs6000-c.cc (c_fold_convert): New function.
+	(c_fold_build2_loc): Likewise.
+	(fully_fold_convert): Use c_fold_convert instead of fold_convert.
+	(altivec_build_resolved_builtin): Likewise.  Use c_fold_build2_loc
+	instead of fold_build2.
+	(resolve_vec_mul, resolve_vec_adde_sube, resolve_vec_addec_subec):
+	Use c_fold_build2_loc instead of fold_build2_loc.
+	(resolve_vec_splats, resolve_vec_extract): Use c_fold_convert instead
+	of fold_convert.
+	(resolve_vec_insert): Use c_fold_build2_loc instead of fold_build2.
+	(altivec_resolve_overloaded_builtin): Use c_fold_convert instead
+	of fold_convert.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124892
+	* config/i386/i386.md (clz<mode>2_lzcnt_nf,
+	<lt_zcnt>_<mode>_nf, popcount<mode>2_nf): Emit explicit
+	set of (match_dup 0) to (const_int 0) without flags clobber instead of
+	using ix86_expand_clear.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124891
+	* tree-ssa-propagate.cc
+	(substitute_and_fold_dom_walker::before_dom_children): Call update_stmt
+	in the did_replace case before calling fold_stmt.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124826
+	* gimple-lower-bitint.cc (bitint_large_huge::handle_load): Look through
+	BIT_FIELD_REF with zero bit offset.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124754
+	* tree-ssa-strlen.cc (strlen_pass::handle_builtin_strcpy): Make
+	sure both get_stridx calls are done before first get_strinfo call.
+	(strlen_pass::handle_builtin_memcpy): Likewise.
+	(strlen_pass::handle_builtin_strcat): Likewise.
+
+2026-06-01  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.cc (pa_trampoline_init): Rework to use
+	clear_cache pattern.
+	* config/pa/pa.md (dcacheflush): Use "<<" condition instead
+	of "<<=".
+	(icacheflush): Remove.
+	(icacheflush1, icacheflush2, icacheflush3): New flush patterns
+	for PA 1.x targets, PA 2.0 targets, and PA 1.x no space
+	register targets.
+	(clear_cache): Rework to flush data and instruction caches.
+	Skip flush if the start address is greater than or equal to
+	the end address.  Don't align the end address to a cacheline
+	boundary.  Handle instruction flushes for PA 1.x targets,
+	PA 2.0 targets, and PA 1.x no space register targets.
+
+2026-06-01  Christophe Lyon  <christophe.lyon@arm.com>
+
+	Backported from master:
+	2026-05-19  Christophe Lyon  <christophe.lyon@arm.com>
+
+	PR target/124870
+	* config/arm/arm-mve-builtins-base.cc (vstrq_scatter_base_impl)
+	(vldrq_gather_base_impl): Fix call_properties.
+
 2026-05-27  liuhongt  <hongtao.liu@intel.com>
 
 	Backported from master:

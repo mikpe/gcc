@@ -1,3 +1,77 @@
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125376
+	* coroutines.cc (register_local_var_uses): Ignore DECL_NAME for
+	name independent decls.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124850
+	* typeck.cc (cxx_mark_addressable): For DECL_ANON_UNION_VAR_P vars
+	also mark their DECL_VALUE_EXPR.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-08  Jakub Jelinek  <jakub@redhat.com>
+
+	* parser.cc (cp_parser_omp_loop_nest): Write orig_declv, not incrv.
+
+2026-06-01  Yang Kun  <yangkun@disroot.org>
+
+	Backported from master:
+	2026-04-08  Yang Kun  <yangkun@disroot.org>
+
+	* parser.cc (cp_parser_omp_clause_proc_bind): Fix error message
+	(cp_parser_omp_clause_device_type): Likewise.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124487
+	* mangle.cc (write_type) <case PACK_INDEX_TYPE>: Handle even
+	the case of partially substituted pack.
+	(write_expression): Similarly for PACK_INDEX_EXPR.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124487
+	* mangle.cc (write_type) <case PACK_INDEX_TYPE>: Handle pack index
+	mangling unless (for now) PACK_INDEX_PACK is a TREE_VEC.
+	(write_expression): Handle PACK_INDEX_EXPR.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124198
+	* parser.cc (cp_parser_pack_index): If index is not type dependent,
+	call build_converted_constant_expr on it.  Return error_mark_node
+	if index is error_operand_p.
+	* pt.cc (tsubst_pack_index): Likewise.
+
+2026-06-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124531
+	* init.cc (build_vec_init): Call braced_lists_to_strings for
+	array CONSTRUCTORs.  Handle RAW_DATA_CST and handle RANGE_EXPR
+	correctly.
+
 2026-05-15  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
