@@ -1,3 +1,19 @@
+2026-06-01  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.cc (pa_trampoline_init): Rework to use
+	clear_cache pattern.
+	* config/pa/pa.md (dcacheflush): Use "<<" condition instead
+	of "<<=".
+	(icacheflush): Remove.
+	(icacheflush1, icacheflush2, icacheflush3): New flush patterns
+	for PA 1.x targets, PA 2.0 targets, and PA 1.x no space
+	register targets.
+	(clear_cache): Rework to flush data and instruction caches.
+	Skip flush if the start address is greater than or equal to
+	the end address.  Don't align the end address to a cacheline
+	boundary.  Handle instruction flushes for PA 1.x targets,
+	PA 2.0 targets, and PA 1.x no space register targets.
+
 2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
