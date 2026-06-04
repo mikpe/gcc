@@ -1,3 +1,11 @@
+2026-06-03  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125049
+	* gcc.target/loongarch/pr125049.c: New test.
+
 2026-05-25  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
