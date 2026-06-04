@@ -1,3 +1,139 @@
+2026-06-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/125252
+	* gcc.dg/pr125252.c
+
+2026-06-03  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* gcc.dg/torture/pr125250.c: Declare g0 as _Bool.
+
+2026-06-03  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* gcc.dg/torture/pr125250.c: New testcase.
+
+2026-06-03  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	Backported from master:
+	2025-10-12  Nathaniel Shead  <nathanieloshead@gmail.com>
+
+	PR c++/122163
+	* g++.dg/cpp0x/lambda/lambda-ref3.C: New test.
+
+2026-06-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-15  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	* c-c++-common/torture/pr124086-1.c: Only enable
+	for power of 2 long double.
+
+2026-06-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/124086
+	* c-c++-common/torture/pr124086-1.c: New test.
+	* g++.dg/torture/pr124086-1.C: New test.
+
+2026-06-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR middle-end/121661
+	* gcc.dg/torture/pr121661-1.c: New test.
+
+2026-06-03  Andrew MacLeod  <amacleod@redhat.com>
+
+	Backported from master:
+	2025-10-01  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/120560
+	* gcc.dg/pr120560.c: New.
+
+2026-06-03  Jan Hubicka  <hubicka@ucw.cz>
+
+	Backported from master:
+	2026-04-17  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/120098
+	* g++.dg/torture/pr120098.C: New test.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/122827
+	* gcc.target/aarch64/sve/pr122827.c: New test.
+
+2026-06-02  Roger Sayle  <roger@nextmovesoftware.com>
+
+	Backported from master:
+	2025-10-15  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR rtl-optimization/122266
+	* gcc.target/i386/pr122266.c: New test case.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125153
+	* gcc.dg/torture/pr125153.c: New testcase.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* gcc.dg/tree-ssa/ssa-thread-23.c: New testcase.
+	* gcc.dg/tree-ssa/ssa-dom-thread-7.c: Adjust.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2025-06-06  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* gcc.dg/tree-ssa/ssa-dom-thread-7.c: Adjust aarch64 expected
+	thread2 number of threads.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* gcc.dg/torture/pr125025.c: New testcase.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125019
+	* gcc.dg/pr125019.c: New testcase.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124868
+	* gcc.dg/torture/pr124868.c: New testcase.
+
 2026-06-01  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

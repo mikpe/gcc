@@ -1,3 +1,9 @@
+2026-06-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/125252
+	* c-typeck.cc (ptr_to_tagged_member): Return type of member.
+	(c_type_canonical): Use incomplete type.
+
 2026-05-15  Andi Kleen  <ak@gcc.gnu.org>
 
 	PR c/124532

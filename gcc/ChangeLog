@@ -1,3 +1,144 @@
+2026-06-03  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* tree-ssa-loop-im.cc (execute_sm): For modes that cannot
+	transfer bits, _Bool and bitfield accesses force the
+	multi-threaded model.
+
+2026-06-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/124086
+	* tree-complex.cc (extract_component): Extend the check
+	for ssa names for VCE to include invariants.
+
+2026-06-03  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR middle-end/121661
+	* tree-complex.cc (extract_component): Create gimple
+	assign statements directly rather than call force_gimple_operand_gsi.
+
+2026-06-03  Andrew MacLeod  <amacleod@redhat.com>
+
+	Backported from master:
+	2025-10-01  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/120560
+	* vr-values.cc (range_from_loop_direction): Use wi::ge_p rather
+	than wi::gt_p.
+
+2026-06-03  Jan Hubicka  <hubicka@ucw.cz>
+
+	Backported from master:
+	2026-04-17  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/120098
+	* ipa-polymorphic-call.cc (polymorphic_ctor_dtor_p): Remove
+	check for pure/const flags
+
+2026-06-03  Jan Hubicka  <hubicka@ucw.cz>
+
+	Backported from master:
+	2026-04-17  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/120098
+	* ipa-devirt.cc (odr_type_p): Add no_derived_construction_vtables
+	(odr_types_ptr): Move ahead in file.
+	(odr_types): Move ahead in file.
+	(anonymous_construction_vtable_p): New function.
+	(mark_derived_construction_vtables): New function.
+	(construction_vtable_hook): New function.
+	(type_possibly_instantiated_p): Watch for construction vtables.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	* config/aarch64/tuning_models/olympus.h (olympus_scalar_issue_info,
+	olympus_advsimd_issue_info, olympus_sve_issue_info): Set
+	loads_stores_per_cycle to 6.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/122827
+	* config/aarch64/aarch64.cc (aarch64_hard_regno_call_part_clobbered):
+	For SVE modes use BYTES_PER_SVE_VECTOR for the per-register size
+	rather than GET_MODE_SIZE.
+	* config/aarch64/aarch64-early-ra.cc (early_ra::get_allocno_subgroup):
+	Classify any SVE mode as FPR_Z.
+
+2026-06-02  Roger Sayle  <roger@nextmovesoftware.com>
+
+	Backported from master:
+	2025-10-15  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR rtl-optimization/122266
+	* combine.cc (struct reg_stat_type): Change types of sign_bit_copies
+	and last_set_sign_bit_copies to unsigned short, to avoid overflows
+	on TImode (and wider) values.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2025-06-06  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/120003
+	* tree-ssa-threadbackward.cc (back_threader::find_paths_to_names):
+	Allow block re-use but do not enlarge the path beyond such a
+	re-use.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125146
+	* gimple-fold.cc (fold_stmt_1): Discard stmts in seq
+	after failed gimple_simplify as well.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* tree-ssa-loop-niter.cc (number_of_iterations_ne): Avoid
+	negation of most negative signed integer.
+	(number_of_iterations_lt): Likewise.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125019
+	* tree-vect-loop.cc (vectorizable_recurr): Properly guard
+	against hitting last stmt when searching for the insertion
+	place.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124868
+	* gimple-ssa-isolate-paths.cc (handle_return_addr_local_phi_arg):
+	Do not diagnose returns in blocks not dominated by the PHI.
+	(find_implicit_erroneous_behavior): Do two sweeps over PHIs,
+	first for NULL dereferences and then for local address returns.
+
 2026-06-01  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
