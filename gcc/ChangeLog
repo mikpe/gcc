@@ -1,3 +1,48 @@
+2026-06-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	PR rtl-optimization/125375
+	* cfgrtl.cc (flow_active_insn_p): Return true for clobbers.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	* config/aarch64/tuning_models/olympus.h (olympus_scalar_issue_info,
+	olympus_advsimd_issue_info, olympus_sve_issue_info): Set
+	loads_stores_per_cycle to 6.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/122827
+	* config/aarch64/aarch64.cc (aarch64_hard_regno_call_part_clobbered):
+	For SVE modes use BYTES_PER_SVE_VECTOR for the per-register size
+	rather than GET_MODE_SIZE.
+	* config/aarch64/aarch64-early-ra.cc (early_ra::get_allocno_subgroup):
+	Classify any SVE mode as FPR_Z.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* tree-ssa-loop-im.cc (execute_sm): For modes that cannot
+	transfer bits, _Bool and bitfield accesses force the
+	multi-threaded model.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125156
+	* tree-cfgcleanup.cc (cleanup_control_expr_graph): Clear
+	EDGE_TRUE_VALUE and EDGE_FALSE_VALUE edge flags only.
+
 2026-06-01  John David Anglin  <danglin@gcc.gnu.org>
 
 	* config/pa/pa.cc (pa_trampoline_init): Rework to use

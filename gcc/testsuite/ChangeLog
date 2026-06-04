@@ -1,3 +1,43 @@
+2026-06-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gcc.dg/pr125375.c: New test.
+
+2026-06-03  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-01  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/122827
+	* gcc.target/aarch64/sve/pr122827.c: New test.
+
+2026-06-03  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/atomic9.adb (NVIC_STIR): Add alignment clause.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* gcc.dg/torture/pr125250.c: Declare g0 as _Bool.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125250
+	* gcc.dg/torture/pr125250.c: New testcase.
+
+2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125156
+	* gcc.dg/torture/pr125156.c: New testcase.
+
 2026-06-01  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:

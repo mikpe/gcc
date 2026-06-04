@@ -1,3 +1,47 @@
+2026-06-02  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gcc-interface/decl.cc (gnat_to_gnu_entity) <E_Variable>: Validate
+	a known alignment on the object even if there is an address clause.
+
+2026-06-02  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gcc-interface/decl.cc (gnat_to_gnu_entity) <E_Variable>: Do not
+	give the warning about too large a size here but...
+	* gcc-interface/utils2.cc (build_allocator): ...here instead.
+
+2026-06-02  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gcc-interface/utils.cc (maybe_pad_type): Propagate the flag
+	TYPE_REVERSE_STORAGE_ORDER from the inner type to the record type
+	if the former is also an aggregate type.
+
+2026-06-02  Gary Dismukes  <dismukes@adacore.com>
+
+	* sem_ch3.adb (Copy_Parent_Attributes): Inherit Linker_Section_Pragma.
+
+2026-06-02  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR ada/18205
+	* exp_attr.adb (Rewrite_Attribute_Proc_Call): Skip the conversion to
+	the formal type only if the actual is of a class-wide type. Generate
+	a dispatching call when both the prefix is a class-wide type and the
+	subprogram is a dispatching operation.
+	(Expand_N_Attribute_Reference) <Input>: Use U_Type consistently and
+	remove an useless invocation of Root_Type.
+	<Put_Image>: Minor comment tweak.
+	<Read>: Likewise.
+	<Write>: Likewise.
+
+2026-06-02  Ronan Desplanques  <desplanques@adacore.com>
+
+	* par.adb, par-util.adb (Check_Bad_Layout_At): New procedure.
+	* par-ch3.adb (P_Declarative_Item): Use new procedure.
+	* par-ch5.adb (P_Sequence_Of_Statements): Likewise.
+
+2026-06-02  Viljar Indus  <indus@adacore.com>
+
+	* sem_util.adb (Normalize_Actuals): Improve error message.
+
 2026-05-29  Marc Poulhiès  <poulhies@adacore.com>
 
 	* sysdep.c (getc_immediate_common): Read character as unsigned
