@@ -9045,6 +9045,34 @@ is_pointer (gfc_expr *e)
   return sym->attr.pointer || sym->attr.proc_pointer;
 }
 
+/* Assumed-rank actual argument: the caller only allocates storage for dtype
+   rank dimensions. Copying GFC_MAX_DIMENSIONS dim entries would read past the
+   physical end of the descriptor. Copy the header fields explicitly and use a
+   runtime-sized memcpy for the dim[] entries.  */
+void
+gfc_resize_assumed_rank_dim_field (gfc_se *se, stmtblock_t *block, tree desc)
+{
+  tree rank, dim_field, dim_size, copy_size, dst_ptr, src_ptr;
+
+  gfc_conv_descriptor_data_set (block, desc,
+				gfc_conv_descriptor_data_get (se->expr));
+  gfc_conv_descriptor_offset_set (block, desc,
+				  gfc_conv_descriptor_offset_get (se->expr));
+  gfc_add_modify (block, gfc_conv_descriptor_dtype (desc),
+		  gfc_conv_descriptor_dtype (se->expr));
+  rank = fold_convert (size_type_node, gfc_conv_descriptor_rank (se->expr));
+  dim_field = gfc_get_descriptor_dimension (se->expr);
+  dim_size = TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (dim_field)));
+  copy_size = fold_build2_loc (input_location, MULT_EXPR,
+			       size_type_node, rank, dim_size);
+  dst_ptr = gfc_build_addr_expr (pvoid_type_node,
+				 gfc_get_descriptor_dimension (desc));
+  src_ptr = gfc_build_addr_expr (pvoid_type_node, dim_field);
+  gfc_add_expr_to_block (block, build_call_expr_loc (input_location,
+			 builtin_decl_explicit (BUILT_IN_MEMCPY),
+			 3, dst_ptr, src_ptr, copy_size));
+}
+
 /* Convert an array for passing as an actual parameter.  */
 
 void
@@ -9319,7 +9347,12 @@ gfc_conv_array_parameter (gfc_se *se, gfc_expr *expr, bool g77,
 	      gfc_conv_descriptor_offset_set (&block, arr, gfc_index_zero_node);
 	      se->expr = arr;
 	    }
-	  gfc_class_array_data_assign (&block, tmp, se->expr, true);
+	  if (expr->rank == -1)
+	    gfc_resize_assumed_rank_dim_field (se, &block, tmp);
+	  else if (CLASS_DATA (fsym)->as->rank == -1)
+	    gfc_class_array_data_assign (&block, tmp, se->expr, false);
+	  else
+	    gfc_class_array_data_assign (&block, tmp, se->expr, true);
 
 	  /* Handle optional.  */
 	  if (fsym && fsym->attr.optional && sym && sym->attr.optional)
