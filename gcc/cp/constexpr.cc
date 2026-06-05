@@ -5439,12 +5439,7 @@ init_subob_ctx (const constexpr_ctx *ctx, constexpr_ctx &new_ctx,
   else if (ctx->object)
     ctxtype = TREE_TYPE (ctx->object);
   else
-    {
-      /* This can happen if the enclosing object is also an empty subobject
-	 (c++/125315).  */
-      gcc_checking_assert (is_empty_class (type));
-      return;
-    }
+    gcc_unreachable ();
 
   if (VECTOR_TYPE_P (type)
       && VECTOR_TYPE_P (ctxtype)
