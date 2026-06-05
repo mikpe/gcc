@@ -5432,17 +5432,8 @@ init_subob_ctx (const constexpr_ctx *ctx, constexpr_ctx &new_ctx,
   if (!AGGREGATE_TYPE_P (type) && !VECTOR_TYPE_P (type))
     /* A non-aggregate member doesn't get its own CONSTRUCTOR.  */
     return;
-
-  tree ctxtype = NULL_TREE;
-  if (ctx->ctor)
-    ctxtype = TREE_TYPE (ctx->ctor);
-  else if (ctx->object)
-    ctxtype = TREE_TYPE (ctx->object);
-  else
-    gcc_unreachable ();
-
   if (VECTOR_TYPE_P (type)
-      && VECTOR_TYPE_P (ctxtype)
+      && VECTOR_TYPE_P (TREE_TYPE (ctx->ctor))
       && index == NULL_TREE)
     /* A vector inside of a vector CONSTRUCTOR, e.g. when a larger
        vector is constructed from smaller vectors, doesn't get its own
@@ -5461,10 +5452,9 @@ init_subob_ctx (const constexpr_ctx *ctx, constexpr_ctx &new_ctx,
 	new_ctx.object = build_ctor_subob_ref (index, type, ctx->object);
     }
 
-  if (is_empty_class (type)
-      && TREE_CODE (ctxtype) != UNION_TYPE)
-    /* Leave ctor null for an empty subobject of a non-union class, they aren't
-       represented in the result of evaluation.  */
+  if (is_empty_class (type))
+    /* Leave ctor null for an empty subobject, they aren't represented in the
+       result of evaluation.  */
     new_ctx.ctor = NULL_TREE;
   else
     {
