@@ -1,3 +1,22 @@
+2026-06-05  Jason Merrill  <jason@redhat.com>
+
+	Revert:
+	2026-05-14  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+		    Jason Merrill  <jason@redhat.com>
+
+	PR c++/123346
+	* constexpr.cc (init_subob_ctx): Do initialize new_ctx.ctor
+	for an empty union member.
+
+2026-06-05  Jason Merrill  <jason@redhat.com>
+
+	Revert:
+	2026-05-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125315
+	* constexpr.cc (init_subob_ctx): Allow both ctor and object
+	to be null for an empty subobject.
+
 2026-06-03  Nathaniel Shead  <nathanieloshead@gmail.com>
 
 	Backported from master:

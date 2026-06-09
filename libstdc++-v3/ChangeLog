@@ -1,3 +1,76 @@
+2026-06-05  XU Kailiang  <xu2k3l4@outlook.com>
+
+	PR libstdc++/117214
+	* include/bits/chrono_io.h (__formatter_chrono::_M_a_A)
+	(__formatter_chrono::_M_b_B, __formatter_chrono::_M_p): Use
+	_M_locale_fmt to format %a/%A/%b/%B/%p.
+	* testsuite/std/time/format/pr117214_custom_timeput.cc: New
+	test.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2025-07-01  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/120789
+	* include/bits/ranges_algo.h (__remove_if_fn::operator()): Use
+	ranges::iter_move(iter) instead of std::move(*iter).
+	* testsuite/25_algorithms/remove_if/120789.cc: New test.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2025-07-01  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/120789
+	* include/bits/ranges_algo.h (__unique_fn::operator()): Use
+	ranges::iter_move(iter) instead of std::move(*iter).
+	* testsuite/25_algorithms/unique/120789.cc: New test.
+
+2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-04-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/ext/pb_ds/detail/gp_hash_table_map_/find_no_store_hash_fn_imps.hpp:
+	Add missing #endif.
+
+2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/debug/safe_iterator.h: Remove trailing whitespace.
+
+2026-06-04  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	Backported from master:
+	2025-12-19  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/debug/helper_functions.h (__gnu_debug::__can_advance):
+	Declare as _GLIBCXX20_CONSTEXPR.
+	* include/debug/safe_iterator.h (__gnu_debug::__can_advance):
+	Define as _GLIBCXX20_CONSTEXPR, and return true for constexpr
+	evaluation.
+	(__gnu_debug::__base): Define as _GLIBCXX20_CONSTEXPR.
+
+2026-06-04  François Dumont  <frs.dumont@gmail.com>
+
+	PR libstdc++/119163
+	* include/debug/functions.h (__check_valid_range): Add C++20 constexpr.
+	* include/debug/helper_functions.h (__valid_range): Likewise.
+	* include/debug/safe_iterator.h (__valid_range): Likewise.
+
+2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2025-10-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/122224
+	* include/bits/stl_iterator_base_funcs.h (prev): Compare
+	distance as n > 0 instead of n != 0.
+	* testsuite/24_iterators/range_operations/122224.cc: New test.
+
 2026-06-03  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:
