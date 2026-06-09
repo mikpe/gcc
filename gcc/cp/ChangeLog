@@ -1,3 +1,47 @@
+2026-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125334
+	* module.cc (depset::hash::add_dependent_adl_entities):
+	Disable when inside a header unit.
+
+2026-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	* module.cc (dep_adl_info::args): Initializer to nullptr
+	instead of immediately allocating.
+	(depset::hash::add_dependent_adl_entities): Exit early
+	for non-type-dependent calls and operator expressions.
+	Only allocate dep_adl_info::args if we're not exiting early.
+	Correct all-type-dependent args test.
+	* name-lookup.cc (name_lookup::preserve_state): Replace
+	propagation of tentative flag with assert that it's not
+	set.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-03  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125378
+	* tree.cc (build_min_non_dep_op_overload): Handle comparison
+	operator expressions rewritten from a <=> that contain an
+	integer promotion.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-03  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125490
+	* parser.cc (cp_parser_constraint_expression): Pass
+	no_toplevel_fold_p=false instead of =true to
+	cp_parser_binary_expression.
+
 2026-06-01  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

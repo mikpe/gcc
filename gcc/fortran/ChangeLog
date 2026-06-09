@@ -1,3 +1,24 @@
+2026-06-09  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-09  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125669
+	* decl.cc (gfc_get_pdt_instance): If the bound expressions for
+	and array component, of the length expression for a character
+	component, gave simplified to a constant, do not set attributes
+	pdt_array and pdt_string respectively.
+
+2026-06-08  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125606
+	* trans-intrinsic.cc (gfc_conv_intrinsic_loc): When the argument
+	of LOC() is not scalar or known to be simply contiguous, simply
+	take the address of the argument array's first element.
+
 2026-06-01  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:

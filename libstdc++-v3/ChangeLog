@@ -1,3 +1,93 @@
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-29  Patrick Palka  <ppalka@redhat.com>
+
+	* include/std/flat_set (_Flat_set_impl::swap): Swap _M_cont
+	first.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-28  Patrick Palka  <ppalka@redhat.com>
+
+	* include/std/flat_map (flat_map): Bring in operator= from
+	_Flat_map_base.
+	(flat_multimap): Likewise.
+	* include/std/flat_set (flat_set): Bring in operator= from
+	_Flat_set_base.
+	(flat_multiset): Likewise.
+	* testsuite/23_containers/flat_map/1.cc (test11): Simplify by
+	using = {...}.
+	(test12): New test.
+	* testsuite/23_containers/flat_multimap/1.cc (test10): Simplify
+	by using = {...}.
+	(test11): New test.
+	* testsuite/23_containers/flat_multiset/1.cc (test10): Simplify
+	by using = {...}.
+	(test11): New test.
+	* testsuite/23_containers/flat_set/1.cc (test10): Simplify by
+	using = {...}.
+	(test11): New test.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-28  Patrick Palka  <ppalka@redhat.com>
+
+	* include/bits/version.def (flat_map): Bump to 202511.
+	(flat_set): Likewise.
+	* include/bits/version.h: Regenerate.
+	* include/std/flat_map (_Flat_map_impl): Remove
+	is_nothrow_swappable_v assertions.
+	(_Flat_map_impl::_Flat_map_impl): Explicitly default copy ctor.
+	Define move ctor with corrected exception handling as per
+	P3567R2.
+	(_Flat_map_impl::operator=): Likewise.
+	(_Flat_map_impl::insert_range): Define new __sorted_t overload
+	as per P3567R2.
+	(_Flat_map_impl::swap): Make conditionally noexcept as per
+	P3567R2.
+	* include/std/flat_set (_Flat_set_impl): Remove
+	is_nothrow_swappable_v assertion.
+	(_Flat_set_impl::_Flat_set_impl): Explicitly default copy ctor.
+	Define move ctor with correct invariant preserving behavior as
+	per P3567R2.
+	(_Flat_set_impl::operator=): Likewise.
+	(_Flat_set_impl::_M_insert_range): Factored out from
+	insert_range.  Add bool parameter __is_sorted defaulted to
+	false.
+	(_Flat_set_impl::insert_range): Define new __sorted_t overload
+	as per P3567R2.
+	(_Flat_set_impl::swap): Make conditionally noexcept as per
+	P3567R2.  Correct to use ranges::swap instead of ADL swap.
+	* testsuite/23_containers/flat_map/1.cc (test11, test12):
+	New tests.
+	* testsuite/23_containers/flat_multimap/1.cc (test10, test11):
+	New tests.
+	* testsuite/23_containers/flat_multiset/1.cc (test10, test11):
+	New tests.
+	* testsuite/23_containers/flat_set/1.cc (test10, test11):
+	New tests.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-05-28  Patrick Palka  <ppalka@redhat.com>
+
+	* include/std/flat_map (_Flat_map_impl::_M_insert): New bool
+	parameter __is_sorted defaulted to false.  Reimplement using
+	views::zip and ranges::inplace_merge.
+	(_Flat_map_impl::insert): In the __sorted_t overload, pass
+	__is_sorted=true to _M_insert.
+
+2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/debug/safe_iterator.h: Remove trailing whitespace.
+
 2026-05-27  Jonathan Wakely  <jwakely@redhat.com>
 
 	Backported from master:

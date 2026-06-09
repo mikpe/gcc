@@ -1,3 +1,59 @@
+2026-06-06  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_ch3.adb (Analyze_Private_Extension_Declaration): Revert latest
+	change.
+	(Find_Type_Of_Subtype_Indic): Return Any_Type if Find_Type fails to
+	resolve the type.
+	* sem_ch12.adb (Analyze_Formal_Derived_Type): Restore more specific
+	error recovery path.
+
+2026-06-06  Ronan Desplanques  <desplanques@adacore.com>
+
+	* exp_ch6.adb (Needs_BIP_Collection): Fix condition.
+
+2026-06-06  Mathias Aparicio  <aparicio@adacore.com>
+
+	* libgnat/a-textio.adb
+	(Get_Upper_Half_Char, Get_Upper_Half_Char_Immed): Replace
+	Constraint_Error with Data_Error
+
+2026-06-06  Viljar Indus  <indus@adacore.com>
+
+	* sem_warn.adb (Warn_On_Suspicious_Index): Only check elements
+	that are coming from source.
+
+2026-06-06  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_ch3.adb (Analyze_Private_Extension_Declaration): Be prepared
+	for Find_Type_Of_Subtype_Indic returning no type.
+	* sem_ch4.adb (Process_Generic_Instantiation): Give an error if the
+	generic instantation is referenced in a generic formal part.
+	* sem_ch12.adb (Analyze_Formal_Derived_Type): Return early in every
+	case of serious errors.
+
+2026-06-04  Artur Pietrek  <pietrek@adacore.com>
+
+	* exp_ch7.adb (Make_Address_For_Finalize): check
+	Has_Controlled_Component predicate before emitting the shift to be
+	consistant with what Is_Constr_Array_Subt_With_Bounds says.
+
+2026-06-04  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* exp_ch4.adb (Expand_Allocator_Expression): In the case of access
+	discriminants, pass Zero_On_Dynamic_Level to compute the static
+	accessibility level of the expression.
+	* sem_res.adb (Check_Aliased_Parameter): Pass Zero_On_Dynamic_Level
+	to compute the static accessibility level of actual parameters.
+
+2026-06-04  Piotr Trojanek  <trojanek@adacore.com>
+
+	* sem_ch9.adb (Analyze_Requeue): Fix unbalanced parens.
+
+2026-06-04  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_util.ads (In_Reverse_Storage_Order_Object): Adjust.
+	* sem_util.adb (In_Reverse_Storage_Order_Object): Rewrite.
+
 2026-06-02  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gcc-interface/decl.cc (gnat_to_gnu_entity) <E_Variable>: Validate

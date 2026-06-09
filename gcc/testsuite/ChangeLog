@@ -1,3 +1,67 @@
+2026-06-09  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-09  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125669
+	* gfortran.dg/pdt_92.f03: New test.
+
+2026-06-09  Xin Liu  <liulxx@hygon.cn>
+
+	Backported from master:
+	2026-04-29  Xin Liu  <liulxx@hygon.cn>
+		    Zhaoling Bao  <baozhaoling@hygon.cn>
+
+	* gcc.target/i386/builtin_target.c: Add handling for HYGON CPUs by
+	validating the vendor and invoking HYGON-specific CPU detection.
+	* gcc.target/i386/funcspec-56.inc: Test function target attribute on
+	{arch,tune}=c86-4g-m{4,6,7}.
+	* g++.target/i386/mv33.C: New test.
+
+2026-06-08  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125606
+	* gfortran.dg/loc_3.f90: New test.
+
+2026-06-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-06-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* g++.dg/modules/test-p1689.py: Make arrays have predictable
+	order.
+
+2026-06-06  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125611
+	* gcc.target/i386/ssse3-pr125611.c: New test.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-03  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125378
+	* g++.dg/lookup/operator-8b.C: New test.
+	* g++.dg/lookup/operator-8c.C: New test.
+	* g++.dg/lookup/operator-9a.C: New test.
+	* g++.dg/lookup/operator-9b.C: New test.
+
+2026-06-04  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-06-03  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/125490
+	* g++.dg/cpp2a/concepts-pr125490.C: New test.
+	* g++.dg/cpp2a/concepts-pr125490a.C: New test.
+
 2026-06-03  Richard Sandiford  <rdsandiford@googlemail.com>
 
 	* gcc.dg/pr125375.c: New test.
