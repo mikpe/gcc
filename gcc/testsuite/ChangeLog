@@ -1,3 +1,20 @@
+2026-06-08  Jason Merrill  <jason@redhat.com>
+
+	Revert:
+	2026-06-08  Egas Ribeiro  <egas.g.ribeiro@gmail.com>
+		    Jason Merrill  <jason@redhat.com>
+
+	PR c++/123346
+	* g++.dg/cpp2a/constexpr-union10.C: New test.
+
+2026-06-08  Jason Merrill  <jason@redhat.com>
+
+	Revert:
+	2026-06-08  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125315
+	* g++.dg/cpp2a/no_unique_address16.C: New test.
+
 2026-06-03  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:
