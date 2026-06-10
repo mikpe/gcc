@@ -1,3 +1,7 @@
+2026-06-09  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/bigint1.adb: New  test.
+
 2026-06-09  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
