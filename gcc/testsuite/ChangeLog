@@ -1,3 +1,90 @@
+2026-06-11  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2024-10-27  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc.dg/vec-perm-lower.c: Add -Wno-psabi to dg-options.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125376
+	* g++.dg/coroutines/pr125376.C: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* gcc.dg/strlenopt-97.c: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125039
+	* gcc.c-torture/compile/pr125039.c: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124133
+	* g++.target/powerpc/pr124133-1.C: New test.
+	* g++.target/powerpc/pr124133-2.C: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR testsuite/124682
+	* gcc.dg/torture/builtin-math-6.c (TESTIT_COMPLEX_R2_ISZ): Define.
+	(TESTIT_COMPLEX_R2_ALLNEG): Use TESTIT_COMPLEX_R2_ISZ instead of
+	TESTIT_COMPLEX_R2.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jakub Jelinek  <jakub@redhat.com>
+
+	* go.test/go-test.exp (errchk): Use -translation binary instead of
+	-encoding binary for TCL 9 compatibility.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/124850
+	* g++.dg/other/anon-union8.C: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124826
+	* gcc.dg/bitint-128.c: New test.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* lib/mike-gcc.exp (postbase): Use switch instead of case for
+	TCL 9 compatibility.
+	* lib/mike-g++.exp (postbase): Likewise.
+
+2026-06-10  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/bigint1.adb: New  test.
+
 2026-06-08  Jason Merrill  <jason@redhat.com>
 
 	Revert:

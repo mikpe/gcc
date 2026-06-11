@@ -1,3 +1,52 @@
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125079
+	* tree-ssa-strlen.cc (get_string_length): Transform
+	__strcat_chk (x, y, z) when we need strlen (x) afterwards into
+	l1 = strlen (x); l = __stpcpy_chk (x + l1, y, z - l1) - x;
+	where l is the strlen (x), instead of using z as last __stpcpy_chk
+	argument.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/125039
+	* range-op-float.cc (operator_not_equal::fold_range): Call
+	empty_range_varying when not calling frelop_early_resolve.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124133
+	* config/rs6000/rs6000-c.cc (c_fold_convert): New function.
+	(c_fold_build2_loc): Likewise.
+	(fully_fold_convert): Use c_fold_convert instead of fold_convert.
+	(altivec_build_resolved_builtin): Likewise.  Use c_fold_build2_loc
+	instead of fold_build2.
+	(resolve_vec_mul, resolve_vec_adde_sube, resolve_vec_addec_subec):
+	Use c_fold_build2_loc instead of fold_build2_loc.
+	(resolve_vec_splats, resolve_vec_extract): Use c_fold_convert instead
+	of fold_convert.
+	(resolve_vec_insert): Use c_fold_build2_loc instead of fold_build2.
+	(altivec_resolve_overloaded_builtin): Use c_fold_convert instead
+	of fold_convert.
+
+2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-04-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/124826
+	* gimple-lower-bitint.cc (bitint_large_huge::handle_load): Look through
+	BIT_FIELD_REF with zero bit offset.
+
 2026-06-03  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:
