@@ -1,3 +1,7 @@
+2026-06-10  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/bigint1.adb: New  test.
+
 2026-06-08  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	Backported from master:
