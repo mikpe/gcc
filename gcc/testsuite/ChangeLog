@@ -1,3 +1,20 @@
+2026-06-11  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-05-08  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125049
+	* gcc.target/loongarch/pr125049.c: New test.
+
+2026-06-10  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/111387
+	* gcc.dg/torture/pr111387.c: New testcase.
+
+2026-06-10  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/bigint1.adb: New  test.
+
 2026-05-27  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
