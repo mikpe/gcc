@@ -6697,6 +6697,7 @@ loongarch_output_asm_load_canary (rtx reg, rtx canary, rtx tmp)
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE loongarch_option_override
+#undef TARGET_OPTION_SAVE
 #define TARGET_OPTION_SAVE loongarch_option_save
 #undef TARGET_OPTION_RESTORE
 #define TARGET_OPTION_RESTORE loongarch_option_restore
