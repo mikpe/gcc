@@ -1,3 +1,22 @@
+2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-21  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125284
+	PR c++/125333
+	* pt.cc (tsubst_decl) <case USING_DECL>: Copy targs before
+	modifying them.
+
+2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125498
+	* mangle.cc (write_reflection): Use DECL_PARM_INDEX for
+	computing the parameter index.
+
 2026-06-05  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

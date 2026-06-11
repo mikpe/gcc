@@ -1,3 +1,22 @@
+2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-21  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125284
+	PR c++/125333
+	* g++.dg/cpp1z/using-variadic4.C: New test.
+	* g++.dg/cpp1z/using-variadic5.C: New test.
+
+2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-10  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125498
+	* g++.dg/reflect/mangle7.C: New test.
+	* g++.dg/reflect/parameters_of9.C: New test.
+
 2026-06-09  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/bigint1.adb: New  test.
