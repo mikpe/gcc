@@ -1,3 +1,12 @@
+2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125751
+	* config/avr/avr.cc (avr_out_fract): Fix too small sequence
+	lengths in avr_asm_len calls.
+
 2026-06-10  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
