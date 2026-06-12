@@ -1,3 +1,7 @@
+2026-06-12  Release Manager
+
+	* GCC 15.3.0 released.
+
 2026-06-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* gnat.dg/bigint1.adb: New  test.
