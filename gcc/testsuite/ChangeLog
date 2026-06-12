@@ -1,3 +1,16 @@
+2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125752
+	* gcc.target/avr/torture/fx-to-double.c: New test.
+
+2026-06-11  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* lib/target-supports.exp (arm_mixed_fp): Simplify
+	implementation.
+
 2026-06-10  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

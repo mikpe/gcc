@@ -1,3 +1,17 @@
+2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125751
+	* config/avr/avr.cc (avr_out_fract): Fix too small sequence
+	lengths in avr_asm_len calls.
+
+2026-06-11  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR testsuite/113276
+	* doc/sourcebuild.texi (arm_mixed_fp): Document.
+
 2026-06-09  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:
