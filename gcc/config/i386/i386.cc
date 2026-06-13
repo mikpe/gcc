@@ -4348,10 +4348,9 @@ function_value_ms_64 (machine_mode orig_mode, machine_mode mode,
 	    break;
 	  if (valtype != NULL_TREE
 	      && !VECTOR_INTEGER_TYPE_P (valtype)
-	      && !INTEGRAL_TYPE_P (valtype)
 	      && !VECTOR_FLOAT_TYPE_P (valtype))
 	    break;
-	  if ((SCALAR_INT_MODE_P (mode) || VECTOR_MODE_P (mode))
+	  if (VECTOR_MODE_P (mode)
 	      && !COMPLEX_MODE_P (mode))
 	    regno = FIRST_SSE_REG;
 	  break;
@@ -4458,9 +4457,8 @@ ix86_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
 	  /* __m128 is returned in xmm0.  256/512-bit vector values are
 	     returned in ymm0/zmm0 when AVX/AVX512 is enabled.  */
 	  if ((!type || VECTOR_INTEGER_TYPE_P (type)
-	       || INTEGRAL_TYPE_P (type)
 	       || VECTOR_FLOAT_TYPE_P (type))
-	      && (SCALAR_INT_MODE_P (mode) || VECTOR_MODE_P (mode))
+	      && VECTOR_MODE_P (mode)
 	      && !COMPLEX_MODE_P (mode)
 	      && ((GET_MODE_SIZE (mode) == 16 || size == 16)
 		  || (TARGET_AVX && (GET_MODE_SIZE (mode) == 32 || size == 32))
