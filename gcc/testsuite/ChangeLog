@@ -1,3 +1,19 @@
+2026-06-12  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-06  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125606
+	* gfortran.dg/loc_3.f90: New test.
+
+2026-06-12  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backported from master:
+	2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/125752
+	* gcc.target/avr/torture/fx-to-double.c: New test.
+
 2026-06-12  Release Manager
 
 	* GCC 15.3.0 released.
