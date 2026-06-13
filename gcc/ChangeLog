@@ -1,3 +1,83 @@
+2026-06-12  Andrew MacLeod  <amacleod@redhat.com>
+
+	Backported from master:
+	2025-10-01  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/120560
+	* vr-values.cc (range_from_loop_direction): Use wi::ge_p rather
+	than wi::gt_p.
+
+2026-06-12  Jan Hubicka  <hubicka@ucw.cz>
+
+	Backported from master:
+	2025-07-11  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/114790
+	* cgraph.cc (cgraph_update_edges_for_call_stmt_node): Resolve devirtualization
+	if call statement was optimized out or turned to direct call.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125146
+	* gimple-fold.cc (fold_stmt_1): Discard stmts in seq
+	after failed gimple_simplify as well.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* tree-ssa-loop-niter.cc (number_of_iterations_ne): Avoid
+	negation of most negative signed integer.
+	(number_of_iterations_lt): Likewise.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125019
+	* tree-vect-loop.cc (vectorizable_recurr): Properly guard
+	against hitting last stmt when searching for the insertion
+	place.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124868
+	* gimple-ssa-isolate-paths.cc (handle_return_addr_local_phi_arg):
+	Do not diagnose returns in blocks not dominated by the PHI.
+	(find_implicit_erroneous_behavior): Do two sweeps over PHIs,
+	first for NULL dereferences and then for local address returns.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-03-18  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124555
+	* match.pd ((A - B) >=/> 0 ? (A - B) : (B - A) -> abs (A - B)):
+	Guard the vector case with target_supports_op_p checks.
+	((A - B) <=/< 0 ? (A - B) : (B - A) -> -abs (A - B)): Likewise.
+	((type)A >=/> 0 ? A : -A -> abs (A)): Likewise.
+	((type)A <=/< 0 ? A : -A -> -abs (A)): Likewise.
+
+2026-06-12  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-01-29  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/123596
+	* tree-eh.cc (sink_clobbers): Create a virtual PHI when
+	one is required but not present, queuing arguments
+	for renaming.
+
 2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
