@@ -1,3 +1,31 @@
+2026-06-13  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-06-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/125252
+	* c-typeck.cc (ptr_to_tagged_member): Return type of member.
+	(c_type_canonical): Use incomplete type.
+
+2026-06-13  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-04-25  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124303
+	* c-decl.cc (finish_struct): Check for consistency of
+	declarations after completing variants.
+
+2026-06-13  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-05-06  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/124985
+	* c-decl.cc (pushtag): Update comment.
+	(declspecs_add_type): Mark TYPE_STUB_DECL as used.
+	* c-typeck.cc (function_to_pointer_conversion): Fix grammar in comment.
+
 2026-05-15  Andi Kleen  <ak@gcc.gnu.org>
 
 	PR c/124532
