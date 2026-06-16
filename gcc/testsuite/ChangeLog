@@ -1,3 +1,173 @@
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125430
+	* gfortran.dg/module_private_2.f90: Remove scan-tree-dump-times
+	assertion for 'priv'; PRIVATE module procedures now have global
+	linkage with hidden visibility and are no longer optimized away.
+	* gfortran.dg/public_private_module_2.f90: Add xfail markers to
+	scan-assembler-not for 'two' and 'six'; update comment to mention
+	procedures alongside variables.
+	* gfortran.dg/public_private_module_7.f90: Add xfail marker to
+	scan-assembler-not for '__m_common_attrs_MOD_other'.
+	* gfortran.dg/public_private_module_8.f90: Add xfail marker to
+	scan-assembler-not for '__m_MOD_myotherlen'.
+	* gfortran.dg/submodule_private_host.f90: New test.
+	* gfortran.dg/submodule_private_host_aux.f90: New auxiliary file.
+	* gfortran.dg/warn_unused_function_2.f90: Remove 'defined but not
+	used' expectation for s1; PRIVATE module procedures now have
+	global linkage and no longer trigger the unused-function warning.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125535
+	* gfortran.dg/asan/implied_do_alloc_comp_leak_1.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125650
+	* gfortran.dg/associate_81.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125481
+	* gfortran.dg/generic_37.f90: New test.
+	* gfortran.dg/generic_38.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125527
+	* gfortran.dg/submodule_host_assoc_1.f90: New test.
+	* gfortran.dg/submodule_host_assoc_1_aux.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125528
+	* gfortran.dg/associate_80.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125529
+	* gfortran.dg/do_concurrent_assoc_default_none.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125530
+	* gfortran.dg/associate_contained_func_typebound.f90: New test.
+	* gfortran.dg/associate_contained_func_typebound_2.f90: New
+	run-time test exercising generic resolution and a module-scope
+	selector.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125531
+	* gfortran.dg/associate_infer_program_type.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	* gfortran.dg/do_concurrent_assoc_iter_1.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125534
+	* gfortran.dg/pdt_array_alloc_1.f90: New test.
+
+2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/125535
+	* gfortran.dg/implied_do_alloc_comp_1.f90: New test.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125652
+	* gcc.dg/torture/pr125652.c: New testcase.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125646
+	* gcc.dg/vect/pr125646.c: New testcase.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125553
+	* gcc.dg/torture/pr125553.c: New testcase.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125545
+	* gcc.dg/torture/pr125545.c: New testcase.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125502
+	* gcc.dg/torture/pr125502.c: New testcase.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-03  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125477
+	* gcc.dg/torture/pr125477.c: New testcase.
+
+2026-06-15  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-04  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* gcc.target/powerpc/future-1.c: New test.
+	* gcc.target/powerpc/future-2.c: Likewise.
+
 2026-06-13  Martin Uecker  <uecker@tugraz.at>
 
 	Backported from master:

@@ -1,3 +1,103 @@
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125652
+	* tree-chrec.cc (chrec_fold_plus_poly_poly): Avoid UB
+	integer overflow in accumulating CHREC_RIGHT.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-10  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125686
+	* tree-vect-patterns.cc (synth_lshift_by_additions): Specify
+	pattern vector type.
+	(apply_binop_and_append_stmt): Likewise.
+	(vect_synth_mult_by_constant): Adjust.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125646
+	* tree-vect-patterns.cc (vect_synth_mult_by_constant): Assign
+	vector type to the pattern def sequence stmts.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125553
+	* tree-ssa-sccvn.cc (visit_nary_op): Valueize the BIT_FIELD_REF
+	operand before looking at its definition.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125545
+	* tree-ssa-reassoc.cc (insert_stmt_after): Allow asm goto
+	with a single successor.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-02  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125502
+	* tree-ssa-forwprop.cc (optimize_vector_load): Do not
+	move defs of abnormals.
+
+2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-03  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125477
+	* tree-vect-loop-manip.cc (vect_loop_versioning): Verify we
+	can duplicate an outer loop before considering to version it.
+
+2026-06-15  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-04  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* config.gcc (powerpc*-*-*): Add support for supporting
+	--with-cpu=future.
+	* config/rs6000/aix71.h (ASM_CPU_SPEC): Pass -mfuture to the assembler
+	if the user used the -mcpu=future option.
+	* config/rs6000/aix72.h (ASM_CPU_SPEC): Likewise.
+	* config/rs6000/aix73.h (ASM_CPU_SPEC): Likewise.
+	* config/rs6000/rs6000-builtin.cc (rs6000_invalid_builtin): Handle
+	ENB_FUTURE and issue diagnostic requiring -mcpu=future.
+	(rs6000_builtin_is_supported): Return TARGET_FUTURE for
+	ENB_FUTURE built-ins.
+	* config/rs6000/rs6000-c.cc (rs6000_target_modify_macros): Define
+	_ARCH_FUTURE if -mcpu=future.
+	* config/rs6000/rs6000-cpus.def (FUTURE_MASKS_SERVER): New macro.
+	(POWERPC_MASKS): Add OPTION_MASK_FUTURE.
+	(rs6000_cpu_opt_value): New entry for 'future' via the RS6000_CPU macro.
+	* config/rs6000/rs6000-gen-builtins.cc (enum bif_stanza): Add
+	BSTZ_FUTURE for future.
+	(write_decls): Add ENB_FUTURE in bif_enable enum of generated header
+	file.
+	* config/rs6000/rs6000-opts.h (PROCESSOR_FUTURE): New macro.
+	* config/rs6000/rs6000-tables.opt: Regenerate.
+	* config/rs6000/rs6000.cc (rs6000_machine_from_flags) If -mcpu=future,
+	set the .machine directive to "future".
+	(rs6000_opt_masks): Add entry for -mfuture.
+	* config/rs6000/rs6000.h (ASM_CPU_SPEC): Pass -mfuture to the assembler
+	if the user used the -mcpu=future option.
+	* config/rs6000/rs6000.opt (-mfuture): New option.
+	* doc/invoke.texi (IBM RS/6000 and PowerPC Options): Document
+	-mcpu=future.
+
 2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
