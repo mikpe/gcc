@@ -4,7 +4,7 @@
 /* PR tree-optimization/125774 */
 
 __attribute__((noipa))
-_Bool __GIMPLE (ssa,startwith("dom2"))
+_Bool __GIMPLE (ssa,startwith("dom"))
 f (int a, int b)
 {
   _Bool _3;
@@ -19,7 +19,7 @@ f (int a, int b)
 }
 
 __attribute__((noipa))
-_Bool __GIMPLE (ssa,startwith("dom2"))
+_Bool __GIMPLE (ssa,startwith("dom"))
 f1 (int a, int b)
 {
   _Bool _3;
