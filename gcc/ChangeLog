@@ -1,3 +1,53 @@
+2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-27  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125025
+	* tree-ssa-loop-niter.cc (number_of_iterations_ne): Avoid
+	negation of most negative signed integer.
+	(number_of_iterations_lt): Likewise.
+
+2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-04-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124868
+	* gimple-ssa-isolate-paths.cc (handle_return_addr_local_phi_arg):
+	Do not diagnose returns in blocks not dominated by the PHI.
+	(find_implicit_erroneous_behavior): Do two sweeps over PHIs,
+	first for NULL dereferences and then for local address returns.
+
+2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/124132
+	* tree-ssa-loop-split.cc (compute_new_first_bound): Fix
+	bound difference computation.
+
+2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-02-03  Richard Biener  <rguenther@suse.de>
+
+	PR ipa/123416
+	* ipa-modref.cc (ipa_merge_modref_summary_after_inlining):
+	Fix typo in condtion for load merging when no callee summary.
+
+2026-06-16  Jan Hubicka  <jh@suse.cz>
+
+	Backported from master:
+	2026-03-10  Jan Hubicka  <jh@suse.cz>
+		    Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/120987
+	* ipa-modref.cc (ipa_merge_modref_summary_after_inlining): Mask
+	off non const/pure/novops related flags when combining of outer
+	functions.
+
 2026-06-11  Georg-Johann Lay  <avr@gjlay.de>
 
 	Backported from master:
