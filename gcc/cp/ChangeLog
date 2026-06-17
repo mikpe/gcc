@@ -1,3 +1,20 @@
+2026-06-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c++/65271
+	* parser.cc (cp_parser_class_specifier): Accept &&.
+
+2026-06-16  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-16  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125770
+	* decl2.cc (mark_used): Check complain & tf_error before giving
+	an error.
+
 2026-06-10  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
