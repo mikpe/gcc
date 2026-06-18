@@ -1,3 +1,115 @@
+2026-06-17  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
+
+	PR target/125215
+	* gcc.target/riscv/rvv/autovec/pr125215.c: New test.
+	* gcc.target/riscv/rvv/autovec/slp-interleave-1.c: Remove.
+	* gcc.target/riscv/rvv/autovec/slp-interleave-2.c: Remove.
+	* gcc.target/riscv/rvv/autovec/slp-interleave-3.c: Remove.
+	* gcc.target/riscv/rvv/autovec/slp-interleave-4.c: Remove.
+	* gcc.target/riscv/rvv/autovec/slp-interleave-5.c: Remove.
+
+2026-06-17  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-09  Alex Coplan  <alex.coplan@arm.com>
+
+	PR middle-end/125621
+	* gcc.target/aarch64/torture/pr125621.c: New test.
+
+2026-06-17  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-27  Kishan Parmar  <kishan@linux.ibm.com>
+		    Surya Kumari Jangala  <jskumari@linux.ibm.com>
+
+	PR target/125448
+	* gcc.target/powerpc/mpc860_no_lwsync.c: Restrict to ilp32 targets.
+
+2026-06-17  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-22  Steve Markgraf  <steve@steve-m.de>
+
+	* gcc.target/powerpc/mpc860_no_lwsync.c: New test.
+
+2026-06-17  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-15  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/125795
+	* gcc.target/aarch64/pr125795.c: New test.
+
+2026-06-17  Carter Rennick  <carter.rennick@gmail.com>
+
+	Backported from master:
+	2026-04-24  Carter Rennick  <carter.rennick@gmail.com>
+
+	PR target/120144
+	* gcc.dg/torture/pr120144.c: New test.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-06-13  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/125776
+	* gcc.dg/torture/pr125776-1.c: New test.
+	* gcc.dg/torture/pr125776-2.c: New test.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-06-14  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR tree-optimization/125774
+	* gcc.dg/torture/pr125774-1.c: New test.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-05-04  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR c++/65271
+	* g++.dg/cpp0x/rv-decl1.C: New test.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-03-12  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR rtl-optimization/123822
+	* gcc.dg/torture/pr123822-1.c: New test.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-03-13  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR rtl-optimization/124454
+	* gcc.dg/pr124454-1.c: New test.
+
+2026-06-17  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	Backported from master:
+	2026-02-19  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	PR rtl-optimization/116053
+	* gcc.dg/pr116053-1.c: 'dg-require-effective-target int128'.
+
+2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	Backported from master:
+	2026-02-18  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
+
+	PR rtl-optimization/116053
+	* gcc.dg/pr116053-1.c: New test.
+
+2026-06-17  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/125501
+	* gcc.dg/pr125501.c: New.
+
 2026-06-16  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
