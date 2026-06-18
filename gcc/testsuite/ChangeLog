@@ -1,3 +1,72 @@
+2026-06-17  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-17  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125764
+	* g++.dg/reflect/can_substitute3.C: New test.
+
+2026-06-17  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-17  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125759
+	* g++.dg/reflect/expr17.C: New test.
+
+2026-06-17  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-09  Alex Coplan  <alex.coplan@arm.com>
+
+	PR middle-end/125621
+	* gcc.target/aarch64/torture/pr125621.c: New test.
+
+2026-06-17  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-27  Kishan Parmar  <kishan@linux.ibm.com>
+		    Surya Kumari Jangala  <jskumari@linux.ibm.com>
+
+	PR target/125448
+	* gcc.target/powerpc/mpc860_no_lwsync.c: Restrict to ilp32 targets.
+
+2026-06-17  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-22  Steve Markgraf  <steve@steve-m.de>
+
+	* gcc.target/powerpc/mpc860_no_lwsync.c: New test.
+
+2026-06-17  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-05-27  Tamar Christina  <tamar.christina@arm.com>
+
+	PR target/125148
+	* gcc.target/aarch64/sve/highway_run.c: New test.
+
+2026-06-17  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-03  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125431
+	* gfortran.dg/vect/pr125431.f90: New test.
+
+2026-06-17  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-15  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/125795
+	* gcc.target/aarch64/pr125795.c: New test.
+
+2026-06-17  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/125501
+	* gcc.dg/pr125501.c: New.
+
 2026-06-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:

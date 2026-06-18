@@ -1,3 +1,57 @@
+2026-06-17  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-09  Alex Coplan  <alex.coplan@arm.com>
+
+	PR middle-end/125621
+	* expmed.cc (make_tree): Fix CONST_POLY_INT case to pass type
+	instead of t, move it to its own switch case.
+
+2026-06-17  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-05-22  Steve Markgraf  <steve@steve-m.de>
+
+	* config/rs6000/rs6000.h (TARGET_NO_LWSYNC): Add PROCESSOR_MPCCORE.
+
+2026-06-17  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-05-27  Tamar Christina  <tamar.christina@arm.com>
+
+	PR target/125148
+	* config/aarch64/aarch64-sve.md
+	(*aarch64_vec_shl_insert_into_zero_<mode>,
+	*aarch64_vec_shl_insert_into_zero_vnx16qi,
+	*aarch64_vec_shl_insert_from_load_<mode>): New.
+	* config/aarch64/aarch64.cc (aarch64_emit_load_store_through_mode):
+	Replace paradoxical subreg with zero-extend.
+
+2026-06-17  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-03  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125431
+	* tree-vect-slp-patterns.cc (complex_mul_pattern::matches,
+	complex_fms_pattern::matches): Gate on FP contraction.
+
+2026-06-17  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-06-15  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/125795
+	* config/aarch64/aarch64-early-ra.cc (early_ra::allocate_colors):
+	Compute the allocated-FPR mask as
+	((1ULL << color->group->size) - 1) << best.
+
+2026-06-17  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/125501
+	* tree-ssa-dom.cc (set_global_ranges_from_unreachable_edges): Abort
+	if there are 2 SSA_NAMES on the branch condition.
+
 2026-06-16  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:
