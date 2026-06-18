@@ -295,7 +295,18 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__diamondrapids");
       def_or_undef (parse_in, "__diamondrapids__");
       break;
-
+    case PROCESSOR_C86_4G_M4:
+      def_or_undef (parse_in, "__c86_4g_m4");
+      def_or_undef (parse_in, "__c86_4g_m4__");
+      break;
+    case PROCESSOR_C86_4G_M6:
+      def_or_undef (parse_in, "__c86_4g_m6");
+      def_or_undef (parse_in, "__c86_4g_m6__");
+      break;
+    case PROCESSOR_C86_4G_M7:
+      def_or_undef (parse_in, "__c86_4g_m7");
+      def_or_undef (parse_in, "__c86_4g_m7__");
+      break;
     /* use PROCESSOR_max to not set/unset the arch macro.  */
     case PROCESSOR_max:
       break;
@@ -497,6 +508,15 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       break;
     case PROCESSOR_DIAMONDRAPIDS:
       def_or_undef (parse_in, "__tune_diamondrapids__");
+      break;
+    case PROCESSOR_C86_4G_M4:
+      def_or_undef (parse_in, "__tune_c86_4g_m4__");
+      break;
+    case PROCESSOR_C86_4G_M6:
+      def_or_undef (parse_in, "__tune_c86_4g_m6__");
+      break;
+    case PROCESSOR_C86_4G_M7:
+      def_or_undef (parse_in, "__tune_c86_4g_m7__");
       break;
     case PROCESSOR_INTEL:
     case PROCESSOR_GENERIC:
