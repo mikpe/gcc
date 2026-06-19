@@ -1,3 +1,15 @@
+2026-06-18  Xin Liu  <liulxx@hygon.cn>
+
+	Backported from master:
+	2026-04-29  Xin Liu  <liulxx@hygon.cn>
+		    Zhaoling Bao  <baozhaoling@hygon.cn>
+
+	* gcc.target/i386/builtin_target.c: Add handling for HYGON CPUs by
+	validating the vendor and invoking HYGON-specific CPU detection.
+	* gcc.target/i386/funcspec-56.inc: Test function target attribute on
+	{arch,tune}=c86-4g-m{4,6,7}.
+	* g++.target/i386/mv33.C: New test.
+
 2026-06-17  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
 
 	PR target/125215

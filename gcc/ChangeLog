@@ -1,3 +1,601 @@
+2026-06-18  Kewen Lin  <linkewen@hygon.cn>
+
+	Backported from master:
+	2026-05-28  Kewen Lin  <linkewen@hygon.cn>
+		    Xin Liu  <liulxx@hygon.cn>
+
+	* config/i386/c86-4g-m7.md (c86_4g_m7_fpu): Remove automaton.
+	(c86_4g_m7_fpu02): New automaton.
+	(c86_4g_m7_fpu13): Ditto.
+	(c86-4g-m7-fpu0): Move to c86_4g_m7_fpu02 automaton.
+	(c86-4g-m7-fpu1): Move to c86_4g_m7_fpu13 automaton.
+	(c86-4g-m7-fpu2): Move to c86_4g_m7_fpu02 automaton.
+	(c86-4g-m7-fpu3): Move to c86_4g_m7_fpu13 automaton.
+	(c86-4g-m7-fdiv): Remove cpu unit.
+	(c86-4g-m7-fdiv1): New cpu unit.
+	(c86-4g-m7-fdiv3): Ditto.
+	(c86-4g-m7-fpu_0_3): New reservation.
+	(c86-4g-m7-fpu_1_3x2): Ditto.
+	(c86-4g-m7-fpu_1_3x3): Ditto.
+	(c86-4g-m7-fpu_1_3x6): Ditto.
+	(c86-4g-m7-fpux2): Ditto.
+	(c86-4g-m7-fpux4): Ditto.
+	(c86-4g-m7-fpux6): Ditto.
+	(c86-4g-m7-fpux8): Ditto.
+	(c86-4g-m7-fpux16): Ditto.
+	(c86-4g-m7-fp1fdiv1x4): Ditto.
+	(c86-4g-m7-fp3fdiv3x4): Ditto.
+	(c86-4g-m7-fdiv13): Ditto.
+	(c86-4g-m7-fp13div13): Ditto.
+	(c86-4g-m7-fp13div13x4): Ditto.
+	(c86-4g-m7-fp1div1_fp3div3_x4x8): Ditto.
+	(c86-4g-m7-fp1div1_fp3div3_x4x9): Ditto.
+	(c86-4g-m7-fp1div1_fp3div3_x4x11): Ditto.
+	(c86-4g-m7-fp1div1_fp3div3_x4x15): Ditto.
+	(c86-4g-m7-fp1div1_fp3div3_x4x18): Ditto.
+	(c86_4g_m7_idiv): New reservation.
+	(c86_4g_m7_idiv_QI): Adjust reservation latency and unit occupancy.
+	(c86_4g_m7_idiv_load): New reservation.
+	(c86_4g_m7_idiv_QI_load): Adjust reservation latency and unit
+	occupancy.
+	(c86_4g_m7_idiv_DI): Remove reservation.
+	(c86_4g_m7_idiv_SI): Ditto.
+	(c86_4g_m7_idiv_HI): Ditto.
+	(c86_4g_m7_idiv_DI_load): Ditto.
+	(c86_4g_m7_idiv_SI_load): Ditto.
+	(c86_4g_m7_idiv_HI_load): Ditto.
+	(c86_4g_m7_sse_insertimm): Adjust reservation units and unit
+	occupancy.
+	(c86_4g_m7_sse_insert): Ditto.
+	(c86_4g_m7_fp_sqrt): Adjust reservation.
+	(c86_4g_m7_fp_div): Ditto.
+	(c86_4g_m7_fp_div_load): Ditto.
+	(c86_4g_m7_fp_idiv_load): Ditto.
+	(c86_4g_m7_sse_pinsr_reg): Adjust reservation units and unit
+	occupancy.
+	(c86_4g_m7_sse_pinsr_reg_load): Ditto.
+	(c86_4g_m7_avx_vpinsr_reg): Ditto.
+	(c86_4g_m7_avx_vpinsr_reg_load): Ditto.
+	(c86_4g_m7_avx512_perm_xmm): Delete the prefix condition.
+	(c86_4g_m7_avx512_perm_xmm_opload): Ditto.
+	(c86_4g_m7_avx512_permi2_ymm): Adjust reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_permi2_zmm): Ditto.
+	(c86_4g_m7_avx512_permi2_ymm_load): Ditto.
+	(c86_4g_m7_avx512_permi2_zmm_load): Ditto.
+	(c86_4g_m7_avx512_perm_zmm_imm): Ditto.
+	(c86_4g_m7_avx512_perm_zmm_imm_load): Ditto.
+	(c86_4g_m7_avx512_perm_zmm_noimm): Ditto.
+	(c86_4g_m7_sse_perm_zmm_noimm_load): Ditto.
+	(c86_4g_m7_avx_perm_ymm): Remove.
+	(c86_4g_m7_avx_perm_ymem): Ditto.
+	(c86_4g_m7_avx512_shuf_zmm): Adjust reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_shuf_zmem): Ditto.
+	(c86_4g_m7_avx512_cmpestr): Ditto.
+	(c86_4g_m7_avx512_cmpestr_load): Ditto.
+	(c86_4g_m7_avx512_vdbpsadbw_zmm): Ditto.
+	(c86_4g_m7_avx512_vdbpsadbw_zmem): Ditto.
+	(c86_4g_m7_avx_ssecomi_comi): Ditto.
+	(c86_4g_m7_avx_ssecomi_comi_load): Ditto.
+	(c86_4g_m7_avx512_expand): Ditto.
+	(c86_4g_m7_avx512_expand_load): Ditto.
+	(c86_4g_m7_avx512_expand_z): Ditto.
+	(c86_4g_m7_avx512_expand_z_load): Ditto.
+	(c86_4g_m7_sse_movnt_xy): Rename to c86_4g_m7_sse_movnt.
+	(c86_4g_m7_avx512_sseadd_xy): Adjust reservation units.
+	(c86_4g_m7_avx512_sseadd_xy_load): Ditto.
+	(c86_4g_m7_sse_sseiadd_hplus): Adjust reservation units and unit
+	occupancy.
+	(c86_4g_m7_sse_sseiadd_hplus_load): Ditto.
+	(c86_4g_m7_avx512_ssemul): Adjust reservation units.
+	(c86_4g_m7_avx512_ssemul_load): Ditto.
+	(c86_4g_m7_avx512_ssediv): Remove.
+	(c86_4g_m7_avx512_ssediv_mem): Remove.
+	(c86_4g_m7_avx512_ssediv_x): New.
+	(c86_4g_m7_avx512_ssediv_xmem): New.
+	(c86_4g_m7_avx512_ssediv_y): New.
+	(c86_4g_m7_avx512_ssediv_ymem): New.
+	(c86_4g_m7_avx512_ssediv_z): Adjust reservation units.
+	(c86_4g_m7_avx512_ssediv_zmem): Ditto.
+	(c86_4g_m7_avx512_ssecmp_z): Add reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_ssecmp_z_load): Ditto.
+	(c86_4g_m7_avx512_ssecmp_vp_z): New reservation.
+	(c86_4g_m7_avx512_ssecmp_vp_z_load): Ditto.
+	(c86_4g_m7_avx512_ssecmp_test_z): Remove reservation.
+	(c86_4g_m7_avx512_ssecmp_test_z_load): Ditto.
+	(c86_4g_m7_avx512_muladd): Broaden matching condition.
+	(c86_4g_m7_avx512_muladd_load): Ditto.
+	(c86_4g_m7_fma_muladd): Remove reservation.
+	(c86_4g_m7_fma_muladd_load): Ditto.
+	(c86_4g_m7_avx512_sse_conflict_x): Add reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_sse_conflict_x_load): Ditto.
+	(c86_4g_m7_avx512_sse_conflict_y): Ditto.
+	(c86_4g_m7_avx512_sse_conflict_y_load): Ditto.
+	(c86_4g_m7_avx512_sse_conflict_z): Ditto.
+	(c86_4g_m7_avx512_sse_conflict_z_load): Ditto.
+	(c86_4g_m7_avx512_sse_class_z): Add reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_sse_class_z_load): Ditto.
+	(c86_4g_m7_avx512_sse_sqrt): Remove.
+	(c86_4g_m7_avx512_sse_sqrt_load): Remove.
+	(c86_4g_m7_avx512_sse_sqrt_sf_x): New.
+	(c86_4g_m7_avx512_sse_sqrt_sf_xload): New.
+	(c86_4g_m7_avx512_sse_sqrt_sf_y): New.
+	(c86_4g_m7_avx512_sse_sqrt_sf_yload): New.
+	(c86_4g_m7_avx512_sse_sqrt_sf_z): New.
+	(c86_4g_m7_avx512_sse_sqrt_sf_zload): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_x): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_xload): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_y): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_yload): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_z): New.
+	(c86_4g_m7_avx512_sse_sqrt_df_zload): New.
+	(c86_4g_m7_avx512_msklog_vector): Add reservation units and unit
+	occupancy.
+	(c86_4g_m7_avx512_mskmov_z_k): Ditto.
+	(c86_4g_m7_avx512_mskmov_k_reg): Ditto.
+	* config/i386/c86-4g.md (c86_4g_fp): Remove automaton.
+	(c86_4g_fp024): New automaton.
+	(c86_4g_fp1): Ditto.
+	(c86-4g-fp0): Move to c86_4g_fp024 automaton.
+	(c86-4g-fp1): Move to c86_4g_fp1 automaton.
+	(c86-4g-fp2): Move to c86_4g_fp024 automaton.
+	(c86-4g-fp3): Ditto.
+	(c86-4g-fp1fdivx4): New reservation.
+	(c86_4g_fp_sqrt): Adjust reservation.
+	(c86_4g_sse_sqrt_sf): Ditto.
+	(c86_4g_sse_sqrt_sf_mem): Ditto.
+	(c86_4g_sse_sqrt_df): Ditto.
+	(c86_4g_sse_sqrt_df_mem): Ditto.
+	(c86_4g_fp_op_div): Ditto.
+	(c86_4g_fp_op_div_load): Ditto.
+	(c86_4g_fp_op_idiv_load): Adjust reservation latency.
+	(c86_4g_ssediv_ss_ps): Adjust reservation.
+	(c86_4g_ssediv_ss_ps_load): Ditto.
+	(c86_4g_ssediv_sd_pd): Ditto.
+	(c86_4g_ssediv_sd_pd_load): Ditto.
+	(c86_4g_ssediv_avx256_ps): Ditto.
+	(c86_4g_ssediv_avx256_ps_load): Ditto.
+	(c86_4g_ssediv_avx256_pd): Ditto.
+	(c86_4g_ssediv_avx256_pd_load): Ditto.
+
+2026-06-18  Kewen Lin  <linkewen@hygon.cn>
+
+	Backported from master:
+	2026-05-01  Kewen Lin  <linkewen@hygon.cn>
+
+	* config/i386/c86-4g-m7.md (c86_4g_m7_idiv): New automaton.
+	(c86_4g_m7_fdiv): Ditto.
+	(c86-4g-m7-idiv): New unit.
+	(c86-4g-m7-fdiv): Ditto.
+	(c86_4g_m7_idiv_DI): Adjust unit in the reservation.
+	(c86_4g_m7_idiv_SI): Ditto.
+	(c86_4g_m7_idiv_HI): Ditto.
+	(c86_4g_m7_idiv_QI): Ditto.
+	(c86_4g_m7_idiv_DI_load): Ditto.
+	(c86_4g_m7_idiv_SI_load): Ditto.
+	(c86_4g_m7_idiv_HI_load): Ditto.
+	(c86_4g_m7_idiv_QI_load): Ditto.
+	(c86_4g_m7_fp_div): Ditto.
+	(c86_4g_m7_fp_div_load): Ditto.
+	(c86_4g_m7_fp_idiv_load): Ditto.
+	(c86_4g_m7_avx512_ssediv): Ditto.
+	(c86_4g_m7_avx512_ssediv_mem): Ditto.
+	(c86_4g_m7_avx512_ssediv_z): Ditto.
+	(c86_4g_m7_avx512_ssediv_zmem): Ditto.
+	(c86_4g_m7_avx512_sse_sqrt): Ditto.
+	(c86_4g_m7_avx512_sse_sqrt_load): Ditto.
+	(c86_4g_m7_fp_sqrt): Ditto.  Rename from ...
+	(c86_4g_m7fp_sqrt): ... here.
+	* config/i386/c86-4g.md (c86_4g_idiv): New automaton.
+	(c86_4g_fdiv): Ditto.
+	(c86-4g-idiv): New unit.
+	(c86-4g-fdiv): Ditto.
+	(c86_4g_idiv_DI): Ditto.
+	(c86_4g_idiv_SI): Ditto.
+	(c86_4g_idiv_HI): Ditto.
+	(c86_4g_idiv_QI): Ditto.
+	(c86_4g_idiv_mem_DI): Ditto.
+	(c86_4g_idiv_mem_SI): Ditto.
+	(c86_4g_idiv_mem_HI): Ditto.
+	(c86_4g_idiv_mem_QI): Ditto.
+	(c86_4g_fp_sqrt): Ditto.
+	(c86_4g_sse_sqrt_sf): Ditto.
+	(c86_4g_sse_sqrt_sf_mem): Ditto.
+	(c86_4g_sse_sqrt_df): Ditto.
+	(c86_4g_sse_sqrt_df_mem): Ditto.
+	(c86_4g_fp_op_div): Ditto.
+	(c86_4g_fp_op_div_load): Ditto.
+	(c86_4g_fp_op_idiv_load): Ditto.
+	(c86_4g_ssediv_ss_ps): Ditto.
+	(c86_4g_ssediv_ss_ps_load): Ditto.
+	(c86_4g_ssediv_ss_pd): Ditto.
+	(c86_4g_ssediv_ss_pd_load): Ditto.
+	(c86_4g_ssediv_avx256_ps): Ditto.
+	(c86_4g_ssediv_avx256_ps_load): Ditto.
+	(c86_4g_ssediv_avx256_pd): Ditto.
+	(c86_4g_ssediv_avx256_pd_load): Ditto.
+
+2026-06-18  Xin Liu  <liulxx@hygon.cn>
+
+	Backported from master:
+	2026-04-29  Xin Liu  <liulxx@hygon.cn>
+		    Zhaoling Bao  <baozhaoling@hygon.cn>
+
+	* common/config/i386/cpuinfo.h (get_hygon_cpu): Detect the specific
+	type of HYGON CPU and return HYGON CPU name.
+	(cpu_indicator_init): Handle HYGON CPU.
+	* common/config/i386/i386-common.cc (processor_names): Add HYGON
+	C86-4G processors c86-4g-m{4,6,7}.
+	(processor_alias_table): Add hygon, hygonfam18h and c86-4g-m{4,6,7}
+	entries.
+	(ARRAY_SIZE): Update as new entries added.
+	* common/config/i386/i386-cpuinfo.h (enum processor_vendor): Add
+	VENDOR_HYGON.
+	(enum processor_types): Add HYGONFAM18H.
+	(enum processor_subtypes): Add HYGONFAM18H_C86_4G_M{4,6,7}.
+	* config.gcc: Add support for c86_4g_m{4,6,7}.
+	* config/i386/cpuid.h (signature_HYGON_ebx):  Add signature for HYGON.
+	(signature_HYGON_ecx): Ditto.
+	(signature_HYGON_edx): Ditto.
+	* config/i386/driver-i386.cc (host_detect_local_cpu): Support HYGON
+	c86-4g-m4{4,6,7} processors.
+	* config/i386/i386-c.cc (ix86_target_macros_internal): Ditto.
+	* config/i386/i386-options.cc (m_C86_4G_M4): New definition.
+	(m_C86_4G_M6): Ditto.
+	(m_C86_4G_M7): Ditto.
+	(m_C86_4G): Ditto.
+	(processor_cost_table): Add cost entries for c86-4g-m4{4,6,7}.
+	* config/i386/i386.cc (ix86_reassociation_width): Add handlings for
+	PROCESSOR_C86_4G_M{4,6,7}.
+	* config/i386/i386.h (enum processor_type): Define
+	PROCESSOR_C86_4G_M{4,6,7}.
+	(PTA_C86_4G_M4): New define.
+	(PTA_C86_4G_M6): Ditto.
+	(PTA_C86_4G_M7): Ditto.
+	* config/i386/x86-tune-costs.h (c86_4g_m4_memcpy): New stringop_algs.
+	(c86_4g_m4_cost): New processor_costs.
+	(c86_4g_m6_cost): Ditto.
+	(c86_4g_m7_cost): Ditto.
+	* config/i386/x86-tune-sched.cc (ix86_issue_rate): Handle
+	PROCESSOR_C86_4G_M{4,6,7}.
+	(ix86_adjust_cost): Ditto.
+	* config/i386/x86-tune.def (X86_TUNE_SCHEDULE): Handle m_C86_4G.
+	(X86_TUNE_PARTIAL_REG_DEPENDENCY): Ditto.
+	(X86_TUNE_SSE_PARTIAL_REG_DEPENDENCY): Ditto.
+	(X86_TUNE_SSE_PARTIAL_REG_FP_CONVERTS_DEPENDENCY): Ditto.
+	(X86_TUNE_SSE_PARTIAL_REG_CONVERTS_DEPENDENCY): Ditto.
+	(X86_TUNE_MEMORY_MISMATCH_STALL): Ditto.
+	(X86_TUNE_FUSE_CMP_AND_BRANCH_32): Ditto.
+	(X86_TUNE_FUSE_CMP_AND_BRANCH_64): Ditto.
+	(X86_TUNE_FUSE_CMP_AND_BRANCH_SOFLAGS): Ditto.
+	(X86_TUNE_USE_LEAVE): Ditto.
+	(X86_TUNE_PUSH_MEMORY): Ditto.
+	(X86_TUNE_INTEGER_DFMODE_MOVES): Ditto.
+	(X86_TUNE_MISALIGNED_MOVE_STRING_PRO_EPILOGUES): Ditto.
+	(X86_TUNE_USE_SAHF): Ditto.
+	(X86_TUNE_USE_BT): Ditto.
+	(X86_TUNE_AVOID_MFENCE): Ditto.
+	(X86_TUNE_USE_FFREEP): Ditto.
+	(X86_TUNE_SSE_UNALIGNED_STORE_OPTIMAL): Ditto.
+	(X86_TUNE_SSE_PACKED_SINGLE_INSN_OPTIMAL): Ditto.
+	(X86_TUNE_SSE_TYPELESS_STORES): Ditto.
+	(X86_TUNE_SSE_LOAD0_BY_PXOR): Ditto.
+	(X86_TUNE_USE_GATHER_2PARTS): Ditto.
+	(X86_TUNE_USE_GATHER_4PARTS): Ditto.
+	(X86_TUNE_USE_GATHER_8PARTS): Ditto.
+	(X86_TUNE_AVOID_128FMA_CHAINS): Ditto.
+	(X86_TUNE_AVOID_256FMA_CHAINS): Ditto.
+	(X86_TUNE_USE_RCR): Ditto.
+	(X86_TUNE_AVX256_MOVE_BY_PIECES): Handle m_C86_4G_M{4,6}.
+	(X86_TUNE_USE_SCATTER_2PARTS): Handle m_C86_4G_M7.
+	(X86_TUNE_USE_SCATTER_4PARTS): Ditto.
+	(X86_TUNE_USE_SCATTER_8PARTS): Ditto.
+	(X86_TUNE_AVX512_SPLIT_REGS): Ditto.
+	(X86_TUNE_AVX256_MOVE_BY_PIECES): Ditto.
+	(X86_TUNE_AVX256_STORE_BY_PIECES): Ditto.
+	(X86_TUNE_AVX512_MOVE_BY_PIECES): Ditto.
+	(X86_TUNE_AVX512_STORE_BY_PIECES): Ditto.
+	* doc/extend.texi: Document about hygonfam18h and c86-4g-m{4,6,7}.
+	* doc/invoke.texi: Document about c86-4g-m{4,6,7}.
+	* config/i386/c86-4g-m7.md: New file for c86-4g-m7 scheduling model
+	information.
+	* config/i386/c86-4g.md: New file for c86-4g-m{4,6} scheduling model
+	information.
+	* config/i386/i386.md (cpu attr): Add c86_4g_m{4,6,7}.
+	(c86-4g.md): New include.
+	(c86-4g-m7.md): Ditto.
+	(*cmpi<unord>xf_i387): Set attr c86_decode.
+	(*cmpi<unord><MODEF:mode>): Ditto.
+	(swap<mode>): Ditto.
+	(*swap<mode>): Ditto.
+	(extendhisi2): Ditto.
+	(floathi<mode>2): Ditto.
+	(float<SWI48x:mode>xf2): Ditto.
+	(*float<SWI48:mode><MODEF:mode>2): Ditto.
+	(*floatdi<MODEF:mode>2_i387): Ditto.
+	(*anddi_1_bt): Ditto.
+	(*iordi_1_bts): Ditto.
+	(*xordi_1_btc): Ditto.
+	(*<btsc><mode>): Ditto.
+	(*btr<mode>): Ditto.
+	(*btsq_imm): Ditto.
+	(*btrq_imm): Ditto.
+	(*btcq_imm): Ditto.
+	(*tzcnt<mode>_1): Ditto.
+	(*tzcnt<mode>_1_falsedep): Ditto.
+	(*bsf<mode>_1): Ditto.
+	(*ctz<mode>2_falsedep): Ditto.
+	(*ctzsi2_zext): Ditto.
+	(*ctzsi2_zext_falsedep): Ditto.
+	(bsr_rex64): Ditto.
+	(bsr_rex64_1): Ditto.
+	(bsr_rex64_1_zext): Ditto.
+	(bsr): Ditto.
+	(bsr_1): Ditto.
+	(bsr_zext_1): Ditto.
+	(*bswaphi2_movbe): Ditto.
+	(*bswaphi2): Ditto.
+	(bswaphisi2_lowpart): Ditto.
+	(fpremxf4_i387): Ditto.
+	(fprem1xf4_i387): Ditto.
+	(<sincos>xf2): Ditto.
+	(sincosxf3): Ditto.
+	(fptanxf4_i387): Ditto.
+	(atan2xf3): Ditto.
+	(fyl2xxf3_i387): Ditto.
+	(fyl2xp1xf3_i387): Ditto.
+	(fxtractxf3_i387): Ditto.
+	(*f2xm1xf2_i387): Ditto.
+	(fscalexf4_i387): Ditto.
+	(rintxf2): Ditto.
+	(*movxi_internal_avx512f): Set attr c86_attr.
+	(*movoi_internal_avx): Ditto.
+	(*movti_internal): Ditto.
+	(*movdi_internal): Ditto.
+	(*movsi_internal): Ditto.
+	(*movhi_internal): Ditto.
+	(*movtf_internal): Ditto.
+	(*movdf_internal): Ditto.
+	(*movsf_internal): Ditto.
+	(*zero_extendsidi2): Ditto.
+	(sqrtxf2): Ditto.
+	(<smaxmin:code><mode>3): Ditto.
+	(*ieee_s<ieee_maxmin><mode>3): Ditto.
+	* config/i386/mmx.md (*mmx_maskmovq): Set attr c86_decode.
+	(*mmx_maskmovq): Ditto.
+	(sse_movntq): Set attr c86_attr.
+	(*mmx_blendps): Ditto.
+	(mmx_blendvps): Ditto.
+	(*mmx_pmaddwd): Ditto.
+	(mmx_pblendvb_v8qi): Ditto.
+	(mmx_pblendvb_<mode>): Ditto.
+	(sse4_1_<code>v4qiv4hi2): Ditto.
+	(sse4_1_<code>v2hiv2si2): Ditto.
+	(sse4_1_<code>v2qiv2si2): Ditto.
+	(sse4_1_<code>v2qiv2hi2): Ditto.
+	(*mmx_pinsrd): Ditto.
+	(*mmx_pinsrw): Ditto.
+	(*mmx_pinsrb): Ditto.
+	(*mmx_pextrw): Ditto.
+	(*mmx_pextrw<mode>): Ditto.
+	(*mmx_pextrw_zext): Ditto.
+	(*mmx_pextrb): Ditto.
+	(*mmx_pextrb_zext): Ditto.
+	(*mmx_pblendw64): Ditto.
+	(*mmx_pblendw32): Ditto.
+	(*vec_extractv2si_1): Ditto.
+	(*vec_extractv2si_1_zext): Ditto.
+	(*pinsrw): Ditto.
+	(*pinsrb): Ditto.
+	(*pextrw): Ditto.
+	(*pextrw<mode>): Ditto.
+	(*pextrw_zext): Ditto.
+	(*pextrb): Ditto.
+	(*pextrb_zext): Ditto.
+	(*mmx_psadbw): Ditto.
+	* config/i386/sse.md (ktest<mode>): Set attr c86_decode.
+	(*kortest<mode>): Ditto.
+	(sse_cvtsi2ss<rex64namesuffix><round_name>): Ditto.
+	(sse2_cvtsi2sd): Ditto.
+	(sse2_maskmovdqu): Ditto.
+	(*<sse>_dp<ssemodesuffix><avxsizesuffix>): Ditto.
+	(*<sse4_1_avx2>_mpsadbw): Ditto.
+	(pclmulqdq): Ditto.
+	(<mask_codefor>conflict<mode><mask_name>): Ditto.
+	(<avx512>_blendm<mode>): Set attr c86_attr.
+	(sse2_movnti<mode>): Ditto.
+	(<sse>_movnt<mode>): Ditto.
+	(<sse2>_movnt<mode>): Ditto.
+	(<sse>_rcp<mode>2): Ditto.
+	(sse_vmrcpv4sf2): Ditto.
+	(<mask_codefor>rcp14<mode><mask_name>): Ditto.
+	(srcp14<mode>): Ditto.
+	(srcp14<mode>_mask): Ditto.
+	(<sse>_sqrt<mode>2<mask_name><round_name>): Ditto.
+	(<sse>_vmsqrt<mode>2<mask_scalar_name><round_scalar_name>): Ditto.
+	(*<sse>_vmsqrt<mode>2<mask_scalar_name><round_scalar_name>): Ditto.
+	(<mask_codefor>rsqrt14<mode><mask_name>): Ditto.
+	(rsqrt14<mode>): Ditto.
+	(rsqrt14_<mode>_mask"): Ditto.
+	(*<code><mode>3<mask_name><round_saeonly_name>): Ditto.
+	(ieee_<ieee_maxmin><mode>3<mask_name><round_saeonly_name>): Ditto.
+	(*<sse>_vm<code><mode>3<mask_scalar_name><round_saeonly_scalar_name>):
+	Ditto.
+	(<sse>_ieee_vm<ieee_maxmin><mode>3<mask_scalar_name>
+	<round_saeonly_scalar_name>): Ditto.
+	(*ieee_<ieee_maxmin><mode>3): Ditto.
+	(avx_h<insn>v4df3): Ditto.
+	(*sse3_haddv2df3): Ditto.
+	(sse3_hsubv2df3): Ditto.
+	(*sse3_haddv2df3_low): Ditto.
+	(*sse3_hsubv2df3_low): Ditto.
+	(avx_h<insn>v8sf3): Ditto.
+	(sse3_h<insn>v4sf3): Ditto.
+	(*<mask_codefor>reducep<mode><mask_name><round_saeonly_name>): Ditto.
+	(reduces<mode><mask_scalar_name><round_saeonly_scalar_name>): Ditto.
+	(*<avx512>_eq<mode>3<mask_scalar_merge_name>_1): Ditto.
+	(<sse>_andnot<mode>3<mask_name>): Ditto.
+	(*<code><mode>3<mask_name>): Ditto.
+	(*andnot<mode>3): Ditto.
+	(<code><mode>3): Ditto.
+	(*<code>tf3): Ditto.
+	(vec_set<mode>_0): Ditto.
+	(@vec_set<mode>_0): Ditto.
+	(*sse4_1_extractps): Ditto.
+	(vec_extract<mode>): Ditto.
+	(<mask_codefor><avx512>_align<mode><mask_name>): Ditto.
+	(avx512bw_pmaddwd512<mode><mask_name>): Ditto.
+	(*avx2_pmaddw): Ditto.
+	(*sse2_pmaddwd): Ditto.
+	(*avx2_<code><mode>3): Ditto.
+	(*avx512f_<code><mode>3<mask_name>): Ditto.
+	(*avx512bw_<code><mode>3<mask_name>): Ditto.
+	(*sse4_1_<code><mode>3<mask_name>): Ditto.
+	(*<code>v8hi3): Ditto.
+	(*<code>v16qi3): Ditto.
+	(*andnot<mode>3_mask): Ditto.
+	(*<code><mode>3): Ditto.
+	(<code>v1ti3): Ditto.
+	(<sse2p4_1>_pinsr<ssemodesuffix>): Ditto.
+	(*<extract_type>_vinsert<shuffletype><extract_suf>_0): Ditto.
+	(<mask_codefor><extract_type>_vinsert<shuffletype><extract_suf>
+	_1<mask_name>): Ditto.
+	(vec_set_lo_<mode><mask_name>): Ditto.
+	(vec_set_hi_<mode><mask_name>): Ditto.
+	(<mask_codefor>avx512dq_shuf_<shuffletype>64x2_1<mask_name>): Ditto.
+	(avx512f_shuf_<shuffletype>64x2_1<mask_name>): Ditto.
+	(*avx512f_shuf_<shuffletype>64x2_1<mask_name>_1): Ditto.
+	(avx512vl_shuf_<shuffletype>32x4_1<mask_name>): Ditto.
+	(avx512f_shuf_<shuffletype>32x4_1<mask_name>): Ditto.
+	(*avx512f_shuf_<shuffletype>32x4_1<mask_name>_1): Ditto.
+	(*vec_extract<mode>): Ditto.
+	(*vec_extract<PEXTR_MODE12:mode>_zext): Ditto.
+	(*vec_extractv16qi_zext): Ditto.
+	(*vec_extractv4si): Ditto.
+	(*vec_extractv4si_zext): Ditto.
+	(*vec_extractv2di_1): Ditto.
+	(*vec_concatv2si_sse4_1): Ditto.
+	(vec_concatv2di): Ditto.
+	(*<sse2_avx2>_uavg<mode>3<mask_name>): Ditto.
+	(*<sse2_avx2>_psadbw): Ditto.
+	(<sse>_movmsk<ssemodesuffix><avxsizesuffix>): Ditto.
+	(*<sse>_movmsk<ssemodesuffix><avxsizesuffix>_<u>ext): Ditto.
+	(<sse2_avx2>_pmovmskb): Ditto.
+	(*<sse2_avx2>_pmovmskb_zext): Ditto.
+	(*sse2_maskmovdqu): Ditto.
+	(avx2_ph<plusminus_mnemonic>wv16hi3): Ditto.
+	(ssse3_ph<plusminus_mnemonic>wv8hi3): Ditto.
+	(ssse3_ph<plusminus_mnemonic>dv4si3): Ditto.
+	(avx2_ph<plusminus_mnemonic>dv8si3): Ditto.
+	(avx2_pmaddubsw256): Ditto.
+	(avx512bw_pmaddubsw512<mode><mask_name>): Ditto.
+	(ssse3_pmaddubsw128): Ditto.
+	(<ssse3_avx2>_psign<mode>3): Ditto.
+	(ssse3_psign<mode>3): Ditto.
+	(*abs<mode>2): Ditto.
+	(abs<mode>2_mask): Ditto.
+	(abs<mode>2_mask): Ditto.
+	(sse4a_movnt<mode>): Ditto.
+	(sse4a_vmmovnt<mode>): Ditto.
+	(<sse4_1>_blend<ssemodesuffix><avxsizesuffix>): Ditto.
+	(<sse4_1>_blendv<ssemodesuffix><avxsizesuffix>): Ditto.
+	(sse4_1_blendv<ssemodesuffix>): Ditto.
+	(<vi8_sse4_1_avx2_avx512>_movntdqa): Ditto.
+	(<sse4_1_avx2>_pblendvb): Ditto.
+	(sse4_1_pblend<ssemodesuffix>): Ditto.
+	(*avx2_pblend<ssemodesuffix>): Ditto.
+	(avx2_pblendd<mode>): Ditto.
+	(avx2_<code>v16qiv16hi2<mask_name>): Ditto.
+	(avx512bw_<code>v32qiv32hi2<mask_name>): Ditto.
+	(sse4_1_<code>v8qiv8hi2<mask_name>): Ditto.
+	(*sse4_1_<code>v8qiv8hi2<mask_name>_1): Ditto.
+	(<mask_codefor>avx512f_<code>v16qiv16si2<mask_name>): Ditto.
+	(avx2_<code>v8qiv8si2<mask_name>): Ditto.
+	(*avx2_<code>v8qiv8si2<mask_name>_1): Ditto.
+	(sse4_1_<code>v4qiv4si2<mask_name>): Ditto.
+	(*sse4_1_<code>v4qiv4si2<mask_name>_1): Ditto.
+	(avx512f_<code>v16hiv16si2<mask_name>): Ditto.
+	(avx2_<code>v8hiv8si2<mask_name>): Ditto.
+	(sse4_1_<code>v4hiv4si2<mask_name>): Ditto.
+	(*sse4_1_<code>v4hiv4si2<mask_name>_1): Ditto.
+	(avx512f_<code>v8qiv8di2<mask_name>): Ditto.
+	(*avx512f_<code>v8qiv8di2<mask_name>_1): Ditto.
+	(avx2_<code>v4qiv4di2<mask_name>): Ditto.
+	(*avx2_<code>v4qiv4di2<mask_name>_1): Ditto.
+	(sse4_1_<code>v2qiv2di2<mask_name>): Ditto.
+	(*sse4_1_<code>v2qiv2di2<mask_name>_1): Ditto.
+	(avx512f_<code>v8hiv8di2<mask_name>): Ditto.
+	(avx2_<code>v4hiv4di2<mask_name>): Ditto.
+	(*avx2_<code>v4hiv4di2<mask_name>_1): Ditto.
+	(sse4_1_<code>v2hiv2di2<mask_name>): Ditto.
+	(*sse4_1_<code>v2hiv2di2<mask_name>_1): Ditto.
+	(avx512f_<code>v8siv8di2<mask_name>): Ditto.
+	(avx2_<code>v4siv4di2<mask_name>): Ditto.
+	(sse4_1_<code>v2siv2di2<mask_name>): Ditto.
+	(*sse4_1_<code>v2siv2di2<mask_name>_1): Ditto.
+	(sse4_1_round<ssescalarmodesuffix>): Ditto.
+	(*sse4_1_round<ssescalarmodesuffix>"): Ditto.
+	(sse4_2_pcmpestri): Ditto.
+	(sse4_2_pcmpestrm): Ditto.
+	(sse4_2_pcmpestr_cconly): Ditto.
+	(sse4_2_pcmpistri): Ditto.
+	(sse4_2_pcmpistrm): Ditto.
+	(sse4_2_pcmpistr_cconly): Ditto.
+	(xop_phadd<u>bw): Ditto.
+	(xop_phadd<u>bd): Ditto.
+	(xop_phadd<u>bq): Ditto.
+	(xop_phadd<u>wd): Ditto.
+	(xop_phadd<u>wq): Ditto.
+	(xop_phadd<u>dq): Ditto.
+	(xop_phsubbw): Ditto.
+	(xop_phsubwd): Ditto.
+	(xop_phsubdq): Ditto.
+	(aesenc): Ditto.
+	(aesenclast): Ditto.
+	(aesdec): Ditto.
+	(aesdeclast): Ditto.
+	(aesimc): Ditto.
+	(aeskeygenassist): Ditto.
+	(<avx2_avx512>_permvar<mode><mask_name>): Ditto.
+	(avx2_perm<mode>_1<mask_name>): Ditto.
+	(<avx512>_permvar<mode><mask_name>): Ditto.
+	(avx512f_perm<mode>_1<mask_name>): Ditto.
+	(<mask_codefor>avx512f_broadcast<mode><mask_name>): Ditto.
+	(avx_vbroadcastf128_<mode>): Ditto.
+	(<mask_codefor>avx512vl_broadcast<mode><mask_name>_1): Ditto.
+	(<mask_codefor>avx512dq_broadcast<mode><mask_name>_1): Ditto.
+	(*<avx512>_vpermi2var<mode>3_mask): Ditto.
+	(<avx512>_vpermt2var<mode>3<sd_maskz_name>): Ditto.
+	(<avx512>_vpermt2var<mode>3_mask): Ditto.
+	(*avx_vperm2f128<mode>_nozero): Ditto.
+	(vec_set_lo_<mode><mask_name>): Ditto.
+	(vec_set_hi_<mode><mask_name>): Ditto.
+	(vec_set_lo_<mode>): Ditto.
+	(vec_set_hi_<mode>): Ditto.
+	(vec_set_lo_v32qi): Ditto.
+	(<avx_avx2>_maskload<ssemodesuffix><avxsizesuffix>): Ditto.
+	(<avx_avx2>_maskstore<ssemodesuffix><avxsizesuffix>): Ditto.
+	(avx_vec_concat<mode>): Ditto.
+	(<avx512>_compress<mode>_mask): Ditto.
+	(compress<mode>_mask): Ditto.
+	(<avx512>_compressstore<mode>_mask): Ditto.
+	(compressstore<mode>_mask): Ditto.
+	(expand<mode>_mask): Ditto.
+	(<mask_codefor>avx512bw_dbpsadbw<mode><mask_name>): Ditto.
+	(clz<mode>2<mask_name>): Ditto.
+	(vpmadd52<vpmadd52type>v8di): Ditto.
+	(vpmadd52<vpmadd52type><mode>): Ditto.
+	(vpmadd52<vpmadd52type><mode>_maskz_1): Ditto.
+	(vpmadd52<vpmadd52type><mode>_mask): Ditto.
+	(vaesdec_<mode>): Ditto.
+	(vaesdeclast_<mode>): Ditto.
+	(vaesenc_<mode>): Ditto.
+	(vaesenclast_<mode>): Ditto.
+
 2026-06-17  Zhongyao Chen  <chen.zhongyao@zte.com.cn>
 
 	PR target/125215
