@@ -3775,6 +3775,11 @@ ix86_broadcast_inner (rtx op, machine_mode mode,
     return nullptr;
 
   rtx_insn *insn = DF_REF_INSN (ref);
+
+  /* Skip JUMP which happens with asm goto.  */
+  if (JUMP_P (insn))
+    return nullptr;
+
   rtx set = single_set (insn);
   if (!set)
     return nullptr;
