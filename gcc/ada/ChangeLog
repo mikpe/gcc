@@ -1,3 +1,26 @@
+2026-06-19  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_ch12.adb (Analyze_Generic_Package_Declaration): Do not set the
+	Body_Needed_For_Inlining flag on the current semantic unit if the
+	package is declared within an instance or does not require a body.
+	(Analyze_Generic_Subprogram_Declaration): Similarly, do not set the
+	Body_Needed_For_Inlining flag on the current semantic unit if the
+	subprogram is declared within an instance.
+
+2026-06-19  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_ch12.adb (Build_Structural_Instantiation): Temporarily disable
+	registration of tagged types when analyzing the instantiation.
+
+2026-06-19  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* libgnat/a-cbinho.adb (Clear): Deallocate the subpool even if the
+	container is empty.
+
+2026-06-19  Steve Baird  <baird@adacore.com>
+
+	* libgnat/a-cbinho.adb (Adjust): Avoid null pointer dereference.
+
 2026-06-09  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/125695

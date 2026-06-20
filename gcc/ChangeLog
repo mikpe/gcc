@@ -1,3 +1,9 @@
+2026-06-19  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* acinclude.m4 (gcc_GAS_FLAGS): Set to --32 for abi32 targets.
+	* configure.ac (TLS support): Use 32-bit sequence for abi32 targets.
+	* configure: Regenerate.
+
 2026-06-17  Alex Coplan  <alex.coplan@arm.com>
 
 	Backported from master:
