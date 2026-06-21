@@ -1,3 +1,12 @@
+2026-06-20  Arsen Arsenović  <aarsenovic@baylibre.com>
+
+	Backported from master:
+	2026-06-19  Arsen Arsenović  <aarsenovic@baylibre.com>
+
+	* doc/extend.texi: Move @anchor-s referring to tops of nodes
+	after their corresponding @node lines.
+	* doc/invoke.texi: Ditto.
+
 2026-06-19  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* acinclude.m4 (gcc_GAS_FLAGS): Set to --32 for abi32 targets.
