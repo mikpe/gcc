@@ -1,3 +1,38 @@
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-17  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125478
+	* gcc.target/riscv/rvv/autovec/pr125478.c: New test.
+
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-16  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125670
+	* gcc.target/riscv/rvv/autovec/pr125670.c: New test.
+
+2026-06-22  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-06-11  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* lib/target-supports.exp (arm_mixed_fp): Simplify
+	implementation.
+
+2026-06-22  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-04-09  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR testsuite/113276
+	* gcc.dg/torture/fp-double-convert-float-1.c: Xfail test for arm*
+	unless single- and double-precision FP.
+	* lib/target-supports.exp (check_effective_target_arm_mixed_fp):
+	New function.
+
 2026-06-18  Xin Liu  <liulxx@hygon.cn>
 
 	Backported from master:
