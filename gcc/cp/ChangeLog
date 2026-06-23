@@ -1,3 +1,22 @@
+2026-06-22  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-27  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/124978
+	PR c++/115314
+	* semantics.cc (finish_decltype_type): Check REFERENCE_REF_P
+	instead of INDIRECT_REF_P before stripping implicit dereferences.
+
+2026-06-22  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-22  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125889
+	* reflect.cc (class_members_of): Also append LAMBDA_FUNCTION_P
+	from the implicitly_declared vector.
+
 2026-06-17  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

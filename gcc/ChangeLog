@@ -1,3 +1,69 @@
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-17  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125478
+	* config/riscv/vector.md: Set widen-alu mode_idx to 3.
+
+2026-06-22  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-06-09  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	* config/rs6000/amo.h (_AMO_LD): Add _AMO_LD_CS_EQ enumerator, gated on
+	_ARCH_FUTURE.
+	(amo_lwat_cas_eq, amo_lwat_scas_eq, amo_ldat_cas_eq,
+	amo_ldat_scas_eq): New compare-and-swap equal helper functions.
+	(_AMO_ERR_CMPSWP): New macro for error-attribute stubs on non-Future
+	targets.
+	* doc/extend.texi (PowerPC Atomic Memory Operation Functions): Document
+	new functions.
+
+2026-06-22  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-06-04  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	PR target/106895
+	* config/rs6000/rs6000.h (enum rs6000_builtin_type_index): Add
+	RS6000_BTI_INTPTI and RS6000_BTI_UINTPTI.
+	(intPTI_type_internal_node, uintPTI_type_internal_node): New
+	PTImode type macros.
+	* config/rs6000/rs6000-builtin.cc (rs6000_init_builtins): Register
+	signed and unsigned PTImode internal builtin types.
+	* config/rs6000/sync.md (trunctipti2): New splitter.
+	(extendptiti2): Likewise.
+	(zero_extendptiti2): Likewise.
+
+2026-06-22  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-05-13  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	PR target/122665
+	* config/rs6000/vsx.md (smul<mode>3_highpart, umul<mode>3_highpart):
+	Replace shift-based patterns with smul_highpart and umul_highpart RTL
+	codes and use altivec_register_operand.
+
+2026-06-22  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-05-19  Peter Bergner  <bergner@linux.ibm.com>
+		    Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	* config/rs6000/amo.h: Add missing atomic memory operations.
+	* doc/extend.texi (PowerPC Atomic Memory Operation Functions): Document
+	new functions.
+
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-16  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125670
+	* config/riscv/autovec-opt.md: Use avl_type operand number.
+
 2026-06-20  Arsen Arsenović  <aarsenovic@baylibre.com>
 
 	Backported from master:
