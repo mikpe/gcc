@@ -1,3 +1,20 @@
+2026-06-22  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	Backported from master:
+	2025-07-14  François-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	PR target/120645
+	* config/darwin-driver.cc: Account for latest macOS numbering
+	scheme.
+
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-16  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125670
+	* config/riscv/autovec-opt.md: Use avl_type operand number.
+
 2026-06-17  Alex Coplan  <alex.coplan@arm.com>
 
 	Backported from master:

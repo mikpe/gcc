@@ -1,3 +1,18 @@
+2026-06-22  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	Backported from master:
+	2025-07-14  François-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	* gcc.dg/darwin-minversion-link.c: Account for macOS 26.
+
+2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	Backported from master:
+	2026-06-16  Robin Dapp  <rdapp.gcc@gmail.com>
+
+	PR target/125670
+	* gcc.target/riscv/rvv/autovec/pr125670.c: New test.
+
 2026-06-17  Alex Coplan  <alex.coplan@arm.com>
 
 	Backported from master:
