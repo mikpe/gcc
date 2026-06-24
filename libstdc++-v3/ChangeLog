@@ -1,3 +1,50 @@
+2026-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/chrono.h (std::chrono_literals): Fix typo in
+	comment.
+
+2026-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/debug_mode.xml: Remove 404 link to stlport
+	website and modernise some text about debug modes in other
+	implementations.
+	* doc/html/manual/debug_mode_design.html: Regenerate.
+
+2026-06-23  Nathan Myers  <ncm@cantrip.org>
+
+	PR libstdc++/125890
+	* include/bits/memory_resource.h (allocate_at_least): Add to
+	allocator_traits<pmr::polymorphic_allocator> specialization.
+	* testsuite/20_util/polymorphic_allocator/at_least.cc: New test.
+
+2026-06-23  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	Backported from master:
+	2026-06-13  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/bits/version.def (constant_wrapper): Bump to 202606L.
+	* include/bits/version.h: Regenerate.
+	* include/bits/funcref_impl.h (function_ref::function_ref): Rename
+	template parameter from __cwfn to __fn and use it direclty.
+	* include/bits/funcwrap.h (function_ref): Rename template parameter
+	to __fn.
+	(std::constant_wrapper): Use auto as non-type template parameter,
+	and refeference it as value.
+	* include/bits/utility.h (__CwFixedValue): Remove.
+	* include/std/mdspan (__mdspan::__is_constant_wrapper):
+	Use auto as non-type template parameter.
+	* testsuite/20_util/constant_wrapper/generic.cc: Remove arrays
+	and string literal tests. Add test for address of value.
+	* testsuite/20_util/constant_wrapper/other_wrappers.cc:
+	Remove test_array.
+	* testsuite/20_util/constant_wrapper/type_param_neg.cc: New file.
+
 2026-06-04  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,27 @@
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125745
+	* g++.dg/ubsan/vptr-19.C: New test.
+
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125408
+	* g++.dg/cpp2a/lambda-targ34.C: New test.
+
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125408
+	* g++.dg/cpp2a/lambda-targ33.C: New test.
+
 2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
 
 	Backported from master:

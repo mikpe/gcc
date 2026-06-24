@@ -1,3 +1,28 @@
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125745
+	* cp-ubsan.cc (cp_ubsan_instrument_vptr): Use build_vfield_ref.
+
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125408
+	* expr.cc (mark_use): Fix condition for changing rvalue to lvalue.
+
+2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125408
+	* tree.cc (cp_walk_subtrees): Walk into the DECL_ORIGINAL_TYPE of a
+	typedef DECL_EXPR.
+
 2026-06-22  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,13 @@
+2026-06-23  Xi Ruoyao  <xry111@xry111.site>
+
+	Revert:
+	2026-06-09  Xi Ruoyao  <xry111@xry111.site>
+
+	* config/mips/sync.md (sync_old_<optab><mode>): Fix
+	uninitialized operand use.
+	(sync_new_<optab><mode>): Fix uninitialized operand use, use the
+	same expression for the set source of operand 0 and 1.
+
 2026-06-22  Robin Dapp  <rdapp.gcc@gmail.com>
 
 	Backported from master:
