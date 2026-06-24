@@ -1,10 +1,18 @@
 #!/bin/sh
 
-if [ "$1" = "--help" -o $# -ne 2 -o -f "$1" ]; then
+usage()
+{
     echo Usage: relpath.sh FROM TO
     echo Print the relative path from FROM to TO
     echo FROM must be a directory, but need not exist
+}
+
+if [ "$1" = "--help" ]; then
+    usage
     exit 0
+elif [ $# -ne 2 -o -f "$1" ]; then
+    usage >&2
+    exit 1
 fi
 
 from="${1%%/}"
