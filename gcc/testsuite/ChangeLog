@@ -1,3 +1,26 @@
+2026-06-24  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125902
+	* gfortran.dg/c-prototypes_1.F90: New test.
+
+2026-06-24  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125939
+	* g++.dg/reflect/type_trait15.C: New test.
+
+2026-06-24  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-04  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/60576
+	* gfortran.dg/asan/assumed_rank_26.f90: New test covering both
+	assumed-rank and fixed-rank type actuals passed to a CLASS
+	assumed-rank dummy.
+
 2026-06-23  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:

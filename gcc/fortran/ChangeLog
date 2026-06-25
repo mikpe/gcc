@@ -1,3 +1,31 @@
+2026-06-24  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125902
+	* dump-parse-tree.cc (get_c_type_name): Use CFI_cdesc_t also for
+	deferred shape and deferred length dummies, as well as for
+	assumed-length scalar character dummies.
+
+2026-06-24  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-04  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/60576
+	* trans-array.cc (gfc_conv_array_parameter): For an assumed-rank
+	actual argument passed to a CLASS assumed-rank formal, use a
+	runtime-sized memcpy for the dim[] entries instead of a full
+	GFC_MAX_DIMENSIONS static copy.  For a fixed-rank actual to a
+	CLASS assumed-rank formal, pass lhs_type=false to
+	gfc_class_array_data_assign so the dim[] copy is sized by the
+	RHS descriptor type (dim_t[rank]).  Fixed-rank class formals
+	retain lhs_type=true.
+	* trans-expr.cc (gfc_conv_derived_to_class): For an assumed-rank
+	actual, use a runtime-sized memcpy for the derived_array descriptor
+	dim[] copy instead of a full GFC_MAX_DIMENSIONS static copy.
+
 2026-06-15  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	Backported from master:

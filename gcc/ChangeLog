@@ -1,3 +1,7 @@
+2026-06-24  Jan Beulich  <jbeulich@suse.com>
+
+	* doc/ifn.texi: Drop blanks after @code.
+
 2026-06-23  Xi Ruoyao  <xry111@xry111.site>
 
 	Revert:
