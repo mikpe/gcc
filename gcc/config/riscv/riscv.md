@@ -181,6 +181,7 @@
    (VTYPE_REGNUM		67)
    (VXRM_REGNUM			68)
    (FRM_REGNUM			69)
+   (VXSAT_REGNUM		70)
 ])
 
 (include "predicates.md")
@@ -2478,7 +2479,15 @@
 	(unspec:P
 	    [(match_operand:P 0 "symbolic_operand" "")]
 	    UNSPEC_TLSDESC))
-   (clobber (reg:P T0_REGNUM))]
+   (clobber (reg:P T0_REGNUM))
+   (clobber (reg:RVVM8QI 96))
+   (clobber (reg:RVVM8QI 104))
+   (clobber (reg:RVVM8QI 112))
+   (clobber (reg:RVVM8QI 120))
+   (clobber (reg:SI VL_REGNUM))
+   (clobber (reg:SI VTYPE_REGNUM))
+   (clobber (reg:SI VXRM_REGNUM))
+   (clobber (reg:SI VXSAT_REGNUM))]
   "TARGET_TLSDESC"
   {
     return ".LT%=: auipc\ta0,%%tlsdesc_hi(%0)\;"
