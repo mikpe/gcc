@@ -1,3 +1,7 @@
+2026-06-26  Release Manager
+
+	* GCC 14.4.0 released.
+
 2026-06-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR ada/125695
