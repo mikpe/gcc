@@ -1,3 +1,42 @@
+2026-06-25  Peter Bergner  <bergner@tenstorrent.com>
+
+	* config/riscv/riscv-cores.def (RISCV_TUNE): Add tt-ascalon-x.
+	(RISCV_CORE): Likewise.
+	* doc/riscv-mcpu.texi: Regenerate.
+	* doc/riscv-mtune.texi: Likewise.
+
+2026-06-25  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-25  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125977
+	* cfgexpand.cc (pass_expand::execute): Guard ranger use
+	on optimize.
+
+2026-06-25  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-06-25  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/125628
+	* config/mips/sync.md (sync_old_<optab><mode>): Fix
+	uninitialized operand use.
+	(sync_new_<optab><mode>): Fix uninitialized operand use, use the
+	same expression for the set source of operand 0 and 1.
+
+2026-06-25  Jan Beulich  <jbeulich@suse.com>
+
+	* config/riscv/arch-canonicalize: Avoid f"..." strings.
+
+2026-06-25  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	Backported from master:
+	2026-06-24  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	* config/i386/prfchwintrin.h (_m_prefetchw): Take
+	volatile const void * instead of void *.
+
 2026-06-24  Jan Beulich  <jbeulich@suse.com>
 
 	* doc/ifn.texi: Drop blanks after @code.

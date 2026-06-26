@@ -1,3 +1,21 @@
+2026-06-25  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125334
+	* module.cc (depset::hash::find_dependencies): Don't add_dependency
+	dependent ADL functions.
+
+2026-06-25  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125768
+	* module.cc (trees_out::decl_node): When not streaming,
+	recurse into DECL_ORIGINAL_TYPE of an imported typedef.
+
 2026-06-24  Marek Polacek  <polacek@redhat.com>
 
 	PR c++/125939

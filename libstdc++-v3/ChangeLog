@@ -1,3 +1,12 @@
+2026-06-25  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-25  Jakub Jelinek  <jakub@redhat.com>
+
+	* src/c++23/Makefile.am (stamp-modules-bits): Use abs_builddir instead
+	of abs_srcdir.
+	* src/c++23/Makefile.in: Regenerate.
+
 2026-06-24  Alexandre Oliva  <oliva@adacore.com>
 
 	Backported from master:

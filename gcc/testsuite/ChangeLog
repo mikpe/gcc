@@ -1,3 +1,28 @@
+2026-06-25  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125334
+	* g++.dg/modules/adl-12_b.C: Check for lazy loading.
+
+2026-06-25  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/125768
+	* g++.dg/modules/alias-3_a.C: New test.
+	* g++.dg/modules/alias-3_b.C: New test.
+	* g++.dg/modules/alias-3_c.C: New test.
+
+2026-06-25  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	Backported from master:
+	2026-06-24  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	* gcc.target/i386/prfchw-Wcast-qual-1.c: New test.
+
 2026-06-24  Harald Anlauf  <anlauf@gmx.de>
 
 	Backported from master:
