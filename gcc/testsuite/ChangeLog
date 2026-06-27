@@ -1,3 +1,19 @@
+2026-06-26  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-06-26  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125900
+	* g++.dg/reflect/expr18.C: New test.
+
+2026-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/125902
+	* gfortran.dg/c-prototypes_2.F90: New test.
+
 2026-06-25  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
