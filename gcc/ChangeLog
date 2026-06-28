@@ -1,3 +1,11 @@
+2026-06-27  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125992
+	* config/s390/s390.md (*brx_stage1_<GPR:mode>): Add CC_REGNUM clobber.
+
 2026-06-25  Peter Bergner  <bergner@tenstorrent.com>
 
 	* config/riscv/riscv-cores.def (RISCV_TUNE): Add tt-ascalon-x.
