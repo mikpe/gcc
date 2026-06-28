@@ -1,3 +1,44 @@
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123529
+	PR c++/98930
+	* pt.cc (has_value_dependent_address): Correct context
+	dependence check for a static local variable.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-02-17  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/121822
+	* cvt.cc (convert_to_void): Don't evaluate a concept-id
+	in an unevaluated context.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2025-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/120224
+	* pt.cc (tsubst_function_decl): Return error_mark_node if
+	substituting into the formal parameter list failed.
+	(tsubst_decl) <case PARM_DECL>: Return error_mark_node
+	upon TREE_TYPE substitution failure, when in a SFINAE
+	context.  Return error_mark_node upon DECL_CHAIN substitution
+	failure.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-02-17  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/122318
+	PR c++/101670
+	* pt.cc (unify) <default>: Accept LAMBDA_EXPR.
+
 2026-06-26  Release Manager
 
 	* GCC 14.4.0 released.

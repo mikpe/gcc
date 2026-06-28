@@ -1,3 +1,38 @@
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-04-07  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/123529
+	PR c++/98930
+	* g++.dg/cpp1z/nontype9.C: New test.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-02-17  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/121822
+	* g++.dg/cpp2a/concepts-decltype6.C: New test.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2025-06-05  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/120224
+	* g++.dg/cpp0x/alias-decl-80.C: New test.
+
+2026-06-27  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2026-02-17  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/122318
+	PR c++/101670
+	* g++.dg/cpp2a/lambda-targ20.C: New test.
+	* g++.dg/cpp2a/lambda-targ21.C: New test.
+
 2026-06-26  Release Manager
 
 	* GCC 14.4.0 released.
