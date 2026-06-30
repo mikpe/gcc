@@ -1,3 +1,44 @@
+2026-06-29  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-23  Alex Coplan  <alex.coplan@arm.com>
+
+	PR target/125818
+	* gcc.target/aarch64/torture/pr125818.c: New test.
+
+2026-06-29  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125469
+	* gcc.target/i386/apx-nf-pr125469.c: New test.
+
+2026-06-29  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-10  Andre Vehreschild  <vehre@gcc.gnu.org>
+		    Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125051
+	* gfortran.dg/coarray/pr125051.f90: New test.
+
+2026-06-29  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	Backported from master:
+	2026-06-26  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	PR target/125949
+	* gcc.target/i386/pr125949.c: New test.
+
+2026-06-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-06-26  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc.target/i386/builtin-memmove-bounded-1a.c: New test.
+	* gcc.target/i386/builtin-memmove-bounded-1b.c: Likewise.
+
 2026-06-27  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

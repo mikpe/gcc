@@ -1,3 +1,44 @@
+2026-06-29  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-23  Alex Coplan  <alex.coplan@arm.com>
+
+	PR target/125818
+	* config/aarch64/aarch64-sve-builtins-base.cc (svset_impl::fold): Fix
+	unsharing to ensure the returned stmt has the exact same lhs as the
+	original.
+
+2026-06-29  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-29  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125469
+	* config/i386/i386.md (*add<mode>_1<nf_name>): Revert 2026-05-28
+	changes.
+	(define_split from *add<mode>_1_nf to *lea<mode>): Set INSN_CODE
+	to -1 if <LEAMODE> and <MODE> are the same.
+
+2026-06-29  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-05-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/125469
+	* config/i386/i386.md (*add<mode>_1<nf_name>): Don't return "#" for
+	the lea non-TARGET_APX_NDD case, instead emit a lea directly.
+
+2026-06-29  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	Backported from master:
+	2026-06-26  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	PR target/125949
+	* config/i386/i386.md ("isa"): Add avxvnniint8.
+	("enabled"): Adjust for avxvnniint8.
+	* config/i386/sse.md (vpdp<vpdotprodtype>_<mode>): Adjust for
+	AVXVNNIINT8.
+
 2026-06-27  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
