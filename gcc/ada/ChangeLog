@@ -1,3 +1,13 @@
+2026-06-29  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* exp_util.ads (Find_Optional_Prim_Op): Add Controlled_Op parameter
+	defaulting to False.
+	* exp_util.adb (Find_Optional_Prim_Op): Likewise.  When it is set to
+	True, test whether the primitive has the signature of the controlled
+	primitives.
+	* sem_ch13.adb (Resolve_Finalization_Procedure): Reset Is_Overloaded
+	once an interpretation has been selected among the set.
+
 2026-06-12  Release Manager
 
 	* GCC 15.3.0 released.
