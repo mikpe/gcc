@@ -1,3 +1,13 @@
+2026-06-29  Alex Coplan  <alex.coplan@arm.com>
+
+	Backported from master:
+	2026-06-23  Alex Coplan  <alex.coplan@arm.com>
+
+	PR target/125818
+	* config/aarch64/aarch64-sve-builtins-base.cc (svset_impl::fold): Fix
+	unsharing to ensure the returned stmt has the exact same lhs as the
+	original.
+
 2026-06-17  Andrew Pinski  <andrew.pinski@oss.qualcomm.com>
 
 	Backported from master:
