@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -march=c86-4g-m7 -mprefer-vector-width=512 -ffast-math -fdump-tree-vect-details" } */
+/* { dg-options "-O3 -march=c86-4g-m7 -mprefer-vector-width=512 --param ix86-vect-compare-costs=1 -ffast-math -fdump-tree-vect-details" } */
 
 #define N 1024
 
