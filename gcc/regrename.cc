@@ -1341,6 +1341,12 @@ scan_rtx_address (rtx_insn *insn, rtx *loc, enum reg_class cl,
 	rtx *locB = NULL;
 	enum rtx_code index_code = SCRATCH;
 
+	if (GET_CODE (op0) == UNSPEC)
+	  {
+	    /* We have a "segment" unspec; skip it.  */
+	    return scan_rtx_address (insn, &XEXP (x, 1), cl, action, mode, as);
+	  }
+
 	if (GET_CODE (op0) == SUBREG)
 	  {
 	    op0 = SUBREG_REG (op0);
