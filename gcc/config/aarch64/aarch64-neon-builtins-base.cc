@@ -562,7 +562,7 @@ public:
       std::swap (a, b);
 
     auto arg_type = TREE_TYPE (a);
-    gcc_assert (arg_type == TREE_TYPE (b));
+    gcc_assert (types_compatible_p (arg_type, TREE_TYPE (b)));
 
     auto tuple_type = TREE_TYPE (f.lhs);
     auto tuple = create_tmp_var (tuple_type);
