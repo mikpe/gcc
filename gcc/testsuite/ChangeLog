@@ -1,3 +1,32 @@
+2026-06-30  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-12  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	PR rtl-optimization/125173
+	* gcc.dg/pr125173-1.c: New test.
+
+2026-06-30  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	Backported from master:
+	2026-04-22  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/124908
+	* gcc.target/aarch64/sve/acle/general/ld1rq_2.c: New test.
+
+2026-06-30  Alfie Richards  <alfie.richards@arm.com>
+
+	PR target/125838
+	* gcc.target/aarch64/preserve_none_5.c: Update to use AAPCS.
+
+2026-06-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	Backported from master:
+	2026-06-21  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/125883
+	* gcc.target/i386/pr125883.c: New test.
+
 2026-06-29  Alex Coplan  <alex.coplan@arm.com>
 
 	Backported from master:
