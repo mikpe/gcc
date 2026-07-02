@@ -1,3 +1,83 @@
+2026-07-01  Matthias Kretz  <m.kretz@gsi.de>
+
+	Backported from master:
+	2026-07-01  Matthias Kretz  <m.kretz@gsi.de>
+
+	* include/bits/simd_details.h (_ScalarAbi): Remove.
+	(__scalar_abi_tag): Identify _Abi<N, N> as scalar now.
+	(__native_abi): Replace _ScalarAbi<1> with _Abi_t<1, 1, ...>.
+	(__abi_rebind): Refactor rebinding from/to __scalar_abi_tag.
+	* include/bits/simd_mask.h (_S_use_bitmask): Only true if
+	!_S_is_scalar.
+	(_M_and_neighbors, _M_or_neighbors): Add case for _S_is_scalar
+	where the and/or must be executed one step earlier.
+	(_M_reduce_min_index, _M_reduce_max_index): Delete dead code.
+	* include/bits/simd_vec.h (_S_use_bitmask): Inherit the value
+	from the first data member.
+	* testsuite/std/simd/traits_impl.cc: Adjust for the removal of
+	_ScalarAbi.
+
+2026-07-01  Yi Chen  <chencyy@hygon.cn>
+
+	Backported from master:
+	2026-07-01  Yi Chen  <chencyy@hygon.cn>
+
+	* src/c++11/random.cc (random_device::_M_init): Add signature_HYGON_ebx to
+	the RDSEED and RDRAND CPUID vendor allowlists.  For the default device on
+	Hygon, prefer RDRAND via a dedicated check at the top of the function.
+
+2026-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/chrono_io.h: Fix comment typo.
+
+2026-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/125956
+	* src/c++20/format.cc [_GLIBCXX_HAVE_ICONV] (iconv_input): New
+	concept.
+	(__encoding::conv) [_GLIBCXX_HAVE_ICONV]: Use iconv_input to
+	decide which type to cast the input pointer to.
+
+2026-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/27_io/filesystem/operations/copy_symlink/1.cc: Add
+	dg-require-target-fs-symlinks.
+	* testsuite/27_io/filesystem/operations/copy_symlink/2.cc:
+	Likewise.
+	* testsuite/27_io/filesystem/operations/copy_symlink/3.cc:
+	Likewise.
+	* testsuite/27_io/filesystem/operations/copy_symlink/4.cc:
+	Likewise.
+
+2026-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/118158
+	* testsuite/27_io/filesystem/operations/pr118158.cc: Add
+	dg-require-mkfifo.
+
+2026-07-01  Dragon Archer  <dragon-archer@outlook.com>
+
+	Backported from master:
+	2026-05-16  Dragon Archer  <dragon-archer@outlook.com>
+
+	PR libstdc++/125228
+	* src/c++11/debug.cc: Replace assert with __glibcxx_assert,
+	and remove the include of <cassert>.
+	* src/c++17/floating_to_chars.cc: Likewise, but redefine
+	assert as __glibcxx_assert.
+
 2026-06-25  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:

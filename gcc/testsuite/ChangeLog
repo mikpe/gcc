@@ -1,3 +1,47 @@
+2026-07-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-26  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	PR target/125972
+	* gcc.target/s390/pr125972.c: New test.
+
+2026-07-01  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/opt109.adb: New test.
+	* gnat.dg/opt109_pkg.ads, gnat.dg/opt109_pkg.adb: New helper.
+
+2026-07-01  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-06-30  Avinash Jayakar  <avinashd@linux.ibm.com>
+		    Surya Kumari Jangala  <jskumari@linux.ibm.com>
+
+	* gcc.target/powerpc/acmp-tst-32bit.c: New test.
+	* gcc.target/powerpc/acmp-tst.c: New test.
+	* gcc.target/powerpc/acmp-tst-indexed.c: New test.
+
+2026-07-01  Kewen Lin  <linkewen@hygon.cn>
+
+	* gcc.target/i386/c86-4g-m7-vect-load-cost-reduc.c: Adjust with
+	--param ix86-vect-compare-costs=1.
+
+2026-07-01  Xin Liu  <liulxx@hygon.cn>
+
+	Backported from master:
+	2026-06-23  Xin Liu  <liulxx@hygon.cn>
+
+	* g++.target/i386/mv33.C: Add c86-4g-m8 target clone test.
+	* gcc.target/i386/funcspec-56.inc: Add c86-4g-m8 arch and tune
+	target attribute tests.
+
+2026-07-01  Zhongjie Guo  <guozhongjie@hygon.cn>
+
+	Backported from master:
+	2026-06-17  Zhongjie Guo  <guozhongjie@hygon.cn>
+
+	* gcc.target/i386/c86-4g-m7-vect-load-cost-reduc.c: New test.
+
 2026-06-30  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
 
 	Backported from master:
