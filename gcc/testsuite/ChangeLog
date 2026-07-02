@@ -1,3 +1,26 @@
+2026-07-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-26  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	PR target/125972
+	* gcc.target/s390/pr125972.c: New test.
+
+2026-07-01  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gnat.dg/opt109.adb: New test.
+	* gnat.dg/opt109_pkg.ads, gnat.dg/opt109_pkg.adb: New helper.
+
+2026-07-01  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-06-30  Avinash Jayakar  <avinashd@linux.ibm.com>
+		    Surya Kumari Jangala  <jskumari@linux.ibm.com>
+
+	* gcc.target/powerpc/acmp-tst-32bit.c: New test.
+	* gcc.target/powerpc/acmp-tst.c: New test.
+	* gcc.target/powerpc/acmp-tst-indexed.c: New test.
+
 2026-06-30  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
 
 	Backported from master:
