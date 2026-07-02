@@ -1995,7 +1995,7 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 	      if (note)
 		{
 		  remove_note (insn, note);
-		  fixup_args_size_notes (insn, last,
+		  fixup_args_size_notes (PREV_INSN (insn), last,
 					 get_args_size (note));
 		  if (lra_dump_file != NULL)
 		    {
