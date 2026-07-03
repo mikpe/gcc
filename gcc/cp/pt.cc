@@ -18707,6 +18707,12 @@ tsubst_stmt (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 			decomp = &decomp_d;
 			ndecl = tsubst_decomp_names (decl, pattern_decl, args,
 						     complain, in_decl, decomp);
+			if (ndecl == error_mark_node && TREE_STATIC (decl))
+			  {
+			    /* As in cp_finish_decomp.  */
+			    tree id = get_identifier ("<decomp>");
+			    SET_DECL_ASSEMBLER_NAME (decl, id);
+			  }
 		      }
 
 		    init = tsubst_init (init, decl, args, complain, in_decl);
