@@ -1,3 +1,32 @@
+2026-07-02  Yi Chen  <chencyy@hygon.cn>
+
+	Backported from master:
+	2026-07-01  Yi Chen  <chencyy@hygon.cn>
+
+	* src/c++11/random.cc (random_device::_M_init): Add signature_HYGON_ebx to
+	the RDSEED and RDRAND CPUID vendor allowlists.  For the default device on
+	Hygon, prefer RDRAND via a dedicated check at the top of the function.
+
+2026-07-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/125956
+	* src/c++20/format.cc [_GLIBCXX_HAVE_ICONV] (iconv_input): New
+	concept.
+	(__encoding::conv) [_GLIBCXX_HAVE_ICONV]: Use iconv_input to
+	decide which type to cast the input pointer to.
+
+2026-07-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2026-06-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/118158
+	* testsuite/27_io/filesystem/operations/pr118158.cc: Add
+	dg-require-mkfifo.
+
 2026-06-25  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
