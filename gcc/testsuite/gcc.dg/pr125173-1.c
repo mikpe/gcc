@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O1 -fno-fuse-ops-with-volatile-access -fno-forward-propagate --param=max-cse-insns=0" } */
+/* { dg-options "-O1 -fno-forward-propagate --param=max-cse-insns=0" } */
 
 int a;
 volatile short b;
