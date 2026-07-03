@@ -1,3 +1,19 @@
+2026-07-02  Xi Ruoyao  <xry111@xry111.site>
+
+	Backported from master:
+	2026-06-30  Xi Ruoyao  <xry111@xry111.site>
+
+	* config/loongarch/loongarch.md
+	(@stack_protect_combined_set_normal_<mode>): Replace `st.d'
+	with `st.<d>', reject stptr.d on LA32 with enabled attribute.
+	(@stack_protect_combined_test_internal_<mode>): Replace `ld.d'
+	with `ld.<d>', reject ldptr.d on LA32 with enabled attribute.
+	(@stack_protect_combined_set_extreme_<mode>): Rename to ...
+	(stack_protect_combined_set_extreme): ... here.  Force DImode.
+	Add TARGET_ABI_LP64 as the condition.
+	(stack_protect_combined_set): Adapt for the change of
+	stack_protect_combined_set_extreme.
+
 2026-07-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
 
 	Backported from master:

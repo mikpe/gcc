@@ -1,3 +1,33 @@
+2026-07-02  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-07-01  Jason Merrill  <jason@redhat.com>
+
+	PR c++/124584
+	* decl.cc (cp_finish_decl): Use get_temp_regvar for decomp guards.
+
+2026-07-02  Jason Merrill  <jason@redhat.com>
+
+	Backported from master:
+	2026-07-01  Jason Merrill  <jason@redhat.com>
+
+	PR c++/121094
+	PR c++/117259
+	* coroutines.cc (replace_proxy): Handle TARGET_EXPR from.
+	(flatten_await_stmt): Pass it.
+
+2026-07-02  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-05-19  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/123536
+	* cp-tree.h (process_outer_var_ref): Remove a parameter's name.
+	* semantics.cc (mark_use): Return if mark_rvalue_use returns
+	error_mark_node.
+	(process_outer_var_ref): Return decl when it is
+	instantiation-dependent.
+
 2026-06-26  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:
