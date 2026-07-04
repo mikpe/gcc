@@ -1,3 +1,38 @@
+2026-07-03  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	PR rtl-optimization/125173
+	* gcc.dg/pr125173-1.c: Remove option
+	-fno-fuse-ops-with-volatile-access.
+
+2026-07-03  Richard Earnshaw  <rearnsha@arm.com>
+
+	* lib/target-supports.exp: Add arm_arch_v7a_thumb.
+	* gcc.target/arm/ifcvt-size-check.c: Add options to force thumb1.
+	* gcc.target/arm/ivopts-2.c: Remove object size check.
+	* gcc.target/arm/ivopts-3.c: Likewise.
+	* gcc.target/arm/ivopts-4.c: Likewise.
+	* gcc.target/arm/ivopts-5.c: Likewise.
+	* gcc.target/arm/ivopts.c: Likewise.
+	* gcc.target/arm/max-insns-skipped.c: Scan for absence of an IT
+	instruction.  Remove object size check.  Use arm_arch_v7a_thumb.
+	* gcc.target/arm/pr43597.c: Remove object size check and use
+	arm_arch_v7a_thumb.
+	* gcc.target/arm/pr63210.c: Use arm_arch_v5t_thumb options.
+	* gcc.target/arm/split-live-ranges-for-shrink-wrap.c: Remove
+	object size check and use arm_arch_v5t_thumb options.
+	(cherry picked from commit
+	e1077ad5753148892871fa146f3948b55c46f7e3 with a slight
+	modification for gcc.target/arm/ivopts.c, to keep the line
+	about arm_iwmmxt_ok because iwmmxt was removed in gcc-16)
+
+2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126018
+	* gfortran.dg/stop_function_code_1.f90: New test.
+
 2026-07-02  Christophe Lyon  <christophe.lyon@arm.com>
 
 	Backported from master:
