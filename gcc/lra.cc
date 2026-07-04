@@ -1989,6 +1989,7 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 	  emit_insn_after (after, insn);
 	  push_insns (last, insn);
 	  setup_sp_offset (after, last);
+	  eliminate_regs_in_insn (after, false, false, -lra_get_insn_recog_data (after)->sp_offset);
 	  if (fixup_reg_args_size)
 	    {
 	      rtx note = find_reg_note (insn, REG_ARGS_SIZE, NULL_RTX);
