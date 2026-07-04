@@ -1,3 +1,20 @@
+2026-07-03  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-05-07  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* gcc.target/powerpc/aes-builtin-1.c: New test.
+	* gcc.target/powerpc/aes-builtin-2.c: New test.
+	* gcc.target/powerpc/aes-builtin-3.c: New test.
+
+2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126018
+	* gfortran.dg/stop_function_code_1.f90: New test.
+
 2026-07-02  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:

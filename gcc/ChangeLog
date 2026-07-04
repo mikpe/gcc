@@ -1,3 +1,66 @@
+2026-07-03  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-05-07  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* config/rs6000/crypto.md (UNSPEC_XXAESENCP): New unspec entry.
+	(UNSPEC_XXAES128ENCP): Likewise.
+	(UNSPEC_XXAES192ENCP): Likewise.
+	(UNSPEC_XXAES256ENCP): Likewise.
+	(UNSPEC_XXAESDECP): Likewise.
+	(UNSPEC_XXAES128DECP): Likewise.
+	(UNSPEC_XXAES192DECP): Likewise.
+	(UNSPEC_XXAES256DECP): Likewise.
+	(UNSPEC_XXAESGENLKP): Likewise.
+	(UNSPEC_XXAES128GENLKP): Likewise.
+	(UNSPEC_XXAES192GENLKP): Likewise.
+	(UNSPEC_XXAES256GENLKP): Likewise.
+	(UNSPEC_XXGFMUL128): Likewise.
+	(UNSPEC_XXGFMUL128GCM): Likewise.
+	(UNSPEC_XXGFMUL128XTS): Likewise.
+	(AESACC_base_code): New iterator for xxaesencp and xxaesdecp base
+	mnemonics.
+	(AESACC_code): New iterator for xxaesencp and xxaesdecp extended
+	mnemonics.
+	(AESGENLKP_code): New iterator for xxaesgenlkp extended mnemonics.
+	(AESGF_code): New iterator for xxgfmul128 extended mnemonics.
+	(AESACC_base_insn): New attribute iterator for xxaesencp and xxaesdecp
+	base mnemonics.
+	(AESACC_insn): New attribute iterator for xxaesencp and xxaesdecp
+	extended mnemonics.
+	(AESGENLKP_insn): New attribute iterator for xxaesgenlkp extended
+	mnemonics.
+	(AESGF_insn): New attribute iterator for xxgfmul128 extended mnemonics.
+	(<AESACC_base_insn>): New define_insn for xxaesencp and xxaesdecp base
+	mnemonics.
+	(<AESACC_insn>): New define_insn for xxaesencp and xxaesdecp extended
+	mnemonics.
+	(<AESGENLKP_insn>): New define_insn for xxaesgenlkp extended mnemonics.
+	(xxaesgenlkp): New define_insn for genlkp base mnemonic.
+	(<AESGF_insn>): New define_insn for xxgfmul128 extended mnemonics.
+	(xxgfmul128): New define_insn for xxgfmul128 base mnemonic.
+	* config/rs6000/rs6000-builtins.def: Added new builtin definitions for
+	AES acceleration.
+	* doc/extend.texi: Add new section for AES acceleration builtins
+	for Future ISA.
+
+2026-07-03  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-06-23  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* config/rs6000/rs6000-builtin.cc (rs6000_invalid_builtin): Handle
+	ENB_FUTURE_ALTIVEC and issue a diagnostic requiring -mcpu=future
+	and -maltivec.
+	(rs6000_builtin_is_supported): Check TARGET_FUTURE && TARGET_ALTIVEC
+	for ENB_FUTURE_ALTIVEC built-ins.
+	* config/rs6000/rs6000-gen-builtins.cc (enum bif_stanza): Add
+	BSTZ_FUTURE_ALTIVEC entry.
+	(stanza_map): Add future-altivec stanza mapping.
+	(enable_string): Add ENB_FUTURE_ALTIVEC.
+	(write_decls): Add ENB_FUTURE_ALTIVEC to the bif_enable enum in the
+	generated header file.
+
 2026-07-02  Xi Ruoyao  <xry111@xry111.site>
 
 	Backported from master:

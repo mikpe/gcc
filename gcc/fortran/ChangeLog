@@ -1,3 +1,15 @@
+2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126018
+	* match.cc (gfc_match_stopcode): Adjust the f2008 error check.If the
+	STOP code expr type is unknown, do not error. It will be checked in
+	gfc_resolve_code.
+	* resolve.cc (gfc_resolve_code): Add checks for EXEC_STOP and
+	EXEC_ERROR_STOP.
+
 2026-06-29  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
