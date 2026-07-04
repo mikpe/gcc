@@ -152,6 +152,7 @@ static void m68k_sched_dfa_pre_advance_cycle (void);
 static void m68k_sched_dfa_post_advance_cycle (void);
 static int m68k_sched_first_cycle_multipass_dfa_lookahead (void);
 
+static bool m68k_frame_pointer_required (void);
 static bool m68k_can_eliminate (const int, const int);
 static void m68k_conditional_register_usage (void);
 static bool m68k_legitimate_address_p (machine_mode, rtx, bool,
@@ -308,6 +309,9 @@ static bool m68k_use_lra_p (void);
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P	m68k_legitimate_address_p
+
+#undef TARGET_FRAME_POINTER_REQUIRED
+#define TARGET_FRAME_POINTER_REQUIRED m68k_frame_pointer_required
 
 #undef TARGET_CAN_ELIMINATE
 #define TARGET_CAN_ELIMINATE m68k_can_eliminate
@@ -870,6 +874,14 @@ m68k_compute_frame_layout (void)
 
   /* Remember what function this frame refers to.  */
   current_frame.funcdef_no = current_function_funcdef_no;
+}
+
+/* Worker function for TARGET_FRAME_POINTER_REQUIRED.  */
+
+static bool
+m68k_frame_pointer_required (void)
+{
+  return cfun->calls_alloca;
 }
 
 /* Worker function for TARGET_CAN_ELIMINATE.  */
