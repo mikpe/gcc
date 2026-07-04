@@ -455,14 +455,30 @@ extern bool lra_remat (void);
 
 /* lra-elimination.c: */
 
+struct mikpe {
+  const char *file;
+  int line;
+  const struct mikpe *prev;
+};
+/* Avoid "warning: ISO C++ forbids compound-literals [-Wpedantic]".  */
+static inline struct mikpe mkmikpe(const char *file, int line, const struct mikpe *prev)
+{
+  struct mikpe m;
+  m.file = file;
+  m.line = line;
+  m.prev = prev;
+  return m;
+}
+#define MIKPE(PREV) mkmikpe(__FILE__,__LINE__,(PREV))
+
 extern void lra_debug_elim_table (void);
 extern int lra_get_elimination_hard_regno (int);
 extern rtx lra_eliminate_regs_1 (rtx_insn *, rtx, machine_mode,
-				 bool, bool, poly_int64, bool);
-extern void eliminate_regs_in_insn (rtx_insn *insn, bool, bool, poly_int64);
+				 bool, bool, poly_int64, bool, struct mikpe);
+extern void eliminate_regs_in_insn (rtx_insn *insn, bool, bool, poly_int64, struct mikpe);
 extern int lra_update_fp2sp_elimination (int *spilled_pseudos);
 extern bool lra_fp_pseudo_p (void);
-extern void lra_eliminate (bool, bool);
+extern void lra_eliminate (bool, bool, struct mikpe);
 
 extern poly_int64 lra_update_sp_offset (rtx, poly_int64);
 extern void lra_eliminate_reg_if_possible (rtx *);

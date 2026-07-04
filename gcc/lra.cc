@@ -1891,19 +1891,41 @@ push_insns (rtx_insn *from, rtx_insn *to)
    taken from the BB insn before FROM after simulating its effects,
    or zero if there is no such insn.  */
 static poly_int64
-setup_sp_offset (rtx_insn *from, rtx_insn *last)
+setup_sp_offset (rtx_insn *from, rtx_insn *last, FILE *file)
 {
   rtx_insn *before = prev_nonnote_nondebug_insn_bb (from);
   poly_int64 offset = 0;
+  poly_int64 offset0 = 0;
 
   if (before && INSN_P (before))
-    offset = lra_update_sp_offset (PATTERN (before),
-				   lra_get_insn_recog_data (before)->sp_offset);
+    {
+      offset0 = lra_get_insn_recog_data (before)->sp_offset;
+      offset = lra_update_sp_offset (PATTERN (before), offset0);
+      if (file)
+	{
+	  fprintf (file, "mikpe: setup_sp_offset 1\n");
+	  dump_rtl_slim (file, before, before, -1, 0);
+	  print_dec (offset0, file);
+	  fprintf (file, " -> ");
+	  print_dec (offset, file);
+	  fprintf (file, "\n");
+	}
+    }
 
   for (rtx_insn *insn = from; insn != NEXT_INSN (last); insn = NEXT_INSN (insn))
     {
+      offset0 = offset;
       lra_get_insn_recog_data (insn)->sp_offset = offset;
       offset = lra_update_sp_offset (PATTERN (insn), offset);
+      if (file)
+	{
+	  fprintf (file, "mikpe: setup_sp_offset 2\n");
+	  dump_rtl_slim (file, insn, insn, -1, 0);
+	  print_dec (offset0, file);
+	  fprintf (file, " -> ");
+	  print_dec (offset, file);
+	  fprintf (file, "\n");
+	}
     }
   return offset;
 }
@@ -1950,7 +1972,7 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 	copy_reg_eh_region_note_forward (insn, before, NULL);
       emit_insn_before (before, insn);
       poly_int64 old_sp_offset = lra_get_insn_recog_data (insn)->sp_offset;
-      poly_int64 new_sp_offset = setup_sp_offset (before, PREV_INSN (insn));
+      poly_int64 new_sp_offset = setup_sp_offset (before, PREV_INSN (insn), NULL);
       if (maybe_ne (old_sp_offset, new_sp_offset))
 	{
 	  if (lra_dump_file != NULL)
@@ -1964,7 +1986,7 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 	    }
 	  lra_get_insn_recog_data (insn)->sp_offset = new_sp_offset;
 	  eliminate_regs_in_insn (insn, false, false,
-				  old_sp_offset - new_sp_offset);
+				  old_sp_offset - new_sp_offset, MIKPE(NULL));
 	  lra_push_insn (insn);
 	}
       push_insns (PREV_INSN (insn), PREV_INSN (before));
@@ -1988,8 +2010,8 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 	    ;
 	  emit_insn_after (after, insn);
 	  push_insns (last, insn);
-	  setup_sp_offset (after, last);
-	  eliminate_regs_in_insn (after, false, false, -lra_get_insn_recog_data (after)->sp_offset);
+	  setup_sp_offset (after, last, fixup_reg_args_size ? lra_dump_file : NULL);
+	  eliminate_regs_in_insn (after, false, false, -lra_get_insn_recog_data (after)->sp_offset, MIKPE(NULL));
 	  if (fixup_reg_args_size)
 	    {
 	      rtx note = find_reg_note (insn, REG_ARGS_SIZE, NULL_RTX);
@@ -2053,7 +2075,7 @@ lra_process_new_insns (rtx_insn *insn, rtx_insn *before, rtx_insn *after,
 		else
 		  emit_insn_before_noloc (copy, tmp, e->dest);
 		push_insns (last, PREV_INSN (copy));
-		setup_sp_offset (copy, last);
+		setup_sp_offset (copy, last, NULL);
 		/* We can ignore BB live info here as it and reg notes
 		   will be updated before the next assignment
 		   sub-pass. */
@@ -2518,7 +2540,7 @@ lra (FILE *f, int verbose)
 	     For example, rs6000 can make
 	     RS6000_PIC_OFFSET_TABLE_REGNUM uneliminable if we started
 	     to use a constant pool.  */
-	  lra_eliminate (false, false);
+	  lra_eliminate (false, false, MIKPE(NULL));
 	  /* We should try to assign hard registers to scratches even
 	     if there were no RTL transformations in lra_constraints.
 	     Also we should check IRA assignments on the first
@@ -2647,7 +2669,7 @@ lra (FILE *f, int verbose)
       lra_spill ();
       /* Assignment of stack slots changes elimination offsets for
 	 some eliminations.  So update the offsets here.  */
-      lra_eliminate (false, false);
+      lra_eliminate (false, false, MIKPE(NULL));
       lra_constraint_new_regno_start = max_reg_num ();
       if (lra_bad_spill_regno_start == INT_MAX
 	  && lra_inheritance_iter > LRA_MAX_INHERITANCE_PASSES
@@ -2659,7 +2681,7 @@ lra (FILE *f, int verbose)
       lra_assignment_iter_after_spill = 0;
     }
   ira_restore_scratches (lra_dump_file);
-  lra_eliminate (true, false);
+  lra_eliminate (true, false, MIKPE(NULL));
   lra_final_code_change ();
   lra_in_progress = false;
   if (live_p)

@@ -602,7 +602,7 @@ get_equiv_with_elimination (rtx x, rtx_insn *insn)
   if (x == res || CONSTANT_P (res))
     return res;
   res = lra_eliminate_regs_1 (insn, res, GET_MODE (res),
-			      false, false, 0, true);
+			      false, false, 0, true, MIKPE(NULL));
   if (REG_POINTER (x))
     lra_pointer_equiv_set_add (res);
   return res;
@@ -4775,6 +4775,15 @@ curr_insn_transform (bool check_only_p)
     if (! curr_static_id->operand[i].is_operator
 	&& process_address (i, check_only_p, &before, &after))
       {
+	if (after && lra_dump_file)
+	  {
+	    fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+	    dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	    fprintf (lra_dump_file, "sp_offset: ");
+	    lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	    print_dec (id->sp_offset, lra_dump_file);
+	    fprintf (lra_dump_file, "\n");
+	  }
 	if (check_only_p)
 	  return true;
 	change_p = true;
@@ -4914,6 +4923,15 @@ curr_insn_transform (bool check_only_p)
 	     secondary memory moves we cannot reuse the original
 	     insn.  */
 	  after = emit_spill_move (false, new_reg, dest);
+	  if (lra_dump_file)
+	    {
+	      fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+	      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	      fprintf (lra_dump_file, "sp_offset: ");
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
 	  lra_process_new_insns (curr_insn, NULL, after,
 				 "Inserting the sec. move");
 	  /* We may have non null BEFORE here (e.g. after address
@@ -4930,6 +4948,15 @@ curr_insn_transform (bool check_only_p)
 	  *curr_id->operand_loc[out] = new_reg;
 	  lra_update_dup (curr_id, out);
 	  after = emit_spill_move (false, new_reg, dest);
+	  if (lra_dump_file)
+	    {
+	      fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+	      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	      fprintf (lra_dump_file, "sp_offset: ");
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
 	  lra_process_new_insns (curr_insn, NULL, after,
 				 "Inserting the sec. move");
 	}
@@ -5047,6 +5074,15 @@ curr_insn_transform (bool check_only_p)
 	    *curr_id->operand_loc[i] = tem;
 	    lra_update_dup (curr_id, i);
 	    process_address (i, false, &before, &after);
+	    if (after && lra_dump_file)
+	      {
+		fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+		dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+		fprintf (lra_dump_file, "sp_offset: ");
+		lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+		print_dec (id->sp_offset, lra_dump_file);
+		fprintf (lra_dump_file, "\n");
+	      }
 
 	    /* If the alternative accepts constant pool refs directly
 	       there will be no reload needed at all.  */
@@ -5148,6 +5184,15 @@ curr_insn_transform (bool check_only_p)
 		  match_reload (i, goal_alt_matched[i], outputs, goal_alt[i],
 				&goal_alt_exclude_start_hard_regs[i], &before,
 				&after, true);
+		  if (after && lra_dump_file)
+		    {
+		      fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+		      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+		      fprintf (lra_dump_file, "sp_offset: ");
+		      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+		      print_dec (id->sp_offset, lra_dump_file);
+		      fprintf (lra_dump_file, "\n");
+		    }
 		}
 	      continue;
 	    }
@@ -5321,6 +5366,15 @@ curr_insn_transform (bool check_only_p)
 	      lra_emit_move (type == OP_INOUT ? copy_rtx (old) : old, new_reg);
 	      emit_insn (after);
 	      after = end_sequence ();
+	      if (after && lra_dump_file)
+		{
+		  fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+		  dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+		  fprintf (lra_dump_file, "sp_offset: ");
+		  lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+		  print_dec (id->sp_offset, lra_dump_file);
+		  fprintf (lra_dump_file, "\n");
+		}
 	      *loc = new_reg;
 	    }
 	  for (j = 0; j < goal_alt_dont_inherit_ops_num; j++)
@@ -5350,6 +5404,15 @@ curr_insn_transform (bool check_only_p)
 			curr_static_id->operand_alternative
 			[goal_alt_number * n_operands + goal_alt_matched[i][0]]
 			.earlyclobber);
+	  if (after && lra_dump_file)
+	    {
+	      fprintf (lra_dump_file, "mikpe: after created: line %u\n", __LINE__);
+	      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	      fprintf (lra_dump_file, "sp_offset: ");
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
 	}
       else if ((curr_static_id->operand[i].type == OP_OUT
 		|| (curr_static_id->operand[i].type == OP_INOUT
@@ -5359,11 +5422,25 @@ curr_insn_transform (bool check_only_p)
 			 -1))))
 	       && (curr_static_id->operand[goal_alt_matched[i][0]].type
 		    == OP_IN))
+	{
 	/* Generate reloads for output and matched inputs.  */
 	match_reload (i, goal_alt_matched[i], outputs, goal_alt[i],
 		      &goal_alt_exclude_start_hard_regs[i], &before, &after,
 		      curr_static_id->operand_alternative
 		      [goal_alt_number * n_operands + i].earlyclobber);
+	  if (after && lra_dump_file)
+	    {
+	      extern poly_int64 curr_sp_change;
+	      fprintf (lra_dump_file, "mikpe: after created: line %u\n", __LINE__);
+	      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	      fprintf (lra_dump_file, "sp_offset: ");
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\nshould be: ");
+	      print_dec (curr_sp_change, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
+	}
       else if (curr_static_id->operand[i].type == OP_IN
 	       && (curr_static_id->operand[goal_alt_matched[i][0]].type
 		   == OP_IN))
@@ -5376,6 +5453,15 @@ curr_insn_transform (bool check_only_p)
 	  match_reload (-1, match_inputs, outputs, goal_alt[i],
 			&goal_alt_exclude_start_hard_regs[i],
 			&before, &after, false);
+	  if (after && lra_dump_file)
+	    {
+	      fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+	      dump_rtl_slim (lra_dump_file, after, after, -1, 0);
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+	      fprintf (lra_dump_file, "sp_offset: ");
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
 	}
       else
 	/* We must generate code in any case when function
@@ -5468,6 +5554,15 @@ curr_insn_transform (bool check_only_p)
 	 assigned.  */
       postpone_insns (before);
       postpone_insns (after);
+    }
+  if (after && lra_dump_file)
+    {
+      fprintf (lra_dump_file, "mikpe: curr_insn_transform line %u\n", __LINE__);
+      dump_insn_slim (lra_dump_file, after);
+      fprintf (lra_dump_file, "sp_offset: ");
+      lra_insn_recog_data_t id = lra_get_insn_recog_data (after);
+      print_dec (id->sp_offset, lra_dump_file);
+      fprintf (lra_dump_file, "\n");
     }
   lra_process_new_insns (curr_insn, before, after,
 			 "Inserting insn reload", true);
@@ -5928,7 +6023,7 @@ lra_constraints (bool first_p)
       }
   /* Do elimination before the equivalence processing as we can spill
      some pseudos during elimination.  */
-  lra_eliminate (false, first_p);
+  lra_eliminate (false, first_p, MIKPE(NULL));
   auto_bitmap equiv_insn_bitmap (&reg_obstack);
 
   /* Register elimination can create new pseudos via the addptr pattern,

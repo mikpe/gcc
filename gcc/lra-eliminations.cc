@@ -68,6 +68,7 @@ along with GCC; see the file COPYING3.	If not see
 #include "output.h"
 #include "rtl-error.h"
 #include "lra-int.h"
+#include "print-rtl.h"
 
 /* This structure is used to record information about hard register
    eliminations.  */
@@ -344,8 +345,9 @@ note_spoff (poly_int64 offset)
 
    If we make full substitution to SP for non-null INSN, add the insn
    sp offset.  */
+static
 rtx
-lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
+lra_eliminate_regs_1_ (rtx_insn *insn, rtx x, machine_mode mem_mode,
 		      bool subst_p, bool update_p,
 		      poly_int64 update_sp_offset, bool full_p)
 {
@@ -412,6 +414,12 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	    {
 	      poly_int64 offset, curr_offset;
 	      rtx to = subst_p ? ep->to_rtx : ep->from_rtx;
+	      int flag;
+
+	      flag = 0;
+	      if (lra_dump_file &&
+		  REGNO (XEXP (x, 0)) == 24)	/* %ap */
+		flag = 1;
 
 	      if (! update_p && ! full_p)
 		return simplify_gen_binary (PLUS, Pmode, to, XEXP (x, 1));
@@ -423,15 +431,48 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	      else
 		offset = (update_p
 			  ? ep->offset - ep->previous_offset : ep->offset);
+	      if (flag)
+		{
+		  fprintf (lra_dump_file, "mikpe: lra_eliminate_regs_1_ line %u\n", __LINE__);
+		  fprintf (lra_dump_file, "offset: ");
+		  print_dec (offset, lra_dump_file);
+		  fprintf (lra_dump_file, "\nep->offset: ");
+		  print_dec (ep->offset, lra_dump_file);
+		  fprintf (lra_dump_file, "\nep->previous_offset: ");
+		  print_dec (ep->previous_offset, lra_dump_file);
+		  if (insn)
+		    {
+		      fprintf (lra_dump_file, "\nid->sp_offset: ");
+		      print_dec (lra_get_insn_recog_data (insn)->sp_offset, lra_dump_file);
+		    }
+		  fprintf (lra_dump_file, "\n");
+		}
 	      if (full_p && insn != NULL_RTX && ep->to_rtx == stack_pointer_rtx)
 		offset -= note_spoff (lra_get_insn_recog_data (insn)->sp_offset);
+	      if (flag)
+		{
+		  fprintf (lra_dump_file, "mikpe: lra_eliminate_regs_1_ line %u\n", __LINE__);
+		  fprintf (lra_dump_file, "offset: ");
+		  print_dec (offset, lra_dump_file);
+		  fprintf (lra_dump_file, "\n");
+		}
 	      if (poly_int_rtx_p (XEXP (x, 1), &curr_offset)
 		  && known_eq (curr_offset, -offset))
 		return to;
 	      else
+		{
+		if (flag)
+		  {
+		    fprintf (lra_dump_file, "mikpe: lra_eliminate_regs_1_ line %u\n", __LINE__);
+		    fprintf (lra_dump_file, "old offset: %ld\n", INTVAL (XEXP (x, 1)));
+		    fprintf (lra_dump_file, "addend: ");
+		    print_dec (offset, lra_dump_file);
+		    fprintf (lra_dump_file, "\n");
+		  }
 		return gen_rtx_PLUS (Pmode, to,
 				     plus_constant (Pmode,
 						    XEXP (x, 1), offset));
+		}
 	    }
 
 	  /* If the hard register is not eliminable, we are done since
@@ -450,10 +491,10 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	 an address operand of a load-address insn.  */
 
       {
-	rtx new0 = lra_eliminate_regs_1 (insn, XEXP (x, 0), mem_mode,
+	rtx new0 = lra_eliminate_regs_1_ (insn, XEXP (x, 0), mem_mode,
 					 subst_p, update_p,
 					 update_sp_offset, full_p);
-	rtx new1 = lra_eliminate_regs_1 (insn, XEXP (x, 1), mem_mode,
+	rtx new1 = lra_eliminate_regs_1_ (insn, XEXP (x, 1), mem_mode,
 					 subst_p, update_p,
 					 update_sp_offset, full_p);
 
@@ -519,11 +560,11 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
     case GE:	   case GT:	  case GEU:    case GTU:
     case LE:	   case LT:	  case LEU:    case LTU:
       {
-	rtx new0 = lra_eliminate_regs_1 (insn, XEXP (x, 0), mem_mode,
+	rtx new0 = lra_eliminate_regs_1_ (insn, XEXP (x, 0), mem_mode,
 					 subst_p, update_p,
 					 update_sp_offset, full_p);
 	rtx new1 = XEXP (x, 1)
-		   ? lra_eliminate_regs_1 (insn, XEXP (x, 1), mem_mode,
+		   ? lra_eliminate_regs_1_ (insn, XEXP (x, 1), mem_mode,
 					   subst_p, update_p,
 					   update_sp_offset, full_p) : 0;
 
@@ -537,7 +578,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	 eliminate it.	*/
       if (XEXP (x, 0))
 	{
-	  new_rtx = lra_eliminate_regs_1 (insn, XEXP (x, 0), mem_mode,
+	  new_rtx = lra_eliminate_regs_1_ (insn, XEXP (x, 0), mem_mode,
 					  subst_p, update_p,
 					  update_sp_offset, full_p);
 	  if (new_rtx != XEXP (x, 0))
@@ -547,7 +588,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 		 REG_DEAD note for the stack or frame pointer.	*/
 	      if (REG_NOTE_KIND (x) == REG_DEAD)
 		return (XEXP (x, 1)
-			? lra_eliminate_regs_1 (insn, XEXP (x, 1), mem_mode,
+			? lra_eliminate_regs_1_ (insn, XEXP (x, 1), mem_mode,
 						subst_p, update_p,
 						update_sp_offset, full_p)
 			: NULL_RTX);
@@ -565,7 +606,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	 strictly needed, but it simplifies the code.  */
       if (XEXP (x, 1))
 	{
-	  new_rtx = lra_eliminate_regs_1 (insn, XEXP (x, 1), mem_mode,
+	  new_rtx = lra_eliminate_regs_1_ (insn, XEXP (x, 1), mem_mode,
 					  subst_p, update_p,
 					  update_sp_offset, full_p);
 	  if (new_rtx != XEXP (x, 1))
@@ -599,7 +640,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
       if (GET_CODE (XEXP (x, 1)) == PLUS
 	  && XEXP (XEXP (x, 1), 0) == XEXP (x, 0))
 	{
-	  rtx new_rtx = lra_eliminate_regs_1 (insn, XEXP (XEXP (x, 1), 1),
+	  rtx new_rtx = lra_eliminate_regs_1_ (insn, XEXP (XEXP (x, 1), 1),
 					      mem_mode, subst_p, update_p,
 					      update_sp_offset, full_p);
 
@@ -624,7 +665,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
     case POPCOUNT:
     case PARITY:
     case BSWAP:
-      new_rtx = lra_eliminate_regs_1 (insn, XEXP (x, 0), mem_mode,
+      new_rtx = lra_eliminate_regs_1_ (insn, XEXP (x, 0), mem_mode,
 				      subst_p, update_p,
 				      update_sp_offset, full_p);
       if (new_rtx != XEXP (x, 0))
@@ -632,7 +673,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
       return x;
 
     case SUBREG:
-      new_rtx = lra_eliminate_regs_1 (insn, SUBREG_REG (x), mem_mode,
+      new_rtx = lra_eliminate_regs_1_ (insn, SUBREG_REG (x), mem_mode,
 				      subst_p, update_p,
 				      update_sp_offset, full_p);
 
@@ -676,12 +717,12 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
       return
 	replace_equiv_address_nv
 	(x,
-	 lra_eliminate_regs_1 (insn, XEXP (x, 0), GET_MODE (x),
+	 lra_eliminate_regs_1_ (insn, XEXP (x, 0), GET_MODE (x),
 			       subst_p, update_p, update_sp_offset, full_p));
 
     case USE:
       /* Handle insn_list USE that a call to a pure function may generate.  */
-      new_rtx = lra_eliminate_regs_1 (insn, XEXP (x, 0), VOIDmode,
+      new_rtx = lra_eliminate_regs_1_ (insn, XEXP (x, 0), VOIDmode,
 				      subst_p, update_p, update_sp_offset, full_p);
       if (new_rtx != XEXP (x, 0))
 	return gen_rtx_USE (GET_MODE (x), new_rtx);
@@ -706,7 +747,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
     {
       if (*fmt == 'e')
 	{
-	  new_rtx = lra_eliminate_regs_1 (insn, XEXP (x, i), mem_mode,
+	  new_rtx = lra_eliminate_regs_1_ (insn, XEXP (x, i), mem_mode,
 					  subst_p, update_p,
 					  update_sp_offset, full_p);
 	  if (new_rtx != XEXP (x, i) && ! copied)
@@ -721,7 +762,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
 	  int copied_vec = 0;
 	  for (j = 0; j < XVECLEN (x, i); j++)
 	    {
-	      new_rtx = lra_eliminate_regs_1 (insn, XVECEXP (x, i, j), mem_mode,
+	      new_rtx = lra_eliminate_regs_1_ (insn, XVECEXP (x, i, j), mem_mode,
 					      subst_p, update_p,
 					      update_sp_offset, full_p);
 	      if (new_rtx != XVECEXP (x, i, j) && ! copied_vec)
@@ -744,19 +785,78 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
   return x;
 }
 
+rtx
+lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
+		      bool subst_p, bool update_p,
+		      poly_int64 update_sp_offset, bool full_p, struct mikpe mikpe)
+{
+  rtx p, q;
+  int flag;
+
+  /* is the input AP+<offset> (possibly wrapped in a MEM[])? */
+  flag = 0;
+  if (lra_dump_file)
+    {
+      p = x;
+      if (GET_CODE (p) == MEM)
+	p = XEXP (p, 0);
+      if (GET_CODE (p) == PLUS
+	  && (q = XEXP (p, 0), GET_CODE (q) == REG && REGNO (q) == 24)	/* %ap */
+	  && (q = XEXP (p, 1), CONST_INT_P (q)))
+	flag = INTVAL (q);
+    }
+
+  rtx res = lra_eliminate_regs_1_ (insn, x, mem_mode, subst_p, update_p, update_sp_offset, full_p);
+
+  /* is the result (AP or SP)+<offset> (possibly wrapped in a MEM[])? */
+  if (flag)
+    {
+      p = res;
+      if (GET_CODE (p) == MEM)
+	p = XEXP (p, 0);
+      if (GET_CODE (p) == PLUS
+	  && (q = XEXP (p, 0), GET_CODE (q) == REG && (REGNO (q) == 15 || REGNO (q) == 24))	/* %sp or %ap */
+	  && (q = XEXP (p, 1), CONST_INT_P (q)))
+	{
+	  p = XEXP (p, 0);
+	  fprintf (lra_dump_file, "mikpe: %%ap+%d -> %s+%ld @ %s line %d\n",
+		   flag, REGNO (p) == 15 ? "%sp" : "%ap", INTVAL (q), __FILE__, __LINE__);
+	  const struct mikpe *m = &mikpe;
+	  do {
+	    fprintf (lra_dump_file, "<- %s line %d\n", m->file, m->line);
+	    m = m->prev;
+	  } while (m);
+	  fprintf (lra_dump_file, "subst_p %d update_p %d update_sp_offset ", subst_p, update_p);
+	  print_dec (update_sp_offset, lra_dump_file);
+	  fprintf (lra_dump_file, " full_p %d\n", full_p);
+	  if (insn)
+	    {
+	      dump_rtl_slim (lra_dump_file, insn, insn, -1, 0);
+	      lra_insn_recog_data_t id = lra_get_insn_recog_data (insn);
+	      fprintf (lra_dump_file, "id->sp_offset ");
+	      print_dec (id->sp_offset, lra_dump_file);
+	      fprintf (lra_dump_file, "\n");
+	    }
+	}
+    }
+
+  return res;
+}
+
 /* This function is used externally in subsequent passes of GCC.  It
    always does a full elimination of X.	 */
 rtx
 lra_eliminate_regs (rtx x, machine_mode mem_mode,
 		    rtx insn ATTRIBUTE_UNUSED)
 {
-  return lra_eliminate_regs_1 (NULL, x, mem_mode, true, false, 0, true);
+  return lra_eliminate_regs_1 (NULL, x, mem_mode, true, false, 0, true, MIKPE(NULL));
 }
 
 /* Stack pointer offset before the current insn relative to one at the
    func start.  RTL insns can change SP explicitly.  We keep the
    changes from one insn to another through this variable.  */
-static poly_int64 curr_sp_change;
+/*static*/
+poly_int64 curr_sp_change;
 
 /* Scan rtx X for references to elimination source or target registers
    in contexts that would prevent the elimination from happening.
@@ -764,7 +864,7 @@ static poly_int64 curr_sp_change;
    MEM_MODE is the mode of an enclosing MEM rtx, or VOIDmode if not
    within a MEM.  */
 static void
-mark_not_eliminable (rtx x, machine_mode mem_mode)
+mark_not_eliminable_ (rtx x, machine_mode mem_mode)
 {
   enum rtx_code code = GET_CODE (x);
   class lra_elim_table *ep;
@@ -855,7 +955,7 @@ mark_not_eliminable (rtx x, machine_mode mem_mode)
 	}
       if (! REG_P (SET_DEST (x))
 	  || REGNO (SET_DEST (x)) >= FIRST_PSEUDO_REGISTER)
-	mark_not_eliminable (SET_DEST (x), mem_mode);
+	mark_not_eliminable_ (SET_DEST (x), mem_mode);
       else
 	{
 	  /* See if this is setting the replacement hard register for
@@ -877,13 +977,13 @@ mark_not_eliminable (rtx x, machine_mode mem_mode)
 	      setup_can_eliminate (ep, false);
 	}
 
-      mark_not_eliminable (SET_SRC (x), mem_mode);
+      mark_not_eliminable_ (SET_SRC (x), mem_mode);
       return;
 
     case MEM:
       /* Our only special processing is to pass the mode of the MEM to
 	 our recursive call.  */
-      mark_not_eliminable (XEXP (x, 0), GET_MODE (x));
+      mark_not_eliminable_ (XEXP (x, 0), GET_MODE (x));
       return;
 
     default:
@@ -894,10 +994,39 @@ mark_not_eliminable (rtx x, machine_mode mem_mode)
   for (i = 0; i < GET_RTX_LENGTH (code); i++, fmt++)
     {
       if (*fmt == 'e')
-	mark_not_eliminable (XEXP (x, i), mem_mode);
+	mark_not_eliminable_ (XEXP (x, i), mem_mode);
       else if (*fmt == 'E')
 	for (j = 0; j < XVECLEN (x, i); j++)
-	  mark_not_eliminable (XVECEXP (x, i, j), mem_mode);
+	  mark_not_eliminable_ (XVECEXP (x, i, j), mem_mode);
+    }
+}
+
+static void
+mark_not_eliminable (rtx x, machine_mode mem_mode)
+{
+  rtx p;
+  int flag;
+  poly_int64 before;
+
+  flag = 0;
+  p = x;
+  if (GET_CODE (p) == SET
+      && (p = SET_DEST (p), MEM_P (p))
+      && (p = XEXP (p, 0), GET_CODE (p) == PRE_DEC))
+    flag = 1;
+
+  before = curr_sp_change;
+  mark_not_eliminable_ (x, mem_mode);
+
+  if (flag && lra_dump_file)
+    {
+      fprintf (lra_dump_file, "mikpe: mark_not_eliminable\n");
+      print_rtl (lra_dump_file, x);
+      fprintf (lra_dump_file, "\nsp offset ");
+      print_dec (before, lra_dump_file);
+      fprintf (lra_dump_file, " -> ");
+      print_dec (curr_sp_change, lra_dump_file);
+      fprintf (lra_dump_file, "\n");
     }
 }
 
@@ -917,9 +1046,10 @@ mark_not_eliminable (rtx x, machine_mode mem_mode)
    parsing already generated elimination insns to find offset
    previously used) in future.  */
 
+/* replace_p = true, first_p = false */
 void
 eliminate_regs_in_insn (rtx_insn *insn, bool replace_p, bool first_p,
-			poly_int64 update_sp_offset)
+			poly_int64 update_sp_offset, struct mikpe mikpe)
 {
   int icode = recog_memoized (insn);
   rtx set, old_set = single_set (insn);
@@ -1072,7 +1202,7 @@ eliminate_regs_in_insn (rtx_insn *insn, bool replace_p, bool first_p,
 	  substed_operand[i]
 	    = lra_eliminate_regs_1 (insn, *id->operand_loc[i], VOIDmode,
 				    replace_p, ! replace_p && ! first_p,
-				    update_sp_offset, first_p);
+				    update_sp_offset, first_p, MIKPE(&mikpe));
 	  if (substed_operand[i] != orig_operand[i])
 	    validate_p = true;
 	}
@@ -1407,9 +1537,9 @@ lra_eliminate_reg_if_possible (rtx *loc)
    the insn for subsequent processing in the constraint pass, update
    the insn info.  */
 static void
-process_insn_for_elimination (rtx_insn *insn, bool final_p, bool first_p)
+process_insn_for_elimination (rtx_insn *insn, bool final_p, bool first_p, struct mikpe mikpe)
 {
-  eliminate_regs_in_insn (insn, final_p, first_p, 0);
+  eliminate_regs_in_insn (insn, final_p, first_p, 0, MIKPE(&mikpe));
   if (! final_p)
     {
       /* Check that insn changed its code.  This is a case when a move
@@ -1503,7 +1633,7 @@ lra_fp_pseudo_p (void)
    elimination register offsets (FIRST_P if we are doing it the first
    time).  */
 void
-lra_eliminate (bool final_p, bool first_p)
+lra_eliminate (bool final_p, bool first_p, struct mikpe mikpe)
 {
   unsigned int uid;
   bitmap_head insns_with_changed_offsets;
@@ -1549,7 +1679,7 @@ lra_eliminate (bool final_p, bool first_p)
       {
 	rtx_insn *insn = lra_insn_recog_data[uid]->insn;
 	start_sequence ();
-	process_insn_for_elimination (insn, final_p, first_p);
+	process_insn_for_elimination (insn, final_p, first_p, MIKPE(&mikpe));
 	rtx_insn *first = get_insns ();
 	end_sequence ();
 	if (first != NULL)
