@@ -113,10 +113,6 @@ struct m68k_frame
   int fpu_no;
   unsigned int fpu_mask;
 
-  /* Offsets relative to ARG_POINTER.  */
-  HOST_WIDE_INT frame_pointer_offset;
-  HOST_WIDE_INT stack_pointer_offset;
-
   /* Function which the above information refers to.  */
   int funcdef_no;
 };
