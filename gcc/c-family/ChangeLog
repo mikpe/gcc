@@ -1,3 +1,13 @@
+2026-07-05  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-06-04  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/125072
+	* c-ubsan.cc (get_index_from_offset,get_index_from_pointer_addr_expr,
+	is_instrumentable_pointer_array_address): Return factor.
+	(ubsan_maybe_instrument_array_ref): Apply factor.
+
 2026-04-30  Release Manager
 
 	* GCC 16.1.0 released.

@@ -1,3 +1,10 @@
+2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/67459
+	PR target/122948
+	* config/sh/sh.md (addc): Fix T bit set expression.
+	(subc): Likewise.
+
 2026-07-03  Avinash Jayakar  <avinashd@linux.ibm.com>
 
 	Backported from master:

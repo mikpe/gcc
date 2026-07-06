@@ -1,3 +1,36 @@
+2026-07-05  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-06-04  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/125072
+	* gcc.dg/pr125072.c: New test.
+	* gcc.dg/ubsan/pointer-counted-by-bounds-124230-union.c: Avoid heap
+	corruption.
+	* gcc.dg/ubsan/pointer-counted-by-bounds-124230.c: Likewise.
+
+2026-07-05  Kees Cook  <kees@kernel.org>
+
+	Backported from master:
+	2026-06-19  Kees Cook  <kees@kernel.org>
+
+	PR c/125604
+	* gcc.dg/counted-by-unary.c: New test.
+
+2026-07-05  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2026-06-03  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/123569
+	* gcc.dg/pr123569.c: New test.
+
+2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/67459
+	PR target/122948
+	* gcc.target/sh/pr122948.c: New test.
+
 2026-07-03  Avinash Jayakar  <avinashd@linux.ibm.com>
 
 	Backported from master:
