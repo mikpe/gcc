@@ -4527,7 +4527,7 @@ print_requires_expression_info (diagnostics::text_sink &text_output,
   cxx_pretty_printer *const pp
     = static_cast <cxx_pretty_printer *> (text_output.get_printer ());
 
-  tree parms = TREE_OPERAND (expr, 0);
+  tree parms = REQUIRES_EXPR_PARMS (expr);
   pp_verbatim (pp, parms ? G_("in requirements with ")
 			 : G_("in requirements "));
   while (parms)

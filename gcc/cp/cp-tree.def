@@ -500,13 +500,13 @@ DEFTREECODE (OMP_DEPOBJ, "omp_depobj", tcc_statement, 2)
 /* Used to represent information associated with constrained declarations. */
 DEFTREECODE (CONSTRAINT_INFO, "constraint_info", tcc_exceptional, 0)
 
-/* A requires-expr has three operands. The first operand is
-   its parameter list (possibly NULL). The second is a list of
-   requirements, which are denoted by the _REQ* tree codes
-   below.  The third is a TREE_VEC of template arguments to
+/* A requires-expr has three operands.  REQUIRES_EXPR_PARMS is
+   its parameter list (possibly NULL).  REQUIRES_EXPR_REQS is a list of
+   requirements, which are denoted by the _REQ* tree codes below.
+   REQUIRES_EXPR_EXTRA_ARGS is a TREE_VEC of template arguments to
    be applied when substituting into the parameter list and
    requirements, set by tsubst_requires_expr for partial instantiations.  */
-DEFTREECODE (REQUIRES_EXPR,   "requires_expr", tcc_expression, 3)
+DEFTREECODE (REQUIRES_EXPR, "requires_expr", tcc_exceptional, 0)
 
 /* A requirement for an expression. */
 DEFTREECODE (SIMPLE_REQ, "simple_req", tcc_expression, 1)

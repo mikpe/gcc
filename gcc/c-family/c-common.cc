@@ -2092,6 +2092,7 @@ verify_tree (tree x, struct tlist **pbefore_sp, struct tlist **pno_sp,
     case CONSTRUCTOR:
     case SIZEOF_EXPR:
     case PAREN_SIZEOF_EXPR:
+    /* FIXME: Add C++ codes like NOEXCEPT_EXPR (cf. unevaluated_p) as well.  */
       return;
 
     case COMPOUND_EXPR:

@@ -2830,7 +2830,7 @@ pp_cxx_requires_expr (cxx_pretty_printer *pp, tree t)
       pp_cxx_right_paren (pp);
       pp_cxx_whitespace (pp);
     }
-  pp_cxx_requirement_body (pp, TREE_OPERAND (t, 1));
+  pp_cxx_requirement_body (pp, REQUIRES_EXPR_REQS (t));
 }
 
 /* simple-requirement:

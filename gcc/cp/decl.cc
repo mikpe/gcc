@@ -21225,6 +21225,7 @@ cp_tree_node_structure (union lang_tree_node * t)
     case TRAIT_EXPR:		return TS_CP_TRAIT_EXPR;
     case TU_LOCAL_ENTITY:	return TS_CP_TU_LOCAL_ENTITY;
     case USERDEF_LITERAL:	return TS_CP_USERDEF_LITERAL;
+    case REQUIRES_EXPR:		return TS_CP_REQUIRES_EXPR;
     default:			return TS_CP_GENERIC;
     }
 }

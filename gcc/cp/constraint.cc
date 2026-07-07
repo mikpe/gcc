@@ -1777,7 +1777,8 @@ tsubst_requires_expr (tree t, tree args, sat_info info)
 	result = tree_cons (NULL_TREE, req, result);
     }
   if (processing_template_decl && result != boolean_false_node)
-    result = finish_requires_expr (EXPR_LOCATION (t), parms, nreverse (result));
+    result = finish_requires_expr (REQUIRES_EXPR_LOCATION (t), parms,
+				   nreverse (result));
   return result;
 }
 
@@ -2178,7 +2179,7 @@ satisfaction_cache::get ()
       /* Prefer printing the instantiated mapping.  */
       tree atom = entry->inst_entry ? entry->inst_entry->atom : entry->atom;
       if (info.noisy ())
-	error_at (EXPR_LOCATION (ATOMIC_CONSTR_EXPR (atom)),
+	error_at (cp_expr_location (ATOMIC_CONSTR_EXPR (atom)),
 		  "satisfaction of atomic constraint %qE depends on itself",
 		  atom);
       return error_mark_node;
@@ -2224,7 +2225,7 @@ satisfaction_cache::save (tree result)
 	  if (entry->diagnose_instability)
 	    {
 	      auto_diagnostic_group d;
-	      error_at (EXPR_LOCATION (ATOMIC_CONSTR_EXPR (entry->atom)),
+	      error_at (cp_expr_location (ATOMIC_CONSTR_EXPR (entry->atom)),
 			"satisfaction value of atomic constraint %qE changed "
 			"from %qE to %qE", entry->atom, entry->result, result);
 	      inform (entry->location,
@@ -2949,10 +2950,13 @@ tree
 finish_requires_expr (location_t loc, tree parms, tree reqs)
 {
   /* Build the node.  */
-  tree r = build_min (REQUIRES_EXPR, boolean_type_node, parms, reqs, NULL_TREE);
+  tree r = make_node (REQUIRES_EXPR);
+  TREE_TYPE (r) = boolean_type_node;
+  REQUIRES_EXPR_PARMS (r) = parms;
+  REQUIRES_EXPR_REQS (r) = reqs;
+  REQUIRES_EXPR_LOCATION (r) = loc;
   TREE_SIDE_EFFECTS (r) = false;
   TREE_CONSTANT (r) = true;
-  SET_EXPR_LOCATION (r, loc);
   return r;
 }
 

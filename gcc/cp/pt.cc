@@ -1886,6 +1886,11 @@ iterative_hash_template_arg (tree arg, hashval_t val)
          So just hash the closure type.  */
       return iterative_hash_template_arg (TREE_TYPE (arg), val);
 
+    case REQUIRES_EXPR:
+      val = iterative_hash_template_arg (REQUIRES_EXPR_PARMS (arg), val);
+      val = iterative_hash_template_arg (REQUIRES_EXPR_REQS (arg), val);
+      return iterative_hash_template_arg (REQUIRES_EXPR_EXTRA_ARGS (arg), val);
+
     case CAST_EXPR:
     case IMPLICIT_CONV_EXPR:
     case STATIC_CAST_EXPR:

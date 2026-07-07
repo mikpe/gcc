@@ -227,6 +227,7 @@ cp_tree_size (enum tree_code code)
     case PRECONDITION_STMT:	return sizeof (tree_exp);
     case POSTCONDITION_STMT:	return sizeof (tree_exp);
     case TU_LOCAL_ENTITY:	return sizeof (tree_tu_local_entity);
+    case REQUIRES_EXPR:		return sizeof (tree_requires_expr);
     default:
       switch (TREE_CODE_CLASS (code))
 	{
@@ -620,6 +621,7 @@ cp_common_init_ts (void)
   MARK_TS_TYPED (LAMBDA_EXPR);
   MARK_TS_TYPED (TYPE_ARGUMENT_PACK);
   MARK_TS_TYPED (TRAIT_EXPR);
+  MARK_TS_TYPED (REQUIRES_EXPR);
 
   /* Random new trees.  */
   MARK_TS_COMMON (BASELINK);
@@ -715,7 +717,6 @@ cp_common_init_ts (void)
   MARK_TS_EXP (DISJ_CONSTR);
   MARK_TS_EXP (ATOMIC_CONSTR);
   MARK_TS_EXP (NESTED_REQ);
-  MARK_TS_EXP (REQUIRES_EXPR);
   MARK_TS_EXP (SIMPLE_REQ);
   MARK_TS_EXP (TYPE_REQ);
 

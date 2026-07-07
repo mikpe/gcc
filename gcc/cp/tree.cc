@@ -2050,6 +2050,7 @@ strip_typedefs_expr (tree t, bool *remove_attributes, unsigned int flags)
     case OVERLOAD:
     case BASELINK:
     case ARGUMENT_PACK_SELECT:
+    case REQUIRES_EXPR:
       return t;
 
     case TRAIT_EXPR:
@@ -4526,6 +4527,16 @@ cp_tree_equal (tree t1, tree t2)
 
     case REFLECT_EXPR:
       return compare_reflections (t1, t2);
+
+    case REQUIRES_EXPR:
+      if (cp_tree_equal (REQUIRES_EXPR_PARMS (t1),
+			  REQUIRES_EXPR_PARMS (t2))
+	  && cp_tree_equal (REQUIRES_EXPR_REQS (t1),
+			    REQUIRES_EXPR_REQS (t2))
+	  && cp_tree_equal (REQUIRES_EXPR_EXTRA_ARGS (t1),
+			    REQUIRES_EXPR_EXTRA_ARGS (t2)))
+	return true;
+      return false;
 
     default:
       break;

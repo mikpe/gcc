@@ -6546,16 +6546,21 @@ trees_out::core_vals (tree t)
       unsigned limit = (vl ? VL_EXP_OPERAND_LENGTH (t)
 			: TREE_OPERAND_LENGTH (t));
       unsigned ix = unsigned (vl);
-      if (code == REQUIRES_EXPR)
-	{
-	  /* The first operand of a REQUIRES_EXPR is a tree chain
-	     of PARM_DECLs.  We need to stream this separately as
-	     otherwise we would only stream the first one.  */
-	  chained_decls (REQUIRES_EXPR_PARMS (t));
-	  ++ix;
-	}
       for (; ix != limit; ix++)
 	WT (TREE_OPERAND (t, ix));
+    }
+  else if (code == REQUIRES_EXPR)
+    {
+      if (state)
+	state->write_location (*this, REQUIRES_EXPR_LOCATION (t));
+
+      if (streaming_p ())
+	if (has_warning_spec (t))
+	  u (get_warning_spec (t));
+
+      chained_decls (REQUIRES_EXPR_PARMS (t));
+      WT (REQUIRES_EXPR_REQS (t));
+      WT (REQUIRES_EXPR_EXTRA_ARGS (t));
     }
   else
     /* The CODE_CONTAINS tables were inaccurate when I started.  */
@@ -7141,13 +7146,18 @@ trees_in::core_vals (tree t)
       unsigned limit = (vl ? VL_EXP_OPERAND_LENGTH (t)
 			: TREE_OPERAND_LENGTH (t));
       unsigned ix = unsigned (vl);
-      if (code == REQUIRES_EXPR)
-	{
-	  REQUIRES_EXPR_PARMS (t) = chained_decls ();
-	  ++ix;
-	}
       for (; ix != limit; ix++)
 	RTU (TREE_OPERAND (t, ix));
+    }
+  else if (code == REQUIRES_EXPR)
+    {
+      REQUIRES_EXPR_LOCATION (t) = state->read_location (*this);
+      if (has_warning_spec (t))
+	put_warning_spec (t, u ());
+
+      REQUIRES_EXPR_PARMS (t) = chained_decls ();
+      RTU (REQUIRES_EXPR_REQS (t));
+      RTU (REQUIRES_EXPR_EXTRA_ARGS (t));
     }
 
   /* Then by CODE.  Special cases and/or 1:1 tree shape

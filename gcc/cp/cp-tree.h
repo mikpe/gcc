@@ -1885,21 +1885,33 @@ struct GTY(()) tree_tu_local_entity {
 #define TU_LOCAL_ENTITY_LOCATION(NODE) \
   (((struct tree_tu_local_entity *)TU_LOCAL_ENTITY_CHECK (NODE))->loc)
 
-
+/* Representation of a requires-expression.  */
+struct GTY(()) tree_requires_expr {
+  struct tree_typed typed;
+  tree parms;
+  tree reqs;
+  tree extra_args;
+  location_t loc;
+};
+
 /* The list of local parameters introduced by this requires-expression,
    in the form of a chain of PARM_DECLs.  */
 #define REQUIRES_EXPR_PARMS(NODE) \
-  TREE_OPERAND (TREE_CHECK (NODE, REQUIRES_EXPR), 0)
+  (((struct tree_requires_expr *) REQUIRES_EXPR_CHECK (NODE))->parms)
 
 /* A TREE_LIST of the requirements for this requires-expression.
    The requirements are stored in lexical order within the TREE_VALUE
    of each TREE_LIST node.  The TREE_PURPOSE of each node is unused.  */
 #define REQUIRES_EXPR_REQS(NODE) \
-  TREE_OPERAND (TREE_CHECK (NODE, REQUIRES_EXPR), 1)
+  (((struct tree_requires_expr *) REQUIRES_EXPR_CHECK (NODE))->reqs)
 
 /* Like PACK_EXPANSION_EXTRA_ARGS, for requires-expressions.  */
 #define REQUIRES_EXPR_EXTRA_ARGS(NODE) \
-  TREE_OPERAND (TREE_CHECK (NODE, REQUIRES_EXPR), 2)
+  (((struct tree_requires_expr *) REQUIRES_EXPR_CHECK (NODE))->extra_args)
+
+/* The source location of the requires-expression.  */
+#define REQUIRES_EXPR_LOCATION(NODE) \
+  (((struct tree_requires_expr *) REQUIRES_EXPR_CHECK (NODE))->loc)
 
 /* True iff TYPE is cv decltype(^^int).  */
 #define REFLECTION_TYPE_P(TYPE) (TREE_CODE (TYPE) == META_TYPE)
@@ -2029,7 +2041,8 @@ enum cp_tree_node_structure_enum {
   TS_CP_TEMPLATE_INFO,
   TS_CP_CONSTRAINT_INFO,
   TS_CP_USERDEF_LITERAL,
-  TS_CP_TU_LOCAL_ENTITY
+  TS_CP_TU_LOCAL_ENTITY,
+  TS_CP_REQUIRES_EXPR
 };
 
 /* The resulting tree type.  */
@@ -2062,6 +2075,8 @@ union GTY((desc ("cp_tree_node_structure (&%h)"),
     userdef_literal;
   struct tree_tu_local_entity GTY ((tag ("TS_CP_TU_LOCAL_ENTITY")))
     tu_local_entity;
+  struct tree_requires_expr GTY ((tag ("TS_CP_REQUIRES_EXPR")))
+    requires_expr;
 };
 
 
@@ -9122,6 +9137,8 @@ cp_expr_location (const_tree t_)
       return TRAIT_EXPR_LOCATION (t);
     case PTRMEM_CST:
       return PTRMEM_CST_LOCATION (t);
+    case REQUIRES_EXPR:
+      return REQUIRES_EXPR_LOCATION (t);
     default:
       return EXPR_LOCATION (t);
     }
