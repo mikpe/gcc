@@ -1,3 +1,11 @@
+2026-07-06  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-07-06  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* gcc.target/arm/tls-disable-literal-pool.c: Add quotation for
+	command line arguments.
+
 2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
 
 	PR target/67459
