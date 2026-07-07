@@ -1,3 +1,24 @@
+2026-07-06  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	Backported from master:
+	2026-06-04  vekumar  <Venkataramanan.Kumar@amd.com>
+
+	* config/i386/x86-tune.def (X86_TUNE_FUSE_ALU_AND_BRANCH_MEM): Enable
+	for m_ZNVER6.
+	(X86_TUNE_FUSE_ALU_AND_BRANCH_MEM_IMM): Likewise.
+	(X86_TUNE_SSE_REDUCTION_PREFER_PSHUF): Likewise.
+
+2026-07-06  liuhongt  <hongtao.liu@intel.com>
+
+	Backported from master:
+	2026-07-06  liuhongt  <hongtao.liu@intel.com>
+
+	PR target/126098
+	* config/i386/sse.md (VI1_AVX512VNNIBW): Remove.
+	(sdot_prod<ssedvecmodelower><mode>): Use VI1_AVX512 instead of
+	VI1_AVX512VNNIBW so V64QI is enabled only under AVX512BW.
+	(udot_prod<ssedvecmodelower><mode>): Likewise.
+
 2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
 
 	PR target/67459
