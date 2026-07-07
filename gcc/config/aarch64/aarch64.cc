@@ -20428,6 +20428,10 @@ aarch64_override_options (void)
   if (TARGET_ILP32)
     warning (OPT_Wdeprecated, "%<-mabi=ilp32%> is deprecated");
 
+  if (TARGET_TME)
+    warning (OPT_Wdeprecated,
+	     "the architecture extension %<+tme%> is deprecated");
+
   if (global_options.x_pcrelative_literal_loads == 1)
     warning (OPT_Wdeprecated, "%<-mpc-relative-literal-loads%> is deprecated");
 
@@ -21078,6 +21082,11 @@ aarch64_process_target_attr (tree args)
   while (token)
     {
       num_attrs++;
+
+      if (strcmp (token, "+tme") == 0 && !TARGET_TME)
+	warning (OPT_Wdeprecated,
+		 "the architecture extension %<+tme%> is deprecated");
+
       if (!aarch64_process_one_target_attr (token))
 	{
 	  /* Check if token is possibly an arch extension without

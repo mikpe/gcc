@@ -21991,8 +21991,6 @@ Enable SVE2 sha3 instructions.  This also enables SVE2 instructions.
 Enable SVE2.1 instructions.  This also enables SVE2 instructions.
 @item sve2p2
 Enable SVE2.2 instructions.  This also enables SVE2 and SVE2.1 instructions.
-@item tme
-Enable the Transactional Memory Extension.
 @item i8mm
 Enable 8-bit Integer Matrix Multiply instructions.  This also enables
 Advanced SIMD and floating-point instructions.  This option is enabled by
