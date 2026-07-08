@@ -1,3 +1,11 @@
+2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	Backported from master:
+	2026-07-01  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	PR target/126049
+	* gcc.target/riscv/rvv/autovec/pr126049.c: New.
+
 2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
 
 	PR target/67459

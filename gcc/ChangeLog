@@ -1,3 +1,13 @@
+2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	Backported from master:
+	2026-07-01  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	PR target/126049
+	* config/riscv/autovec.md: Change fmin/fmax reduction initial
+	value from inf/-inf to NaN for proper semantics of corresponding
+	C funtion.
+
 2026-07-05  Oleg Endo  <olegendo@gcc.gnu.org>
 
 	PR target/67459
