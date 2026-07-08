@@ -1,3 +1,41 @@
+2026-07-07  Stafford Horne  <shorne@gmail.com>
+
+	Backported from master:
+	2026-07-07  Stafford Horne  <shorne@gmail.com>
+
+	PR target/126081
+	* gcc.target/or1k/pr126081.c: New test.
+
+2026-07-07  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-07-01  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	* gcc.target/powerpc/vsx_arith_builtin-1.c: Remove inline asm
+	that forces operands into FPRs.
+	* gcc.target/powerpc/vsx_arith_builtin-2.c: Likewise.
+	* gcc.target/powerpc/vsx_arith_vect_1.c: Likewiswe.
+
+2026-07-07  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-06-24  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	* gcc.target/powerpc/vsx_arith_builtin-1.c: New test.
+	* gcc.target/powerpc/vsx_arith_builtin-2.c: Likewise.
+	* gcc.target/powerpc/vsx_arith_builtin-3.c: Likewise.
+	* gcc.target/powerpc/vsx_arith_builtin-4.c: Likewise.
+	* gcc.target/powerpc/vsx_arith_vect_1.c: Likewise.
+	* gcc.target/powerpc/vsx_arith_vect_2.c: Likewise.
+
+2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	Backported from master:
+	2026-07-01  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	PR target/126049
+	* gcc.target/riscv/rvv/autovec/pr126049.c: New.
+
 2026-07-06  Jason Merrill  <jason@redhat.com>
 
 	Backported from master:
