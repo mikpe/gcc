@@ -1,3 +1,18 @@
+2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	Backported from master:
+	2026-07-01  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
+
+	PR target/126049
+	* gcc.target/riscv/rvv/autovec/pr126049.c: New.
+
+2026-07-07  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	Backported from master:
+	2025-05-09  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* g++.dg/cpp2a/decomp2.C: Require tls_runtime.
+
 2026-07-06  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	Backported from master:
