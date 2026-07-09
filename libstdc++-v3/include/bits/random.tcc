@@ -78,13 +78,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
     template<typename _InputIterator, typename _OutputIterator,
-	     typename _Tp>
+	     typename _RealType>
       _OutputIterator
       __normalize(_InputIterator __first, _InputIterator __last,
-		  _OutputIterator __result, const _Tp& __factor)
+		  _OutputIterator __result, const _RealType& __factor)
       {
 	for (; __first != __last; ++__first, (void) ++__result)
-	  *__result = *__first / __factor;
+	  *__result = _RealType(_RealType(*__first) / __factor);
 	return __result;
       }
 
@@ -2947,28 +2947,30 @@ namespace __detail
     piecewise_constant_distribution<_RealType>::param_type::
     _M_configure()
     {
-      const double __sum = std::accumulate(_M_den.begin(),
-					   _M_den.end(), 0.0);
+      const _CalcType __sum = std::accumulate(_M_den.begin(), _M_den.end(),
+					      _CalcType(0));
       __glibcxx_assert(__sum > 0);
 
       __detail::__normalize(_M_den.begin(), _M_den.end(), _M_den.begin(),
 			    __sum);
 
+      _CalcType __psum(0);
       _M_cp.reserve(_M_den.size());
-      std::partial_sum(_M_den.begin(), _M_den.end(),
-		       std::back_inserter(_M_cp));
+      for (_CalcType __den : _M_den)
+	_M_cp.push_back(__psum += __den);
 
       // Make sure the last cumulative probability is one.
-      _M_cp[_M_cp.size() - 1] = 1.0;
+      _M_cp[_M_cp.size() - 1] = _CalcType(1);
 
       for (size_t __k = 0; __k < _M_den.size(); ++__k)
-	_M_den[__k] /= _M_int[__k + 1] - _M_int[__k];
+	_M_den[__k] = _CalcType(_CalcType(_M_den[__k])
+			/ (_M_int[__k + 1] - _M_int[__k]));
     }
 
   template<typename _RealType>
     void
     piecewise_constant_distribution<_RealType>::param_type::
-    _M_initialize2(const _RealType* __ints, _RealType __den)
+    _M_initialize2(const _RealType* __ints, _CalcType __den)
     {
       if (__ints[0] == _RealType(0) && __ints[1] == _RealType(1))
 	return;
@@ -3041,9 +3043,11 @@ namespace __detail
 	for (; __bbegin != __bend; ++__bbegin)
 	  _M_int.push_back(*__bbegin);
 
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 4052. Bogus requirements for piecewise_linear_distribution
 	_M_den.reserve(_M_int.size() - 1);
 	for (size_t __k = 0; __k < _M_int.size() - 1; (void)++__k, ++__wbegin)
-	  _M_den.push_back(*__wbegin);
+	  _M_den.push_back(_CalcType(*__wbegin));
 
 	_M_configure();
       }
@@ -3057,10 +3061,21 @@ namespace __detail
 	if (__bl.size() < 2)
 	  return;
 
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 4052. Bogus requirements for piecewise_linear_distribution
+	auto __cfw = [&__fw](_RealType __n, _RealType __p)
+	{
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+	  return __fw(0.5 * (__n + __p));
+#else
+	  return _RealType(__fw(_RealType(0.5) * (__n + __p)));
+#endif
+	};
+
 	if (__bl.size() == 2)
 	  {
 	    const _RealType *__ints = __bl.begin();
-	    _RealType __den = __fw(0.5 * (__ints[1] + __ints[0]));
+	    _CalcType __den = __cfw(__ints[1], __ints[0]);
 	    _M_initialize2(__ints, __den);
 	    return;
 	  }
@@ -3068,7 +3083,7 @@ namespace __detail
 	_M_int = __bl;
 	_M_den.reserve(_M_int.size() - 1);
 	for (size_t __k = 0; __k < _M_int.size() - 1; ++__k)
-	  _M_den.push_back(__fw(0.5 * (_M_int[__k + 1] + _M_int[__k])));
+	  _M_den.push_back(__cfw(_M_int[__k + 1], _M_int[__k]));
 
 	_M_configure();
       }
@@ -3081,10 +3096,19 @@ namespace __detail
       {
 	const size_t __n = __nw == 0 ? 1 : __nw;
 	const _RealType __delta = (__xmax - __xmin) / __n;
+	auto __cfw = [&__fw, __delta](_RealType __v)
+	{
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+	  return __fw(__v + 0.5 * __delta);
+#else
+	  return _RealType(__fw(__v + _RealType(0.5) * __delta));
+#endif
+	};
+
 	if (__n == 1)
 	  {
 	    _RealType __ints[2] = { __xmin, __xmin + __delta };
-	    _RealType __den = __fw(__xmin + 0.5 * __delta);
+	    _CalcType __den = __cfw(__xmin);
 	    _M_initialize2(__ints, __den);
 	    return;
 	  }
@@ -3095,9 +3119,24 @@ namespace __detail
 
 	_M_den.reserve(__n);
 	for (size_t __k = 0; __k < __nw; ++__k)
-	  _M_den.push_back(__fw(_M_int[__k] + 0.5 * __delta));
+	  _M_den.push_back(__cfw(_M_int[__k]));
 
 	_M_configure();
+      }
+
+  template<typename _RealType>
+    template<typename _AdaptedUniformRandomNumberGenerator>
+      typename piecewise_constant_distribution<_RealType>::result_type
+      piecewise_constant_distribution<_RealType>::
+      __generate_one(_AdaptedUniformRandomNumberGenerator& __aurng,
+		     const param_type& __param)
+      {
+	const _CalcType __p = __aurng();
+	auto __pos = std::lower_bound(__param._M_cp.begin(),
+				      __param._M_cp.end(), __p);
+	const size_t __i = __pos - __param._M_cp.begin();
+	const _CalcType __pref = __i > 0 ? __param._M_cp[__i - 1] : _CalcType(0);
+	return __param._M_int[__i] + (__p - __pref) / _CalcType(__param._M_den[__i]);
       }
 
   template<typename _RealType>
@@ -3107,20 +3146,13 @@ namespace __detail
       operator()(_UniformRandomNumberGenerator& __urng,
 		 const param_type& __param)
       {
-	__detail::_Adaptor<_UniformRandomNumberGenerator, double>
+	__detail::_Adaptor<_UniformRandomNumberGenerator, _CalcType>
 	  __aurng(__urng);
 
-	const double __p = __aurng();
 	if (__param._M_cp.empty())
-	  return __p;
+	  return __aurng();
 
-	auto __pos = std::lower_bound(__param._M_cp.begin(),
-				      __param._M_cp.end(), __p);
-	const size_t __i = __pos - __param._M_cp.begin();
-
-	const double __pref = __i > 0 ? __param._M_cp[__i - 1] : 0.0;
-
-	return __param._M_int[__i] + (__p - __pref) / __param._M_den[__i];
+	return __generate_one(__aurng, __param);
       }
 
   template<typename _RealType>
@@ -3133,29 +3165,15 @@ namespace __detail
 		      const param_type& __param)
       {
 	__glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
-	__detail::_Adaptor<_UniformRandomNumberGenerator, double>
+	__detail::_Adaptor<_UniformRandomNumberGenerator, _CalcType>
 	  __aurng(__urng);
 
 	if (__param._M_cp.empty())
-	  {
-	    while (__f != __t)
-	      *__f++ = __aurng();
-	    return;
-	  }
-
-	while (__f != __t)
-	  {
-	    const double __p = __aurng();
-
-	    auto __pos = std::lower_bound(__param._M_cp.begin(),
-					  __param._M_cp.end(), __p);
-	    const size_t __i = __pos - __param._M_cp.begin();
-
-	    const double __pref = __i > 0 ? __param._M_cp[__i - 1] : 0.0;
-
-	    *__f++ = (__param._M_int[__i]
-		      + (__p - __pref) / __param._M_den[__i]);
-	  }
+	  while (__f != __t)
+	    *__f++ = __aurng();
+	else
+	  while (__f != __t)
+	    *__f++ = __generate_one(__urng, __param);
       }
 
   template<typename _RealType, typename _CharT, typename _Traits>
@@ -3230,34 +3248,37 @@ namespace __detail
     piecewise_linear_distribution<_RealType>::param_type::
     _M_configure()
     {
-      double __sum = 0.0;
+      _CalcType __sum = 0.0;
       _M_cp.reserve(_M_int.size() - 1);
       _M_m.reserve(_M_int.size() - 1);
       for (size_t __k = 0; __k < _M_int.size() - 1; ++__k)
 	{
 	  const _RealType __delta = _M_int[__k + 1] - _M_int[__k];
-	  __sum += 0.5 * (_M_den[__k + 1] + _M_den[__k]) * __delta;
+	  __sum += _CalcType(0.5)
+		   * (_CalcType(_M_den[__k + 1]) + _CalcType(_M_den[__k]))
+		   * __delta;
 	  _M_cp.push_back(__sum);
-	  _M_m.push_back((_M_den[__k + 1] - _M_den[__k]) / __delta);
+	  _M_m.push_back(
+	    (_CalcType(_M_den[__k + 1]) - _CalcType(_M_den[__k])) / __delta);
 	}
       __glibcxx_assert(__sum > 0);
 
       //  Now normalize the densities...
       __detail::__normalize(_M_den.begin(), _M_den.end(), _M_den.begin(),
 			    __sum);
-      //  ... and partial sums... 
+      //  ... and partial sums...
       __detail::__normalize(_M_cp.begin(), _M_cp.end(), _M_cp.begin(), __sum);
       //  ... and slopes.
       __detail::__normalize(_M_m.begin(), _M_m.end(), _M_m.begin(), __sum);
 
       //  Make sure the last cumulative probablility is one.
-      _M_cp[_M_cp.size() - 1] = 1.0;
+      _M_cp[_M_cp.size() - 1] = _CalcType(1);
     }
 
   template<typename _RealType>
     void
     piecewise_linear_distribution<_RealType>::param_type::
-    _M_initialize2(const _RealType* __ints, const _RealType* __dens)
+    _M_initialize2(const _RealType* __ints, const _CalcType* __dens)
     {
       if (__ints[0] == _RealType(0)
 	  && __ints[1] == _RealType(1)
@@ -3288,7 +3309,7 @@ namespace __detail
 
 	if (__bbegin == __bend)
 	  {
-	    _RealType __dens[2];
+	    _CalcType __dens[2];
 	    __dens[0] = *__wbegin;
 	    ++__wbegin;
 	    __dens[1] = *__wbegin;
@@ -3314,9 +3335,11 @@ namespace __detail
 	for (; __bbegin != __bend; ++__bbegin)
 	  _M_int.push_back(*__bbegin);
 
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 4052. Bogus requirements for piecewise_linear_distribution
 	_M_den.reserve(_M_int.size());
 	for (size_t __i = 0; __i < _M_int.size(); (void)++__i, ++__wbegin)
-	  _M_den.push_back(*__wbegin);
+	  _M_den.push_back(_CalcType(*__wbegin));
 
 	_M_configure();
       }
@@ -3333,7 +3356,7 @@ namespace __detail
 	if (__bl.size() == 2)
 	  {
 	    const _RealType *__ints = __bl.begin();
-	    _RealType __den[2];
+	    _CalcType __den[2];
 	    __den[0] = __fw(__ints[0]);
 	    __den[1] = __fw(__ints[1]);
 	    _M_initialize2(__ints, __den);
@@ -3343,7 +3366,7 @@ namespace __detail
 	_M_int = __bl;
 	_M_den.reserve(__bl.size());
 	for (_RealType __b : __bl)
-	  _M_den.push_back(__fw(__b));
+	  _M_den.push_back(_CalcType(__fw(__b)));
 	_M_configure();
       }
 
@@ -3356,18 +3379,20 @@ namespace __detail
 	const size_t __n = __nw == 0 ? 1 : __nw;
 	const _RealType __delta = (__xmax - __xmin) / __n;
 	const auto __cfw = [&] (_RealType __v)
-	  {
+	{
 #ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
-	    return __fw(__v + __delta);
+	  return __fw(__v + __delta);
 #else
-	    return __fw(__v);
+	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	  // 4052. Bogus requirements for piecewise_linear_distribution
+	  return _RealType(__fw(__v));
 #endif
-	  };
+	};
 
 	if (__n == 1)
 	  {
 	    _RealType __ints[2] = { __xmin, __xmin + __delta };
-	    _RealType __dens[2];
+	    _CalcType __dens[2];
 	    __dens[0] = __cfw(__ints[0]);
 	    __dens[1] = __cfw(__ints[1]);
 	    _M_initialize2(__ints, __dens);
@@ -3386,39 +3411,49 @@ namespace __detail
       }
 
   template<typename _RealType>
-    template<typename _UniformRandomNumberGenerator>
+    template<typename _AdaptedUniformRandomNumberGenerator>
       typename piecewise_linear_distribution<_RealType>::result_type
       piecewise_linear_distribution<_RealType>::
-      operator()(_UniformRandomNumberGenerator& __urng,
-		 const param_type& __param)
+      __generate_one(_AdaptedUniformRandomNumberGenerator& __aurng,
+		     const param_type& __param)
       {
-	__detail::_Adaptor<_UniformRandomNumberGenerator, double>
-	  __aurng(__urng);
-
-	const double __p = __aurng();
-	if (__param._M_cp.empty())
-	  return __p;
-
+	const _CalcType __p = __aurng();
 	auto __pos = std::lower_bound(__param._M_cp.begin(),
 				      __param._M_cp.end(), __p);
 	const size_t __i = __pos - __param._M_cp.begin();
 
-	const double __pref = __i > 0 ? __param._M_cp[__i - 1] : 0.0;
+	const _CalcType __pref = __i > 0 ? __param._M_cp[__i - 1] : 0.0;
 
-	const double __a = 0.5 * __param._M_m[__i];
-	const double __b = __param._M_den[__i];
-	const double __cm = __p - __pref;
+	const _CalcType __a = _CalcType(0.5) * __param._M_m[__i];
+	const _CalcType __b = __param._M_den[__i];
+	const _CalcType __cm = __p - __pref;
 
 	_RealType __x = __param._M_int[__i];
 	if (__a == 0)
 	  __x += __cm / __b;
 	else
 	  {
-	    const double __d = __b * __b + 4.0 * __a * __cm;
-	    __x += 0.5 * (std::sqrt(__d) - __b) / __a;
-          }
+	    const _CalcType __d = __b * __b + 4.0 * __a * __cm;
+	    __x += _CalcType(0.5) * (std::sqrt(__d) - __b) / __a;
+	  }
+	return __x;
+      }
 
-        return __x;
+
+  template<typename _RealType>
+    template<typename _UniformRandomNumberGenerator>
+      typename piecewise_linear_distribution<_RealType>::result_type
+      piecewise_linear_distribution<_RealType>::
+      operator()(_UniformRandomNumberGenerator& __urng,
+		 const param_type& __param)
+      {
+	__detail::_Adaptor<_UniformRandomNumberGenerator, _CalcType>
+	  __aurng(__urng);
+
+	if (__param._M_cp.empty())
+	  return __aurng();
+
+	return __generate_one(__aurng, __param);
       }
 
   template<typename _RealType>
@@ -3431,9 +3466,15 @@ namespace __detail
 		      const param_type& __param)
       {
 	__glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
-	// We could duplicate everything from operator()...
-	while (__f != __t)
-	  *__f++ = this->operator()(__urng, __param);
+	__detail::_Adaptor<_UniformRandomNumberGenerator, _CalcType>
+	  __aurng(__urng);
+
+	if (__param._M_cp.empty())
+	  while (__f != __t)
+	    *__f++ = __aurng();
+	else
+	  while (__f != __t)
+	    *__f++ = __generate_one(__urng, __param);
       }
 
   template<typename _RealType, typename _CharT, typename _Traits>

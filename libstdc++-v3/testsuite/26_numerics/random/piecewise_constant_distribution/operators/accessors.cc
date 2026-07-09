@@ -33,39 +33,84 @@ test_exact()
   VERIFY( density[4] == RealType(0.5 / 8.0) );
 }
 
-template<typename RealType>
+template<typename InputType, typename DistType = InputType>
 void
 test_precision_depended()
 {
   constexpr bool preserved
-#ifdef _GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES
-    = true;
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+    = sizeof(InputType) <= sizeof(double);
+#elifdef _GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES
+    = sizeof(InputType) <= sizeof(DistType);
 #else
-    = sizeof(RealType) <= sizeof(double);
+    // input is converted to DistType and stored in double
+    = (sizeof(InputType) <= sizeof(DistType))
+      && (sizeof(InputType) <= sizeof(double));
 #endif
 
-  RealType x[3]{0.0, 0.5, 1.0};
-  constexpr RealType step
-    = std::numeric_limits<RealType>::epsilon();
-  RealType wt[2]{RealType(1) - step, RealType(1) + step};
+  std::initializer_list<DistType> x{0.0, 0.5, 1.0};
+  constexpr InputType step
+    = std::numeric_limits<InputType>::epsilon();
+  InputType wt[2]{InputType(1) - step, InputType(1) + step};
 
-  std::piecewise_constant_distribution<RealType>
-    u(std::begin(x), std::end(x), wt);
-
-  const std::vector<RealType>& interval = u.intervals();
-  VERIFY( interval.size() == 3 );
-  VERIFY( interval[0] == RealType(0.0) );
-  VERIFY( interval[2] == RealType(1.0) );
+  using Distribution = std::piecewise_constant_distribution<DistType>;
+  auto validate = [&wt](const Distribution& dist)
+  {
+    const std::vector<DistType>& interval = dist.intervals();
+    VERIFY( interval.size() == 3 );
+    VERIFY( interval[0] == DistType(0.0) );
+    VERIFY( interval[2] == DistType(1.0) );
 
 #ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
-  const std::vector<double>& density = u.densities();
+    const std::vector<double>& density = dist.densities();
 #else
-  const std::vector<RealType>& density = u.densities();
+    const std::vector<DistType>& density = dist.densities();
 #endif
 
-  VERIFY( density.size() == 2 );
-  VERIFY( density[0] == (preserved ? wt[0] : RealType(1)) );
-  VERIFY( density[1] == (preserved ? wt[1] : RealType(1)) );
+    VERIFY( density.size() == 2 );
+    VERIFY( density[0] == (preserved ? wt[0] : InputType(1)) );
+    VERIFY( density[1] == (preserved ? wt[1] : InputType(1)) );
+  };
+
+  Distribution from_iter(x.begin(), x.end(), wt);
+  validate(from_iter);
+
+  auto wf = [&wt](DistType v)
+  { return wt[int(v / 0.5)]; };
+
+  Distribution from_init_list(x, wf);
+  validate(from_init_list);
+
+  Distribution from_count(2, InputType(0), InputType(1), wf);
+  validate(from_count);
+}
+
+template<typename RealType, typename URBG = std::mt19937>
+void
+test_engine_calls()
+{
+  constexpr std::size_t bits = __builtin_popcountg(URBG::max() - URBG::min());
+  constexpr std::size_t calls
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+    = (std::numeric_limits<double>::digits + bits - 1) / bits;
+#else
+    = (std::numeric_limits<RealType>::digits + bits - 1) / bits;
+#endif
+
+  struct wrapper : URBG
+  {
+    typename URBG::result_type operator()()
+    {
+      ++num_calls;
+      return URBG::operator()();
+    }
+    std::size_t num_calls = 0;
+  };
+
+  wrapper eng;
+  std::piecewise_constant_distribution<RealType> u;
+  u(eng);
+  VERIFY(eng.num_calls == calls);
 }
 
 int main()
@@ -79,5 +124,12 @@ int main()
   test_precision_depended<double>();
   test_precision_depended<long double>();
 
+  test_precision_depended<double, float>();
+  test_precision_depended<long double, float>();
+  test_precision_depended<long double, double>();
+
+  test_engine_calls<float>();
+  test_engine_calls<double>();
+  test_engine_calls<long double>();
   return 0;
 }

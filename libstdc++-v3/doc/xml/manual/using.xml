@@ -1391,7 +1391,9 @@ g++ -Winvalid-pch -I. -include stdc++.h -H -g -O2 hello.cc -o test.exe
 	xlink:href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82749">
 	PR82749</link> (<link xmlns:xlink="http://www.w3.org/1999/xlink"
 	xlink:href="https://cplusplus.github.io/LWG/lwg-defects.html#1439">
-	LWG1439</link>), and <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	LWG1439</link>), <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:href="https://cplusplus.github.io/LWG/lwg-defects.html#4052">
+	LWG4052</link>,	and <link xmlns:xlink="http://www.w3.org/1999/xlink"
 	xlink:href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125548">
 	PR125548</link>) in GCC 17.
       </para>

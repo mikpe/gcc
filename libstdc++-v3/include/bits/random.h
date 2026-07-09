@@ -6470,6 +6470,11 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 
       using _StorageType
 	= __detail::__piecewise_distributions_storage_t<_RealType>;
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+      using _CalcType = double;
+#else
+      using _CalcType = _RealType;
+#endif
 
     public:
       /** The type of the range of the distribution. */
@@ -6552,7 +6557,7 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	_M_configure();
 
 	void
-	_M_initialize2(const _RealType* __ints, _RealType __den);
+	_M_initialize2(const _RealType* __ints, _CalcType __den);
 
 	std::vector<_RealType> _M_int;
 	std::vector<_StorageType> _M_den;
@@ -6733,6 +6738,11 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 		   std::piecewise_constant_distribution<_RealType1>& __x);
 
     private:
+      template<typename _AdaptedUniformRandomNumberGenerator>
+	result_type
+	__generate_one(_AdaptedUniformRandomNumberGenerator& __aurng,
+		       const param_type& __param);
+
       template<typename _ForwardIterator,
 	       typename _UniformRandomNumberGenerator>
 	void
@@ -6775,6 +6785,11 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 
       using _StorageType
 	= __detail::__piecewise_distributions_storage_t<_RealType>;
+#ifdef _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS
+      using _CalcType = double;
+#else
+      using _CalcType = _RealType;
+#endif
 
     public:
       /** The type of the range of the distribution. */
@@ -6857,7 +6872,7 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 	_M_configure();
 
 	void
-	_M_initialize2(const _RealType* __ints, const _RealType* __dens);
+	_M_initialize2(const _RealType* __ints, const _CalcType* __dens);
 
 	std::vector<_RealType> _M_int;
 	std::vector<_StorageType> _M_den;
@@ -7040,6 +7055,11 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 		   std::piecewise_linear_distribution<_RealType1>& __x);
 
     private:
+      template<typename _AdaptedUniformRandomNumberGenerator>
+	result_type
+	__generate_one(_AdaptedUniformRandomNumberGenerator& __aurng,
+		       const param_type& __param);
+
       template<typename _ForwardIterator,
 	       typename _UniformRandomNumberGenerator>
 	void
