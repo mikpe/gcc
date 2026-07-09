@@ -1,3 +1,36 @@
+2026-07-08  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-12  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125597
+	* tree-vect-loop-manip.cc (vect_do_peeling): Create IFN_VARYING for
+	early break scalar IV.
+	* tree-vect-loop.cc (vect_update_ivs_after_vectorizer_for_early_breaks):
+	Replace the IFN_VARYING with actual value.
+
+2026-07-08  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-12  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125597
+	(vect_do_peeling): Create IFN_VARYING for masks.
+	* tree-vect-loop-manip.cc (vect_set_loop_condition): Replace the
+	IFN_VARYING.
+
+2026-07-08  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-12  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125597
+	* internal-fn.def (VARYING): New.
+	* doc/ifn.texi: Document it.
+	* internal-fn.cc (expand_VARYING): New.
+	* internal-fn.h (expand_VARYING): New.
+	* tree-cfg.cc (verify_gimple_call): Check for leaked IFN_VARYING.
+
 2026-07-07  Stafford Horne  <shorne@gmail.com>
 
 	Backported from master:

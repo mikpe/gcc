@@ -1,3 +1,21 @@
+2026-07-08  Marek Polacek  <polacek@redhat.com>
+
+	Backported from master:
+	2026-07-06  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/125901
+	* g++.dg/reflect/type_trait16.C: New test.
+	* g++.dg/reflect/type_trait17.C: New test.
+	* g++.dg/reflect/type_trait18.C: New test.
+
+2026-07-08  Tamar Christina  <tamar.christina@arm.com>
+
+	Backported from master:
+	2026-06-12  Tamar Christina  <tamar.christina@arm.com>
+
+	PR tree-optimization/125597
+	* gcc.target/aarch64/pr125597.c: New test.
+
 2026-07-07  Stafford Horne  <shorne@gmail.com>
 
 	Backported from master:
