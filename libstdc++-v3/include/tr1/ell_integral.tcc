@@ -223,7 +223,7 @@ namespace tr1
 
       if (__isnan(__k) || __isnan(__phi))
         return std::numeric_limits<_Tp>::quiet_NaN();
-      else if (std::abs(__k) > _Tp(1))
+      else if ((std::abs(__k) > _Tp(1)) || __builtin_isinf(__phi))
         std::__throw_domain_error(__N("Bad argument in __ellint_1."));
       else
         {
@@ -437,7 +437,7 @@ namespace tr1
 
       if (__isnan(__k) || __isnan(__phi))
         return std::numeric_limits<_Tp>::quiet_NaN();
-      else if (std::abs(__k) > _Tp(1))
+      else if ((std::abs(__k) > _Tp(1)) || __builtin_isinf(__phi))
         std::__throw_domain_error(__N("Bad argument in __ellint_2."));
       else
         {
@@ -705,7 +705,7 @@ namespace tr1
 
       if (__isnan(__k) || __isnan(__nu) || __isnan(__phi))
         return std::numeric_limits<_Tp>::quiet_NaN();
-      else if (std::abs(__k) > _Tp(1))
+      else if ((std::abs(__k) > _Tp(1)) || __builtin_isinf(__phi))
         std::__throw_domain_error(__N("Bad argument in __ellint_3."));
       else
         {
