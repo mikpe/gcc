@@ -1,3 +1,29 @@
+2026-07-09  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-07-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/126127
+	* gfortran.dg/block_18.f90: New test.
+
+2026-07-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backported from master:
+	2026-07-08  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126148
+	* gcc.target/i386/pr126148.c: New test.
+
+2026-07-09  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-07  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/103367
+	* gfortran.dg/pr103367_2.f90: New test.
+	* gfortran.dg/pr103367_3.f90: New test.
+	* gfortran.dg/pr103367_4.f90: New test.
+
 2026-07-08  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

@@ -1,3 +1,26 @@
+2026-07-09  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2026-07-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/126127
+	* interface.cc (find_symtree0): Check for NULL pointer.
+	(gfc_find_sym_in_symtree): Also search user-defined operator list
+	when the symbol refers to a function.
+
+2026-07-09  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-07  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/103367
+	* expr.cc (simplify_const_ref): Hoist the call to
+	remove_subobject_ref up a level.
+	* primary.cc (gfc_match_rvalue): Don't copy the value expr
+	if the type is an EXPR_VARIABLE.
+	* trans-array.cc (gfc_conv_array_initializer): Only copy the expr
+	value if it does not have a ref.
+
 2026-07-03  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	Backported from master:

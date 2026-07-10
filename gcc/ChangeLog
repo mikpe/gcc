@@ -1,3 +1,25 @@
+2026-07-09  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2026-07-07  Richard Earnshaw  <rearnsha@arm.com>
+
+	* config/aarch64/aarch64-option-extensions.def (AARCH64_OPT_EXTENSION):
+	Remove +mpamv2.
+	* config/aarch64/aarch64-sys-regs.def: Remove sysregs associated
+	with MPAMv2_VID and adjust other related sysregs to use the
+	base permitted architecture.
+	* doc/invoke.texi (aarch64: +mpamv2): Remove option.
+
+2026-07-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backported from master:
+	2026-07-08  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126148
+	* config/i386/i386-expand.cc (ix86_gen_ccmp_first): Restrict
+	floating-point modes accepted for ccmp according to the
+	available floating-point instruction set.
+
 2026-07-08  Tamar Christina  <tamar.christina@arm.com>
 
 	Backported from master:
