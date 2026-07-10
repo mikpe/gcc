@@ -1,3 +1,13 @@
+2026-07-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backported from master:
+	2026-07-08  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126148
+	* config/i386/i386-expand.cc (ix86_gen_ccmp_first): Restrict
+	floating-point modes accepted for ccmp according to the
+	available floating-point instruction set.
+
 2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
 
 	Backported from master:

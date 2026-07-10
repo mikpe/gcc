@@ -1,3 +1,42 @@
+2026-07-09  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-07  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/103367
+	* gfortran.dg/pr103367_2.f90: New test.
+	* gfortran.dg/pr103367_3.f90: New test.
+	* gfortran.dg/pr103367_4.f90: New test.
+
+2026-07-09  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-06-24  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/60576
+	* gfortran.dg/asan/assumed_rank_26.f90: New test covering both
+	assumed-rank and fixed-rank type actuals passed to a CLASS
+	assumed-rank dummy.
+
+2026-07-09  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/103367
+	* gfortran.dg/pr103367.f90: Expect a constant-expression error and
+	prune the legacy-extension warning.
+
+2026-07-09  Christopher Albert  <albert@tugraz.at>
+
+	PR fortran/103367
+	* gfortran.dg/pr103367.f90: New test.
+
+2026-07-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backported from master:
+	2026-07-08  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126148
+	* gcc.target/i386/pr126148.c: New test.
+
 2026-07-07  Icenowy Zheng  <zhengxingda@iscas.ac.cn>
 
 	Backported from master:
