@@ -1392,6 +1392,28 @@ test_accessing_ordinary_linemaps (const line_table_case &case_)
   source_range src_range = get_range_from_loc (line_table, range_c_b_d);
   ASSERT_EQ (loc_b, src_range.m_start);
   ASSERT_EQ (loc_d, src_range.m_finish);
+
+  /* Verify raw line map usage.  The map should have the requested properties,
+     irrespective of limits like LINE_MAP_MAX_LOCATION_WITH_COLS.  */
+  for (int sysp = 0; sysp != 3; ++sysp)
+    {
+      constexpr int column_bits = 8, range_bits = 7;
+      const int line = 1 + sysp;
+      const auto map = linemap_add_raw_map (line_table, LC_RENAME,
+					    line_table->highest_location + 1,
+					    sysp, column_bits + range_bits,
+					    range_bits, "foo2.c", line, 1);
+      ASSERT_NE (map, nullptr);
+      ASSERT_EQ (map->reason, LC_RENAME);
+      ASSERT_EQ (map->m_column_and_range_bits, column_bits + range_bits);
+      ASSERT_EQ (map->m_range_bits, range_bits);
+      const line_map_uint_t col = 200 + sysp;
+      const location_t loc = MAP_START_LOCATION (map) + (col << range_bits);
+      ASSERT_GT (loc, line_table->highest_line);
+      ASSERT_LT (loc, line_table->highest_location);
+      ASSERT_EQ (in_system_header_at (loc), sysp);
+      assert_loceq ("foo2.c", line, col, loc);
+    }
 }
 
 /* Verify various properties of UNKNOWN_LOCATION.  */

@@ -576,9 +576,7 @@ linemap_add (line_maps *set, enum lc_reason reason,
   unsigned range_bits = 0;
   if (start_location < LINE_MAP_MAX_LOCATION_WITH_COLS)
     range_bits = set->default_range_bits;
-  start_location += (loc_one << range_bits) - 1;
-  start_location &=  ~((loc_one << range_bits) - 1);
-
+  start_location = linemap_next_start_location (start_location, range_bits);
   linemap_assert (!LINEMAPS_ORDINARY_USED (set)
 		  || (start_location
 		      >= MAP_START_LOCATION (LINEMAPS_LAST_ORDINARY_MAP (set))));
@@ -709,6 +707,41 @@ linemap_add (line_maps *set, enum lc_reason reason,
       map->included_from = linemap_included_from (from);
     }
 
+  return map;
+}
+
+/* Create a map with exactly the requested parameters.  Not intended for general
+   use, but useful for applications that need to work with linemap internals
+   directly.  NUM_LINES is the number of lines this map should be able to hold;
+   this just ensures that set->highest_location is set properly so that the next
+   added map will leave sufficient room for NUM_LINES lines in this map.  */
+
+line_map_ordinary *
+linemap_add_raw_map (line_maps *set, lc_reason reason, location_t start_loc,
+		     unsigned int sysp, int column_and_range_bits,
+		     int range_bits, const char *to_file, linenum_type to_line,
+		     line_map_uint_t num_lines)
+{
+  start_loc = linemap_next_start_location (start_loc, range_bits);
+  gcc_assert (start_loc > set->highest_location);
+  location_t last_loc = start_loc + (loc_one << column_and_range_bits) - 1;
+  if (num_lines > 1)
+    last_loc += (num_lines - 1) << column_and_range_bits;
+  if (last_loc >= LINE_MAP_MAX_LOCATION)
+    return nullptr;
+  const auto map = linemap_check_ordinary (new_linemap (set, start_loc));
+  map->reason = reason;
+  map->sysp = sysp;
+  map->m_column_and_range_bits = column_and_range_bits;
+  map->m_range_bits = range_bits;
+  map->to_file = to_file;
+  map->to_line = to_line;
+  set->info_ordinary.m_cache = LINEMAPS_ORDINARY_USED (set) - 1;
+  set->highest_location = last_loc;
+  set->highest_line
+    = start_loc + ((last_loc - start_loc)
+		   & (line_map_uint_t (-1) << column_and_range_bits));
+  set->max_column_hint = 1U << (column_and_range_bits - range_bits);
   return map;
 }
 
@@ -1153,10 +1186,13 @@ linemap_lookup (const line_maps *set, location_t line)
   return linemap_ordinary_map_lookup (set, line);
 }
 
-/* Given a source location yielded by an ordinary map, returns that
-   map.  Since the set is built chronologically, the logical lines are
-   monotonic increasing, and so the list is sorted and we can use a
-   binary search.  */
+/* Given a source location yielded by an ordinary map, returns that map.  Since
+   the start_location of each map is larger than the prior one, this can be done
+   with binary search.  Note that the line maps are not necessarily sorted by
+   file name or by line number, although they often are, at least in a local
+   region, since things like #line directives, multiple includes, or
+   manipulations outside the normal usage during parsing can all affect the
+   sorting.  But they are always sorted by start_location.  */
 
 static const line_map_ordinary *
 linemap_ordinary_map_lookup (const line_maps *set, location_t line)
