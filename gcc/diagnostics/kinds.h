@@ -34,7 +34,9 @@ enum class kind
   pop,
   /* This is used internally to note that a diagnostic is enabled
      without mandating any specific type.  */
-  any
+  any,
+
+  tot_num_diagnostic_kinds
 };
 
 extern const char *get_text_for_kind (enum diagnostics::kind);

@@ -339,7 +339,7 @@ public:
   void
   report_global_digraph (const lazily_created<digraphs::digraph> &);
 
-  enum kind
+  void
   classify_diagnostic (option_id opt_id,
 		       enum kind new_kind,
 		       location_t where)
@@ -351,10 +351,7 @@ public:
       .log_param_location_t ("where", where);
     logging::auto_inc_depth depth_sentinel (m_logger);
 
-    return m_option_classifier.classify_diagnostic (this,
-						    opt_id,
-						    new_kind,
-						    where);
+    m_option_classifier.classify_diagnostic (this, opt_id, new_kind, where);
   }
 
   void push_diagnostics (location_t where)

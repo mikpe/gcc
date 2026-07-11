@@ -115,56 +115,37 @@ option_classifier::pop (location_t where)
   m_classification_history.safe_push (v);
 }
 
-/* Interface to specify diagnostic kind overrides.  Returns the
-   previous setting, or kind::unspecified if the parameters are out of
-   range.  If OPTION_ID is zero, the new setting is for all the
-   diagnostics.  */
+/* Interface to specify diagnostic kind overrides.  If OPTION_ID is zero, the
+   new setting is for all the diagnostics.  */
 
-enum kind
+void
 option_classifier::classify_diagnostic (const context *dc,
 					option_id opt_id,
 					enum kind new_kind,
 					location_t where)
 {
-  enum kind old_kind;
-
   if (opt_id.m_idx < 0
       || opt_id.m_idx >= m_n_opts
       || new_kind >= kind::last_diagnostic_kind)
-    return kind::unspecified;
+    return;
 
-  old_kind = m_classify_diagnostic[opt_id.m_idx];
+  auto &base_kind = m_classify_diagnostic[opt_id.m_idx];
 
   /* Handle pragmas separately, since we need to keep track of *where*
      the pragmas were.  */
   if (where != UNKNOWN_LOCATION)
     {
-      unsigned i;
-
       /* Record the command-line status, so we can reset it back on kind::pop. */
-      if (old_kind == kind::unspecified)
-	{
-	  old_kind = (!dc->option_enabled_p (opt_id)
-		      ? kind::ignored : kind::any);
-	  m_classify_diagnostic[opt_id.m_idx] = old_kind;
-	}
-
-      classification_change_t *p;
-      FOR_EACH_VEC_ELT_REVERSE (m_classification_history, i, p)
-	if (p->option == opt_id.m_idx)
-	  {
-	    old_kind = p->kind;
-	    break;
-	  }
+      if (base_kind == kind::unspecified)
+	base_kind = (!dc->option_enabled_p (opt_id)
+		     ? kind::ignored : kind::any);
 
       classification_change_t v
 	= { where, opt_id.m_idx, new_kind };
       m_classification_history.safe_push (v);
     }
   else
-    m_classify_diagnostic[opt_id.m_idx] = new_kind;
-
-  return old_kind;
+    base_kind = new_kind;
 }
 
 /* Update the kind of DIAGNOSTIC based on its location(s), including

@@ -141,13 +141,13 @@ diagnostic_initialize_input_context (diagnostics::context *context,
 }
 
 /* Force diagnostics controlled by OPTIDX to be kind KIND.  */
-inline diagnostics::kind
+inline void
 diagnostic_classify_diagnostic (diagnostics::context *context,
 				diagnostics::option_id opt_id,
 				enum diagnostics::kind kind,
 				location_t where)
 {
-  return context->classify_diagnostic (opt_id, kind, where);
+  context->classify_diagnostic (opt_id, kind, where);
 }
 
 inline void

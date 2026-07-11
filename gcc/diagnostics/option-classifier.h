@@ -57,7 +57,7 @@ public:
     return m_classify_diagnostic[opt_id.m_idx];
   }
 
-  enum kind
+  void
   classify_diagnostic (const context *context,
 		       option_id opt_id,
 		       enum kind new_kind,
@@ -69,7 +69,6 @@ public:
   int pch_save (FILE *);
   int pch_restore (FILE *);
 
-private:
   /* Each time a diagnostic's classification is changed with a pragma,
      we record the change and the location of the change in an array of
      these structs.  */
@@ -85,6 +84,7 @@ private:
     enum kind kind;
   };
 
+private:
   int m_n_opts;
 
   /* For each option index that can be passed to warning() et al
