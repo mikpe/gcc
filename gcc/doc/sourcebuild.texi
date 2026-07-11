@@ -4119,12 +4119,19 @@ it is executed.  It is one of:
 Compile with @option{-c} to produce a relocatable object file.
 @item link
 Compile, assemble, and link to produce an executable file.
+@item ar-link
+Similar to @code{link}, but combine all but the first source file into
+an archive file before the final link.
+@item incr-link
+As with @code{ar-link}, but combine the files into an object file
+using incremental linking, rather than an archive file.  This enables
+testing the incremental linking features of the LTO front end.
 @item run
 Produce and run an executable file, which is expected to return
 an exit code of 0.
 @end table
 
-The default is @code{assemble}.  That can be overridden for a set of
+The default is @code{run}.  That can be overridden for a set of
 tests by redefining @code{dg-do-what-default} within the @code{.exp}
 file for those tests.
 

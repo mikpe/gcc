@@ -44,12 +44,15 @@ where there is a single file named 'foo_0.C'.
 
 === The dg-lto-do Directive ==
 
-The only supported dg-lto-do options are 'assemble', 'run' and 'link'.
-Additionally, these can only be used in the main file.  If
-'assemble' is used, only the individual object files are
-generated.  If 'link' is used, the final executable is generated
-but not executed (in this case, function main() needs to exist
-but it does not need to do anything).  If 'run' is used, the
-final executable is generated and the resulting binary executed.
+The supported dg-lto-do options are 'assemble', 'run', 'link', 'ar-link',
+and 'incr-link'.  This option can only be used in the main file.  If
+'assemble' is used, only the individual object files are generated.  If
+'link' is used, the final executable is generated but not executed (in
+this case, function main() needs to exist but it does not need to do
+anything).  If 'run' is used, the final executable is generated and the
+resulting binary executed.  'ar-link' and 'incr-link' are similar to
+'link', except that the non-main object files are combined together before
+the final link, into either an archive, in the former case, or an object
+file via incremental linking, in the latter.
 
 The default value for dg-lto-do is 'run'.
