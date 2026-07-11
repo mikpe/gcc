@@ -8,6 +8,8 @@ The LTO harness recognizes the following special DejaGnu directives:
  *  dg-lto-options - the equivalent of dg-options with additional syntax
       to support different sets of options for different files compiled
       as part of the same test case,
+ *  dg-lto-additional-options - the equivalent of dg-additional-options;
+      adds to the default options instead of overwriting them
  *  dg-lto-warning - the equivalent of dg-warning for diagnostics expected
       to be emitted at LTO link time,
  *  dg-lto-message - the equivakent of dg-message for informational notes

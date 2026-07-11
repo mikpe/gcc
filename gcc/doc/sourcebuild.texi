@@ -4134,8 +4134,17 @@ Unlike @code{dg-do}, @code{dg-lto-do} does not support an optional
 
 @item @{ dg-lto-options @{ @{ @var{options} @} [@{ @var{options} @}] @} [@{ target @var{selector} @}]@}
 This directive provides a list of one or more sets of compiler options
-to override @var{LTO_OPTIONS}.  Each test will be compiled and run with
-each of these sets of options.
+to override @var{LTO_OPTIONS}.  Every test file will be compiled and
+run once for each of these sets of options.  Individual source files
+within a test may also use @code{dg-options} to specify additional
+options to include.
+
+@item @{ dg-lto-additional-options @{ @{ @var{options} @} [@{ @var{options} @}] @} [@{ target @var{selector} @}]@}
+This is similar to @code{dg-lto-options}, but rather than overriding
+@var{LTO_OPTIONS}, it appends the given options to each of the sets
+specified in @var{LTO_OPTIONS}.  This can be used to add a given list
+of options to every compilation of all source files in the test,
+without otherwise changing which combinations of options are tested.
 
 @item @{ dg-extra-ld-options @var{options} [@{ target @var{selector} @}]@}
 This directive adds @var{options} to the linker options used.
