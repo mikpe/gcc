@@ -116,7 +116,7 @@ along with GCC; see the file COPYING3.  If not see
 			  to terminate the statements and exception
 			  regions within this block.
 
-   12) STRINGS
+   13) STRINGS
 
      String are represented in the table as pairs, a length in ULEB128
      form followed by the data for the string.  */
@@ -225,6 +225,7 @@ enum lto_section_type
   LTO_section_ipa_sra,
   LTO_section_odr_types,
   LTO_section_ipa_modref,
+  LTO_section_linemap,
   LTO_N_SECTION_TYPES		/* Must be last.  */
 };
 
@@ -258,10 +259,18 @@ typedef void (lto_free_section_data_f) (struct lto_file_decl_data *,
 					const char *,
 					size_t);
 
-/* The location cache holds expanded locations for streamed in trees.
-   This is done to reduce memory usage of libcpp linemap that strongly prefers
-   locations to be inserted in the source order.  */
+/* Structure to map ordinary_map indices from streamed-in data to
+   the linemap they correspond to.  */
+struct GTY(()) lto_loc_map
+{
+  size_t nmaps;
+  size_t map[1];
+};
 
+/* The location cache holds the ancillary data for streamed in trees.  This is
+   done to reduce memory usage in the libcpp linemap; we don't need to create an
+   adhoc location and store the ancillary data if the tree ends up being
+   merged.  */
 class lto_location_cache
 {
 public:
@@ -273,65 +282,67 @@ public:
   void accept_location_cache ();
   /* Tree merging did succeed; throw away recent changes.  */
   void revert_location_cache ();
-  void input_location (location_t *loc, struct bitpack_d *bp,
+  void input_location (location_t *dest, struct bitpack_d *bp,
 		       class data_in *data_in);
-  void input_location_and_block (location_t *loc, struct bitpack_d *bp,
+  void input_location_and_block (location_t *dest, struct bitpack_d *bp,
 				 class lto_input_block *ib,
 				 class data_in *data_in);
-  lto_location_cache ()
-     : loc_cache (), accepted_length (0), current_file (NULL), current_line (0),
-       current_col (0), current_sysp (false), current_loc (UNKNOWN_LOCATION),
-       current_block (NULL_TREE)
+  void set_linemap_offset (unsigned offset) { linemap_offset = offset; }
+
+  explicit lto_location_cache (lto_file_decl_data *loc_data)
+    : decl_data{loc_data}
   {
-    gcc_assert (!current_cache);
-    current_cache = this;
+    if (decl_data)
+      {
+	gcc_assert (!current_cache);
+	current_cache = this;
+      }
   }
   ~lto_location_cache ()
   {
-    apply_location_cache ();
-    gcc_assert (current_cache == this);
-    current_cache = NULL;
+    if (decl_data)
+      {
+	apply_location_cache ();
+	gcc_assert (current_cache == this);
+	current_cache = NULL;
+      }
   }
 
-  /* There can be at most one instance of location cache (combining multiple
-     would bring it out of sync with libcpp linemap); point to current
-     one.  */
+  /* There can be at most one active instance of location_cache, so that IPA
+     passes can find it if needed; point to current one.  */
   static lto_location_cache *current_cache;
 
 private:
-  static int cmp_loc (const void *pa, const void *pb);
-
   struct cached_location
   {
-    const char *file;
-    location_t *loc;
-    int line, col;
-    bool sysp;
+    location_t *dest;
+    location_t loc;
     tree block;
     unsigned discr;
   };
 
-  /* The location cache.  */
+  /* Which linemap section we are using.  */
+  lto_file_decl_data *const decl_data;
+  const lto_loc_map *cur_loc_map = nullptr;
+  unsigned linemap_offset = 0;
 
+  /* The location cache.  */
   auto_vec<cached_location> loc_cache;
+
+  /* These keep track of most recently seen values as they are streamed in.  */
+  tree stream_block = NULL_TREE;
+  unsigned stream_discr = 0;
+  size_t stream_map_idx = 0;
+  location_t stream_loc_offset = 0;
+  unsigned stream_linemap_order = -1U;
+
+  /* These keep track of most recently accepted values.  */
+  cached_location current_cloc = {};
+  location_t current_loc = UNKNOWN_LOCATION;
 
   /* Accepted entries are ones used by trees that are known to be not unified
      by tree merging.  */
-
-  int accepted_length;
-
-  /* Bookkeeping to remember state in between calls to lto_apply_location_cache
-     When streaming gimple, the location cache is not used and thus
-     lto_apply_location_cache happens per location basis.  It is then
-     useful to avoid redundant calls of linemap API.  */
-
-  const char *current_file;
-  int current_line;
-  int current_col;
-  bool current_sysp;
-  location_t current_loc;
-  tree current_block;
-  unsigned current_discr;
+  unsigned accepted_length = 0;
 };
 
 /* Structure used as buffer for reading an LTO file.  */
@@ -507,6 +518,10 @@ struct GTY((for_user)) lto_in_decl_state
 
   /* True if decl state is compressed.  */
   bool compressed;
+
+  /* Order of the linemap section to be used for interpreting the locations
+     streamed for this decl.  */
+  unsigned linemap_id;
 };
 
 typedef struct lto_in_decl_state *lto_in_decl_state_ptr;
@@ -546,6 +561,10 @@ struct lto_out_decl_state
 
   /* True if offload tables should be output. */
   bool output_offload_tables_p;
+
+  /* Order of the linemap section to be used for interpreting the locations
+     streamed for this decl.  */
+  unsigned linemap_id;
 };
 
 typedef struct lto_out_decl_state *lto_out_decl_state_ptr;
@@ -617,7 +636,24 @@ struct GTY(()) lto_file_decl_data
   int unit_base;
 
   unsigned mode_bits;
+
+  /* Number of linemap sections contained in this file.  There is typically only
+     1, but WPA and INCREMENTAL_LINK_LTO modes may create files with more than
+     one linemap.  */
+  unsigned num_linemap_sections;
+
+  /* Location maps for locations streamed in this file.  */
+  lto_file_decl_data *loc_map_decl_data;
+  vec<lto_loc_map *, va_gc> *loc_maps;
 };
+
+/* Given an input linemap ID, compute how it will be known in the output, given
+   that the output could be the combination of multiple input files.  */
+inline unsigned
+lto_linemap_output_id (unsigned linemap_id, const lto_file_decl_data *file_data)
+{
+  return linemap_id + file_data->order;
+}
 
 typedef struct lto_file_decl_data *lto_file_decl_data_ptr;
 
@@ -728,17 +764,13 @@ struct output_block
      if we are serializing something else.  */
   symtab_node *symbol;
 
-  /* These are the last file and line that were seen in the stream.
-     If the current node differs from these, it needs to insert
-     something into the stream and fix these up.  */
-  const char *current_file;
-  int current_line;
-  int current_col;
-  bool current_sysp;
-  bool reset_locus;
-  bool emit_pwd;
+  /* These record the most-recently-streamed values, to avoid streaming
+     them unnecessarily.  */
   tree current_block;
   unsigned current_discr;
+  size_t current_map_idx;
+  location_t current_loc_offset;
+  unsigned current_linemap_id;
 
   /* Cache of nodes written in this section.  */
   struct streamer_tree_cache_d *writer_cache;
@@ -773,6 +805,10 @@ public:
 
   /* Cache of source code location.  */
   lto_location_cache location_cache;
+
+  explicit data_in (lto_file_decl_data *data_for_loc)
+    : location_cache{data_for_loc}
+  {}
 };
 
 
@@ -869,8 +905,9 @@ extern void lto_input_constructors_and_inits (struct lto_file_decl_data *,
 extern void lto_input_toplevel_asms (struct lto_file_decl_data *, int);
 extern void lto_input_mode_table (struct lto_file_decl_data *);
 extern class data_in *lto_data_in_create (struct lto_file_decl_data *,
-				    const char *, unsigned,
-				    vec<ld_plugin_symbol_resolution_t> );
+					  const char *, unsigned,
+					  vec<ld_plugin_symbol_resolution_t>,
+					  bool need_location_cache = true);
 extern void lto_data_in_delete (class data_in *);
 extern void lto_input_data_block (class lto_input_block *, void *, size_t);
 void lto_input_location (location_t *, struct bitpack_d *, class data_in *);
@@ -902,6 +939,8 @@ extern void lto_output_toplevel_asms (lto_symtab_encoder_t);
 extern void produce_asm (struct output_block *ob);
 extern void lto_output ();
 extern void produce_asm_for_decls ();
+void lto_register_linemap_for_output (size_t, unsigned);
+void lto_copy_linemaps ();
 void lto_output_decl_state_streams (struct output_block *,
 				    struct lto_out_decl_state *);
 void lto_output_decl_state_refs (struct output_block *,

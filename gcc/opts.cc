@@ -3964,6 +3964,7 @@ gen_command_line_string (cl_decoded_option *options,
       case OPT_nostdinc__:
       case OPT_fpreprocessed:
       case OPT_fltrans_output_list_:
+      case OPT_fltrans_linemap_file_:
       case OPT_fresolution_:
       case OPT_fdebug_prefix_map_:
       case OPT_fmacro_prefix_map_:

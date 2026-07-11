@@ -57,6 +57,10 @@ fltrans-output-list=
 LTO Joined Var(ltrans_output_list)
 Specify a file to which a list of files output by LTRANS is written.
 
+fltrans-linemap-file=
+LTO Joined Var(ltrans_linemap_file)
+Specify the object file containing copied linemap sections; used internally during LTRANS phase.
+
 fresolution=
 LTO Joined
 The resolution file.

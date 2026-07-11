@@ -94,10 +94,10 @@ lto_tag_name (enum LTO_tags tag)
 }
 
 
-/* Get a section name for a particular type or name.  The NAME field
-   is only used if SECTION_TYPE is LTO_section_function_body. For all
-   others it is ignored.  The callee of this function is responsible
-   to free the returned name.  */
+/* Get a section name for a particular type or name.  The NAME and NODE_ORDER
+   fields are only used if SECTION_TYPE is LTO_section_function_body or
+   LTO_section_linemap.  The callee of this function is responsible for freeing
+   the returned name.  */
 
 char *
 lto_get_section_name (int section_type, const char *name,
@@ -105,7 +105,7 @@ lto_get_section_name (int section_type, const char *name,
 {
   const char *add;
   char post[32];
-  const char *sep;
+  const char *sep = ".";
   char *buffer = NULL;
 
   if (section_type == LTO_section_function_body)
@@ -120,11 +120,16 @@ lto_get_section_name (int section_type, const char *name,
       add = buffer;
       sep = "";
     }
-  else if (section_type < LTO_N_SECTION_TYPES)
+  else if (section_type == LTO_section_linemap)
     {
-      add = lto_section_name[section_type];
-      sep = ".";
+      gcc_checking_assert (!name);
+      const auto section_name = lto_section_name[section_type];
+      buffer = XNEWVEC (char, strlen (section_name) + 32);
+      sprintf (buffer, "%s.%d", section_name, node_order);
+      add = buffer;
     }
+  else if (section_type < LTO_N_SECTION_TYPES)
+    add = lto_section_name[section_type];
   else
     internal_error ("bytecode stream: unexpected LTO section %s", name);
 

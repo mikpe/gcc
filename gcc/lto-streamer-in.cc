@@ -376,52 +376,29 @@ canon_file_name (const char *relative_prefix, const char *string)
     }
 }
 
+/* Given a map index and offset from the streamed data, convert it to a
+   location_t in the global line map.  */
+
+static location_t
+get_location_from_idx (size_t map_idx, location_t offset,
+		       const lto_loc_map *loc_map)
+{
+  if (!map_idx)
+    return offset;
+  gcc_checking_assert (loc_map);
+  --map_idx;
+  gcc_assert (map_idx < loc_map->nmaps);
+  const auto map = LINEMAPS_ORDINARY_MAP_AT (line_table, loc_map->map[map_idx]);
+  const location_t res = map->start_location + offset;
+  gcc_checking_assert (res < (map == LINEMAPS_LAST_ORDINARY_MAP (line_table)
+			      ? line_table->highest_location + 1
+			      : map[1].start_location));
+  return res;
+}
+
 /* Pointer to currently alive instance of lto_location_cache.  */
 
 lto_location_cache *lto_location_cache::current_cache;
-
-/* Sort locations in source order. Start with file from last application.  */
-
-int
-lto_location_cache::cmp_loc (const void *pa, const void *pb)
-{
-  const cached_location *a = ((const cached_location *)pa);
-  const cached_location *b = ((const cached_location *)pb);
-  const char *current_file = current_cache->current_file;
-  int current_line = current_cache->current_line;
-
-  if (a->file == current_file && b->file != current_file)
-    return -1;
-  if (a->file != current_file && b->file == current_file)
-    return 1;
-  if (a->file == current_file && b->file == current_file)
-    {
-      if (a->line == current_line && b->line != current_line)
-	return -1;
-      if (a->line != current_line && b->line == current_line)
-	return 1;
-    }
-  if (a->file != b->file)
-    return strcmp (a->file, b->file);
-  if (a->sysp != b->sysp)
-    return a->sysp ? 1 : -1;
-  if (a->line != b->line)
-    return a->line - b->line;
-  if (a->col != b->col)
-    return a->col - b->col;
-  if (a->discr != b->discr)
-    return a->discr - b->discr;
-  if ((a->block == NULL_TREE) != (b->block == NULL_TREE))
-    return a->block ? 1 : -1;
-  if (a->block)
-    {
-      if (BLOCK_NUMBER (a->block) < BLOCK_NUMBER (b->block))
-	return -1;
-      if (BLOCK_NUMBER (a->block) > BLOCK_NUMBER (b->block))
-	return 1;
-    }
-  return 0;
-}
 
 /* Apply all changes in location cache.  Add locations into linemap and patch
    trees.  */
@@ -429,60 +406,19 @@ lto_location_cache::cmp_loc (const void *pa, const void *pb)
 bool
 lto_location_cache::apply_location_cache ()
 {
-  static const char *prev_file;
-  if (!loc_cache.length ())
-    return false;
-  if (loc_cache.length () > 1)
-    loc_cache.qsort (cmp_loc);
+  if (loc_cache.is_empty ())
+    return true;
 
-  for (unsigned int i = 0; i < loc_cache.length (); i++)
+  for (const auto &cloc: loc_cache)
     {
-      struct cached_location loc = loc_cache[i];
-
-      if (current_file != loc.file)
-	linemap_add (line_table, prev_file ? LC_RENAME : LC_ENTER,
-		     loc.sysp, loc.file, loc.line);
-      else if (current_line != loc.line)
-	{
-	  int max = loc.col;
-
-	  for (unsigned int j = i + 1; j < loc_cache.length (); j++)
-	    if (loc.file != loc_cache[j].file
-		|| loc.line != loc_cache[j].line)
-	      break;
-	    else if (max < loc_cache[j].col)
-	      max = loc_cache[j].col;
-	  linemap_line_start (line_table, loc.line, max + 1);
-	}
-      gcc_assert (*loc.loc == BUILTINS_LOCATION + 1);
-      if (current_file != loc.file
-	  || current_line != loc.line
-	  || current_col != loc.col)
-	{
-	  current_loc = linemap_position_for_column (line_table, loc.col);
-	  if (loc.block)
-	    current_loc = set_block (current_loc, loc.block);
-	  if (loc.discr)
-	    current_loc = location_with_discriminator (current_loc, loc.discr);
-	}
-      else if (current_block != loc.block)
-	{
-	  if (loc.block)
-	    current_loc = set_block (current_loc, loc.block);
-	  else
-	    current_loc = LOCATION_LOCUS (current_loc);
-	  if (loc.discr)
-	    current_loc = location_with_discriminator (current_loc, loc.discr);
-	}
-      else if (current_discr != loc.discr)
-	current_loc = location_with_discriminator (current_loc, loc.discr);
-      *loc.loc = current_loc;
-      current_line = loc.line;
-      prev_file = current_file = loc.file;
-      current_col = loc.col;
-      current_block = loc.block;
-      current_discr = loc.discr;
+      const location_t loc = cloc.loc;
+      const auto range = source_range::from_location (loc);
+      *cloc.dest = line_table->get_or_create_combined_loc (loc, range,
+							   cloc.block,
+							   cloc.discr);
     }
+  current_cloc = loc_cache[loc_cache.length () - 1];
+  current_loc = *current_cloc.dest;
   loc_cache.truncate (0);
   accepted_length = 0;
   return true;
@@ -505,124 +441,214 @@ lto_location_cache::revert_location_cache ()
   loc_cache.truncate (accepted_length);
 }
 
-/* Read a location bitpack from bit pack BP and either update *LOC directly
-   or add it to the location cache.  If IB is non-NULL, stream in a block
-   afterwards.
-   It is necessary to call apply_location_cache to get *LOC updated.  */
+/* Bitpack packing is more efficient for small values since every 4th bit is a
+   continuation bit, so it helps to pack values as the delta from the previous
+   if they can get large.  */
+template<typename Int>
+static Int
+bp_unpack_delta (bitpack_d *bp, Int &prev)
+{
+  const bool decrease = bp_unpack_value (bp, 1);
+  const Int delta = bp_unpack_var_len_unsigned (bp);
+  return prev = (decrease ? prev - delta : prev + delta);
+}
+
+/* Read the linemap section of order LINEMAP_ID from FILE_DATA and create an
+   lto_loc_map object that can be used to find which ordinary map in the
+   global line_table corresponds to a given streamed-out map index.  Always
+   either returns a non-NULL pointer, or calls fatal_error().  */
+
+static lto_loc_map *
+create_loc_map (lto_file_decl_data *file_data, unsigned linemap_id)
+{
+  timevar_push (TV_IPA_LTO_LINEMAP_IN);
+
+  size_t len;
+  const auto data = lto_get_section_data (file_data, LTO_section_linemap,
+					  nullptr, linemap_id, &len, true);
+  if (!data)
+    fatal_error (UNKNOWN_LOCATION,
+		 "linemap section #%u not found in file %qs",
+		 linemap_id, file_data->file_name);
+
+  const auto header = (const lto_simple_header_with_strings *) data;
+  const char *const main_begin = data + sizeof (*header);
+  const auto data_in
+    = lto_data_in_create (file_data, main_begin + header->main_size,
+			  header->string_size, vNULL, false);
+  lto_input_block ib (main_begin, header->main_size, file_data);
+  bitpack_d bp = streamer_read_bitpack (&ib);
+
+  /* Create the location map object.  */
+  const size_t nmaps = bp_unpack_var_len_unsigned (&bp);
+  size_t loc_map_sz = sizeof (lto_loc_map);
+  if (nmaps > 1)
+    loc_map_sz += (nmaps - 1) * sizeof (size_t);
+  const auto loc_map = (lto_loc_map *) ggc_internal_alloc (loc_map_sz);
+  loc_map->nmaps = nmaps;
+
+  /* Read the line map data.  */
+  const char *stream_relative_path_prefix = nullptr;
+  const char *stream_file = nullptr;
+  size_t cur_map_idx = 0;
+  linenum_type cur_line = 0;
+  for (size_t i = 0; i != nmaps; ++i)
+    {
+      const size_t map_idx = bp_unpack_delta (&bp, cur_map_idx);
+      gcc_assert (map_idx && map_idx <= nmaps);
+      const line_map_uint_t num_lines = bp_unpack_var_len_unsigned (&bp);
+      const bool sysp = bp_unpack_value (&bp, 1);
+      const unsigned int column_bits = bp_unpack_value (&bp, 8);
+      const linenum_type to_line = bp_unpack_delta (&bp, cur_line);
+      const bool file_change = bp_unpack_value (&bp, 1);
+      if (file_change)
+	{
+	  const bool pwd_change = bp_unpack_value (&bp, 1);
+	  if (pwd_change)
+	    {
+	      const char *pwd = bp_unpack_string (data_in, &bp);
+	      const char *src_pwd = get_src_pwd ();
+	      stream_relative_path_prefix
+		= strcmp (pwd, src_pwd) == 0 ? nullptr
+		: canon_relative_path_prefix (pwd, src_pwd);
+	    }
+	  stream_file = canon_file_name (stream_relative_path_prefix,
+					 bp_unpack_string (data_in, &bp));
+	}
+      gcc_assert (stream_file);
+      const auto map
+	= linemap_add_raw_map (line_table,
+			       line_table->depth ? LC_RENAME : LC_ENTER,
+			       line_table->highest_location + 1, sysp,
+			       column_bits, 0, stream_file, to_line, num_lines);
+      if (!map)
+	fatal_error (UNKNOWN_LOCATION,
+		     "Ran out of locations while reading linemap section #%u",
+		     linemap_id);
+      loc_map->map[map_idx - 1] = map - line_table->info_ordinary.maps;
+      if (flag_wpa || flag_incremental_link == INCREMENTAL_LINK_LTO)
+	{
+	  const auto out_id = lto_linemap_output_id (linemap_id, file_data);
+	  lto_register_linemap_for_output (map_idx, out_id);
+	}
+    }
+
+  lto_data_in_delete (data_in);
+  lto_free_section_data (file_data, LTO_section_linemap, nullptr,
+			 data, len, true);
+
+  timevar_pop (TV_IPA_LTO_LINEMAP_IN);
+  return loc_map;
+}
+
+/* Return the location map with given ID, reading it from the LTO object if
+   necessary.  */
+
+static const lto_loc_map *
+get_loc_map (lto_file_decl_data *file_data, unsigned linemap_id)
+{
+  /* During LTRANS, the location maps are stored in a different object.  */
+  while (file_data->loc_map_decl_data)
+    file_data = file_data->loc_map_decl_data;
+
+  if (vec_safe_length (file_data->loc_maps) <= linemap_id)
+    vec_safe_grow_cleared (file_data->loc_maps, linemap_id + 1);
+  auto &res = (*file_data->loc_maps)[linemap_id];
+  if (!res)
+    res = create_loc_map (file_data, linemap_id);
+  return res;
+}
+
+
+/* Read a location bitpack from bit pack BP and either update *LOC directly or
+   add it to the location cache.  It is necessary to call apply_location_cache
+   to guarantee that *LOC has been updated.  */
 
 void
-lto_location_cache::input_location_and_block (location_t *loc,
+lto_location_cache::input_location_and_block (location_t *dest,
 					      struct bitpack_d *bp,
 					      class lto_input_block *ib,
 					      class data_in *data_in)
 {
-  static const char *stream_file;
-  static int stream_line;
-  static int stream_col;
-  static bool stream_sysp;
-  static tree stream_block;
-  static unsigned stream_discr;
-  static const char *stream_relative_path_prefix;
+  gcc_checking_assert (decl_data);
 
-  gcc_assert (current_cache == this);
-
-  *loc = bp_unpack_int_in_range (bp, "location", 0,
-				 RESERVED_LOCATION_COUNT + 1);
-
-  if (*loc < RESERVED_LOCATION_COUNT)
+  location_t loc;
+  unsigned this_discr;
+  const bool is_reserved = bp_unpack_value (bp, 1);
+  if (is_reserved)
     {
-      if (ib)
+      loc = bp_unpack_int_in_range (bp, "loc", 0, RESERVED_LOCATION_COUNT - 1);
+      this_discr = 0;
+    }
+  else
+    {
+      const bool linemap_change = bp_unpack_value (bp, 1);
+      if (linemap_change)
 	{
-	  bool block_change = bp_unpack_value (bp, 1);
-	  if (block_change)
-	    stream_block = stream_read_tree (ib, data_in);
-	  if (stream_block)
-	    *loc = set_block (*loc, stream_block);
+	  const unsigned linemap_id = bp_unpack_var_len_unsigned (bp);
+	  cur_loc_map = get_loc_map (decl_data, linemap_id + linemap_offset);
 	}
-      return;
+      const auto prev_idx = stream_map_idx;
+      bp_unpack_delta (bp, stream_map_idx);
+      bp_unpack_delta (bp, stream_loc_offset);
+      if (stream_map_idx != prev_idx)
+	/* The hash code is only there for the benefit of -flto-incremental;
+	   we don't need to do anything with it here.  */
+	bp_unpack_var_len_unsigned (bp);
+
+      loc = get_location_from_idx (stream_map_idx, stream_loc_offset,
+				   cur_loc_map);
+      if (bp_unpack_value (bp, 1))
+	stream_discr = bp_unpack_var_len_unsigned (bp);
+      this_discr = stream_discr;
     }
 
-  bool file_change = (*loc == RESERVED_LOCATION_COUNT + 1);
-  /* Keep value RESERVED_LOCATION_COUNT in *loc as linemap lookups will
-     ICE on it.  */
-  *loc = RESERVED_LOCATION_COUNT;
-  bool line_change = bp_unpack_value (bp, 1);
-  bool column_change = bp_unpack_value (bp, 1);
-  bool discr_change = bp_unpack_value (bp, 1);
-
-  if (file_change)
-    {
-      bool pwd_change = bp_unpack_value (bp, 1);
-      if (pwd_change)
-	{
-	  const char *pwd = bp_unpack_string (data_in, bp);
-	  const char *src_pwd = get_src_pwd ();
-	  if (strcmp (pwd, src_pwd) == 0)
-	    stream_relative_path_prefix = NULL;
-	  else
-	    stream_relative_path_prefix
-	      = canon_relative_path_prefix (pwd, src_pwd);
-	}
-      stream_file = canon_file_name (stream_relative_path_prefix,
-				     bp_unpack_string (data_in, bp));
-      stream_sysp = bp_unpack_value (bp, 1);
-    }
-
-  if (line_change)
-    stream_line = bp_unpack_var_len_unsigned (bp);
-
-  if (column_change)
-    stream_col = bp_unpack_var_len_unsigned (bp);
-
-  if (discr_change)
-    stream_discr = bp_unpack_var_len_unsigned (bp);
-
-  tree block = NULL_TREE;
+  tree this_block = NULL_TREE;
   if (ib)
     {
-      bool block_change = bp_unpack_value (bp, 1);
-      if (block_change)
+      if (bp_unpack_value (bp, 1))
 	stream_block = stream_read_tree (ib, data_in);
-      block = stream_block;
+      this_block = stream_block;
+    }
+
+  /* If this location can be ordinary rather than ad-hoc, then there is no more
+     overhead associated with it, so we may as well finalize it now.  */
+  if (!(this_discr || this_block))
+    {
+      *dest = loc;
+      return;
     }
 
   /* This optimization saves location cache operations during gimple
      streaming.  */
-
-  if (current_file == stream_file
-      && current_line == stream_line
-      && current_col == stream_col
-      && current_sysp == stream_sysp
-      && current_discr == stream_discr)
+  if (loc == current_cloc.loc
+      && this_block == current_cloc.block
+      && this_discr == current_cloc.discr)
     {
-      if (current_block == block)
-	*loc = current_loc;
-      else if (block)
-	*loc = set_block (current_loc, block);
-      else
-	*loc = LOCATION_LOCUS (current_loc);
+      *dest = current_loc;
       return;
     }
 
-  struct cached_location entry
-    = {stream_file, loc, stream_line, stream_col, stream_sysp, block, stream_discr};
+  /* Keep value RESERVED_LOCATION_COUNT in *dest so linemap lookups will ICE on
+     it if we erroneously try to use the location before it is ready.  */
+  *dest = RESERVED_LOCATION_COUNT;
+
+  /* This location needs to be ad-hoc; remember the details for now and create
+     the ad-hoc location later once we know we need it.  */
+  cached_location entry = {};
+  entry.dest = dest;
+  entry.loc = loc;
+  entry.block = this_block;
+  entry.discr = this_discr;
   loc_cache.safe_push (entry);
 }
 
-/* Read a location bitpack from bit pack BP and either update *LOC directly
-   or add it to the location cache.
-   It is necessary to call apply_location_cache to get *LOC updated.  */
-
 void
-lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
+lto_location_cache::input_location (location_t *dest, struct bitpack_d *bp,
 				    class data_in *data_in)
 {
-  return input_location_and_block (loc, bp, NULL, data_in);
+  return input_location_and_block (dest, bp, NULL, data_in);
 }
-
-/* Read a location bitpack from input block IB and either update *LOC directly
-   or add it to the location cache.
-   It is necessary to call apply_location_cache to get *LOC updated.  */
 
 void
 lto_input_location (location_t *loc, struct bitpack_d *bp,
@@ -1634,7 +1660,7 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
       decl_state = lto_get_function_in_decl_state (file_data, fn_decl);
       gcc_assert (decl_state);
       file_data->current_decl_state = decl_state;
-
+      data_in->location_cache.set_linemap_offset (decl_state->linemap_id);
 
       /* Set up the struct function.  */
       from = data_in->reader_cache->nodes.length ();
@@ -2201,15 +2227,16 @@ lto_free_file_name_hash (void)
 class data_in *
 lto_data_in_create (struct lto_file_decl_data *file_data, const char *strings,
 		    unsigned len,
-		    vec<ld_plugin_symbol_resolution_t> resolutions)
+		    vec<ld_plugin_symbol_resolution_t> resolutions,
+		    bool need_location_cache)
 {
-  class data_in *data_in = new (class data_in);
-  data_in->file_data = file_data;
-  data_in->strings = strings;
-  data_in->strings_len = len;
-  data_in->globals_resolution = resolutions;
-  data_in->reader_cache = streamer_tree_cache_create (false, false, true);
-  return data_in;
+  const auto d = new data_in{need_location_cache ? file_data : nullptr};
+  d->file_data = file_data;
+  d->strings = strings;
+  d->strings_len = len;
+  d->globals_resolution = resolutions;
+  d->reader_cache = streamer_tree_cache_create (false, false, true);
+  return d;
 }
 
 

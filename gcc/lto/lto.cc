@@ -166,6 +166,22 @@ materialize_cgraph (void)
   timevar_pop (lto_timer);
 }
 
+/* Stream out all the linemap sections so they are available for LTRANS.  */
+
+static void
+stream_out_linemaps (const char *filename)
+{
+  const auto file = lto_obj_file_open (filename, true);
+  if (!file)
+    fatal_error (input_location, "%<lto_obj_file_open()%> failed");
+  lto_set_current_out_file (file);
+  lto_copy_linemaps ();
+  free (const_cast<char *> (file->filename));
+  lto_set_current_out_file (nullptr);
+  lto_obj_file_close (file);
+  free (file);
+}
+
 /* Actually stream out ENCODER into TEMP_FILENAME.  */
 
 static void
@@ -357,6 +373,12 @@ lto_wpa_write_files (void)
       sets_per_worker = (n_sets + lto_parallelism - 1) / lto_parallelism;
     }
 
+  /* Write out all the linemaps since they will be needed during LTRANS.  */
+  sprintf (temp_filename + blen, "%u.o", n_sets);
+  const auto linemap_filename = xstrdup (temp_filename);
+  stream_out_linemaps (linemap_filename);
+
+  /* Write out the partitions.  */
   for (i = 0; i < n_sets; i++)
     {
       ltrans_partition part = ltrans_partitions[i];
@@ -428,6 +450,8 @@ lto_wpa_write_files (void)
   if (ltrans_output_list_stream == NULL)
     fatal_error (input_location,
 		 "opening LTRANS output list %s: %m", ltrans_output_list);
+  fprintf (ltrans_output_list_stream, "0\n%s\n", linemap_filename);
+  free (linemap_filename);
   for (i = 0; i < n_sets; i++)
     {
       unsigned int len = strlen (temp_filenames[i]);

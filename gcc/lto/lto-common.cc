@@ -195,6 +195,9 @@ lto_read_in_decl_state (class data_in *data_in, const uint32_t *data,
       gcc_assert (decl == void_type_node);
       decl = NULL_TREE;
     }
+  else
+    state->linemap_id = *data++;
+
   state->fn_decl = decl;
 
   for (i = 0; i < LTO_N_DECL_STREAMS; i++)
@@ -2203,6 +2206,25 @@ lto_section_with_id (const char *name, unsigned HOST_WIDE_INT *id)
   return sscanf (s, "." HOST_WIDE_INT_PRINT_HEX_PURE, id) == 1;
 }
 
+/* Return the linemap ID if NAME refers to an LTO linemap section,
+   otherwise -1U.  */
+
+static unsigned linemap_section_id (const char *name)
+{
+  const int prefix_len = strlen (section_name_prefix);
+  gcc_checking_assert (!strncmp (name, section_name_prefix, prefix_len));
+  name += prefix_len;
+  if (*name++ != '.')
+    return -1U;
+  const auto lm_name = lto_section_name[LTO_section_linemap];
+  const int lm_len = strlen (lm_name);
+  if (strncmp (name, lm_name, lm_len))
+    return -1U;
+  name += lm_len;
+  unsigned linemap_id;
+  return sscanf (name, ".%u", &linemap_id) == 1 ? linemap_id : -1U;
+}
+
 /* Create file_data of each sub file id.  */
 
 static int
@@ -2242,6 +2264,10 @@ create_subid_section_table (struct lto_section_slot *ls, splay_tree file_ids,
       list->last = file_data;
     }
 
+  const auto lsid = linemap_section_id (ls->name);
+  file_data->num_linemap_sections = MAX (file_data->num_linemap_sections,
+					 lsid + 1);
+
   /* Copy section into sub module hash table.  */
   new_name = XDUPVEC (char, ls->name, strlen (ls->name) + 1);
   s_slot.name = new_name;
@@ -2253,6 +2279,10 @@ create_subid_section_table (struct lto_section_slot *ls, splay_tree file_ids,
   *hash_slot = new_slot;
   return 1;
 }
+
+/* In LTRANS, the linemap data is all stored in a separate object, namely this
+   one.  */
+static GTY(()) lto_file_decl_data *loc_map_decl_data;
 
 /* Read declarations and other initializations for a FILE_DATA.  */
 
@@ -2274,7 +2304,6 @@ lto_file_finalize (struct lto_file_decl_data *file_data, lto_file *file,
     resolutions[rp->index] = rp->res;
   file_data->respairs.release ();
 
-  file_data->renaming_hash_table = lto_create_renaming_table ();
   file_data->file_name = file->filename;
   file_data->order = order;
 
@@ -2291,6 +2320,18 @@ lto_file_finalize (struct lto_file_decl_data *file_data, lto_file *file,
   lto_check_version (file_data->lto_section_header.major_version,
 		     file_data->lto_section_header.minor_version,
 		     file_data->file_name);
+
+  if (flag_ltrans)
+    {
+      if (!loc_map_decl_data)
+	/* This is not a real LTRANS file; it is just here to hold the line
+	   maps.  */
+	return;
+      else
+	file_data->loc_map_decl_data = loc_map_decl_data;
+    }
+
+  file_data->renaming_hash_table = lto_create_renaming_table ();
 
 #ifdef ACCEL_COMPILER
   lto_input_mode_table (file_data);
@@ -2369,10 +2410,13 @@ lto_file_read (lto_file *file, FILE *resolution_file, int *count)
   lto_resolution_read (file_ids, resolution_file, file);
 
   /* Finalize each lto file for each submodule in the merged object.  */
-  int order = 0;
+  static int order = 0;
   for (file_data = file_list.first; file_data != NULL;
        file_data = file_data->next)
-    lto_create_files_from_ids (file, file_data, count, order++);
+    {
+      lto_create_files_from_ids (file, file_data, count, order);
+      order += file_data->num_linemap_sections;
+    }
 
   splay_tree_delete (file_ids);
   htab_delete (section_hash_table);
@@ -2812,6 +2856,31 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
   if (!quiet_flag)
     fprintf (stderr, "Reading object files:");
 
+  if (flag_ltrans)
+    {
+      if (!ltrans_linemap_file)
+	fatal_error (UNKNOWN_LOCATION,
+		     "%<-fltrans-linemap-file%> is required with %<-fltrans%>");
+      if (!quiet_flag)
+	{
+	  fprintf (stderr, " %s", ltrans_linemap_file);
+	  fflush (stderr);
+	}
+      current_lto_file = lto_obj_file_open (ltrans_linemap_file, false);
+      int lm_count = 0;
+      if (!(current_lto_file
+	    && (loc_map_decl_data = lto_file_read (current_lto_file, resolution,
+						   &lm_count))
+	    && lm_count == 1
+	    && loc_map_decl_data->next == nullptr))
+	fatal_error (UNKNOWN_LOCATION,
+		     "unexpected error reading LTRANS linemap section from %qs",
+		     ltrans_linemap_file);
+      lto_obj_file_close (current_lto_file);
+      free (current_lto_file);
+      current_lto_file = nullptr;
+    }
+
   /* Read all of the object files specified on the command line.  */
   for (i = 0, last_file_ix = 0; i < nfiles; ++i)
     {
@@ -3030,8 +3099,9 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
   /* Indicate that the cgraph is built and ready.  */
   symtab->function_flags_ready = true;
 
-  ggc_free (all_file_decl_data);
-  all_file_decl_data = NULL;
+
+  /* N.B. No longer calling ggc_free (all_file_decl_data) here; it is helpful to
+     keep the ordered list of files available e.g. for lto_copy_linemaps().  */
 }
 
 

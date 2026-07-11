@@ -1926,6 +1926,7 @@ cont1:
   for (i = 0; i < ltoobj_argc; ++i)
     obstack_ptr_grow (&argv_obstack, ltoobj_argv[i]);
   obstack_ptr_grow (&argv_obstack, NULL);
+  obstack_ptr_grow (&argv_obstack, NULL);
 
   new_argv = XOBFINISH (&argv_obstack, const char **);
   argv_ptr = &new_argv[new_head_argc];
@@ -1975,6 +1976,8 @@ cont1:
       /* Parse the list of LTRANS inputs from the WPA stage.  */
       obstack_init (&env_obstack);
       nr = 0;
+      const char *linemap_name = nullptr;
+      char *linemap_arg = nullptr;
       for (;;)
 	{
 	  const unsigned piece = 32;
@@ -2002,6 +2005,15 @@ cont:
 	      goto cont;
 	    }
 	  input_name[len - 1] = '\0';
+
+	  if (!linemap_arg)
+	    {
+	      constexpr auto lf_opt = "-fltrans-linemap-file=";
+	      linemap_arg = concat (lf_opt, input_name, nullptr);
+	      free (input_name);
+	      linemap_name = linemap_arg + strlen (lf_opt);
+	      continue;
+	    }
 
 	  if (input_name[0] == '*')
 	    output_name = &input_name[1];
@@ -2133,7 +2145,8 @@ cont:
 	  argv_ptr[2] = "-o";
 	  argv_ptr[3] = output_name;
 	  argv_ptr[4] = input_name;
-	  argv_ptr[5] = NULL;
+	  argv_ptr[5] = linemap_arg;
+	  argv_ptr[6] = NULL;
 	  if (parallel)
 	    {
 	      fprintf (mstream, "%s:\n\t@%s ", output_name, new_argv[0]);
@@ -2252,6 +2265,16 @@ cont:
 	    if (early_debug_object_names[i] != NULL)
 	      printf ("%s\n", early_debug_object_names[i]);
 	}
+
+      if (linemap_arg)
+	{
+	  /* This should be done even if(ltrans_cache), since the linemap file
+	     changes when any of the inputs changes and is not part of the
+	     cache.  */
+	  maybe_unlink (linemap_name);
+	  free (linemap_arg);
+	}
+
       nr = 0;
       free (ltrans_priorities);
       free (output_names);

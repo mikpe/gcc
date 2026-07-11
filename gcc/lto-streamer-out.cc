@@ -57,17 +57,14 @@ static void lto_write_tree (struct output_block*, tree, bool);
 static void
 clear_line_info (struct output_block *ob)
 {
-  ob->current_file = NULL;
-  ob->current_line = 0;
-  ob->current_col = 0;
-  ob->current_sysp = false;
-  ob->reset_locus = true;
-  ob->emit_pwd = true;
   /* Initialize to something that will never appear as block,
      so that the first location with block in a function etc.
      always streams a change_block bit and the first block.  */
   ob->current_block = void_node;
   ob->current_discr = UINT_MAX;
+  ob->current_map_idx = 0;
+  ob->current_loc_offset = 0;
+  ob->current_linemap_id = -1U;
 }
 
 
@@ -181,86 +178,258 @@ tree_is_indexable (tree t)
     return (IS_TYPE_OR_DECL_P (t) || TREE_CODE (t) == SSA_NAME);
 }
 
+namespace {
 
-/* Output info about new location into bitpack BP.
-   After outputting bitpack, lto_output_location_data has
-   to be done to output actual data.  */
+/* Compute a 32-bit hash of the linemap details.  This is currently used to
+   ensure that WPA streamed output will change whenever the linemap details
+   change, otherwise there could be potential issues with the validity of
+   the cache used to implement -flto-incremental.  */
+
+hashval_t
+compute_map_hash (const line_map_ordinary *map)
+{
+  inchash::hash h;
+  h.add_int (map->sysp);
+  h.add_int (map->m_column_and_range_bits - map->m_range_bits);
+  h.add_int (map->to_line);
+  h.add_object (map->included_from);
+  h.add (map->to_file, strlen (map->to_file));
+  return h.end ();
+}
+
+class location_output
+{
+public:
+
+  struct map_id_t
+  {
+    size_t idx;
+    unsigned linemap_id;
+    hashval_t hash;
+  };
+
+  struct location_id_t
+  {
+    map_id_t map_id;
+    location_t offset;
+  };
+
+  location_id_t record_location (location_t loc);
+
+  void register_map_id (size_t map_idx, unsigned linemap_id)
+  {
+    gcc_checking_assert (LINEMAPS_ORDINARY_USED (line_table)
+			 == orig_map_ids.length () + 1);
+    const auto map = LINEMAPS_LAST_ORDINARY_MAP (line_table);
+    const hashval_t hash = compute_map_hash (map);
+    orig_map_ids.safe_push (map_id_t{map_idx, linemap_id, hash});
+  }
+
+  void produce_linemap_section ();
+
+private:
+  struct map_data
+  {
+    size_t idx;
+    hashval_t hash;
+    location_t highest_location;
+  };
+  hash_map<nofree_ptr_hash<const line_map_ordinary>, map_data> map_data_map;
+  vec<map_id_t> orig_map_ids = {};
+};
+
+location_output::location_id_t
+location_output::record_location (location_t loc)
+{
+  /* Strip away any macro expansion data or embedded range information.  */
+  loc = linemap_resolve_location (line_table, loc, LRK_MACRO_EXPANSION_POINT,
+				  nullptr);
+  loc = get_pure_location (loc);
+  location_id_t loc_id = {};
+  if (loc < RESERVED_LOCATION_COUNT)
+    {
+      /* IDX 0 is for reserved locations.  */
+      loc_id.offset = loc;
+      return loc_id;
+    }
+
+  const auto map = linemap_check_ordinary (linemap_lookup (line_table, loc));
+
+  if (flag_wpa || flag_incremental_link == INCREMENTAL_LINK_LTO)
+    {
+      /* In these modes, we don't create new locations, we only work with what
+	 was read, so we will re-output the locations in the same way.  */
+      gcc_checking_assert (orig_map_ids.length ()
+			   == LINEMAPS_ORDINARY_USED (line_table));
+      gcc_checking_assert (!map->m_range_bits);
+      loc_id.map_id = orig_map_ids[map - line_table->info_ordinary.maps];
+      loc_id.offset = loc - map->start_location;
+      return loc_id;
+    }
+
+  /* Represent each location_t as the offset from the map start,
+     without any range bits.  */
+  map_data &md = map_data_map.get_or_insert (map);
+  if (!md.idx)
+    {
+      md.idx = map_data_map.elements ();
+      md.hash = compute_map_hash (map);
+    }
+  md.highest_location = MAX (md.highest_location, loc);
+  loc_id.map_id.idx = md.idx;
+  loc_id.map_id.hash = md.hash;
+  loc_id.offset = (loc - map->start_location) >> map->m_range_bits;
+  return loc_id;
+}
+
+/* Bitpack packing is more efficient for small values since every 4th bit is a
+   continuation bit, so it helps to pack values as the delta from the previous
+   if they can get large.  */
+template<typename Int>
+static void
+bp_pack_delta (bitpack_d *bp, Int val, Int &prev)
+{
+  const bool decrease = (val < prev);
+  bp_pack_value (bp, decrease, 1);
+  bp_pack_var_len_unsigned (bp, decrease ? prev - val : val - prev);
+  prev = val;
+}
+
+void
+location_output::produce_linemap_section ()
+{
+  timevar_push (TV_IPA_LTO_LINEMAP_OUT);
+
+  const auto ob = create_output_block (LTO_section_linemap);
+  auto bp = bitpack_create (ob->main_stream);
+
+  /* Sort the maps in the order they need to be inserted later.  */
+  const size_t nmaps = map_data_map.elements ();
+  using KV = std::pair<const line_map_ordinary *, map_data>;
+  const std::unique_ptr<KV[]> sorted_maps{new KV[nmaps]};
+  size_t map_i = 0;
+  for (auto iter = map_data_map.begin (), end = map_data_map.end ();
+       iter != end; ++iter)
+    sorted_maps[map_i++] = *iter;
+  gcc_qsort (sorted_maps.get (), nmaps, sizeof (KV),
+	     [] (const void *p1, const void *p2)
+	     {
+	       const auto map1 = static_cast<const KV *> (p1)->first;
+	       const auto map2 = static_cast<const KV *> (p2)->first;
+	       const location_t loc1 = map1->start_location;
+	       const location_t loc2 = map2->start_location;
+	       return (loc2 < loc1) - (loc1 < loc2);
+	     });
+
+  /* Output the maps.  */
+  bp_pack_var_len_unsigned (&bp, nmaps);
+  const char *current_file = nullptr;
+  bool emit_pwd = true;
+  size_t prev_idx = 0;
+  linenum_type prev_line = 0;
+  for (map_i = 0; map_i != nmaps; ++map_i)
+    {
+      const auto map = sorted_maps[map_i].first;
+      const map_data &md = sorted_maps[map_i].second;
+      bp_pack_delta (&bp, md.idx, prev_idx);
+      const auto num_lines
+	= 1 + ((md.highest_location - map->start_location)
+	       >> map->m_column_and_range_bits);
+      bp_pack_var_len_unsigned (&bp, num_lines);
+      bp_pack_value (&bp, map->sysp != 0, 1);
+      bp_pack_value (&bp, map->m_column_and_range_bits - map->m_range_bits, 8);
+      bp_pack_delta (&bp, map->to_line, prev_line);
+      const bool file_change = (map->to_file != current_file);
+      bp_pack_value (&bp, file_change, 1);
+      if (file_change)
+	{
+	  bool stream_pwd = false;
+	  const char *remapped = remap_debug_filename (map->to_file);
+	  if (emit_pwd && remapped && !IS_ABSOLUTE_PATH (remapped))
+	    {
+	      stream_pwd = true;
+	      emit_pwd = false;
+	    }
+	  bp_pack_value (&bp, stream_pwd, 1);
+	  if (stream_pwd)
+	    bp_pack_string (ob, &bp, get_src_pwd (), true);
+	  bp_pack_string (ob, &bp, remapped, true);
+	}
+    }
+
+  /* Finalize the section.  */
+  streamer_write_bitpack (&bp);
+  {
+    const auto section_name
+      = lto_get_section_name (LTO_section_linemap, nullptr, 0, nullptr);
+    lto_begin_section (section_name, true);
+    free (section_name);
+  }
+
+  lto_simple_header_with_strings header = {};
+  header.main_size = ob->main_stream->total_size;
+  header.string_size = ob->string_stream->total_size;
+  lto_write_data (&header, sizeof header);
+  lto_write_stream (ob->main_stream);
+  lto_write_stream (ob->string_stream);
+  lto_end_section ();
+  destroy_output_block (ob);
+
+  timevar_pop (TV_IPA_LTO_LINEMAP_OUT);
+}
+
+location_output loc_output;
+
+} /* unnamed namespace */
+
+/* Get a mapping index for LOC and stream it along with optional ancillary
+   data.  */
 
 static void
 lto_output_location_1 (struct output_block *ob, struct bitpack_d *bp,
-		       location_t orig_loc, bool block_p)
+		       location_t loc, bool block_p)
 {
-  location_t loc = LOCATION_LOCUS (orig_loc);
-
-  if (loc >= RESERVED_LOCATION_COUNT)
+  const auto loc_id = loc_output.record_location (loc);
+  if (!loc_id.map_id.idx)
     {
-      expanded_location xloc = expand_location (loc);
-      unsigned discr = get_discriminator_from_loc (orig_loc);
-
-      if (ob->reset_locus)
-	{
-	  if (xloc.file == NULL)
-	    ob->current_file = "";
-	  if (xloc.line == 0)
-	    ob->current_line = 1;
-	  if (xloc.column == 0)
-	    ob->current_col = 1;
-	  ob->reset_locus = false;
-	}
-
-      /* As RESERVED_LOCATION_COUNT is 2, we can use the spare value of
-	 3 without wasting additional bits to signalize file change.
-	 If RESERVED_LOCATION_COUNT changes, reconsider this.  */
-      gcc_checking_assert (RESERVED_LOCATION_COUNT == 2);
-      bp_pack_int_in_range (bp, 0, RESERVED_LOCATION_COUNT + 1,
-			    RESERVED_LOCATION_COUNT
-			    + (ob->current_file != xloc.file));
-
-      bp_pack_value (bp, ob->current_line != xloc.line, 1);
-      bp_pack_value (bp, ob->current_col != xloc.column, 1);
-      bp_pack_value (bp, ob->current_discr != discr, 1);
-
-      if (ob->current_file != xloc.file)
-	{
-	  bool stream_pwd = false;
-	  const char *remapped = remap_debug_filename (xloc.file);
-	  if (ob->emit_pwd && remapped && !IS_ABSOLUTE_PATH (remapped))
-	    {
-	      stream_pwd = true;
-	      ob->emit_pwd = false;
-	    }
-	  bp_pack_value (bp, stream_pwd, 1);
-	  if (stream_pwd)
-	    bp_pack_string (ob, bp, get_src_pwd (), true);
-	  bp_pack_string (ob, bp, remapped, true);
-	  bp_pack_value (bp, xloc.sysp, 1);
-	}
-      ob->current_file = xloc.file;
-      ob->current_sysp = xloc.sysp;
-
-      if (ob->current_line != xloc.line)
-	bp_pack_var_len_unsigned (bp, xloc.line);
-      ob->current_line = xloc.line;
-
-      if (ob->current_col != xloc.column)
-	bp_pack_var_len_unsigned (bp, xloc.column);
-      ob->current_col = xloc.column;
-
-      if (ob->current_discr != discr)
-	bp_pack_var_len_unsigned (bp, discr);
-      ob->current_discr = discr;
+      bp_pack_value (bp, true, 1);
+      bp_pack_int_in_range (bp, 0, RESERVED_LOCATION_COUNT - 1, loc_id.offset);
     }
   else
-    bp_pack_int_in_range (bp, 0, RESERVED_LOCATION_COUNT + 1, loc);
+    {
+      bp_pack_value (bp, false, 1);
+      if (loc_id.map_id.linemap_id == ob->current_linemap_id)
+	bp_pack_value (bp, false, 1);
+      else
+	{
+	  bp_pack_value (bp, true, 1);
+	  bp_pack_var_len_unsigned (bp, loc_id.map_id.linemap_id);
+	  ob->current_linemap_id = loc_id.map_id.linemap_id;
+	}
+      const bool is_new_map = (loc_id.map_id.idx != ob->current_map_idx);
+      bp_pack_delta (bp, loc_id.map_id.idx, ob->current_map_idx);
+      bp_pack_delta (bp, loc_id.offset, ob->current_loc_offset);
+      if (is_new_map)
+	bp_pack_var_len_unsigned (bp, loc_id.map_id.hash);
+      const unsigned discr = get_discriminator_from_loc (loc);
+      bp_pack_value (bp, ob->current_discr != discr, 1);
+      if (ob->current_discr != discr)
+	{
+	  bp_pack_var_len_unsigned (bp, discr);
+	  ob->current_discr = discr;
+	}
+    }
 
   if (block_p)
     {
-      tree block = LOCATION_BLOCK (orig_loc);
+      tree block = LOCATION_BLOCK (loc);
       bp_pack_value (bp, ob->current_block != block, 1);
       streamer_write_bitpack (bp);
       if (ob->current_block != block)
-	lto_output_tree (ob, block, true, true);
-      ob->current_block = block;
+	{
+	  lto_output_tree (ob, block, true, true);
+	  ob->current_block = block;
+	}
     }
 }
 
@@ -2664,6 +2833,10 @@ copy_function_or_variable (struct symtab_node *node, int output_order)
   lto_free_raw_section_data (file_data, LTO_section_function_body, name,
 			     data, len);
   lto_end_section ();
+
+  /* Make sure the reader knows which linemap section to use.  */
+  out_state->linemap_id = lto_linemap_output_id (in_state->linemap_id,
+						 file_data);
 }
 
 /* Wrap symbol references in *TP inside a type-preserving MEM_REF.  */
@@ -2738,6 +2911,64 @@ produce_lto_section ()
   destroy_output_block (ob);
 }
 
+/* If we have copied a function, we need to make sure the linemap it refers to
+   is also streamed out.  */
+
+static void
+copy_linemap_section (lto_file_decl_data *file_data, unsigned order)
+{
+  const auto in_section_name
+    = lto_get_section_name (LTO_section_linemap, nullptr, order, file_data);
+  const auto out_section_name
+    = lto_get_section_name (LTO_section_linemap, nullptr,
+			    lto_linemap_output_id (order, file_data), nullptr);
+
+  if (streamer_dump_file)
+    fprintf (streamer_dump_file, "Copying linemap section from %s to %s\n",
+	     in_section_name, out_section_name);
+
+  size_t len;
+  const auto data = lto_get_raw_section_data (file_data, LTO_section_linemap,
+					      nullptr, order, &len);
+  gcc_assert (data);
+  lto_begin_section (out_section_name, false);
+  free (in_section_name);
+  free (out_section_name);
+  lto_write_raw_data (data, len);
+  lto_free_raw_section_data (file_data, LTO_section_linemap,
+			     nullptr, data, len);
+  lto_end_section ();
+}
+
+static void
+copy_linemap_sections (lto_file_decl_data *file_data)
+{
+  for (unsigned i = 0; i != file_data->num_linemap_sections; ++i)
+    copy_linemap_section (file_data, i);
+}
+
+/* Copy all the linemaps we read into an object file so LTRANS can find them
+   later.  */
+
+void
+lto_copy_linemaps ()
+{
+  timevar_push (TV_IPA_LTO_LINEMAP_COPY);
+  lto_streamer_init ();
+  lto_push_out_decl_state (nullptr);
+
+  /* In WPA, we write these out to a standalone file; give it an LTO header
+     section.  */
+  if (flag_wpa)
+    produce_lto_section ();
+
+  for (auto file_data = lto_get_file_decl_data (); *file_data; ++file_data)
+    copy_linemap_sections (*file_data);
+
+  lto_pop_out_decl_state ();
+  timevar_pop (TV_IPA_LTO_LINEMAP_COPY);
+}
+
 /* Compare symbols to get them sorted by filename (to optimize streaming)  */
 
 static int
@@ -2804,6 +3035,22 @@ create_order_remap (lto_symtab_encoder_t encoder)
 	  ord++;
 	}
     }
+}
+
+/* When WPA writes out its outputs, there are two different ways a location
+   may be streamed out: either streamed freshly, e.g. when trees are
+   streamed out in the decls section, or else copied verbatim from the input
+   files.  In the former case, we need to remember how a location_t was
+   originally referenced in the input data, so we can stream it out the same
+   way; otherwise it would be necessary to stream out a new linemap section
+   just for WPA-generated locations, which would a) be wasteful given that
+   all locations originated from one of the linemap sections that already
+   exists and b) inhibit incremental LTO since a change to one partition
+   would affect the linemap for all of them.  */
+
+void lto_register_linemap_for_output (size_t map_idx, unsigned linemap_id)
+{
+  loc_output.register_map_id (map_idx, linemap_id);
 }
 
 /* Main entry point from the pass manager.  */
@@ -3013,17 +3260,21 @@ lto_output_decl_state_refs (struct output_block *ob,
 			    struct lto_out_decl_state *state)
 {
   unsigned i;
-  unsigned ref;
+  uint32_t ref, lm_order;
   tree decl;
 
   /* Write reference to FUNCTION_DECL.  If there is not function,
      write reference to void_type_node. */
   decl = (state->fn_decl) ? state->fn_decl : void_type_node;
   streamer_tree_cache_lookup (ob->writer_cache, decl, &ref);
-  gcc_assert (ref != (unsigned)-1);
+  gcc_assert (ref != (uint32_t)-1);
   ref = ref * 2 + (state->compressed ? 1 : 0);
   lto_write_data (&ref, sizeof (uint32_t));
-
+  if (state->fn_decl)
+    {
+      lm_order = state->linemap_id;
+      lto_write_data (&lm_order, sizeof (lm_order));
+    }
   for (i = 0;  i < LTO_N_DECL_STREAMS; i++)
     write_global_references (ob, &state->streams[i]);
 }
@@ -3038,6 +3289,8 @@ lto_out_decl_state_written_size (struct lto_out_decl_state *state)
   size_t size;
 
   size = sizeof (int32_t);	/* fn_ref. */
+  if (state->fn_decl)
+    size += sizeof (int32_t);   /* linemap_id.  */
   for (i = 0; i < LTO_N_DECL_STREAMS; i++)
     {
       size += sizeof (int32_t); /* vector size. */
@@ -3487,4 +3740,16 @@ produce_asm_for_decls (void)
   destroy_output_block (ob);
   if (lto_stream_offload_p)
     lto_write_mode_table ();
+
+  /* Copy or write the linemap section(s) as needed.  For incremental LTO, we
+     copy them into the output file now.  For WPA, we will copy them into a
+     dedicated file later.  Otherwise, we create a new one from scratch and
+     output it now.  */
+  if (flag_incremental_link == INCREMENTAL_LINK_LTO)
+    lto_copy_linemaps ();
+  else if (!flag_wpa)
+    {
+      gcc_checking_assert (!in_lto_p);
+      loc_output.produce_linemap_section ();
+    }
 }
