@@ -1,3 +1,30 @@
+2026-07-10  Martin Jambor  <mjambor@suse.cz>
+
+	Backported from master:
+	2026-06-18  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/124128
+	* ipa-cp.cc (ipa_vr_intersect_with_arith_jfunc): Move the check if
+	the final type conversion needs to happen before the conversion.
+
+2026-07-10  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	* config/s390/s390.md: Annotate mnemonic for
+	extzv_<mode>_{srl,sll}<clobbercc_or_nocc>.
+
+2026-07-10  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-01  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	PR target/126054
+	* config/s390/s390.md: Fix
+	extzv_<mode>_{srl,sll}<clobbercc_or_nocc> by adjusting the
+	bitmasks in the output templates.
+
 2026-07-09  Richard Earnshaw  <rearnsha@arm.com>
 
 	Backported from master:
