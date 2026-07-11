@@ -533,6 +533,37 @@ create_loc_map (lto_file_decl_data *file_data, unsigned linemap_id)
 	}
     }
 
+  /* Process the diagnostics classification history.  */
+  auto &chist = global_dc->get_classification_history ();
+  const int pop_offset = chist.length ();
+  using DK = diagnostics::kind;
+  for (size_t i = 0, nc = bp_unpack_var_len_unsigned (&bp); i != nc; ++i)
+    {
+      const size_t map_idx = bp_unpack_var_len_unsigned (&bp);
+      const location_t offset = bp_unpack_var_len_unsigned (&bp);
+      const location_t loc = get_location_from_idx (map_idx, offset, loc_map);
+      const int option = bp_unpack_var_len_int (&bp);
+      const auto kind = bp_unpack_enum (&bp, diagnostics::kind,
+					DK::tot_num_diagnostic_kinds);
+      if (kind == DK::pop)
+	{
+	  diagnostics::option_classifier::classification_change_t c = {};
+	  c.location = loc;
+	  c.option = option + pop_offset;
+	  c.kind = kind;
+	  chist.safe_push (c);
+	}
+      else
+	global_dc->classify_diagnostic (option, kind, loc);
+    }
+  /* Make sure we reset back to the baseline.  */
+  {
+    diagnostics::option_classifier::classification_change_t c = {};
+    c.location = line_table->highest_location;
+    c.kind = DK::pop;
+    chist.safe_push (c);
+  }
+
   lto_data_in_delete (data_in);
   lto_free_section_data (file_data, LTO_section_linemap, nullptr,
 			 data, len, true);

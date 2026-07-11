@@ -303,6 +303,14 @@ location_output::produce_linemap_section ()
   const auto ob = create_output_block (LTO_section_linemap);
   auto bp = bitpack_create (ob->main_stream);
 
+  /* Prepare the diagnostic classification history.  To make life easier on the
+     reader, which will need to build the line map before processing the
+     classification history, we will stream it out after the line map data.  But
+     we need to call record_location() now.  */
+  const auto &chist = global_dc->get_classification_history ();
+  for (auto &c : chist)
+    record_location (c.location);
+
   /* Sort the maps in the order they need to be inserted later.  */
   const size_t nmaps = map_data_map.elements ();
   using KV = std::pair<const line_map_ordinary *, map_data>;
@@ -355,6 +363,18 @@ location_output::produce_linemap_section ()
 	    bp_pack_string (ob, &bp, get_src_pwd (), true);
 	  bp_pack_string (ob, &bp, remapped, true);
 	}
+    }
+
+  /* Output the diagnostics classification history.  */
+  bp_pack_var_len_unsigned (&bp, chist.length ());
+  for (auto &c : chist)
+    {
+      const location_id_t loc_id = record_location (c.location);
+      bp_pack_var_len_unsigned (&bp, loc_id.map_id.idx);
+      bp_pack_var_len_unsigned (&bp, loc_id.offset);
+      bp_pack_var_len_int (&bp, c.option);
+      using DK = diagnostics::kind;
+      bp_pack_enum (&bp, DK, DK::tot_num_diagnostic_kinds, c.kind);
     }
 
   /* Finalize the section.  */
