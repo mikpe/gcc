@@ -1,3 +1,20 @@
+2026-07-11  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-11  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126210
+	* gfortran.dg/pr126210.f90: New test.
+
+2026-07-11  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-10  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126170
+	* gfortran.dg/lto/pr126170_0.f90: New test.
+	* gfortran.dg/lto/pr126170_1.f90: New test.
+
 2026-07-10  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
