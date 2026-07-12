@@ -552,8 +552,7 @@ Common Joined RejectNegative UInteger Var(warn_array_bounds) Warning IntegerRang
 Warn if an array is accessed out of bounds.
 
 Wuse-after-free
-Common Var(warn_use_after_free) Warning
-Warn for uses of pointers to deallocated storage.
+Common Alias(Wuse-after-free=, 1, 0) Warning
 
 Wuse-after-free=
 Common Joined RejectNegative UInteger Var(warn_use_after_free) Warning IntegerRange(0, 3)
