@@ -20292,7 +20292,7 @@ maybe_prepare_return_this (tree cdtor)
   if (targetm.cxx.cdtor_returns_this ())
     if (tree val = DECL_ARGUMENTS (cdtor))
       {
-	suppress_warning (val, OPT_Wuse_after_free);
+	suppress_warning (val, OPT_Wuse_after_free_);
 	return val;
       }
 

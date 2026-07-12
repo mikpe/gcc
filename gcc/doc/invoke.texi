@@ -8442,6 +8442,7 @@ Warn about uses of pointers to dynamically allocated objects that have
 been rendered indeterminate by a call to a deallocation function.
 The warning is enabled at all optimization levels but may yield different
 results with optimization than without.
+@option{-Wuse-after-free} is equivalent to @option{-Wuse-after-free=1}.
 
 @table @gcctabopt
 @item -Wuse-after-free=1
