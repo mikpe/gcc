@@ -236,6 +236,15 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
       && !TYPE_UNSIGNED (TREE_TYPE (@0)))
   (abs @0)))
 
+/* (X ^ -(X < 0)) + (X < 0) -> abs (X) */
+(simplify
+ (plus:c (bit_xor:c @0 (negate (convert@1 (lt @0 integer_zerop)))) @1)
+ (if (INTEGRAL_TYPE_P (TREE_TYPE (@0))
+      && !TYPE_UNSIGNED (TREE_TYPE (@0))
+      && !TYPE_SATURATING (TREE_TYPE (@0))
+      && (GIMPLE || !TREE_SIDE_EFFECTS (@0)))
+  (abs @0)))
+
 /* Following match patterns are used by the match_spaceship function to detect
    all possible spaceship combinations.  */
 #if GIMPLE
@@ -4852,6 +4861,14 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
  (if (INTEGRAL_TYPE_P (type)
       && (GIMPLE || !TREE_SIDE_EFFECTS (@1)))
   (cond (convert:boolean_type_node @2) @1 @0)))
+
+/* Transform (A ^ -cmp) + cmp into cmp ? -A : A.  */
+(simplify
+ (plus:c (bit_xor:c @0 (negate zero_one_valued_p@1)) @1)
+ (if (INTEGRAL_TYPE_P (type)
+      && !TYPE_SATURATING (type)
+      && (GIMPLE || !TREE_SIDE_EFFECTS (@0)))
+  (cond (convert:boolean_type_node @1) (negate @0) @0)))
 
 /* Transform A & (B*cmp) into (A&B)*cmp.  */
 (simplify
