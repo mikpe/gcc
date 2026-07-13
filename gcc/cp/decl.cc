@@ -20276,7 +20276,7 @@ store_parm_decls (tree current_function_parms)
 
   /* Register cleanups for parameters with trivial_abi attribute, the cleanup
      of which is the callee's responsibility.  */
-  if (!processing_template_decl)
+  if (!processing_template_decl && !DECL_CLONED_FUNCTION_P (fndecl))
     for (tree parm = DECL_ARGUMENTS (fndecl); parm; parm = DECL_CHAIN (parm))
       {
 	if (TREE_CODE (parm) == PARM_DECL)
