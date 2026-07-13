@@ -5097,8 +5097,8 @@ emit_cmp_and_jump_insns (rtx x, rtx y, enum rtx_code comparison, rtx size,
 	      create_input_operand (&ops[offset + 1], op1c, mode2);
 	      if (masked_op)
 		{
+		  auto mask_mode = TYPE_MODE (TREE_TYPE (masked_op));
 		  rtx mask_op = expand_normal (masked_op);
-		  auto mask_mode = GET_MODE (mask_op);
 		  create_input_operand (&ops[0], mask_op, mask_mode);
 		}
 	      else if (len_op)
