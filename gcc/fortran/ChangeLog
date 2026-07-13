@@ -1,3 +1,18 @@
+2026-07-12  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2026-05-07  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/125172
+	* resolve.cc (gfc_fixup_inferred_type_refs): Update kind for
+	INQUIRY_RE and INQUIRY_IM references on inferred complex
+	associate-name.
+	(resolve_variable): For an inferred-type associate-name with
+	no subobject ref, refresh e->ts from sym->ts.
+	(resolve_assoc_var): For an inferred-type complex/character
+	associate-name, refresh sym->ts from the resolved target when
+	only the kind differs.
+
 2026-07-11  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	Backported from master:
