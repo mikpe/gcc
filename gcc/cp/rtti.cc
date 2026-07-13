@@ -342,10 +342,11 @@ typeid_ok_p (void)
 
 /* True if EXP is a glvalue expression of polymorphic class type whose
    dynamic type is not known statically, so that typeid (EXP) must be
-   evaluated per ([expr.typeid]/4).  */
+   evaluated per ([expr.typeid]/4).  If NONNULL is non-null, set
+   *NONNULL according to resolves_to_fixed_type_p.  */
 
 bool
-typeid_evaluated_p (tree exp)
+typeid_evaluated_p (tree exp, int *nonnull)
 {
   if (exp == error_mark_node)
     return false;
@@ -356,9 +357,9 @@ typeid_evaluated_p (tree exp)
     t = TREE_TYPE (t);
   if (TREE_CODE (t) != RECORD_TYPE && TREE_CODE (t) != UNION_TYPE)
     return false;
-  int nonnull = 0;
+  bool fixed = resolves_to_fixed_type_p (exp, nonnull);
   return (TYPE_POLYMORPHIC_P (t)
-	  && !resolves_to_fixed_type_p (exp, &nonnull)
+	  && !fixed
 	  /* Only a glvalue operand is evaluated ([expr.typeid]/4).
 	     The following check is only necessary because
 	     resolves_to_fixed_type_p does not handle all
@@ -380,10 +381,9 @@ build_typeid (tree exp, tsubst_flags_t complain)
   if (processing_template_decl)
     return build_min (TYPEID_EXPR, const_type_info_type_node, exp);
 
-  if (typeid_evaluated_p (exp))
+  int nonnull = 0;
+  if (typeid_evaluated_p (exp, &nonnull))
     {
-      int nonnull = 0;
-      resolves_to_fixed_type_p (exp, &nonnull);
       if (!nonnull)
 	{
 	  /* Make sure it isn't a null lvalue; evaluate it once.  */
