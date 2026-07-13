@@ -482,3 +482,42 @@
 	  (match_dup 1)
 	  (match_operand:SUBST_V 2 "const0_operand")
 	  (match_operand:<avx512fmaskhalfmode> 3 "register_operand" "Yk")))])
+
+(define_subst_attr "round_zext_name" "round_zext" "_zext" "_round_zext")
+(define_subst_attr "round_zext_constraint" "round_zext" "vm" "v")
+(define_subst_attr "round_zext_constraint2" "round_zext" "m" "v")
+(define_subst_attr "round_zext_nimm_predicate" "round_zext" "vector_operand" "register_operand")
+(define_subst_attr "round_zext_nimm_scalar_predicate" "round_zext" "nonimmediate_operand" "register_operand")
+(define_subst_attr "round_zext_op2" "round_zext" "" "%R2")
+
+(define_subst "round_zext"
+  [(set (match_operand:DI 0)
+        (zero_extend:DI
+          (match_operand:SI 1)))]
+  "TARGET_64BIT && TARGET_AVX512F"
+  [(set (match_dup 0)
+        (zero_extend:DI
+           (unspec:SI
+              [(match_dup 1)
+               (match_operand:SI 2 "const_4_or_8_to_11_operand")]
+              UNSPEC_EMBEDDED_ROUNDING)))
+])
+
+(define_subst_attr "round_saeonly_zext_name" "round_saeonly_zext" "_zext" "_round_zext")
+(define_subst_attr "round_saeonly_zext_constraint" "round_saeonly_zext" "vm" "v")
+(define_subst_attr "round_saeonly_zext_constraint2" "round_saeonly_zext" "m" "v")
+(define_subst_attr "round_saeonly_zext_nimm_scalar_predicate" "round_saeonly_zext" "nonimmediate_operand" "register_operand")
+(define_subst_attr "round_saeonly_zext_op2" "round_saeonly_zext" "" "%r2")
+
+(define_subst "round_saeonly_zext"
+  [(set (match_operand:DI 0)
+        (zero_extend:DI
+          (match_operand:SI 1)))]
+  "TARGET_64BIT && TARGET_AVX512F"
+  [(set (match_dup 0)
+        (zero_extend:DI
+           (unspec:SI
+              [(match_dup 1)
+               (match_operand:SI 2 "const48_operand")]
+              UNSPEC_EMBEDDED_ROUNDING)))
+])
