@@ -13,7 +13,7 @@
 /* { dg-final { scan-assembler-times "foo\t5" 4 { target { powerpc*-*-* } } } } */
 #elif defined (__riscv)
 # define FPR "{fa5}"
-/* { dg-final { scan-assembler-times "foo\tfa5" 4 { target { rsicv*-*-* } } } } */
+/* { dg-final { scan-assembler-times "foo\tfa5" 4 { target { riscv*-*-* } } } } */
 #elif defined (__s390__)
 # define FPR "{f5}"
 /* { dg-final { scan-assembler-times "foo\t%f5" 4 { target { s390*-*-* } } } } */
