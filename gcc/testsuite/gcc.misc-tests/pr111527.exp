@@ -24,6 +24,14 @@ if { [is_remote host] } {
     return
 }
 
+# This file doesn't use runtest_file_p, so disable parallelization
+# of this *.exp file.  The first parallel runtest to reach this
+# will run the tests.
+if { ![gcc_parallel_test_run_p pr111527] } {
+    return
+}
+gcc_parallel_test_enable 0
+
 global GCC_UNDER_TEST
 if { ![info exists GCC_UNDER_TEST] } {
     set GCC_UNDER_TEST [find_gcc]
@@ -76,3 +84,5 @@ if { [regexp {COLLECT_GCC_OPTIONS=@[^[:space:]]+} $out] } {
 file delete -force $obj
 file delete -force $rsp
 file delete -force $src
+
+gcc_parallel_test_enable 1
