@@ -1,5 +1,5 @@
 /* { dg-do compile { target { ! ia32 } } } */
-/* { dg-options "-O2 -mbmi2" } */
+/* { dg-options "-O2 -mbmi2 -mtune=generic" } */
 /* { dg-final { check-function-bodies "**" "" "" { target *-*-linux* *-*-gnu* } } } */
 
 /* %edx is fixed by the ISA (implicit mulx source) and %edi by the ABI

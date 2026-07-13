@@ -1,5 +1,5 @@
 /* { dg-do compile { target { ! ia32 } } } */
-/* { dg-options "-O2 -mno-bmi2" } */
+/* { dg-options "-O2 -mno-bmi2 -mtune=generic" } */
 /* { dg-final { check-function-bodies "**" "" "" { target *-*-linux* *-*-gnu* } } } */
 
 /* %rax, %rdx and %edi are fixed by the ISA (mulq) and the ABI (first
