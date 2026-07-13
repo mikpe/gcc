@@ -280,7 +280,7 @@ in the following sections.
 -Wextra-semi  -Wno-global-module  -Wno-inaccessible-base
 -Wno-inherited-variadic-ctor  -Wno-init-list-lifetime
 -Winvalid-constexpr  -Winvalid-imported-macros
--Wno-invalid-offsetof  -Wno-literal-suffix
+-Wno-invalid-offsetof  -Wno-invalid-specialization  -Wno-literal-suffix
 -Wmismatched-new-delete  -Wmismatched-tags
 -Wmultiple-inheritance  -Wnamespaces  -Wnarrowing
 -Wnoexcept  -Wnoexcept-type  -Wnon-virtual-dtor
@@ -4303,6 +4303,15 @@ Verify all imported macro definitions are valid at the end of
 compilation.  This is not enabled by default, as it requires
 additional processing to determine.  It may be useful when preparing
 sets of header-units to ensure consistent macros.
+
+@opindex Winvalid-specialization
+@opindex Wno-invalid-specialization
+@item -Wno-invalid-specialization @r{(C++ and Objective-C++ only)}
+Do not error on explicit specializations of templates marked with the
+@code{no_specializations} attribute.  This diagnostics is enabled
+by default, and @option{-Wno-invalid-specialization} or
+@code{#pragma GCC ignored "-Winvalid-specializations"} can disable
+that diagnostics.
 
 @opindex Wliteral-suffix
 @opindex Wno-literal-suffix

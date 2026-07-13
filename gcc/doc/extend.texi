@@ -31662,6 +31662,41 @@ arrays of any of the above
 @end itemize
 @end itemize
 
+@cindex @code{no_specializations} template attribute
+@item no_specializations
+
+The @code{no_specializations} attribute can be applied to a C++
+class template, variable template or function template, though not
+their specializations.  It instructs the compiler to error if
+such a template is explicitly specialized.  The primary use case
+for this attribute is the standard library where the standard
+specifies it is undefined behavior to specialize some template.
+The error can be disabled with @option{-Wno-invalid-specialization}
+or @code{#pragma GCC ignored "-Winvalid-specialization"}.
+
+The attribute can be specified either as @code{__attribute__
+((no_specializations))} or @code{[[clang::no_specializations]]} for compatibility
+with the original implementation in Clang.  To avoid portability
+complications, @code{[[gnu::no_specializations]]} is ignored with a warning.
+
+The attribute has a single optional argument, a string literal, which is
+included in the diagnostics and can provide reason why some template should
+not be specialized.
+
+@smallexample
+template <typename T>
+struct __attribute__ ((__no_specializations__)) A @{@};
+template <typename T, typename U>
+[[clang::no_specializations]] int b = 1;
+template <typename T>
+[[__clang__::__no_specializations__ ("foo cannot be specialized")]] int
+foo () @{ return 42; @}
+template <> struct A <int> @{@}; // Error
+template <typename T> int b <T, T> = 2; // Error
+template <> int foo <int> () @{ return 43; @} // Error
+@};
+@end smallexample
+
 @end table
 
 @node Function Multiversioning

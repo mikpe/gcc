@@ -967,6 +967,10 @@ Winvalid-pch
 C ObjC C++ ObjC++ CPP(warn_invalid_pch) CppReason(CPP_W_INVALID_PCH) Var(cpp_warn_invalid_pch) Init(0) Warning
 Warn about PCH files that are found but not used.
 
+Winvalid-specialization
+C++ ObjC++ Var(warn_invalid_specialization) Init(1) Warning
+Error about specializations of templates with \"clang::no_specializations\" attribute.
+
 Winvalid-utf8
 C ObjC C++ ObjC++ CPP(cpp_warn_invalid_utf8) CppReason(CPP_W_INVALID_UTF8) Var(warn_invalid_utf8) Init(0) Warning
 Warn about invalid UTF-8 characters.

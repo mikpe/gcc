@@ -1,0 +1,31 @@
+// PR c++/120635
+// { dg-do compile { target c++11 } }
+// { dg-require-iconv "IBM1047" }
+// { dg-options "-fexec-charset=IBM1047" }
+
+template <typename T, typename U>
+struct [[clang::no_specializations ("this is why")]] B {}; // { dg-message "declared 'clang::no_specializations' here" }
+#if __cpp_variable_templates >= 201304
+template <typename T, typename U>
+[[clang::no_specializations ("my other reason")]] int c = 1; // { dg-message "declared 'clang::no_specializations' here" "" { target c++14 } }
+#endif
+template <typename T, typename U>
+[[__clang__::__no_specializations__ ("bar cannot be specialized")]] int bar () { return 0; } // { dg-message "declared 'clang::no_specializations' here" }
+template <typename T>
+struct D {};
+template <>
+struct B <int, int> { int a; };				// { dg-error "'struct B<int, int>' cannot be specialized: 'this is why'" }
+template <typename T>
+struct B <long, T> { long c; };				// { dg-error "'struct B<long int, T>' cannot be specialized: 'this is why'" }
+template <typename T>
+struct B <D <T>, D <T>> { D<T> c; };			// { dg-error "'struct B<D<T>, D<T> >' cannot be specialized: 'this is why'" }
+#if __cpp_variable_templates >= 201304
+template <>
+int c <int, int> = 2;					// { dg-error "'c<int, int>' cannot be specialized: 'my other reason'" "" { target c++14 } }
+template <typename T>
+int c <long, T> = 3;					// { dg-error "'c<long int, T>' cannot be specialized: 'my other reason'" "" { target c++14 } }
+template <typename T>
+int c <D <T>, D <T>> = 4;				// { dg-error "'c<D<T>, D<T> >' cannot be specialized: 'my other reason'" "" { target c++14 } }
+#endif
+template <>
+int bar <int, int> () { return 1; }			// { dg-error "'int bar\\\(\\\) \\\[with T = int; U = int\\\]' cannot be specialized: 'bar cannot be specialized'" }

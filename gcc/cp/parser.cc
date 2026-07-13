@@ -33424,6 +33424,10 @@ cp_parser_std_attribute (cp_parser *parser, tree attr_ns)
 	     && (is_attribute_p ("deprecated", attr_id)
 		 || is_attribute_p ("nodiscard", attr_id)))
       attr_flag = uneval_string_attr;
+    else if (attr_ns
+	     && is_attribute_p ("clang", attr_ns)
+	     && is_attribute_p ("no_specializations", attr_id))
+      attr_flag = uneval_string_attr;
 
     /* If this is a fake attribute created to handle -Wno-attributes,
        we must skip parsing the arguments.  */

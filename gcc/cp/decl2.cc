@@ -1751,21 +1751,16 @@ is_late_template_attribute (tree attr, tree decl)
       if (!type)
 	return true;
 
-      /* We can't apply any attributes to a completely unknown type until
-	 instantiation time.  */
-      enum tree_code code = TREE_CODE (type);
-      if (code == TEMPLATE_TYPE_PARM
-	  || code == BOUND_TEMPLATE_TEMPLATE_PARM
-	  || code == TYPENAME_TYPE)
-	return true;
-      /* Also defer most attributes on dependent types.  This is not
+      /* Some attributes specifically apply to templates.  */
+      if (is_attribute_p ("abi_tag", name)
+	  || is_attribute_p ("deprecated", name)
+	  || is_attribute_p ("unavailable", name)
+	  || is_attribute_p ("visibility", name)
+	  || is_attribute_p ("no_specializations", name))
+	return false;
+      /* Defer most attributes on dependent types.  This is not
 	 necessary in all cases, but is the better default.  */
-      else if (dependent_type_p (type)
-	       /* But some attributes specifically apply to templates.  */
-	       && !is_attribute_p ("abi_tag", name)
-	       && !is_attribute_p ("deprecated", name)
-	       && !is_attribute_p ("unavailable", name)
-	       && !is_attribute_p ("visibility", name))
+      else if (dependent_type_p (type))
 	return true;
       else
 	return false;
