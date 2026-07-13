@@ -170,7 +170,7 @@ See also @ref{OpenMP Implementation Status}.
 * OpenMP 5.1:: Feature completion status to 5.1 specification
 * OpenMP 5.2:: Feature completion status to 5.2 specification
 * OpenMP 6.0:: Feature completion status to 6.0 specification
-* OpenMP Technical Report 14:: Feature completion status to first 6.1 preview
+* OpenMP Technical Report 15:: Feature completion status to second 6.1 preview
 @end menu
 
 The @code{_OPENMP} preprocessor macro and Fortran's @code{openmp_version}
@@ -653,26 +653,63 @@ to address of matching mapped list item per 5.1, Sect. 2.21.7.2 @tab N @tab
 @end multitable
 
 
-@node OpenMP Technical Report 14
-@section OpenMP Technical Report 14
+@node OpenMP Technical Report 15
+@section OpenMP Technical Report 15
 
-Technical Report (TR) 14 is the first preview for OpenMP 6.1.
+Technical Report (TR) 15 is the second preview for OpenMP 6.1.
 
 @unnumberedsubsec New features listed in Appendix B of the OpenMP specification
 @multitable @columnfractions .60 .10 .25
+@item Spatial ICVs and the @code{dim} modifier for spatial dimensions @tab N @tab
+@item Spatial-dimension API routines @tab Y
+      @tab Single active dimension until @code{dim} modifier is supported
+@item In the @code{OMP_PLACES} env var, support extended syntax with abstract names
+      @tab N @tab
+@item In the @code{OMP_PLACES} env var, support hierarchical place groups
+      @tab N @tab
+@item In the @code{OMP_PLACES} env var, new @code{structured} operator
+      @tab N @tab
+@item @code{reset} and @code{noreset} modifiers to the @code{OMP_PROC_BIND}
+      env var @tab N @tab
+@item @code{optional} modifier to the @code{default} and @code{defaultmap}
+      clauses for Fortran @tab N @tab
+@item @code{implicit} modifier to the @code{default} and @code{defaultmap}
+      clauses @tab N @tab
+@item Type conversion in atomic structured blocks @tab N @tab
 @item The @code{depth} clause to @code{fuse} directive @tab N @tab
+@item The @code{per_thread} modifier to the @code{reduction} clause @tab N @tab
+@item Mapping polymorphic variables in Fortran @tab N @tab
 @item The @code{attach} modifier to the @code{map} clause @tab N @tab
 @item The @code{dyn_groupprivate} clause and the
       @code{omp_get_dyn_groupprivate_ptr}, @code{omp_get_dyn_groupprivate_size},
       and @code{omp_get_dyn_groupprivate_size} routines @tab N @tab
+@item The @code{vendor} trait selector to the @code{device} and @code{target_device}
+      selector set in context selectors @tab N @tab
 @item @code{begin declare_variant} directive in Fortran @tab N @tab
+@item @code{shift} clause to the @code{tile} construct @tab N @tab
 @item @code{grid} and @code{tile} modifier to the @code{size} clause @tab N @tab
 @item New @code{flatten} loop-transforming directive @tab N @tab
 @item @code{scaled} modifier to @code{simdlen} clause @tab N @tab
+@item Lifted restriction on the first chunk size for the @code{schedule} clause
+      with @code{simd} modifier @tab N @tab
+@item Change to the used chunk-size with the @code{schedule} clause and no
+      specified @var{chunk_size} @tab N @tab
+@item Clarified behavior of Fortran type-bound procedures inside @code{target}
+      regions @tab N @tab
+@item @code{taskwait} construct's implicit task-dependencies rules update
+      @tab N @tab
+@item @code{depobj} and @code{loc} modifiers to the @code{depend} clause
+      @tab N @tab
 @item New @code{omp_default_device} identifier as conforming device number
       @tab Y @tab
+@item @code{user_mem} class template added to the @code{omp::allocator} namespace
+      @tab N @tab
+@item @code{omp_get_filtered_devices} API routines @tab N @tab
+@item @code{omp_get_device_distances} API routines @tab Y @tab
 @item Clarify when @code{omp_target_is_accessible} routine returns zero
       @tab Y @tab
+@item OMPT entry point @code{set_selective_callback} @tab N @tab
+@item OMPT entry point @code{get_uid_from_device} @tab N @tab
 @end multitable
 
 @unnumberedsubsec Deprecated features, unless listed above
