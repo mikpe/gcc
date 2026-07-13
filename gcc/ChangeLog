@@ -35,7 +35,7 @@
 
 	* config/i386/i386.md (*bmi2_umul<mode>3_highpart): New pattern.
 
-2026-07-12  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+2026-07-12  MITSUNARI Shigeo  <herumi@nifty.com>
 
 	* expmed.cc (expand_wide_mulh_udiv): New function.
 	(expand_divmod): Use it for unsigned constant division needing a
