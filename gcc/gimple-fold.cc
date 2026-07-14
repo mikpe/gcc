@@ -1478,10 +1478,70 @@ gimple_fold_builtin_memset (gimple_stmt_iterator *gsi, tree c, tree len)
   if (! tree_fits_uhwi_p (len))
     return false;
 
+  length = tree_to_uhwi (len);
+
+  tree dest = gimple_call_arg (stmt, 0);
+  if (length == 1
+      && POINTER_TYPE_P (TREE_TYPE (dest)))
+    {
+      /* Keep the original call until object-size analysis has inspected it.  */
+      if (!(cfun->curr_properties & PROP_objsz))
+	return false;
+
+      /* Detect out-of-bounds accesses without issuing warnings.
+	 Avoid folding out-of-bounds accesses but to avoid false
+	 positives for unreachable code defer warning until after
+	 DCE has worked its magic.
+	 -Wrestrict is still diagnosed.  */
+      if (int warning = check_bounds_or_overlap (as_a <gcall *>(stmt),
+						 dest, NULL_TREE, len,
+						 NULL_TREE, false, false))
+	if (warning != OPT_Wrestrict)
+	  return false;
+
+      etype = unsigned_char_type_node;
+      tree ptype = TREE_TYPE (TREE_TYPE (dest));
+      if (TYPE_VOLATILE (ptype))
+	etype = build_qualified_type (etype, TYPE_QUAL_VOLATILE);
+
+      location_t loc = gimple_location (stmt);
+      tree cval_tree;
+      if (TREE_CODE (c) == INTEGER_CST)
+	cval_tree = fold_convert (etype, c);
+      else
+	cval_tree = gimple_convert (gsi, true, GSI_SAME_STMT, loc, etype, c);
+
+      /* Build accesses at offset zero with a ref-all character type.  */
+      tree off0
+	= build_int_cst (build_pointer_type_for_mode (char_type_node,
+						      ptr_mode, true), 0);
+      tree var = fold_build2_loc (loc, MEM_REF, etype, dest, off0);
+      gimple *store = gimple_build_assign (var, cval_tree);
+      gimple_move_vops (store, stmt);
+      gimple_set_location (store, loc);
+      copy_warning (store, stmt);
+
+      tree lhs = gimple_call_lhs (stmt);
+      if (!lhs)
+	{
+	  gsi_replace (gsi, store, false);
+	  return true;
+	}
+
+      gsi_insert_before (gsi, store, GSI_SAME_STMT);
+      tree ret = dest;
+      if (!useless_type_conversion_p (TREE_TYPE (lhs), TREE_TYPE (dest)))
+	ret = gimple_convert (gsi, true, GSI_SAME_STMT, loc,
+			      TREE_TYPE (lhs), dest);
+      gimple *asgn = gimple_build_assign (lhs, ret);
+      gsi_replace (gsi, asgn, false);
+
+      return true;
+    }
+
   if (TREE_CODE (c) != INTEGER_CST)
     return false;
 
-  tree dest = gimple_call_arg (stmt, 0);
   tree var = dest;
   if (TREE_CODE (var) != ADDR_EXPR)
     return false;
@@ -1502,7 +1562,6 @@ gimple_fold_builtin_memset (gimple_stmt_iterator *gsi, tree c, tree len)
   if (! var_decl_component_p (var))
     return false;
 
-  length = tree_to_uhwi (len);
   if (GET_MODE_SIZE (SCALAR_INT_TYPE_MODE (etype)) != length
       || (GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (etype))
 	  != GET_MODE_BITSIZE (SCALAR_INT_TYPE_MODE (etype)))
