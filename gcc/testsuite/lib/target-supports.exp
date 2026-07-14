@@ -7150,6 +7150,23 @@ proc check_effective_target_arm_v8_1m_mve_ok { } {
 		check_effective_target_arm_v8_1m_mve_ok_nocache]
 }
 
+# Return 1 if the target can link ARMv8.1-M MVE code using the
+# options selected by arm_v8_1m_mve_ok, 0 otherwise.
+
+proc check_effective_target_arm_v8_1m_mve_link { } {
+    if { ![check_effective_target_arm_v8_1m_mve_ok] } {
+	return 0
+    }
+
+    return [check_no_compiler_messages arm_v8_1m_mve_link executable {
+	int
+	main (void)
+	{
+	  return 0;
+	}
+    } [add_options_for_arm_v8_1m_mve ""]]
+}
+
 proc add_options_for_arm_v8_1m_mve { flags } {
     if { ! [check_effective_target_arm_v8_1m_mve_ok] } {
 	return "$flags"

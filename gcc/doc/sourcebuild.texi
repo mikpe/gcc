@@ -2235,6 +2235,11 @@ ARM target supports options to generate instructions from ARMv8.1-M with
 the M-Profile Vector Extension (MVE). Some multilibs may be incompatible
 with these options.
 
+@item arm_v8_1m_mve_link
+ARM target supports linking programs using the options selected by
+@code{arm_v8_1m_mve_ok}. Some multilibs may be incompatible with these
+options.
+
 @item arm_v8_1m_mve_fp_ok
 ARM target supports options to generate instructions from ARMv8.1-M with
 the Half-precision floating-point instructions (HP), Floating-point Extension
