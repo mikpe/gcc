@@ -1,3 +1,83 @@
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-07-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126150
+	* g++.dg/pr126150.C: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-25  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125953
+	* gcc.dg/torture/pr125953.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-26  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125875
+	* gcc.dg/torture/pr125875.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125786
+	* gcc.dg/torture/pr125786.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125668
+	* gcc.dg/pr125668.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125296
+	* gcc.dg/pr125206.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126008
+	* gcc.dg/torture/pr126008.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125730
+	* gcc.dg/torture/pr125730.c: New testcase.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-07-01  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125040
+	* gcc.dg/torture/pr125040.c: New testcase.
+
+2026-07-13  Josef Melcr  <josef.melcr@suse.com>
+
+	Backported from master:
+	2026-07-13  Josef Melcr  <josef.melcr@suse.com>
+
+	PR ipa/125121
+	* c-c++-common/gomp/pr125121.c: New test.
+
 2026-07-12  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:

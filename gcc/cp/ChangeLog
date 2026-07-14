@@ -1,3 +1,9 @@
+2026-07-13  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/126066
+	* tree.cc (lvalue_kind) <case MODOP_EXPR>: Use
+	gcc_checking_assert instead of gcc_assert.
+
 2026-07-08  Marek Polacek  <polacek@redhat.com>
 
 	Backported from master:

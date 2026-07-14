@@ -1,3 +1,119 @@
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-07-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126150
+	* tree-cfg.cc (replace_uses_by): Delay purging of EH edges
+	until after FOR_EACH_IMM_USE_STMT finished.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-25  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125953
+	* gimple-range.cc (gimple_ranger::range_of_expr): Document.
+	Fall back to global ranges if 'stmt' is not in the IL.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-26  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/125875
+	* match.pd: When checking for !can_vec_perm_const_p also
+	allow variable permutes and use the vec_perm_indices CTOR
+	with the original tree operands.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-26  Richard Biener  <rguenther@suse.de>
+
+	* vec-perm-indices.h (vec_perm_indices::new_vector): New overload.
+	(vec_perm_indices::input_bitwise_zero_p): New method.
+	(vec_perm_indices::m_input0_bitwise_zero_p,
+	vec_perm_indices::m_input1_bitwise_zero_p): New members.
+	(vec_perm_indices::vec_perm_indices): Adjust.
+	(tree_to_vec_perm_indices): Declare.
+	* vec-perm-indices.cc (vec_perm_indices::new_vector): New overload.
+	(vec_perm_indices::new_expanded_vector): Adjust.
+	(tree_to_vec_perm_indices): New function.
+	* optabs-query.cc (can_vec_perm_const_p): Handle permute
+	patterns mapping to vec_shl/vec_shr.
+	* tree-vect-generic.cc (lower_vec_perm): Move vec_shl/vec_shr
+	detection to can_vec_perm_const_p and simplify.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125786
+	* tree-ssa-reassoc.cc (optimize_vec_cond_expr): Create a new
+	stmt instead of rewriting an existing possibly multi-use one.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125668
+	* tree-ssa-forwprop.cc (forward_propagate_addr_expr_1):
+	Preserve alignment of the original access also for propagating
+	into the LHS.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-05-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125296
+	* tree-ssa-forwprop.cc (forward_propagate_addr_expr_1):
+	Preserve alignment of the original access.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126008
+	* tree-ssa-loop-ivopts.cc (alloc_iv): Revert last change.
+	* tree-ssa-address.cc (add_to_parts): Use unsigned arithmetic
+	to accumulate to base.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-06-16  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125730
+	* tree-ssa-loop-ivopts.cc (alloc_iv): Do not convert pointer
+	IVs to unsigned before canonicalizing.
+
+2026-07-13  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-07-01  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/125040
+	* tree-ssa-pre.cc (clean): Iterate processing.
+
+2026-07-13  Josef Melcr  <josef.melcr@suse.com>
+
+	Backported from master:
+	2026-07-13  Josef Melcr  <josef.melcr@suse.com>
+
+	PR ipa/125121
+	* cgraph.cc (cgraph_edge::make_callback): Add missing call to
+	duplication hooks.
+	* ipa-prop.cc (init_callback_edge_summary): Remove function.
+	(ipa_compute_jump_functions_for_edge): Remove call to
+	init_callback_edge_summary, fix comment.
+	(ipa_edge_args_sum_t::duplicate): Fix the initialization of jump
+	functions vector for callback edges.
+
 2026-07-10  Martin Jambor  <mjambor@suse.cz>
 
 	Backported from master:
