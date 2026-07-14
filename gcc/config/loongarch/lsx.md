@@ -1598,7 +1598,7 @@
   [(set (match_operand:LSX_WHB_W 0 "register_operand" "=f")
 	(vec_select:LSX_WHB_W
 	  (match_operand:LSX_WHB_W 1 "register_operand" "f")
-	  (match_operand 2 "par_const_vector_shf_set_operand" "")))]
+	  (match_operand:<VIMODE>  2 "par_const_vector_shf_set_operand" "")))]
   "ISA_HAS_LSX"
 {
   HOST_WIDE_INT val = 0;

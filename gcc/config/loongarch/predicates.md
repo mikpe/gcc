@@ -684,7 +684,7 @@
 						       op));
 })
 
-(define_predicate "par_const_vector_shf_set_operand"
+(define_special_predicate "par_const_vector_shf_set_operand"
   (match_code "parallel")
 {
   return loongarch_const_vector_shuffle_set_p (op, mode);
