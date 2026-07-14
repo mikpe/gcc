@@ -14547,3 +14547,23 @@ proc check_effective_target_valgrind { } {
     }
     return 0
 }
+
+# Return 1 if the target runtime can deref null, 0 otherwise.
+# Cache the result.
+
+proc check_effective_target_can_deref_null { } {
+    return [check_runtime can_deref_null {
+	char __attribute__((noipa))
+	read_mem (volatile char *p)
+	{
+	  return *p;
+	}
+
+	int
+	main ()
+	{
+	  read_mem (0);
+	  return 0;
+	}
+      } "-O0 -fno-delete-null-pointer-checks -Wno-null-dereference"]
+}
