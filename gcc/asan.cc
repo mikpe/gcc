@@ -2446,8 +2446,13 @@ report_error_func (bool is_store, bool recover_p, HOST_WIDE_INT size_in_bytes,
       *nargs = 2;
       return builtin_decl_implicit (report[recover_p][is_store][5]);
     }
-  *nargs = 1;
   int size_log2 = exact_log2 (size_in_bytes);
+  if (size_log2 == -1 || size_log2 >= 5)
+    {
+      *nargs = 2;
+      return builtin_decl_implicit (report[recover_p][is_store][5]);
+    }
+  *nargs = 1;
   return builtin_decl_implicit (report[recover_p][is_store][size_log2]);
 }
 
@@ -4289,8 +4294,12 @@ asan_expand_poison_ifn (gimple_stmt_iterator *iter,
 	{
 	  tree fun = report_error_func (store_p, recover_p, tree_to_uhwi (size),
 					&nargs);
-	  call = gimple_build_call (fun, 1,
-				    build_fold_addr_expr (shadow_var));
+	  call = gimple_build_call (fun, nargs,
+				    build_fold_addr_expr (shadow_var),
+				    nargs == 2
+				    ? fold_convert (pointer_sized_int_node,
+						    size)
+				    : NULL_TREE);
 	}
       gimple_set_location (call, gimple_location (use));
       gimple *call_to_insert = call;
