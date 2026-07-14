@@ -158,7 +158,7 @@ asan_red_zone_size (unsigned int size)
   return c ? 2 * ASAN_RED_ZONE_SIZE - c : ASAN_RED_ZONE_SIZE;
 }
 
-/* Return how much a stack variable occupis on a stack
+/* Return how much a stack variable occupies on a stack
    including a space for red zone.  */
 
 inline unsigned HOST_WIDE_INT
