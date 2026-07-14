@@ -557,11 +557,11 @@ when written on a single line, just do it.
 Start the enquiry clause in the if-part of a conditional clause right
 after the @code{if} symbol, not in the next line.
 
-The serial clauses in the then- and if-parts of the conditional clause
+The serial clauses in the then- and else-parts of the conditional clause
 shall be indented five positions right, which is the length of both
 the @code{then} and @code{else} symbols plus one.
 
-The first declaration or unit in the then- and if-parts shall be
+The first declaration or unit in the then- and else-parts shall be
 placed in the same line than the @code{then} and @code{else} symbols,
 respectively.
 
