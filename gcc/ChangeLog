@@ -1,3 +1,118 @@
+2026-07-13  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR driver/124058
+	* gcc-diagnostic-spec.cc (nowarn_spec_t::nowarn_spec_t):
+	Remove leftover reference to OPT_Wuse_after_free.
+
+2026-07-13  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR driver/124058
+	* common.opt (Wuse-after-free): Make an alias for
+	-Wuse-after-free=1.
+	* doc/invoke.texi: Document alias.
+	* gimple-ssa-warn-access.cc (pass_waccess::warn_invalid_pointer):
+	Use OPT_Wuse_after_free_.
+
+2026-07-13  Vladimir N. Makarov  <vmakarov@redhat.com>
+
+	PR target/120165
+	* lra-constraints.cc (virtual_reg_p, contains_virtual_reg_p): New.
+	(reg_has_incdec_p): Ditto.
+	(lra_constraints): Use reg_has_incdec_p and contains_virtual_reg_p
+	to switch off the equiv.
+
+2026-07-13  Nathan Sidwell  <nathan@acm.org>
+
+	* print-rtl.cc (rtx_writer::print_rtx_operand_code_i): Don't
+	fallback to UNSPEC enums if there are any UNSPECV enums.
+	(print_exp): Print unspec/unspecv name, when available.
+
+2026-07-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* doc/extend.texi (no_specializations): Document new
+	attribute.
+	* doc/invoke.texi (-Wno-invalid-specialization): Document new
+	warning.
+
+2026-07-13  Odysseas Georgoudis  <odygrd@hotmail.com>
+
+	PR tree-optimization/113894
+	* match.pd: Add simplifications for branchless conditional negate
+	and sign-test absolute value idioms.
+
+2026-07-13  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	PR target/78799
+	* config/i386/i386.cc (function_value_ms_64): Do not treat
+	integral 16-byte values as SSE returns.
+	(ix86_return_in_memory): Likewise avoid treating integral 16-byte
+	values as XMM returns.
+
+2026-07-13  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	* config/rs6000/rs6000-call.cc (rs6000_return_in_memory): Handle
+	TDOmode and emit "Dense Math" diagnostics.
+	(rs6000_function_arg): Reject TDOmode function parameters and
+	emit "Dense Math" diagnostics.
+	* config/rs6000/rs6000-modes.def: Add TDOmode.
+
+2026-07-13  Dylan Rees  <dylan.rees@arm.com>
+
+	* cse.cc (struct cse_vec_duplicate_match): New struct.
+	(struct cse_basic_block_data): New member added.
+	(cse_prescan_cache_vec_dup): New function to cache any vector
+	duplications and check for potential matches.
+	(cse_prescan_path): Extended pre_scan loop to cache vector
+	duplication matches + New loop added to assign a list of
+	matches to a block of data inside new struct member.
+	(cse_main): New loop to emit wider vector duplication earlier
+	and update narrower vector duplicate to SUBREG insn.
+
+2026-07-13  Dylan Rees  <dylan.rees@arm.com>
+
+	* config/aarch64/aarch64-builtins.cc (aarch64_fold_lo_call_to_hi):
+	New branch to check for uniform vectors, extend and then add
+	them to the new highpart builtin call.
+
+2026-07-13  Josef Melcr  <josef.melcr@suse.com>
+
+	PR ipa/125121
+	* cgraph.cc (cgraph_edge::make_callback): Add missing call to
+	duplication hooks.
+	* ipa-prop.cc (init_callback_edge_summary): Remove function.
+	(ipa_compute_jump_functions_for_edge): Remove call to
+	init_callback_edge_summary, fix comment.
+	(ipa_edge_args_sum_t::duplicate): Fix the initialization of jump
+	functions vector for callback edges.
+
+2026-07-13  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/t-sol2 (install-clearcap-map): Install as clearcap.map.
+
+2026-07-13  Sandra Loosemore  <sloosemore@baylibre.com>
+
+	* doc/extend.texi (Common Attributes): Delete instances of
+	extra "the".
+	* doc/invoke.texi (Visium Options): Likewise.
+	* doc/tree-ssa.texi (SSA Operands): Likewise.
+
+2026-07-13  Sandra Loosemore  <sloosemore@baylibre.com>
+
+	* doc/invoke.texi (Options Summary) [C Language Options]:
+	Group --ansi with -ansi since they are documented together.
+	Correctly alphabetize -ffso-struct.
+	(C Dialect Options): Likeise correctly alphabetize -ffso-struct.
+
+2026-07-13  Sandra Loosemore  <sloosemore@baylibre.com>
+
+	* doc/invoke.texi (Option Summary): Add -fdeps-file, -fdeps-format,
+	and -fdeps-target.
+	(C Dialect Options): Properly alphabetize entries for the above
+	options, group them together, move the introductory paragraph
+	into the discussion of this group of items, and make the docs
+	more descriptive.
+
 2026-07-12  Jin Ma  <jinma@linux.alibaba.com>
 
 	* config/riscv/riscv.md (*<any_extract:optab><GPR:mode>3):

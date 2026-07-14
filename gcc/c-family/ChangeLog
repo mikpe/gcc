@@ -1,3 +1,16 @@
+2026-07-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* c.opt (Winvalid-specialization): New option.
+	* c.opt.urls: Regenerate.
+	* c-lex.cc (c_common_has_attribute): Don't advertise
+	gnu::no_specializations attribute availability.
+
+2026-07-13  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/126066
+	* c-common.cc (verify_tree): Add a comment.
+
 2026-07-10  Jakub Jelinek  <jakub@redhat.com>
 
 	PR c++/107187

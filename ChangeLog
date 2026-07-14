@@ -1,3 +1,9 @@
+2026-07-13  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
+
+	* MAINTAINERS.yml: Add myself.
+	* MAINTAINERS (Write After Approval): Regenerate.
+	(Contributing under the DCO): Regenerate.
+
 2026-07-12  Kael Andrew Alonzo Franco  <kaelfandrew@gmail.com>
 
 	* MAINTAINERS (Write After Approval): Add myself.

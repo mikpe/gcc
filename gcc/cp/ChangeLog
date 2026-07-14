@@ -1,3 +1,89 @@
+2026-07-13  Yuxuan Chen  <i@yuxuan.ch>
+
+	PR c++/125066
+	* decl.cc (store_parm_decls): Do not register trivial_abi parameter
+	cleanups for cloned functions.
+
+2026-07-13  Vladislav Semykin  <vladislav.semykin@gmail.com>
+
+	PR c++/126207
+	* cp-tree.h (typeid_evaluated_p): Add nonnull out-parameter.
+	* rtti.cc (typeid_evaluated_p): Likewise; avoid calling
+	resolves_to_fixed_type_p twice.
+	(build_typeid): Adjust.
+
+2026-07-13  Yuxuan Chen  <i@yuxuan.ch>
+
+	PR c++/125064
+	* tree.cc (validate_trivial_abi_attribute): Remove a rejected
+	trivial_abi attribute from all variants.
+
+2026-07-13  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	PR driver/124058
+	* decl.cc (maybe_prepare_return_this): Use OPT_Wuse_after_free_.
+
+2026-07-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* tree.cc (cxx_gnu_attributes): Add "no_specializations" entry.
+	(cxx_clang_attributes): Likewise.
+	(handle_no_specializations_attribute,
+	handle_gnu_no_specializations_attribute): New functions.
+	* decl2.cc (is_late_template_attribute): Return false for
+	"no_specializations" attribute, even on dependent types.  Don't
+	differentiate between the completely unknown and dependent
+	cases, for the 5 template attributes return always false, for
+	others true if dependent type and false otherwise.
+	* parser.cc (cp_parser_std_attribute): Use
+	uneval_string_attr even for clang::no_specializations attribute.
+	* pt.cc: Include "escaped_string.h".
+	(maybe_diagnose_no_specializations): New function.
+	(maybe_process_partial_specialization): Use it.
+	(check_explicit_specialization): Likewise.
+
+2026-07-13  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/126066
+	* constraint.cc (tsubst_requires_expr): Use
+	REQUIRES_EXPR_LOCATION.
+	(satisfaction_cache::get): Use cp_expr_location.
+	(satisfaction_cache::save): Likewise.
+	(finish_requires_expr): Use make_node and set REQUIRES_EXPR_*.
+	* cp-objcp-common.cc (cp_tree_size): Handle REQUIRES_EXPR.
+	(cp_common_init_ts): Change REQUIRES_EXPR from MARK_TS_EXP to
+	MARK_TS_TYPED.
+	* cp-tree.def (REQUIRES_EXPR): Make it tcc_exceptional with no
+	operands.
+	* cp-tree.h (struct tree_requires_expr): New.
+	(REQUIRES_EXPR_PARMS): Adjust.
+	(REQUIRES_EXPR_REQS): Likewise.
+	(REQUIRES_EXPR_EXTRA_ARGS): Likewise.
+	(REQUIRES_EXPR_LOCATION): New.
+	(enum cp_tree_node_structure_enum): Add TS_CP_REQUIRES_EXPR.
+	(union lang_tree_node): Add tree_requires_expr.
+	(cp_expr_location): Handle REQUIRES_EXPR.
+	* cxx-pretty-print.cc (pp_cxx_requires_expr): Use
+	REQUIRES_EXPR_REQS.
+	* decl.cc (cp_tree_node_structure): Handle REQUIRES_EXPR.
+	* error.cc (print_requires_expression_info): Use
+	REQUIRES_EXPR_PARMS.
+	* mangle.cc (write_tparms_constraints): Use cp_expr_location.
+	* module.cc (trees_out::core_vals): Handle REQUIRES_EXPR
+	specially.
+	(trees_in::core_vals): Likewise.
+	* pt.cc (iterative_hash_template_arg): Handle REQUIRES_EXPR.
+	* tree.cc (strip_typedefs_expr): Likewise.
+	(cp_tree_equal): Likewise.
+
+2026-07-13  Joyee Cheung  <joyee@igalia.com>
+
+	PR c++/96496
+	* cvt.cc (ocp_convert): For an enumeration type with a fixed
+	underlying type, convert the operand to that type first, as
+	specified by [expr.static.cast]/8.  Update the comment quoting
+	[expr.static.cast]/8.
+
 2026-07-10  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* module.cc (EOPNOTSUPP): Provide fallback.

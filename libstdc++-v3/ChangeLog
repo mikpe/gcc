@@ -1,3 +1,12 @@
+2026-07-13  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* include/std/mdspan (layout_stride::mapping::_M_check_unique):
+	Define.
+	(layout_stride::mapping(const extents_type&, span<....>)):
+	Add __glibcxx_assert on _M_check_unique.
+	* testsuite/23_containers/mdspan/layouts/stride_neg.cc:
+	Test for the new added assertions.
+
 2026-07-10  Tomasz Kamiński  <tkaminsk@redhat.com>
 
 	* testsuite/std/memory/start_lifetime_as/neg.cc: Fix

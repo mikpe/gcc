@@ -1,3 +1,8 @@
+2026-07-13  Tobias Burnus  <tburnus@baylibre.com>
+
+	* libgomp.texi (OpenMP Implementation Status): Change section
+	name from TR14 to TR15 and add TR15 additions.
+
 2026-07-09  Paul-Antoine Arras  <parras@baylibre.com>
 	    Thomas Schwinge  <tschwinge@baylibre.com>
 
