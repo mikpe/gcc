@@ -1116,10 +1116,17 @@ ranger_cache::get_global_range (vrange &r, tree name) const
 void
 ranger_cache::mark_stale (tree name)
 {
-  // Only mark it as stale if it has been processed. If it has no range
-  // it will be calculated at the next request anyway.
-  if (m_globals.has_range (name))
-    bitmap_set_bit (m_stale, SSA_NAME_VERSION (name));
+  if (SSA_NAME_IS_DEFAULT_DEF (name))
+    {
+      // Default defs have no DEF to recalculate, just create a new timestamp.
+      m_temporal->set_timestamp_stored (name);
+    }
+  else if (m_globals.has_range (name))
+    {
+      // Otherwise Only mark it as stale if it has been processed. If it has no
+      // range it will be calculated at the next request anyway.
+      bitmap_set_bit (m_stale, SSA_NAME_VERSION (name));
+    }
 }
 
 // Get the global range for NAME, and return in R.  Return false if the

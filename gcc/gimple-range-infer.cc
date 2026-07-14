@@ -457,6 +457,8 @@ infer_range_manager::add_range (tree name, gimple *s, const vrange &r)
      fprintf (dump_file, "\n");
    }
 
+  get_range_query (cfun)->update_range_info (name);
+
   // If NAME already has a range, intersect them and done.
   exit_range *ptr = m_on_exit[bb->index].find_ptr (name);
   if (ptr)
