@@ -56,7 +56,7 @@
 
 
 
-int main(int argc, void **args)
+int main(int argc, char **args)
 {
   /* Functions are tested in alphabetical order.  */
   

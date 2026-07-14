@@ -14,7 +14,7 @@
 #include "../../../objc-obj-c++-shared/nsconstantstring-class.h"
 #endif
 
-int main(int argc, void **args)
+int main(int argc, char **args)
 {
   if ([@"this is a string" length] != strlen ("this is a string"))
     abort ();

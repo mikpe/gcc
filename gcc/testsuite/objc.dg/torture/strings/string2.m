@@ -14,7 +14,7 @@
 #include "../../../objc-obj-c++-shared/nsconstantstring-class.h"
 #endif
 
-int main(int argc, void **args)
+int main(int argc, char **args)
 {
   if (strcmp ([@"this " @"is " @"a " @"string" cString],
               "this " "is " "a " "string"))

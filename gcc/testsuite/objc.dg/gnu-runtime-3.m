@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int main(int argc, void **args)
+int main(int argc, char **args)
 {
   [TestsuiteObject new];
   return 0;

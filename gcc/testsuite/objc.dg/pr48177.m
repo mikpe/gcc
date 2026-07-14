@@ -5,7 +5,7 @@
 #include <objc/runtime.h>
 #include <stdlib.h>
 
-int main(int argc, void **args)
+int main(int argc, char **args)
 {
 #ifdef __GNU_LIBOBJC__
   /* This special test tests that, if you have a selector already

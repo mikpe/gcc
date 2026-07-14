@@ -16,7 +16,7 @@
 
 #define STRING "this is a string"
 
-int main (int argc, void **args)
+int main (int argc, char **args)
 {
   if (strcmp ([@STRING cString], STRING))
     abort ();
