@@ -4269,21 +4269,24 @@ gfc_compare_actual_formal (gfc_actual_arglist **ap, gfc_formal_arglist *formal,
 	      {
 	      case INTENT_OUT:
 		{
-		  gfc_symbol *s = e->symtree->n.sym;
 		  gfc_expr_set_at (e, &e->where, VALUE_INTENT_OUT);
+		  if (f->sym->attr.allocatable)
+		    gfc_used_in_allocate_expr (e, &e->where, ALLOCATED_ARG);
 
-		  /* INTENT(OUT) allocates variables as far as we know.  */
-		  if (s->attr.allocatable)
-		    s->attr.allocated = 1;
 		}
 		break;
+
 	      case INTENT_IN:
 		gfc_value_used_expr (e, VALUE_INTENT_IN);
 		break;
+
 	      case INTENT_INOUT:
 	      case INTENT_UNKNOWN:
 		gfc_value_set_and_used (e, &e->where, VALUE_ARG,
 					VALUE_MAYBE_USED);
+
+		if (f->sym->attr.allocatable)
+		  gfc_used_in_allocate_expr (e, &e->where, ALLOCATED_ARG);
 		break;
 	      }
 	  }

@@ -421,6 +421,15 @@ enum value_used
   VALUE_USED
 };
 
+/* How a variable is allocated.  */
+enum var_allocated
+{
+  ALLOCATED_NEVER = 0,
+  ALLOCATED_ARG,
+  ALLOCATED_ALLOCATE_STMT,
+  ALLOCATED_ASSIGNMENT
+};
+
 /* Strings for all symbol attributes.  We use these for dumping the
    parse tree, in error messages, and also when reading and writing
    modules.  In symbol.cc.  */
@@ -1039,7 +1048,7 @@ typedef struct
   ENUM_BITFIELD (value_used) value_used:3;
 
   /* Set if the symbol has been allocated in the current procedure.  */
-  unsigned allocated:1;
+  ENUM_BITFIELD (var_allocated) allocated:2;
 
   /* Set if we already emitted a warning for this symbol and the
      middle-end should not add additional ones.  */
@@ -4013,7 +4022,7 @@ void gfc_mark_lhs_as_used (gfc_expr *, locus *);
 void gfc_value_used_expr (gfc_expr *, enum value_used);
 void gfc_value_set_and_used (gfc_expr *, locus *loc,
 			     enum value_set, enum value_used);
-void gfc_used_in_allocate_expr (gfc_expr *, locus *loc);
+void gfc_used_in_allocate_expr (gfc_expr *, locus *loc, enum var_allocated);
 void gfc_expr_set_at (gfc_expr *, locus *loc, enum value_set);
 
 

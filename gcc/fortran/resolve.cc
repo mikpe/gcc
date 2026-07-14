@@ -9755,7 +9755,7 @@ check_symbols:
     }
 
 success:
-  gfc_used_in_allocate_expr (e, &e->where);
+  gfc_used_in_allocate_expr (e, &e->where, ALLOCATED_ALLOCATE_STMT);
 
   if (code->expr3)
     gfc_value_set_at (e->symtree->n.sym, &code->expr3->where, VALUE_VARDEF);
@@ -20840,24 +20840,6 @@ find_unused_vs_set (gfc_symbol *sym)
       || attr->volatile_ || attr->asynchronous || !attr->referenced)
     return;
 
-  if (warn_unused_intent_out && attr->value_set == VALUE_INTENT_OUT
-      && !var_value_is_used (sym))
-    {
-      gfc_warning (OPT_Wunused_intent_out, "Variable %qs passed to "
-		   "INTENT(OUT) argument at %L but value never used",
-		   sym->name, &sym->other_loc);
-      attr->warning_emitted = 1;
-      return;
-    }
-
-  if (warn_unused_read && attr->value_set == VALUE_READ && !var_value_is_used (sym))
-    {
-      gfc_warning (OPT_Wunused_read, "Variable %qs read at %L but never "
-		   "used", sym->name, &sym->other_loc);
-      attr->warning_emitted = 1;
-      return;
-    }
-
   /* There is no allocation in sight, but the variable is used anyway.  This
      might be hidden behind PRESENT, but issue a warning nonetheless.  If
      people complain, we might want to make this to an extra option to be
@@ -20970,14 +20952,49 @@ find_unused_vs_set (gfc_symbol *sym)
 	  attr->warning_emitted = 1;
 	  return;
 	}
-      if (attr->allocatable && attr->allocated && !var_value_is_used (sym))
+      if (attr->allocatable && !var_value_is_used (sym))
 	{
-	  gfc_warning (OPT_Wunused_but_set_variable_, "Variable %qs "
-		       "allocated at %L but never used", sym->name,
-		       &sym->extra_loc);
-	  attr->warning_emitted = 1;
-	  return;
+	  if (attr->allocated == ALLOCATED_ALLOCATE_STMT)
+	    {
+	      gfc_warning (OPT_Wunused_but_set_variable_, "Variable %qs "
+			   "allocated at %L but never used", sym->name,
+			   &sym->extra_loc);
+	      attr->warning_emitted = 1;
+	      return;
+	    }
+	  else if (attr->allocated == ALLOCATED_ARG)
+	    {
+	      gfc_warning (OPT_Wunused_but_set_variable_, "Variable %qs maybe "
+			   "allocated as argument at %L but never used",
+			   sym->name, &sym->extra_loc);
+	      attr->warning_emitted = 1;
+	      return;
+	    }
 	}
+    }
+
+  /* -Wunused-intent-out and -Wunused-read are enabled with -Wextra, so
+     check for these conditions at the end.  If one of the warnings
+     with -Wall triggered, we do not want to issue a different warrning
+     for the same variable if the user supplies -Wall -Wextra instead
+     of only -Wall.  */
+
+  if (warn_unused_intent_out && attr->value_set == VALUE_INTENT_OUT
+      && !var_value_is_used (sym))
+    {
+      gfc_warning (OPT_Wunused_intent_out, "Variable %qs passed to "
+		   "INTENT(OUT) argument at %L but value never used",
+		   sym->name, &sym->other_loc);
+      attr->warning_emitted = 1;
+      return;
+    }
+
+  if (warn_unused_read && attr->value_set == VALUE_READ && !var_value_is_used (sym))
+    {
+      gfc_warning (OPT_Wunused_read, "Variable %qs read at %L but never "
+		   "used", sym->name, &sym->other_loc);
+      attr->warning_emitted = 1;
+      return;
     }
 }
 

@@ -5857,8 +5857,7 @@ mark_vars_as_used (gfc_expr **e, int *walk_subtrees, void *data)
     return 0;
 
   sym->attr.value_used = how_used;
-  if (sym->other_loc.nextc == NULL)
-    sym->other_loc = expr->where;
+  sym->other_loc = expr->where;
 
   return 0;
 }
@@ -5894,7 +5893,7 @@ gfc_value_set_and_used (gfc_expr *expr, locus *loc, enum value_set how_set,
 /* ALLOCATE (A(N)) means that N is used, but A is not marked as such.  */
 
 void
-gfc_used_in_allocate_expr (gfc_expr *expr, locus *loc)
+gfc_used_in_allocate_expr (gfc_expr *expr, locus *loc, enum var_allocated how)
 {
   gfc_symbol *sym;
   enum value_used prev_used;
@@ -5909,13 +5908,17 @@ gfc_used_in_allocate_expr (gfc_expr *expr, locus *loc)
   gfc_value_used_expr (expr, VALUE_USED);
   sym->attr.value_used = prev_used;
   sym->other_loc = prev_loc;
-  sym->attr.allocated = 1;
+
+  if (how <= sym->attr.allocated)
+    return;
+
+  sym->attr.allocated = how;
 
   if (sym->extra_loc.nextc == NULL)
     sym->extra_loc = *loc;
 }
 
-/* Mark a symbol to allocated.  */
+/* Mark a symbol as allocated.  */
 
 bool
 gfc_lvalue_allocated_at (gfc_symbol *sym, locus *loc)
@@ -5923,7 +5926,7 @@ gfc_lvalue_allocated_at (gfc_symbol *sym, locus *loc)
   if (sym->other_loc.nextc == 0)
     sym->other_loc = *loc;
 
-  sym->attr.allocated = 1;
+  sym->attr.allocated = ALLOCATED_ASSIGNMENT;
   return true;
 }
 
