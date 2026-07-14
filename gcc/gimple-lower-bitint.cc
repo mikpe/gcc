@@ -56,6 +56,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "ubsan.h"
 #include "stor-layout.h"
 #include "gimple-lower-bitint.h"
+#include "attribs.h"
+#include "asan.h"
 
 /* Split BITINT_TYPE precisions in 4 categories.  Small _BitInt, where
    target hook says it is a single limb, middle _BitInt which per ABI
@@ -7316,6 +7318,40 @@ gimple_lower_bitint (void)
 
       if (expanded)
 	{
+	  free_dominance_info (CDI_DOMINATORS);
+	  free_dominance_info (CDI_POST_DOMINATORS);
+	  mark_virtual_operands_for_renaming (cfun);
+	  cleanup_tree_cfg (TODO_update_ssa);
+	}
+    }
+
+  if (flag_sanitize & (SANITIZE_ADDRESS | SANITIZE_HWADDRESS))
+    {
+      hash_map<tree, tree> shadow_vars_mapping;
+      bool need_commit_edge_insert = false;
+      bool any_asan_poison = false;
+      for (unsigned j = 0; j < num_ssa_names; ++j)
+	{
+	  tree s = ssa_name (j);
+	  if (s == NULL)
+	    continue;
+	  tree type = TREE_TYPE (s);
+	  if (BITINT_TYPE_P (type)
+	      && gimple_call_internal_p (SSA_NAME_DEF_STMT (s),
+					 IFN_ASAN_POISON)
+	      && bitint_precision_kind (type) >= bitint_prec_large)
+	    {
+	      any_asan_poison = true;
+	      gimple_stmt_iterator gsi = gsi_for_stmt (SSA_NAME_DEF_STMT (s));
+	      asan_expand_poison_ifn (&gsi, &need_commit_edge_insert,
+				      shadow_vars_mapping);
+	    }
+	}
+      if (any_asan_poison)
+	{
+	  if (need_commit_edge_insert)
+	    gsi_commit_edge_inserts ();
+	  i = 0;
 	  free_dominance_info (CDI_DOMINATORS);
 	  free_dominance_info (CDI_POST_DOMINATORS);
 	  mark_virtual_operands_for_renaming (cfun);
