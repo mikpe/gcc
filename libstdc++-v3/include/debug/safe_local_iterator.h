@@ -65,9 +65,6 @@ namespace __gnu_debug
     : private _Iterator
     , public _Safe_local_iterator_base
     {
-      typedef _Iterator _Iter_base;
-      typedef _Safe_local_iterator_base _Safe_base;
-
       typedef typename _UContainer::size_type size_type;
 
       typedef std::iterator_traits<_Iterator> _Traits;
@@ -85,10 +82,9 @@ namespace __gnu_debug
 
       struct _Unchecked { };
 
-      _Safe_local_iterator(const _Safe_local_iterator& __x,
-			   _Unchecked) noexcept
-      : _Iter_base(__x.base())
-      { _M_attach(__x._M_safe_container()); }
+      _Safe_local_iterator(const _Safe_local_iterator& __x, _Unchecked) noexcept
+      : _Iterator(__x), _Safe_local_iterator_base(__x, _S_constant())
+      { }
 
     public:
       typedef _Iterator					iterator_type;
@@ -99,7 +95,7 @@ namespace __gnu_debug
       typedef typename _Traits::pointer			pointer;
 
       /// @post the iterator is singular and unattached
-      _Safe_local_iterator() noexcept : _Iter_base() { }
+      _Safe_local_iterator() noexcept : _Iterator() { }
 
       /**
        * @brief Safe iterator construction from an unsafe iterator and
@@ -110,14 +106,14 @@ namespace __gnu_debug
        */
       _Safe_local_iterator(_Iterator __i,
 			   const _Safe_unordered_container_base* __cont)
-      : _Iter_base(__i), _Safe_base(__cont, _S_constant())
+      : _Iterator(__i), _Safe_local_iterator_base(__cont, _S_constant())
       { }
 
       /**
        * @brief Copy construction.
        */
       _Safe_local_iterator(const _Safe_local_iterator& __x) noexcept
-      : _Iter_base(__x.base())
+      : _Iterator(__x)
       {
 	// _GLIBCXX_RESOLVE_LIB_DEFECTS
 	// DR 408. Is vector<reverse_iterator<char*> > forbidden?
@@ -134,7 +130,7 @@ namespace __gnu_debug
        * @post __x is singular and unattached
        */
       _Safe_local_iterator(_Safe_local_iterator&& __x) noexcept
-      : _Iter_base()
+      : _Iterator()
       {
 	_GLIBCXX_DEBUG_VERIFY(!__x._M_singular()
 			      || __x._M_value_initialized(),
@@ -157,7 +153,7 @@ namespace __gnu_debug
 	  typename __gnu_cxx::__enable_if<_IsConstant::__value &&
 	    std::__are_same<_MutableIterator, _OtherIterator>::__value,
 					  _UContainer>::__type>& __x) noexcept
-	: _Iter_base(__x.base())
+	: _Iterator(__x.base())
 	{
 	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
 	  // DR 408. Is vector<reverse_iterator<char*> > forbidden?
@@ -321,12 +317,12 @@ namespace __gnu_debug
       /** Attach iterator to the given unordered container. */
       void
       _M_attach(const _Safe_unordered_container_base* __cont)
-      { _Safe_base::_M_attach(__cont, _S_constant()); }
+      { _Safe_local_iterator_base::_M_attach(__cont, _S_constant()); }
 
       /** Likewise, but not thread-safe. */
       void
       _M_attach_single(const _Safe_unordered_container_base* __cont)
-      { _Safe_base::_M_attach_single(__cont, _S_constant()); }
+      { _Safe_local_iterator_base::_M_attach_single(__cont, _S_constant()); }
 
       /// Is the iterator dereferenceable?
       bool
@@ -341,7 +337,7 @@ namespace __gnu_debug
       /// Is the iterator value-initialized?
       bool
       _M_value_initialized() const
-      { return _M_version == 0 && base() == _Iter_base{}; }
+      { return _M_version == 0 && base() == _Iterator{}; }
 
       // Is the iterator range [*this, __rhs) valid?
       bool
