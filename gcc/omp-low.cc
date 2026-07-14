@@ -13287,9 +13287,9 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	case OMP_CLAUSE_DEVICE_TYPE:
 	  /* FIXME: Ensure that 'nohost' also has not implied before that
 	     'g->have_offload = true' or an implicit declare target.  */
-	  if (OMP_CLAUSE_DEVICE_TYPE_KIND (c) != OMP_CLAUSE_DEVICE_TYPE_ANY)
+	  if (OMP_CLAUSE_DEVICE_TYPE_KIND (c) == OMP_CLAUSE_DEVICE_TYPE_HOST)
 	    sorry_at (OMP_CLAUSE_LOCATION (c),
-		      "only the %<device_type(any)%> is supported");
+		      "the %<device_type(host)%> is not supported");
 	  break;
       case OMP_CLAUSE_USES_ALLOCATORS:
 	allocator = OMP_CLAUSE_USES_ALLOCATORS_ALLOCATOR (c);

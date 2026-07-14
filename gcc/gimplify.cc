@@ -18990,6 +18990,46 @@ gimplify_omp_workshare (tree *expr_p, gimple_seq *pre_p)
       stmt = gimple_build_omp_scope (body, OMP_CLAUSES (expr));
       break;
     case OMP_TARGET:
+      /* Handle 'device_type(nohost)'.  */
+      if (tree c = omp_find_clause (OMP_CLAUSES (expr), OMP_CLAUSE_DEVICE_TYPE))
+	if (OMP_CLAUSE_DEVICE_TYPE_KIND (c) == OMP_CLAUSE_DEVICE_TYPE_NOHOST)
+	  {
+	    location_t loc = gimple_location (body);
+	    tree fn = builtin_decl_explicit (BUILT_IN_OMP_IS_INITIAL_DEVICE);
+	    fn = build_call_expr_loc (loc, fn, 0);
+	    tree err = builtin_decl_explicit (BUILT_IN_GOMP_ERROR);
+	    const char *str = "Executing device-type 'nohost' target region "
+			      "on the host";
+	    const int len = strlen (str) + 1;
+	    tree msg = build_string (len, str);
+	    TREE_TYPE (msg) = build_array_type_nelts (char_type_node, len);
+	    TREE_READONLY (msg) = 1;
+	    TREE_STATIC (msg) = 1;
+	    msg = build_fold_addr_expr (msg);
+	    tree msglen = fold_build2 (MINUS_EXPR, size_type_node,
+				       build_all_ones_cst (size_type_node),
+				       size_one_node);
+	    err = build_call_expr_loc (loc, err, 2, msg, msglen);
+	    tree l1 = create_artificial_label (UNKNOWN_LOCATION);
+	    tree l2 = create_artificial_label (UNKNOWN_LOCATION);
+	    tree l3 = create_artificial_label (UNKNOWN_LOCATION);
+
+	    gimple_seq new_body = NULL;
+
+	    gimplify_expr (&fn, &new_body, NULL, is_gimple_val, fb_rvalue);
+	    gcond *cond = gimple_build_cond (NE_EXPR, fn,
+					     build_int_cst (TREE_TYPE (fn), 0),
+					     l1, l2);
+	    gimplify_seq_add_stmt (&new_body, cond);
+	    gimplify_seq_add_stmt (&new_body, gimple_build_label (l1));
+	    gimplify_and_add (err, &new_body);
+	    gimplify_seq_add_stmt (&new_body, gimple_build_goto (l3));
+	    gimplify_seq_add_stmt (&new_body, gimple_build_label (l2));
+	    gimple_seq_add_seq (&new_body, body);
+	    gimplify_seq_add_stmt (&new_body, gimple_build_label (l3));
+	    body = gimple_build_bind (NULL_TREE, new_body, make_node (BLOCK));
+	    gimple_set_location (body, loc);
+	  }
       stmt = gimple_build_omp_target (body, GF_OMP_TARGET_KIND_REGION,
 				      OMP_CLAUSES (expr), iterator_loops_seq);
       break;

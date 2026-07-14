@@ -105,11 +105,17 @@ GOMP_warning (const char *msg, size_t msglen)
     gomp_error ("error directive encountered");
 }
 
+/* Handle 'omp error' directive; for msglen == -2, it is used internally
+   by the compiler-generated code such that 'error directive encountered'
+   is not printed.  */
+
 void
 GOMP_error (const char *msg, size_t msglen)
 {
   if (msg && msglen == (size_t) -1)
     gomp_fatal ("fatal error: error directive encountered: %s", msg);
+  else if (msg && msglen == (size_t) -2)
+    gomp_fatal ("fatal error: %s", msg);
   else if (msg)
     {
       fputs ("\nlibgomp: fatal error: error directive encountered: ", stderr);

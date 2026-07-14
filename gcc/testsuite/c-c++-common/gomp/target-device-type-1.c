@@ -10,10 +10,10 @@ void f ()
 #pragma omp target device_type ( any )
   ;
 
-#pragma omp target device_type ( nohost )  // { dg-message "sorry, unimplemented: only the 'device_type\\(any\\)' is supported" }
+#pragma omp target device_type ( nohost )
   ;
 
-#pragma omp target device_type ( host )
+#pragma omp target device_type ( host )  // { dg-message "sorry, unimplemented: the 'device_type\\(host\\)' is not supported" }
   ;
 
 }
