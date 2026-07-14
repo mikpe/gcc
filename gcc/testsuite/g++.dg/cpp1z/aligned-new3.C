@@ -13,7 +13,7 @@ void* operator new (std::size_t n, std::align_val_t)
 }
 
 bool deleted = false;
-void operator delete (void *p, std::size_t, std::align_val_t) // { dg-warning "exception specifier" }
+void operator delete (void *p, std::size_t, std::align_val_t)
 {
   deleted = true;
   operator delete (p);

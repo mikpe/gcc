@@ -12166,6 +12166,14 @@ grokfndecl (tree ctype,
       return NULL_TREE;
     }
 
+  /* [except.spec]/9 - A deallocation function with no explicit noexcept-specifier
+     has a non-throwing exception specification.  */
+  if (raises == NULL_TREE
+      && cxx_dialect >= cxx11
+      && IDENTIFIER_NEWDEL_OP_P (declarator)
+      && !IDENTIFIER_NEW_OP_P (declarator))
+    raises = noexcept_true_spec;
+
   type = build_cp_fntype_variant (type, rqual, raises, late_return_type_p);
 
   decl = build_lang_decl_loc (location, FUNCTION_DECL, declarator, type);
