@@ -37,9 +37,6 @@
 #include <sys/syscall.h>
 
 
-static int num_numa_nodes = 0;
-static int *numa_distances = NULL;
-
 int
 gomp_get_current_numa_node ()
 {
@@ -51,59 +48,148 @@ gomp_get_current_numa_node ()
 int
 gomp_get_numa_distance (int node1, int node2)
 {
-  if (node1 < 0 || node2 < 0 || num_numa_nodes < 0)
+  /* num_numa_nodes: 0 = uninit, -1 = being initialized, -2 = error,
+		     > 0 = the number of numa nodes.
+     numa_distances: a 2D array of #nodes * #nodes with the distances.
+     remap: map the numa number to the index in numa_distances;
+	    as numa numbers might not be contiguous.
+     num_remap: size of the remap array.  */
+  static int num_numa_nodes = 0;
+  static int *numa_distances = NULL;
+  static unsigned num_remap = 0;
+  static unsigned *remap = NULL;
+
+retry:
+  int num = __atomic_load_n (&num_numa_nodes, MEMMODEL_RELAXED);
+  if (node1 < 0 || node2 < 0 || num <= -2)
     return -1;
-
-  if (numa_distances == NULL)
+  if (num > 0)
     {
-      num_numa_nodes = -1;
-      DIR *dir = opendir ("/sys/devices/system/node");
-      if (!dir)
+      if (node1 > num_remap || node2 > num_remap)
 	return -1;
-      struct dirent *dp;
-      int cnt = 0;
-      errno = 0;
-      while ((dp = readdir(dir)) != NULL)
-	if (strncmp ("node", dp->d_name, 4 /* strlen ("node") */) == 0)
-	  cnt++;
-	else if (errno)
-	  {
-	    closedir (dir);
-	    return -1;
-	  }
-      closedir (dir);
-      numa_distances = (int *) gomp_malloc (sizeof (int) * cnt * cnt);
-
-      constexpr int len = sizeof ("/sys/devices/system/node/node12345/"
-				  "distance");
-      char filename[len];
-
-      for (int i = 0; i < cnt; i++)
-	{
-	  if (len < snprintf (filename, sizeof (filename),
-			      "/sys/devices/system/node/node%d/distance", i))
-	    return -1;
-	  int distance = -1;
-	  FILE *in = fopen (filename, "r");
-	  if (!in)
-	    {
-	      free (numa_distances);
-	      return -1;
-	    }
-	  for (int j = 0; j < cnt; j++)
-	    {
-	      fscanf (in, "%d", &distance);
-	      if (distance == -1)
-		{
-		  fclose (in);
-		  free (numa_distances);
-		  return -1;
-		}
-	      numa_distances[i * cnt + j] = distance;
-	    }
-	  fclose (in);
-	}
-      num_numa_nodes = cnt;
+      node1 = remap[node1];
+      node2 = remap[node2];
+      if (node1 >= num || node2 >= num)
+	return -1;
+      return numa_distances[node1 * num_numa_nodes + node2];
     }
-  return numa_distances[node1 * num_numa_nodes + node2];
+
+  /* Obtain distance data - or busy wait until another thread did so.  */
+  int val = 0;
+  if (!__atomic_compare_exchange_n (&num_numa_nodes, &val, -1, false,
+				    MEMMODEL_ACQUIRE, MEMMODEL_ACQUIRE))
+    {
+      while (-1 == __atomic_load_n (&num_numa_nodes, MEMMODEL_ACQUIRE));
+      __asm volatile ("" : : : "memory");
+      goto retry;
+    }
+
+  /* Obtain numa nodes.  */
+
+  num = 0;
+  FILE *f = fopen ("/sys/devices/system/node/online", "r");
+  if (f == NULL)
+    goto fail;
+  char *lineptr = NULL;
+  size_t nline;
+  if (getline (&lineptr, &nline, f) <= 0)
+    {
+      free (lineptr);
+      fclose (f);
+      goto fail;
+    }
+  fclose (f);
+
+  /* Create mapping array between the node number and contiguous
+     n-th online node count. */
+  unsigned constexpr UNSET_REMAP = (unsigned) -1;
+  num_remap = 8;
+  remap = malloc (sizeof (*remap) * num_remap);
+  if (!remap)
+    goto fail;
+  for (int i = 0; i < num_remap; i++)
+    remap[i] = UNSET_REMAP;
+  char *q = lineptr;
+  while (*q && *q != '\n')
+    {
+      unsigned nfirst, nlast;
+      char *end;
+
+      errno = 0;
+      nfirst = strtoul (q, &end, 10);
+      if (errno || end == q)
+	goto fail;
+      q = end;
+      nlast = nfirst;
+      if (*q == '-')
+	{
+	  errno = 0;
+	  nlast = strtoul (q + 1, &end, 10);
+	  if (errno || end == q + 1 || nlast < nfirst)
+	    goto fail;
+	  q = end;
+	}
+      if (num_remap <= nlast)
+	{
+	  int n = nlast > 2 * num_remap ? nlast + 1 : num_remap * 2;
+	  remap = realloc (remap, sizeof (*remap) * n);
+	  if (!remap || n <= nlast)
+	    goto fail;
+	  for (int i = num_remap; i < n; i++)
+	    remap[i] = UNSET_REMAP;
+	  num_remap = n;
+	}
+      for (; nfirst <= nlast; nfirst++)
+	remap[nfirst] = num++;
+      if (*q == ',')
+	++q;
+    }
+  free (lineptr);
+  lineptr = NULL;
+
+  /* Fill distance data.  */
+  numa_distances = (int *) gomp_malloc (sizeof (*numa_distances) * num * num);
+
+  for (int i = 0; i < num_remap; i++)
+    if (remap[i] == UNSET_REMAP)
+      continue;
+    else
+      {
+	constexpr int len = sizeof ("/sys/devices/system/node/node12345/"
+				    "distance");
+	char filename[len];
+	int node = remap[i];
+	if (node < 0)
+	  goto fail;
+	if (len < snprintf (filename, sizeof (filename),
+			    "/sys/devices/system/node/node%d/distance", i))
+	  goto fail;
+	FILE *in = fopen (filename, "r");
+	if (!in)
+	  goto fail;
+	for (int j = 0; j < num; j++)
+	  {
+	    /* Distance -1 might happen on virtualized systems or when the
+	       kernel reports "No NUMA configuration found".  The code assumes
+	       that only distance values show up for online nodes.  */
+	    int distance;
+	    if (fscanf (in, "%d", &distance) != 1)
+	      {
+		fclose (in);
+		goto fail;
+	      }
+	    numa_distances[node * num + j] = distance;
+	  }
+	fclose (in);
+      }
+  __asm volatile ("" : : : "memory");
+  __atomic_store_n (&num_numa_nodes, num, MEMMODEL_RELAXED);
+  goto retry;
+
+fail:
+  free (lineptr);
+  free (remap);
+  free (numa_distances);
+  __atomic_store_n (&num_numa_nodes, -2, MEMMODEL_RELAXED);
+  return -1;
 }
