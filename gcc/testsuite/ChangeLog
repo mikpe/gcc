@@ -1,3 +1,120 @@
+2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* gcc.target/arm/pr110268-1.c: Use arm_v8_1m_mve_link.
+	* gcc.target/arm/pr110268-2.c: Likewise
+	* lib/target-supports.exp (arm_v8_1m_mve_link): New.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124948
+	* gcc.dg/torture/bitint-100.c: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/126084
+	* gcc.dg/asan/bitint-1.c: New test.
+	* gcc.dg/asan/bitint-2.c: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+		    H.J. Lu  <hjl.tools@gmail.com>
+
+	PR tree-optimization/120201
+	* g++.dg/asan/pr120201-1.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/opt/20260703-1.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/126057
+	* g++.dg/cpp2a/decomp11.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/126036
+	* g++.dg/reflect/pr126036.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/126007
+	* g++.dg/ext/is_implicit_lifetime3.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/125935
+	* gcc.dg/debug/dwarf2/pr125935-1.c: New test.
+	* gcc.dg/debug/dwarf2/pr125935-2.c: New test.
+	* gcc.dg/debug/dwarf2/pr125935-3.c: New test.
+	* gcc.dg/debug/ctf/ctf-bitfields-3.c: Expect bool rather than _Bool.
+	* gcc.dg/Warray-bounds-65.c: Expect bool in diagnostics instead of
+	_Bool.
+	* gcc.dg/Wbad-function-cast-1.c: Likewise.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125674
+	* g++.dg/template/bitfield5.C: New test.
+	* g++.dg/template/bitfield6.C: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/91155
+	* g++.dg/torture/pr91155.C: Change into dg-do run test, actually test
+	the strings are the same.
+
+2026-07-14  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2026-07-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126194
+	* g++.dg/lto/pr126194.h: New testcase.
+	* g++.dg/lto/pr126194_0.C: Likewise.
+	* g++.dg/lto/pr126194_1.C: Likewise.
+	* g++.dg/lto/pr126194_2.C: Likewise.
+
+2026-07-14  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	Backported from master:
+	2026-07-14  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126234
+	* gfortran.dg/pr126234.f90: New test.
+
 2026-07-13  Richard Biener  <rguenther@suse.de>
 
 	Backported from master:

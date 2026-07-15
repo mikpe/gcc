@@ -1,3 +1,15 @@
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124948
+	* c-common.cc (sync_resolve_size): Return -1 for fetch ops
+	on _BitInt types with padding bits where the target requires
+	extension into the padding bits.
+	(atomic_bitint_fetch_using_cas_loop): Handle also __sync_*
+	fetch builtins.
+
 2026-07-05  Martin Uecker  <uecker@tugraz.at>
 
 	Backported from master:
