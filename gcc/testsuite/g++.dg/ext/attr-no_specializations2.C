@@ -5,7 +5,7 @@ template <typename T, typename U>
 union [[clang::no_specializations ("reason1")]] A {};			// { dg-message "declared 'clang::no_specializations' here" }
 #if __cpp_variable_templates >= 201304
 template <typename T, typename U>
-[[__clang__::__no_specializations__ ("reason2")]] int b = 1;		// { dg-message "declared 'clang::no_specializations' here" "" { target c++14 } }
+[[_Clang::__no_specializations__ ("reason2")]] int b = 1;		// { dg-message "declared 'clang::no_specializations' here" "" { target c++14 } }
 #endif
 template <typename T, typename U>
 [[clang::no_specializations ("reason3")]] int foo () { return 0; }	// { dg-message "declared 'clang::no_specializations' here" }

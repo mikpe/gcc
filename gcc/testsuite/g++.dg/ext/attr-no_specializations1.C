@@ -8,7 +8,7 @@ template <typename T, typename U>
 [[clang::no_specializations]] int b = 1;		// { dg-message "declared 'clang::no_specializations' here" "" { target c++14 } }
 #endif
 template <typename T, typename U>
-[[__clang__::__no_specializations__]] int foo () { return 0; }	// { dg-message "declared 'clang::no_specializations' here" }
+[[_Clang::__no_specializations__]] int foo () { return 0; }	// { dg-message "declared 'clang::no_specializations' here" }
 template <typename T>
 struct B {
   struct [[clang::no_specializations]] C {};		// { dg-warning "'no_specializations' attribute only applies to class, function or variable templates" }

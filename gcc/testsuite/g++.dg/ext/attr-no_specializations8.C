@@ -10,7 +10,7 @@ template <typename T, typename U>
 [[clang::no_specializations ("my other reason")]] int c = 1; // { dg-message "declared 'clang::no_specializations' here" "" { target c++14 } }
 #endif
 template <typename T, typename U>
-[[__clang__::__no_specializations__ ("bar cannot be specialized")]] int bar () { return 0; } // { dg-message "declared 'clang::no_specializations' here" }
+[[_Clang::__no_specializations__ ("bar cannot be specialized")]] int bar () { return 0; } // { dg-message "declared 'clang::no_specializations' here" }
 template <typename T>
 struct D {};
 template <>

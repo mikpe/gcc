@@ -355,7 +355,6 @@ c_common_has_attribute (cpp_reader *pfile, bool std_syntax)
     {
       attr_name = get_identifier ((const char *)
 				  cpp_token_as_text (pfile, token));
-      attr_name = canonicalize_attr_name (attr_name);
       bool have_scope = false;
       int idx = 0;
       const cpp_token *nxt_token;
@@ -390,6 +389,13 @@ c_common_has_attribute (cpp_reader *pfile, bool std_syntax)
 	  if (nxt_token->type == CPP_NAME)
 	    {
 	      tree attr_ns = attr_name;
+	      /* In clang, __clang__ is predefined macro, and the supported
+		 alternate namespace is _Clang rather than __clang__ because
+		 of that.  Don't handle ___Clang__ that way though.  */
+	      if (id_equal (attr_ns, "_Clang"))
+		attr_ns = get_identifier ("clang");
+	      else if (!id_equal (attr_ns, "__clang__"))
+		attr_ns = canonicalize_attr_name (attr_ns);
 	      tree attr_id
 		= get_identifier ((const char *)
 				  cpp_token_as_text (pfile, nxt_token));
@@ -424,6 +430,7 @@ c_common_has_attribute (cpp_reader *pfile, bool std_syntax)
 	}
       else
 	{
+	  attr_name = canonicalize_attr_name (attr_name);
 	  /* Some standard attributes need special handling.  */
 	  if (c_dialect_cxx ())
 	    {

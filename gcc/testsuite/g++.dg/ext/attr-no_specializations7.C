@@ -9,7 +9,7 @@ template <typename T, typename U>
 [[clang::no_specializations]] constexpr int b = 1;	// { dg-bogus "declared 'clang::no_specializations' here" }
 #endif
 template <typename T, typename U>
-[[__clang__::__no_specializations__]] int foo () { return 0; }	// { dg-bogus "declared 'clang::no_specializations' here" }
+[[_Clang::__no_specializations__]] int foo () { return 0; }	// { dg-bogus "declared 'clang::no_specializations' here" }
 template <typename T>
 struct D {};
 template <>
@@ -35,7 +35,7 @@ template <typename T, typename U>
 [[clang::no_specializations ("my other reason")]] int c = 1; // { dg-bogus "declared 'clang::no_specializations' here" }
 #endif
 template <typename T, typename U>
-[[__clang__::__no_specializations__ ("bar cannot be specialized")]] int bar () { return 0; } // { dg-bogus "declared 'clang::no_specializations' here" }
+[[_Clang::__no_specializations__ ("bar cannot be specialized")]] int bar () { return 0; } // { dg-bogus "declared 'clang::no_specializations' here" }
 template <>
 struct B <int, int> { int a; };				// { dg-bogus "'struct B<int, int>' cannot be specialized: 'this is why'" }
 template <typename T>

@@ -1824,6 +1824,12 @@ and suffixed by two underscores; for example, the alternate name of
 @code{weak} is @code{__weak__}.  These alternate names are useful in
 library header files in case they are included into files that have
 redefined the base name of the attribute as a preprocessor macro.
+Similarly for every supported standard or scoped attribute, for example, the
+variant spellings of @code{[[gnu::weak]]} are @code{[[__gnu__::__weak__]]},
+@code{[[gnu::__weak__]]} or @code{[[__gnu__::weak]]}.  The only exception
+is that alternate spelling of the @code{clang} scoped attribute namespace
+is @code{_Clang} rather than @code{__clang__} for compatibility with that
+compiler.
 
 GCC also accepts the keyword @code{__attribute} as a synonym for
 @code{__attribute__}.
@@ -31689,7 +31695,7 @@ struct __attribute__ ((__no_specializations__)) A @{@};
 template <typename T, typename U>
 [[clang::no_specializations]] int b = 1;
 template <typename T>
-[[__clang__::__no_specializations__ ("foo cannot be specialized")]] int
+[[_Clang::__no_specializations__ ("foo cannot be specialized")]] int
 foo () @{ return 42; @}
 template <> struct A <int> @{@}; // Error
 template <typename T> int b <T, T> = 2; // Error
