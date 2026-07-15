@@ -6,7 +6,7 @@
 int
 f (int *x)
 {
-  #pragma omp target device_type(nohost)
+  #pragma omp target map(tofrom:x[0:1]) device_type(nohost)
     (*x)++;
   return *x;
 }
