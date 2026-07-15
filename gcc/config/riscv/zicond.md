@@ -458,7 +458,7 @@
 	 (const_int 0)))
    (clobber (match_operand:X 3 "register_operand"))]
   "exact_log2 (INTVAL (operands[2])) >= 0"
-  [(set (match_dup 3) (any_gt:X (match_dup 1) (const_int 1)))
+  [(set (match_dup 3) (any_ge:X (match_dup 1) (const_int 1)))
    (set (match_dup 0) (ashift:X (match_dup 3) (match_dup 4)))]
   { operands[4] = GEN_INT (exact_log2 (INTVAL (operands[2]))); })
 
