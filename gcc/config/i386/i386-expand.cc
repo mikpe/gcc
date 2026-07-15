@@ -9765,11 +9765,15 @@ ix86_expand_set_or_cpymem (rtx dst, rtx src, rtx count_exp, rtx val_exp,
       /* Destination is aligned after the misaligned prologue.  */
       aligned_dstmem = misaligned_prologue_used;
 
-      if (noalign && !misaligned_prologue_used)
+      if (noalign
+	  && !misaligned_prologue_used
+	  && (!count
+	      || count > (unsigned HOST_WIDE_INT) epilogue_size_needed))
 	{
-	  /* Also use misaligned prologue if alignment isn't needed and
-	     destination isn't aligned.   Since alignment isn't needed,
-	     the destination after prologue won't be aligned.  */
+	  /* Also use misaligned prologue if count > epilogue size,
+	     alignment isn't needed and destination isn't aligned.
+	     Since alignment isn't needed, the destination after
+	     prologue won't be aligned.  */
 	  aligned_dstmem = (GET_MODE_ALIGNMENT (move_mode)
 			    <= MEM_ALIGN (dst));
 	  if (!aligned_dstmem)
