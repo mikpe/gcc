@@ -3464,9 +3464,11 @@ riscv_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
       rtx base = XEXP (x, 0);
       HOST_WIDE_INT offset = INTVAL (XEXP (x, 1));
 
-      /* Handle (plus (plus (mult (a) (mem_shadd_constant)) (fp)) (C)) case.  */
-      if (GET_CODE (base) == PLUS && mem_shadd_or_shadd_rtx_p (XEXP (base, 0))
-	  && SMALL_OPERAND (offset))
+      /* Handle (plus (plus (mult (a) (mem_shadd_constant))
+			    (stack_base)) (C)).
+	 Form STACK_BASE + C before adding the scaled index, so that CSE can
+	 share the base when C is a large frame offset.  */
+      if (GET_CODE (base) == PLUS && mem_shadd_or_shadd_rtx_p (XEXP (base, 0)))
 	{
 	  rtx index = XEXP (base, 0);
 	  rtx fp = XEXP (base, 1);
@@ -3479,10 +3481,9 @@ riscv_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 	      if (GET_CODE (index) == MULT)
 		shift_val = exact_log2 (shift_val);
 
-	      rtx reg1 = gen_reg_rtx (Pmode);
+	      rtx reg1 = force_reg (Pmode, riscv_add_offset (NULL, fp, offset));
 	      rtx reg2 = gen_reg_rtx (Pmode);
 	      rtx reg3 = gen_reg_rtx (Pmode);
-	      riscv_emit_binary (PLUS, reg1, fp, GEN_INT (offset));
 	      riscv_emit_binary (ASHIFT, reg2, XEXP (index, 0), GEN_INT (shift_val));
 	      riscv_emit_binary (PLUS, reg3, reg2, reg1);
 
