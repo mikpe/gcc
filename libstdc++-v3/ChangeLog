@@ -1,3 +1,80 @@
+2026-07-14  François Dumont  <frs.dumont@gmail.com>
+
+	* include/debug/safe_iterator.h
+	(_Safe_iterator::_Iter_base, _Safe_iterator::_Safe_base): Remove.
+	(_Safe_iterator(const _Safe_iterator&, _Unchecked)): Delegate to correct base classes
+	constructors.
+	* include/debug/safe_local_iterator.h
+	(_Safe_local_iterator::_Iter_base, _Safe_local_iterator::_Safe_base): Remove.
+	(_Safe_local_iterator(const _Safe_local_iterator&, _Unchecked)): Delegate to the correct
+	base classes constructors.
+
+2026-07-14  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/125548
+	* doc/html/manual/using_macros.html:
+	(_GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS): Mention PR125548
+	* doc/xml/manual/using.xml: Regenerate
+	* include/bits/random.tcc
+	(piecewise_linear_distribution::param_type::param_type(size_t, _RealType, ...)):
+	Update weight computation.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/serialize2.cc:
+	Updated expected values.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/cons/pr125548.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/cons/pr125548_fallback.cc:
+	Run pr125548.cc with _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS.
+
+2026-07-14  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/82749
+	* doc/xml/manual/using.xml
+	(_GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS): Add entry.
+	(_GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES): Add entry.
+	* doc/html/manual/using_macros.html: Regenerate.
+	* include/bits/random.h
+	(__detail::__piecewise_distributions_storage)
+	(__detail::__piecewise_distributions_storage_t)
+	(piecewise_constant_distribution::_StorageType)
+	(piecewise_linear_distribution::_StorageType): Define.
+	(piecewise_constant_distribution::param_type::_M_den)
+	(piecewise_constant_distribution::param_type::_M_cp)
+	(piecewise_linear_distribution::param_type::_M_den)
+	(piecewise_linear_distribution::param_type::_M_cp)
+	(piecewise_linear_distribution::param_type::_M_m): Use _StorageType
+	as element type.
+	(piecewise_constant_distribution::param_type::densities)
+	(piecewise_linear_distribution::param_type::densities)
+	[!_GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS]: Change return type
+	to vector<result_type>, mark with "__rt" ABI tag, and adjust
+	implementation.
+	(piecewise_constant_distribution::param_type::intervals)
+	(piecewise_linear_distribution::param_type::intervals): Use
+	result_type alias in return type.
+	(piecewise_constant_distribution::densities)
+	(piecewise_linear_distribution::densities): Delegate to param_type
+	method, additional change return type and  mark as always_inline
+	if _GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS is not defined.
+	(piecewise_constant_distribution::intervals)
+	(piecewise_linear_distribution::intervals): Delegate to param_type
+	method and use result_type alias in return type.
+	* include/bits/random.tcc
+	(operator<<(basic_ostream&, const piecewise_constant_distribution&))
+	(operator<<(basic_ostream&, const piecewise_linear_distribution&)):
+	Parse vector of _StorageType for densities, to preserve behavior.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/accessors.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/accessors_exact.cc:
+	Run accessors.cc with _GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors_exact.cc:
+	Likewise.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/accessors_fallback.cc:
+	Run accessors.cc with _GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors_fallback.cc:
+	Likewise.
+
 2026-07-13  Tomasz Kamiński  <tkaminsk@redhat.com>
 
 	* include/std/mdspan (layout_stride::mapping::_M_check_unique):

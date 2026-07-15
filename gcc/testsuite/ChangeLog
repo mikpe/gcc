@@ -1,3 +1,157 @@
+2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
+
+	* c-c++-common/gomp/target-device-type-1.c: Update dg-sorry
+	as now only device_type(host) remains unimplemented.
+	* gfortran.dg/gomp/target-device-type-1.f90: Likewise.
+
+2026-07-14  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc.dg/gnu-api-2-class.m: Replace void ** with char **
+	in the main function signature.
+	* objc.dg/gnu-api-2-ivar.m: Likewise.
+	* objc.dg/gnu-api-2-method.m: Likewise.
+	* objc.dg/gnu-api-2-objc.m: Likewise.
+	* objc.dg/gnu-api-2-objc_msg_lookup.m: Likewise.
+	* objc.dg/gnu-api-2-object.m: Likewise.
+	* objc.dg/gnu-api-2-property.m: Likewise.
+	* objc.dg/gnu-api-2-protocol.m: Likewise.
+	* objc.dg/gnu-api-2-resolve-method.m: Likewise.
+	* objc.dg/gnu-api-2-sel.m: Likewise.
+	* objc.dg/gnu-runtime-2.m: Likewise.
+	* objc.dg/gnu-runtime-3.m: Likewise.
+	* objc.dg/pr48177.m: Likewise.
+	* objc.dg/torture/strings/string1.m: Likewise.
+	* objc.dg/torture/strings/string2.m: Likewise.
+	* objc.dg/torture/strings/string3.m: Likewise.
+	* objc.dg/torture/strings/string4.m: Likewise.
+
+2026-07-14  Karl Meakin  <karl.meakin@arm.com>
+
+	PR target/126064
+	* gcc.target/aarch64/pr126064.c: New test.
+
+2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* gcc.target/arm/pr110268-1.c: Use arm_v8_1m_mve_link.
+	* gcc.target/arm/pr110268-2.c: Likewise
+	* lib/target-supports.exp (arm_v8_1m_mve_link): New.
+
+2026-07-14  Cem Akgok  <cemakgok@gmail.com>
+
+	PR tree-optimization/126225
+	* gcc.dg/vect/vect-iv-12.c: New test.
+	* gcc.dg/vect/vect-iv-13.c: New test.
+	* gcc.dg/vect/vect-iv-14.c: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124948
+	* gcc.dg/torture/bitint-100.c: New test.
+
+2026-07-14  Naveen  <naveen.siddegowda@oss.qualcomm.com>
+
+	PR tree-optimization/102202
+	* gcc.dg/pr102202-fold.c: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/126084
+	* gcc.dg/asan/bitint-1.c: New test.
+	* gcc.dg/asan/bitint-2.c: New test.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+	    H.J. Lu  <hjl.tools@gmail.com>
+
+	PR tree-optimization/120201
+	* g++.dg/asan/pr120201-1.C: New test.
+
+2026-07-14  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/123625
+	PR target/121957
+	* gcc.c-torture/execute/pr121957.c: New test.
+	* gcc.c-torture/execute/pr123625.c: New test.
+	* gcc.c-torture/execute/pr123625-2.c: New test.
+	* gcc.c-torture/execute/pr123625-3.c: New test.
+	* gcc.dg/pr123625-1.c: New test.
+
+2026-07-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126194
+	* g++.dg/lto/pr126194.h: New testcase.
+	* g++.dg/lto/pr126194_0.C: Likewise.
+	* g++.dg/lto/pr126194_1.C: Likewise.
+	* g++.dg/lto/pr126194_2.C: Likewise.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/cpp0x/dealloc1.C: New test.
+	* g++.dg/cpp0x/dealloc2.C: New test.
+	* g++.dg/cpp2a/destroying-delete7.C: New test.
+	* g++.dg/reflect/is_noexcept5.C: New test.
+	* g++.dg/cpp1z/aligned-new3.C (operator delete): Don't expect
+	a warning.
+
+2026-07-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126202
+	* g++.target/i386/pr126202-1.C: New test.
+	* gcc.target/i386/pr126202-1.c: Likewise.
+
+2026-07-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/110533
+	* gcc.target/i386/pr110533-2a.c: New test.
+	* gcc.target/i386/pr110533-2b.c: Likewise.
+
+2026-07-14  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/base/pr112431-18.c: Remove xfail.
+
+2026-07-14  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u16-m1.c:
+	Add non-number boundary for reg num check.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u16-m2.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u16-mf2.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u16-mf4.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u32-m1.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u32-mf2.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u8-m1.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u8-m2.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u8-mf2.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u8-mf4.c:
+	Ditto.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf2-u8-mf8.c:
+	Ditto.
+
+2026-07-14  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf8-u8-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf8-u8-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf8-u8-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vzext_vf8-u8-mf8.c: New test.
+
+2026-07-14  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vsext_vf8-i8-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vsext_vf8-i8-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vsext_vf8-i8-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vsext_vf8-i8-mf8.c: New test.
+
+2026-07-14  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/126234
+	* gfortran.dg/pr126234.f90: New test.
+
 2026-07-13  Yuxuan Chen  <i@yuxuan.ch>
 
 	PR c++/125066

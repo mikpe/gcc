@@ -1,3 +1,8 @@
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* decl.cc (grokfndecl): If raises is NULL_TREE for C++11
+	deallocation function, use noexcept_true_spec instead.
+
 2026-07-13  Yuxuan Chen  <i@yuxuan.ch>
 
 	PR c++/125066

@@ -1,3 +1,8 @@
+2026-07-14  Jose E. Marchesi  <jemarch@gnu.org>
+
+	* ga68-coding-guidelines.texi (Conditional clauses): Fix typo
+	if-parts -> else-parts.
+
 2026-07-05  Jose E. Marchesi  <jemarch@gnu.org>
 
 	* a68-low-units.cc (a68_lower_denotation): Check for denotations

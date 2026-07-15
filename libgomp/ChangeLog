@@ -1,3 +1,18 @@
+2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
+
+	* error.c (GOMP_error): When passing msglen == (size_t) -2,
+	do not show 'error directive encountered:' in the message.
+	* libgomp.texi (Implementation Status): Mark target + device_type
+	as partially implemented.
+	* testsuite/libgomp.c/target-device-type-1.c: New test.
+	* testsuite/libgomp.c/target-device-type-2.c: New test.
+
+2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR libgomp/125877
+	* config/linux/numa.c (gomp_get_numa_distance): Avoid data race issue
+	during initalization and handle non-contiguous node numbering.
+
 2026-07-13  Tobias Burnus  <tburnus@baylibre.com>
 
 	* libgomp.texi (OpenMP Implementation Status): Change section

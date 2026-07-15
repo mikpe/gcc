@@ -1,3 +1,103 @@
+2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
+
+	* gimplify.cc (gimplify_omp_workshare): Handle 'device_type(nohost)'
+	on 'target'.
+	* omp-low.cc (lower_omp_target): Remove sorry for this case.
+
+2026-07-14  Karl Meakin  <karl.meakin@arm.com>
+
+	PR target/126064
+	* config/aarch64/aarch64-neon-builtins-base.cc: Compare
+	`arg_type` and `TREE_TYPE (b)` using `types_compatible_p` rather
+	than comparing their pointer addresses.
+
+2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* doc/sourcebuild.texi (arm_v8_1m_mve_link): Document.
+
+2026-07-14  Cem Akgok  <cemakgok@gmail.com>
+
+	PR tree-optimization/126225
+	* tree-vect-loop.cc (vect_slp_induction_reuse_p): New function.
+	(vectorizable_induction): Validate SLP induction IV reuse.  Reuse
+	generated IVs cyclically when filling the SLP group.
+
+2026-07-14  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/darwin.cc (darwin_globalize_label): Handle Protocol
+	references.
+	(darwin_label_is_anonymous_local_objc_name): Likewise.
+
+2026-07-14  Naveen  <naveen.siddegowda@oss.qualcomm.com>
+
+	PR tree-optimization/102202
+	* gimple-fold.cc (gimple_fold_builtin_memset): Hoist
+	tree_to_uhwi (len) before the INTEGER_CST guard.  Fold
+	length-one memset calls through arbitrary pointer destinations.
+	Build a ref-all MEM_REF at offset zero and preserve the call
+	result when it is used.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/126084
+	* gimple-lower-bitint.cc: Include "attribs.h" and "asan.h".
+	(gimple_lower_bitint): Use asan_expand_poison_ifn to lower
+	.ASAN_POISON calls with large/huge _BitInt lhs.
+	* asan.cc (report_error_func): Set *nargs and use _n builtin
+	even if size is not a power of two or larger than 16.
+	(asan_expand_poison_ifn): Handle nargs == 2.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+	    H.J. Lu  <hjl.tools@gmail.com>
+
+	PR tree-optimization/120201
+	* cfgexpand.cc (expand_used_vars): Set data.asan_alignb to
+	maximum of itself and crtl->stack_alignment_needed
+	/ BITS_PER_UNIT.
+
+2026-07-14  Kyrylo Tkachov  <ktkachov@nvidia.com>
+
+	PR target/123625
+	PR target/121957
+	* tree-outof-ssa.cc (split_overlapping_partition_decls): New function.
+	Use use_register_for_decl to identify memory partitions.
+	(remove_ssa_form): Call split_overlapping_partition_decls.
+
+2026-07-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126194
+	* gimple-ssa-pta-constraints.cc (find_func_aliases_for_call):
+	Only ignore calls to delete if DECL_IS_REPLACEABLE_OPERATOR.
+
+2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* asan.h (asan_var_and_redzone_size): Fix comment typo,
+	occupis -> occupies.
+
+2026-07-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126202
+	* alias.cc (static_reg_base_value): Revert commit e754b70fe54.
+	(find_base_term): Likewise.
+	* alias.h (find_base_term): Likewise.
+	* function.cc (thread_prologue_and_epilogue_insns): Likewise.
+	* rtl.h (static_reg_base_value): Likewise.
+	* config/i386/i386.cc (stack_access_data): Likewise.
+	(ix86_find_all_reg_uses_1): Likewise.
+	(ix86_find_all_reg_uses): Likewise.
+	(ix86_access_stack_p): Likewise.
+	(ix86_need_alignment_p_2): Likewise.
+	(ix86_need_alignment_p_1): Likewise.
+	(ix86_need_alignment_p): Likewise.
+	(ix86_update_stack_alignment): Likewise.
+	(ix86_find_max_used_stack_alignment): Likewise.
+	(ix86_update_stack_alignment_2): Removed.
+	(ix86_update_stack_alignment_1): Likewise.
+
+2026-07-14  Pan Li  <pan2.li@intel.com>
+
+	* config/riscv/vector.md: Leverage Wvr constraint.
+
 2026-07-13  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	PR driver/124058
