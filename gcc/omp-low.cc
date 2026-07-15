@@ -4884,6 +4884,12 @@ lower_private_allocate (tree var, tree new_var, tree &allocator,
       return false;
     }
 
+  if (gimple_code (ctx->stmt) == GIMPLE_OMP_TARGET && DECL_P (allocator))
+    {
+      allocator = lookup_decl (allocator, ctx);
+      gcc_checking_assert (allocator != NULL_TREE);
+    }
+
   unsigned HOST_WIDE_INT ialign = 0;
   if (TREE_CODE (allocator) == TREE_LIST)
     {
@@ -12942,6 +12948,19 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   hash_map<tree, tree> alloc_map;
   hash_map<tree, gimple_seq> alloc_seq_map;
 
+  /* The value expression for USES_ALLOCATORS needs to be setup before the
+     allocator is used via lower_private_allocate.  */
+  for (c = clauses; c ; c = OMP_CLAUSE_CHAIN (c))
+    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USES_ALLOCATORS)
+      {
+	tree allocator = OMP_CLAUSE_USES_ALLOCATORS_ALLOCATOR (c);
+	tree new_allocator = lookup_decl (allocator, ctx);
+	tree x = build_receiver_ref (allocator, false, ctx);
+	SET_DECL_VALUE_EXPR (new_allocator, x);
+	DECL_HAS_VALUE_EXPR_P (new_allocator) = 1;
+	map_cnt++;
+      }
+
   for (c = clauses; c ; c = OMP_CLAUSE_CHAIN (c))
     switch (OMP_CLAUSE_CODE (c))
       {
@@ -13286,14 +13305,6 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	    SET_DECL_VALUE_EXPR (new_var, x);
 	    DECL_HAS_VALUE_EXPR_P (new_var) = 1;
 	  }
-	break;
-      case OMP_CLAUSE_USES_ALLOCATORS:
-	allocator = OMP_CLAUSE_USES_ALLOCATORS_ALLOCATOR (c);
-	tree new_allocator = lookup_decl (allocator, ctx);
-	x = build_receiver_ref (allocator, false, ctx);
-	SET_DECL_VALUE_EXPR (new_allocator, x);
-	DECL_HAS_VALUE_EXPR_P (new_allocator) = 1;
-	map_cnt++;
 	break;
       }
 
