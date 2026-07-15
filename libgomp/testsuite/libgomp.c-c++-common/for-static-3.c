@@ -7,5 +7,6 @@
 #include "for-static.h"
 
 /* { dg-final { scan-offload-tree-dump-times "GOMP_distribute_static_worksharing_start \\(\[^\\)\]" 2 "optimized" } } */
-/* { dg-final { scan-offload-tree-dump-times "GOMP_distribute_static_worksharing_dispatch \\(\\)" 2 "optimized" } } */
+/* { dg-final { scan-offload-tree-dump-times "GOMP_distribute_static_worksharing_dispatch \\(\[^,\]+, \[^,\]+, \[^,\]+, 0, \[^)\]+\\)" 1 "optimized" } } */
+/* { dg-final { scan-offload-tree-dump-times "GOMP_distribute_static_worksharing_dispatch \\(\[^,\]+, \[^,\]+, \[^,\]+, 4, \[^)\]+\\)" 1 "optimized" } } */
 /* { dg-final { scan-offload-tree-dump-times "GOMP_distribute_static_worksharing_end \\(\\)" 2 "optimized" } } */

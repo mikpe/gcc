@@ -64,10 +64,19 @@ GOMP_distribute_static_worksharing_start (unsigned long long niter
   return nteams + tid * 1I;
 }
 
-/* Stub for OMPT callback enabled by -fopenmp-ompt-detailed.  */
+/* Stub for OMPT callback enabled by -fopenmp-ompt-detailed. NITER is the total
+   number of iterations. START is the starting iteration index. INCR is the
+   increment of the loop (or step). CHUNK_SIZE is the specific chunk size
+   requested in the schedule clause, or 0 if not specified. ISTART is the
+   iteration index of the logical chunk start.  */
 
 void
-GOMP_distribute_static_worksharing_dispatch (void)
+GOMP_distribute_static_worksharing_dispatch (
+  unsigned long long niter __attribute__ ((unused)),
+  unsigned long long start __attribute__ ((unused)),
+  unsigned long long incr __attribute__ ((unused)),
+  unsigned long long chunk_size __attribute__ ((unused)),
+  unsigned long long istart __attribute__ ((unused)))
 {}
 
 /* Stub for OMPT callback enabled by -fopenmp-ompt.  */
