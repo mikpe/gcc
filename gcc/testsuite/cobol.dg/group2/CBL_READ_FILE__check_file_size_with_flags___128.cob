@@ -29,6 +29,7 @@
         procedure division.
           perform write-file.
           perform check-file-size.
+          move zero to return-code.
           goback.
 
         write-file section.
@@ -77,6 +78,7 @@
                                      file-handle.
 
           if return-code <> 0
+            display "Failed to open file " filename
             display "CBL_OPEN_FILE failed with " return-code
             goback
           end-if.

@@ -35,7 +35,7 @@
       *> Deny both read and write.
           move 0 to deny-mode.
           display "Opening /dev/zero as read-only".
-          call "CBL_OPEN_FILE" using "/dev/zero"
+          call "CBL_OPEN_FILE" using Z"/dev/zero"
                                      access-mode
                                      deny-mode
                                      device

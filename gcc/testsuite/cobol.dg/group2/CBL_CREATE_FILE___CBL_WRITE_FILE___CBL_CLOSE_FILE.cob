@@ -1,5 +1,5 @@
        *> { dg-do run }
-       *> { dg-options "-dialect mf" }
+       *> { dg-options "-dialect mf -fcobol-exceptions EC-ALL" }
 
         identification division.
         program-id. test_cbl_write_file.

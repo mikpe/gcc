@@ -41,13 +41,13 @@
         open-ro.
           move 1 to access-mode.
           display "Opening /dev/null as read-only"
-          call "CBL_OPEN_FILE" using "/dev/null"
+          call "CBL_OPEN_FILE" using Z"/dev/null"
                                      access-mode
                                      deny-mode
                                      device
                                      file-handle
           if return-code <> 0
-            display "Failed to open " FILE_NAME " with " return-code
+            display "Failed to open " Z"/dev/null" " with " return-code
           else
             call "CBL_CLOSE_FILE" using file-handle
           end-if.

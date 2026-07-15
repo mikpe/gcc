@@ -21,6 +21,7 @@
           perform create-file.
           perform delete-file.
           perform delete-invalid-file.
+          move zero to return-code.
           goback.
 
         create-file section.

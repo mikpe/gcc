@@ -47,18 +47,20 @@
        77  func-ret             Binary-Long.
        77  errno-val            Binary-Long.
        77  lk-mode              PIC 9(8) COMP-5.
+       01  filename-max         CONSTANT AS 8 * 1024.
+       01  filename 	        PIC X(filename-max).
        77  filename-len         PIC 9(4) BINARY VALUE ZERO.
        01  ws-access-mode       PIC 9(8) COMP-5.
 
        LINKAGE SECTION.
        77  RETCODE              PIC X(2) COMP-5.
-       01  filename  	          PIC X ANY LENGTH.
+       01  Lk-filename 	        PIC X ANY LENGTH.
        01  access-mode          PIC x COMP-x.
        01  deny-mode            PIC x comp-x.  *>  Not supported (must be 0).
        01  device               PIC x comp-x.  *>  Not supported (must be 0).
        01  file-handle          PIC X(4) COMP-5.
 
-       PROCEDURE DIVISION USING filename,
+       PROCEDURE DIVISION USING Lk-filename,
                        By Reference access-mode,
                        By Reference deny-mode,
                        By Reference device,
@@ -72,8 +74,7 @@
            END-IF.
 
            COMPUTE filename-len =
-                FUNCTION LENGTH(FUNCTION TRIM(filename)).
-           MOVE X"00" TO filename(filename-len + 1:1).
+                FUNCTION LENGTH(FUNCTION TRIM(Lk-filename)).
       D     Display 'CBL_CREATE_FILE: filename: [' filename ']'
       D     Display               'ws-access-mode: ' ws-access-mode ', '
       D     Display                 'deny-mode: ' deny-mode.
@@ -94,18 +95,31 @@
            Compute ws-access-mode = ws-access-mode + O_CREAT + O_TRUNC.
            Compute Lk-mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP.
 
-           MOVE FUNCTION posix-open(filename, ws-access-mode, lk-mode)
-             TO func-ret.
+           IF Lk-filename(filename-len:1) = ZERO
+             MOVE FUNCTION posix-open(Lk-filename,
+                                      ws-access-mode, lk-mode)
+               TO func-ret
+           ELSE
+             IF filename-max < filename-len + 1
+               MOVE 30 to RETCODE
+               GOBACK
+             END-IF
+             MOVE Lk-filename to filename
+             MOVE ZERO TO filename(filename-len + 1:1)
+             MOVE FUNCTION posix-open(filename, ws-access-mode, lk-mode)
+               TO func-ret
+           END-IF
 
            If func-ret is < 0
            Then
                Move Function COBRT-FILE-STATUS() to RETCODE
       D        Display 'COBRT-FILE-STATUS returned: ' RETCODE
+      D                ' for errno ' func-ret
            else
                Move func-ret to file-handle
                Move 0 to RETCODE
            end-if.
-
+           
            END PROGRAM CBL_CREATE_FILE.
 
         >> POP SOURCE FORMAT
