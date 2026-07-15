@@ -13384,12 +13384,11 @@ vect_analyze_stmt (vec_info *vinfo,
 
    Create a vectorized stmt to replace STMT_INFO, and insert it at GSI.  */
 
-bool
+void
 vect_transform_stmt (vec_info *vinfo,
 		     stmt_vec_info stmt_info, gimple_stmt_iterator *gsi,
 		     slp_tree slp_node, slp_instance slp_node_instance)
 {
-  bool is_store = false;
   bool done;
 
   gcc_assert (slp_node);
@@ -13435,7 +13434,6 @@ vect_transform_stmt (vec_info *vinfo,
     case store_vec_info_type:
       done = vectorizable_store (vinfo, stmt_info, gsi, slp_node, NULL);
       gcc_assert (done);
-      is_store = true;
       break;
 
     case condition_vec_info_type:
@@ -13523,8 +13521,6 @@ vect_transform_stmt (vec_info *vinfo,
 	  gcc_assert (done);
 	}
     }
-
-  return is_store;
 }
 
 

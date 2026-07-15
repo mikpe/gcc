@@ -2596,7 +2596,7 @@ void vect_get_vec_defs (vec_info *, slp_tree,
 extern tree vect_init_vector (vec_info *, stmt_vec_info, tree, tree,
                               gimple_stmt_iterator *);
 extern tree vect_get_slp_vect_def (slp_tree, unsigned);
-extern bool vect_transform_stmt (vec_info *, stmt_vec_info,
+extern void vect_transform_stmt (vec_info *, stmt_vec_info,
 				 gimple_stmt_iterator *,
 				 slp_tree, slp_instance);
 extern void vect_remove_stores (vec_info *, stmt_vec_info);
