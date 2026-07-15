@@ -122,7 +122,8 @@ get_handle (const size_t id, const char t)
 
       if (!pid)
 	pid = shared_memory_get_env ();
-      snprintf (name, MAX_PATH, "Global_gfortran-%s-%c-%zd", pid, t, id);
+      snprintf (name, MAX_PATH, "Global_gfortran-%s-%c-%" FLM_Z "d",
+		pid, t, id);
       switch (t)
 	{
 	case 'm':
@@ -131,8 +132,8 @@ get_handle (const size_t id, const char t)
 	case 'c':
 	  {
 	    handles[id] = CreateSemaphore (NULL, 0, __INT_MAX__, name);
-	    snprintf (name, MAX_PATH, "Global_gfortran-%s-%c-%zd_lock", pid, t,
-		      id);
+	    snprintf (name, MAX_PATH, "Global_gfortran-%s-%c-%" FLM_Z "d_lock",
+		      pid, t, id);
 	    handles[id + 1] = CreateSemaphore (NULL, 1, 1, name);
 	    this_image.supervisor->global_used_handles
 	      = smax (this_image.supervisor->global_used_handles, id + 2);
@@ -173,7 +174,7 @@ void
 thread_support_init_supervisor (void)
 {
   if (local->total_num_images > ULONGBITS * MAX_NUM_SIGNALED)
-    caf_runtime_error ("Maximum number of supported images is %zd.",
+    caf_runtime_error ("Maximum number of supported images is %" FLM_Z "d.",
 		       ULONGBITS * MAX_NUM_SIGNALED);
   this_image.supervisor->global_used_handles = 0;
 }

@@ -36,6 +36,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #  define gfc_printf __printf__
 #endif
 
+/* Handle unsupported C99 length modifiers.  */
+#if defined(__hpux__)
+/* size_t is unsigned long on HP-UX.  */
+#define FLM_Z "l"
+#else
+#define FLM_Z "z"
+#endif
+
 /* config.h MUST be first because it can affect system headers.  */
 #include "config.h"
 

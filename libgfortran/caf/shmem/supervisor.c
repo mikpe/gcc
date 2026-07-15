@@ -106,7 +106,7 @@ get_memory_size_from_envvar (void)
     {
       char suffix[2];
       int rv;
-      rv = sscanf (e, "%zu%1s", &sz, suffix);
+      rv = sscanf (e, "%" FLM_Z "u%1s", &sz, suffix);
       if (rv == 2)
 	{
 	  switch (suffix[0])

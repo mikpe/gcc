@@ -110,7 +110,7 @@ reduce (parray *ret,
 	{
 	  int mext = (int)GFC_DESCRIPTOR_EXTENT (mask, i);
 	  runtime_error ("shape mismatch between ARRAY and MASK in the REDUCE "
-			 "intrinsic (%zd/%d)", ext, mext);
+			 "intrinsic (%" FLM_Z "d/%d)", ext, mext);
 	}
 
       if (scalar_result)

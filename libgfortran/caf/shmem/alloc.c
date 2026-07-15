@@ -85,7 +85,7 @@ get_memory_by_id_internal (alloc *iface, size_t size, memid id, bool *created)
 	{
 	  allocator_unlock (&iface->alloc);
 	  caf_runtime_error (
-	    "Size mismatch for coarray allocation id %zd: found = %lu "
+	    "Size mismatch for coarray allocation id %" FLM_Z "d: found = %lu "
 	    "< size = %lu\n",
 	    id, found_size, size);
 	  return NULL; // The runtime_error exit()s, so this is never reached.
@@ -144,7 +144,8 @@ alloc_free_memory_with_id (alloc *iface, memid id)
   if (!hm_search_result_contains (&res))
     {
       allocator_unlock (&iface->alloc);
-      caf_runtime_error ("Error in free_memory_with_id: %zd not found.\n", id);
+      caf_runtime_error ("Error in free_memory_with_id: %" FLM_Z
+			 "d not found.\n", id);
       return;
     }
 
