@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-additional-options "-ffast-math -fdump-tree-optimized" } */
+/* { dg-additional-options "-ffast-math -fno-tree-slp-vectorize -fdump-tree-optimized" } */
 /* { dg-additional-options "-mavx2" { target x86_64-*-* i?86-*-* } } */
 /* { dg-require-effective-target vect_double } */
 /* { dg-require-effective-target vect_unpack } */

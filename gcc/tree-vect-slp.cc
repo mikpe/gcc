@@ -4321,6 +4321,63 @@ vect_build_slp_instance (vec_info *vinfo,
      vect_analyze_slp_instance now.  */
   gcc_assert (kind != slp_inst_kind_store || group_size == 1);
 
+  /* For BB vectorization we get failures only in case of the need of
+     unrolling, as otherwise we'll simply get operands built from scalars.
+     Iff there is any mismatches in the toplevel stmts those will prevail,
+     otherwise we get the non-power-of-two tail of the lanes failed.
+     For BB reductions we mainly want to catch the first case so we pick
+     a more useful subset of lanes to reduce.  */
+  if (kind == slp_inst_kind_bb_reduc && matches[0])
+    {
+      unsigned n_matching = 0;
+      for (unsigned i = 0; i < group_size; ++i)
+	if (matches[i])
+	  n_matching++;
+      vec<stmt_vec_info> scalar_stmts2 = vNULL;
+      /* Try matched parts and put the rest to remain.  */
+      if (n_matching >= 2 && n_matching >= group_size / 2)
+	{
+	  /* As we know the matches[] stmts match up, recursing for
+	     non-power-of-two sizes will just force-fail the tail
+	     for us at hopefully optimal vector size and succesfully
+	     finish discovery.  */
+	  scalar_stmts2.create (n_matching);
+	  for (unsigned i = 0; i < group_size; ++i)
+	    if (matches[i])
+	      scalar_stmts2.quick_push (scalar_stmts[i]);
+	    else
+	      remain.safe_push
+		(gimple_get_lhs (vect_orig_stmt (scalar_stmts[i])->stmt));
+	}
+      /* Try the non-matching part.  */
+      else if (group_size - n_matching >= 2)
+	{
+	  /* We do not know whether the !matches[] part matches, so avoid
+	     cutting to a multiple of the vector size too early.  We should
+	     make progress by means of remain only growing and most of the
+	     time prefering the matching[] part.  */
+	  scalar_stmts2.create (scalar_stmts.length () - n_matching);
+	  for (unsigned i = 0; i < group_size; ++i)
+	    if (!matches[i])
+	      scalar_stmts2.quick_push (scalar_stmts[i]);
+	    else
+	      remain.safe_push
+		(gimple_get_lhs (vect_orig_stmt (scalar_stmts[i])->stmt));
+	}
+      if (scalar_stmts2.exists ())
+	{
+	  if (dump_enabled_p ())
+	    dump_printf_loc (MSG_NOTE, vect_location, "Splitting %d "
+			     "non-matching lanes to scalar remains\n",
+			     scalar_stmts.length () - scalar_stmts2.length ());
+	  scalar_stmts.release ();
+	  return vect_build_slp_instance (vinfo, kind, scalar_stmts2,
+					  root_stmt_infos, remain,
+					  max_tree_size, limit, bst_map,
+					  force_single_lane);
+	}
+    }
+
   /* Free the allocated memory.  */
   scalar_stmts.release ();
 
@@ -9980,7 +10037,6 @@ vect_slp_check_for_roots (bb_vec_info bb_vinfo)
 	      /* ???  For now do not allow mixing ops or externs/constants.  */
 	      bool invalid = false;
 	      unsigned remain_cnt = 0;
-	      unsigned last_idx = 0;
 	      for (unsigned i = 0; i < chain.length (); ++i)
 		{
 		  if (chain[i].code != code)
@@ -9995,13 +10051,7 @@ vect_slp_check_for_roots (bb_vec_info bb_vinfo)
 						      (chain[i].op)->stmt)
 			  != chain[i].op))
 		    remain_cnt++;
-		  else
-		    last_idx = i;
 		}
-	      /* Make sure to have an even number of lanes as we later do
-		 all-or-nothing discovery, not trying to split further.  */
-	      if ((chain.length () - remain_cnt) & 1)
-		remain_cnt++;
 	      if (!invalid && chain.length () - remain_cnt > 1)
 		{
 		  vec<stmt_vec_info> stmts;
@@ -10014,9 +10064,7 @@ vect_slp_check_for_roots (bb_vec_info bb_vinfo)
 		      stmt_vec_info stmt_info;
 		      if (chain[i].dt == vect_internal_def
 			  && ((stmt_info = bb_vinfo->lookup_def (chain[i].op)),
-			      gimple_get_lhs (stmt_info->stmt) == chain[i].op)
-			  && (i != last_idx
-			      || (stmts.length () & 1)))
+			      gimple_get_lhs (stmt_info->stmt) == chain[i].op))
 			stmts.quick_push (stmt_info);
 		      else
 			remain.quick_push (chain[i].op);
