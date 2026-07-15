@@ -580,7 +580,7 @@ to address of matching mapped list item per 5.1, Sect. 2.21.7.2 @tab N @tab
       @code{target_data}, @code{target_exit_data} and @code{target_update}
       @tab N @tab
 @item New @code{device_type} clause to the @code{target} directive
-      @tab P @tab @code{device_type(host)} unsupported
+      @tab Y @tab
 @item @code{target_data} as composite construct @tab N @tab
 @item @code{nowait} clause with reverse-offload @code{target} directives
       @tab N @tab

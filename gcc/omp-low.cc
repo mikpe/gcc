@@ -2131,10 +2131,10 @@ omp_maybe_offloaded_ctx (omp_context *ctx)
 }
 
 /* Build a decl for the omp child function.  It'll not contain a body
-   yet, just the bare decl.  */
+   yet, just the bare decl. If HOST_ONLY, do not create a device version.  */
 
 static void
-create_omp_child_function (omp_context *ctx, bool task_copy)
+create_omp_child_function (omp_context *ctx, bool task_copy, bool host_only)
 {
   tree decl, type, name, t;
 
@@ -2189,7 +2189,7 @@ create_omp_child_function (omp_context *ctx, bool task_copy)
   DECL_FUNCTION_VERSIONED (decl)
     = DECL_FUNCTION_VERSIONED (current_function_decl);
 
-  if (omp_maybe_offloaded_ctx (ctx))
+  if (omp_maybe_offloaded_ctx (ctx) && !host_only)
     {
       cgraph_node::get_create (decl)->offloadable = 1;
       if (ENABLE_OFFLOADING)
@@ -2435,7 +2435,7 @@ scan_omp_parallel (gimple_stmt_iterator *gsi, omp_context *outer_ctx)
   DECL_NAMELESS (name) = 1;
   TYPE_NAME (ctx->record_type) = name;
   TYPE_ARTIFICIAL (ctx->record_type) = 1;
-  create_omp_child_function (ctx, false);
+  create_omp_child_function (ctx, false, false);
   gimple_omp_parallel_set_child_fn (stmt, ctx->cb.dst_fn);
 
   scan_sharing_clauses (gimple_omp_parallel_clauses (stmt), ctx);
@@ -2488,7 +2488,7 @@ scan_omp_task (gimple_stmt_iterator *gsi, omp_context *outer_ctx)
   DECL_NAMELESS (name) = 1;
   TYPE_NAME (ctx->record_type) = name;
   TYPE_ARTIFICIAL (ctx->record_type) = 1;
-  create_omp_child_function (ctx, false);
+  create_omp_child_function (ctx, false, false);
   gimple_omp_task_set_child_fn (stmt, ctx->cb.dst_fn);
 
   scan_sharing_clauses (gimple_omp_task_clauses (stmt), ctx);
@@ -2502,7 +2502,7 @@ scan_omp_task (gimple_stmt_iterator *gsi, omp_context *outer_ctx)
       DECL_NAMELESS (name) = 1;
       TYPE_NAME (ctx->srecord_type) = name;
       TYPE_ARTIFICIAL (ctx->srecord_type) = 1;
-      create_omp_child_function (ctx, true);
+      create_omp_child_function (ctx, true, false);
     }
 
   scan_omp (gimple_omp_body_ptr (stmt), ctx);
@@ -3209,7 +3209,10 @@ scan_omp_target (gomp_target *stmt, omp_context *outer_ctx)
 
   if (offloaded)
     {
-      create_omp_child_function (ctx, false);
+      tree c = omp_find_clause (clauses, OMP_CLAUSE_DEVICE_TYPE);
+      bool host_only
+	= c && OMP_CLAUSE_DEVICE_TYPE_KIND (c) == OMP_CLAUSE_DEVICE_TYPE_HOST;
+      create_omp_child_function (ctx, false, host_only);
       gimple_omp_target_set_child_fn (stmt, ctx->cb.dst_fn);
     }
 
@@ -3268,7 +3271,7 @@ scan_omp_teams (gomp_teams *stmt, omp_context *outer_ctx)
   DECL_NAMELESS (name) = 1;
   TYPE_NAME (ctx->record_type) = name;
   TYPE_ARTIFICIAL (ctx->record_type) = 1;
-  create_omp_child_function (ctx, false);
+  create_omp_child_function (ctx, false, false);
   gimple_omp_teams_set_child_fn (stmt, ctx->cb.dst_fn);
 
   scan_sharing_clauses (gimple_omp_teams_clauses (stmt), ctx);
@@ -13284,13 +13287,6 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	    DECL_HAS_VALUE_EXPR_P (new_var) = 1;
 	  }
 	break;
-	case OMP_CLAUSE_DEVICE_TYPE:
-	  /* FIXME: Ensure that 'nohost' also has not implied before that
-	     'g->have_offload = true' or an implicit declare target.  */
-	  if (OMP_CLAUSE_DEVICE_TYPE_KIND (c) == OMP_CLAUSE_DEVICE_TYPE_HOST)
-	    sorry_at (OMP_CLAUSE_LOCATION (c),
-		      "the %<device_type(host)%> is not supported");
-	  break;
       case OMP_CLAUSE_USES_ALLOCATORS:
 	allocator = OMP_CLAUSE_USES_ALLOCATORS_ALLOCATOR (c);
 	tree new_allocator = lookup_decl (allocator, ctx);

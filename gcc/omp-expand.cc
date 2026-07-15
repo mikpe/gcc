@@ -10014,6 +10014,7 @@ expand_omp_target (struct omp_region *region)
   tree clauses = gimple_omp_target_clauses (entry_stmt);
 
   bool is_ancestor = false;
+  bool is_host_only = false;
   child_fn = child_fn2 = NULL_TREE;
   child_cfun = NULL;
   if (offloaded)
@@ -10021,6 +10022,9 @@ expand_omp_target (struct omp_region *region)
       c = omp_find_clause (clauses, OMP_CLAUSE_DEVICE);
       if (ENABLE_OFFLOADING && c)
 	is_ancestor = OMP_CLAUSE_DEVICE_ANCESTOR (c);
+      c = omp_find_clause (clauses, OMP_CLAUSE_DEVICE_TYPE);
+      if (c && OMP_CLAUSE_DEVICE_TYPE_KIND (c) == OMP_CLAUSE_DEVICE_TYPE_HOST)
+	is_host_only = true;
       child_fn = gimple_omp_target_child_fn (entry_stmt);
       child_cfun = DECL_STRUCT_FUNCTION (child_fn);
     }
@@ -10211,7 +10215,7 @@ expand_omp_target (struct omp_region *region)
 	{
 	  if (in_lto_p)
 	    DECL_PRESERVE_P (child_fn) = 1;
-	  if (!is_ancestor)
+	  if (!is_ancestor && !is_host_only)
 	    vec_safe_push (offload_funcs, child_fn);
 	}
 
@@ -10393,8 +10397,10 @@ expand_omp_target (struct omp_region *region)
     }
   else
     {
-      c = omp_find_clause (clauses, OMP_CLAUSE_DEVICE);
-      if (c)
+      if (is_host_only)
+	device = build_int_cst (integer_type_node,
+				GOMP_DEVICE_HOST_FALLBACK - 1);
+      else if ((c = omp_find_clause (clauses, OMP_CLAUSE_DEVICE)) != NULL_TREE)
 	{
 	  device = OMP_CLAUSE_DEVICE_ID (c);
 	  /* Ensure 'device' is of the correct type.  */

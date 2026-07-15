@@ -13,7 +13,7 @@ void f ()
 #pragma omp target device_type ( nohost )
   ;
 
-#pragma omp target device_type ( host )  // { dg-message "sorry, unimplemented: the 'device_type\\(host\\)' is not supported" }
+#pragma omp target device_type ( host )
   ;
 
 }

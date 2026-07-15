@@ -10,7 +10,7 @@
 !$omp target device_type ( nohost )
 !$omp end target
 
-!$omp target device_type ( host )  ! { dg-message "sorry, unimplemented: the 'device_type\\(host\\)' is not supported" }
+!$omp target device_type ( host )
 !$omp end target
 
 end
