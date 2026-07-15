@@ -9082,7 +9082,8 @@ vect_bb_slp_mark_live_stmts (bb_vec_info bb_vinfo, slp_tree node,
 		    if (dump_enabled_p ())
 		      dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
 				       "Cannot determine insertion place for "
-				       "lane extract\n");
+				       "lane extract of %T at node %p\n",
+				       DEF_FROM_PTR (def_p), (void *)node);
 		    can_insert = false;
 		    break;
 		  }
