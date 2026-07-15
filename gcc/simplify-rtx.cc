@@ -727,12 +727,10 @@ simplify_context::simplify_truncation (machine_mode mode, rtx op,
 	}
     }
 
-  /* Turn (truncate:M1 (*_extract:M2 (reg:M2) (len) (pos))) into
-     (*_extract:M1 (truncate:M1 (reg:M2)) (len) (pos')) if possible without
-     changing len.  */
+  /* Turn (truncate:M1 (*_extract:M2 (reg:M3) (len) (pos))) into
+     (*_extract:M1 (truncate:M1 (reg:M3)) (len) (pos')) if possible.  */
   if ((GET_CODE (op) == ZERO_EXTRACT || GET_CODE (op) == SIGN_EXTRACT)
-      && REG_P (XEXP (op, 0))
-      && GET_MODE (XEXP (op, 0)) == GET_MODE (op)
+      && precision <= GET_MODE_UNIT_PRECISION (GET_MODE (XEXP (op, 0)))
       && CONST_INT_P (XEXP (op, 1))
       && CONST_INT_P (XEXP (op, 2)))
     {
@@ -741,7 +739,8 @@ simplify_context::simplify_truncation (machine_mode mode, rtx op,
       unsigned HOST_WIDE_INT pos = UINTVAL (XEXP (op, 2));
       if (BITS_BIG_ENDIAN && pos >= op_precision - precision)
 	{
-	  op0 = simplify_gen_unary (TRUNCATE, mode, op0, GET_MODE (op0));
+	  if (GET_MODE (op0) != mode)
+	    op0 = simplify_gen_unary (TRUNCATE, mode, op0, GET_MODE (op0));
 	  if (op0)
 	    {
 	      pos -= op_precision - precision;
@@ -751,7 +750,8 @@ simplify_context::simplify_truncation (machine_mode mode, rtx op,
 	}
       else if (!BITS_BIG_ENDIAN && precision >= len + pos)
 	{
-	  op0 = simplify_gen_unary (TRUNCATE, mode, op0, GET_MODE (op0));
+	  if (GET_MODE (op0) != mode)
+	    op0 = simplify_gen_unary (TRUNCATE, mode, op0, GET_MODE (op0));
 	  if (op0)
 	    return simplify_gen_ternary (GET_CODE (op), mode, mode, op0,
 					 XEXP (op, 1), XEXP (op, 2));
