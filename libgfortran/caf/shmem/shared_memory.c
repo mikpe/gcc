@@ -75,7 +75,7 @@ shared_memory_set_env (pid_t pid)
   int res;
 
   /* HP-UX / Legacy Fallback using putenv */
-  res = snprintf (buffer, 28, "%s=%d", "ENV_PPID", (int)pid);
+  res = snprintf (buffer, 28, "%s=%d", ENV_PPID, (int)pid);
   if (res != -1)
     putenv (buffer);
 #endif
@@ -268,7 +268,7 @@ shared_memory_init (shared_memory_act *mem, size_t size)
       int res;
 
       /* HP-UX / Legacy Fallback using putenv */
-      res = snprintf (buffer, 28, "%s=%p", "ENV_BASE", mem->glbl.base);
+      res = snprintf (buffer, 28, "%s=%p", ENV_BASE, mem->glbl.base);
       if (res != -1)
 	putenv (buffer);
 #endif
