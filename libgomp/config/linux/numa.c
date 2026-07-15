@@ -87,14 +87,13 @@ retry:
   /* Obtain numa nodes.  */
 
   num = 0;
+  char *lineptr = NULL;
+  size_t nline = 0;
   FILE *f = fopen ("/sys/devices/system/node/online", "r");
   if (f == NULL)
     goto fail;
-  char *lineptr = NULL;
-  size_t nline;
   if (getline (&lineptr, &nline, f) <= 0)
     {
-      free (lineptr);
       fclose (f);
       goto fail;
     }
