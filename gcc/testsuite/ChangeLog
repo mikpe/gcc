@@ -1,3 +1,12 @@
+2026-07-14  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2024-09-11  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/116597
+	* gcc.target/arm/pac-sibcall-2.c: New test.
+	* gcc.target/arm/pac-sibcall-3.c: New test.
+
 2026-07-12  Paul Thomas  <pault@gcc.gnu.org>
 
 	Backported from master:
