@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -mno-avx" } */
+/* { dg-options "-O2 -mno-avx -mno-stackrealign" } */
 
 typedef double double4 __attribute__((vector_size(32)));
 
