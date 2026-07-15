@@ -1,3 +1,10 @@
+2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	Backported from master:
+	2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
+
+	* doc/sourcebuild.texi (arm_v8_1m_mve_link): Document.
+
 2026-07-09  Uros Bizjak  <ubizjak@gmail.com>
 
 	Backported from master:
