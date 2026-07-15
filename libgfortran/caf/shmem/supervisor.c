@@ -134,11 +134,11 @@ get_memory_size_from_envvar (void)
       if (sizeof (size_t) == 4)
 	sz = ((size_t) 1) << 28;
       else
-#ifndef WIN32
-	sz = ((size_t) 1) << 34;
-#else
-	/* Use 1GB on Windows.  */
+#if defined(WIN32) || defined(__hpux__)
+	/* Use 1GB on Windows and HP-UX.  */
 	sz = ((size_t) 1) << 30;
+#else
+	sz = ((size_t) 1) << 34;
 #endif
     }
   return sz;

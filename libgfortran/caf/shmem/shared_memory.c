@@ -122,6 +122,17 @@ shared_memory_prepare (shared_memory_act *)
   asm volatile ("" ::: "memory");
 }
 
+#if defined(__hpux__)
+/* On HP-UX, shm_open parses the name argument directly through file
+   system checks.  We need to provide a file path inside a globally
+   writeable directory.  */
+#define SHM_NAME_FMTD "/tmp/gfor-shm-%d"
+#define SHM_NAME_FMTS "/tmp/gfor-shm-%s"
+#else
+#define SHM_NAME_FMTD "/gfor-shm-%d"
+#define SHM_NAME_FMTS "/gfor-shm-%s"
+#endif
+
 #define SHM_NAME_MAX 255
 
 /* Initialize the memory with one page, the shared metadata of the
@@ -140,7 +151,7 @@ shared_memory_init (shared_memory_act *mem, size_t size)
       int n = sscanf (env_val, "%d", &ppid);
       assert (n == 1);
     }
-  snprintf (shm_name, SHM_NAME_MAX, "/gfor-shm-%d", ppid);
+  snprintf (shm_name, SHM_NAME_MAX, SHM_NAME_FMTD, ppid);
   if (base)
     {
       int n = sscanf (base, "%p", &base_ptr);
@@ -286,7 +297,8 @@ shared_memory_cleanup (shared_memory_act *mem)
     {
       char shm_name[SHM_NAME_MAX];
 
-      snprintf (shm_name, SHM_NAME_MAX, "/gfor-shm-%s", shared_memory_get_env ());
+      snprintf (shm_name, SHM_NAME_MAX, SHM_NAME_FMTS,
+		shared_memory_get_env ());
       /* Only the supervisor is to delete the shm-file.  */
       res = shm_unlink (shm_name);
       if (res == -1)

@@ -125,7 +125,7 @@ foreach test [lsort [glob -nocomplain $srcdir/$subdir/*.\[fF\]{,90,95,03,08} ]] 
         foreach flags $option_list {
             verbose "Testing $nshort (libcaf_shmem), $flags" 1
             set gfortran_aux_module_flags "-fcoarray=lib $flags -lcaf_shmem"
-            if { [istarget *-*-freebsd*] } {
+            if { [istarget *-*-freebsd*] || [istarget *-*-hpux*] } {
                 dg-test $test "-fcoarray=lib -pthread $flags -lcaf_shmem" {}
             } else {
                 if { [istarget *-linux*] } {
