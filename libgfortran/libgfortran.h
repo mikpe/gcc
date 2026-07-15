@@ -47,6 +47,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #include <stdarg.h>
 #include <stdbool.h>
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
+
 #if HAVE_COMPLEX_H
 /* Must appear before math.h on VMS systems.  */
 # include <complex.h>

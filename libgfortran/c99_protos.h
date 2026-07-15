@@ -25,6 +25,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #ifndef C99_PROTOS_H
 #define C99_PROTOS_H 1
 
+/* string functions */
+#ifndef HAVE_STRNLEN
+#define HAVE_STRNLEN 1
+extern size_t strnlen(const char *, size_t);
+#endif
+
 /* float variants of libm functions */
 #ifndef HAVE_ACOSF
 #define HAVE_ACOSF 1
@@ -136,6 +142,11 @@ extern long double fmodl (long double x, long double y);
 extern float frexpf(float, int *);
 #endif
 
+#ifndef HAVE_FREXPL
+#define HAVE_FREXPL 1
+extern long double frexpl(long double, int *);
+#endif
+
 #ifndef HAVE_HYPOTF
 #define HAVE_HYPOTF 1
 extern float hypotf(float, float);
@@ -159,6 +170,11 @@ extern double scalbn(double, int);
 #ifndef HAVE_SCALBNF
 #define HAVE_SCALBNF 1
 extern float scalbnf(float, int);
+#endif
+
+#ifndef HAVE_SCALBNL
+#define HAVE_SCALBNL 1
+extern long double scalbnl(long double, int);
 #endif
 
 #ifndef HAVE_SINF

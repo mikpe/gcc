@@ -45,10 +45,154 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define IMAGPART(z) (__imag__(z))
 #define COMPLEX_ASSIGN(z_, r_, i_) {__real__(z_) = (r_); __imag__(z_) = (i_);}
 
-
 /* Prototypes are included to silence -Wstrict-prototypes
    -Wmissing-prototypes.  */
 
+/* Main union type we use to manipulate the floating-point type.  */
+typedef union
+{
+  long double value;
+
+  struct
+#ifdef __MINGW32__
+  /* On mingw targets the ms-bitfields option is active by default.
+     Therefore enforce gnu-bitfield style.  */
+  __attribute__ ((gcc_struct))
+#endif
+  {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    unsigned negative:1;
+    unsigned exponent:15;
+    unsigned mantissa0:16;
+    unsigned mantissa1:32;
+    unsigned mantissa2:32;
+    unsigned mantissa3:32;
+#else
+    unsigned mantissa3:32;
+    unsigned mantissa2:32;
+    unsigned mantissa1:32;
+    unsigned mantissa0:16;
+    unsigned exponent:15;
+    unsigned negative:1;
+#endif
+  } ieee;
+
+  struct
+  {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint64_t high;
+    uint64_t low;
+#else
+    uint64_t low;
+    uint64_t high;
+#endif
+  } words64;
+
+  struct
+  {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint32_t w0;
+    uint32_t w1;
+    uint32_t w2;
+    uint32_t w3;
+#else
+    uint32_t w3;
+    uint32_t w2;
+    uint32_t w1;
+    uint32_t w0;
+#endif
+  } words32;
+
+  struct
+#ifdef __MINGW32__
+  /* Make sure we are using gnu-style bitfield handling.  */
+  __attribute__ ((gcc_struct))
+#endif
+  {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    unsigned negative:1;
+    unsigned exponent:15;
+    unsigned quiet_nan:1;
+    unsigned mantissa0:15;
+    unsigned mantissa1:32;
+    unsigned mantissa2:32;
+    unsigned mantissa3:32;
+#else
+    unsigned mantissa3:32;
+    unsigned mantissa2:32;
+    unsigned mantissa1:32;
+    unsigned mantissa0:15;
+    unsigned quiet_nan:1;
+    unsigned exponent:15;
+    unsigned negative:1;
+#endif
+  } ieee_nan;
+
+} ieee754_long_double;
+
+
+/* Get two 64 bit ints from a long double.  */
+#define GET_LDOUBLE_WORDS64(ix0,ix1,d)  \
+do {                                   \
+  ieee754_long_double u;               \
+  u.value = (d);                       \
+  (ix0) = u.words64.high;              \
+  (ix1) = u.words64.low;               \
+} while (0)
+
+/* Set a long double from two 64 bit ints.  */
+#define SET_LDOUBLE_WORDS64(d,ix0,ix1)  \
+do {                                   \
+  ieee754_long_double u;               \
+  u.words64.high = (ix0);              \
+  u.words64.low = (ix1);               \
+  (d) = u.value;                       \
+} while (0)
+
+/* Get the more significant 64 bits of a long double mantissa.  */
+#define GET_LDOUBLE_MSW64(v,d)          \
+do {                                   \
+  ieee754_long_double u;               \
+  u.value = (d);                       \
+  (v) = u.words64.high;                \
+} while (0)
+
+/* Set the more significant 64 bits of a long double mantissa from an int.  */
+#define SET_LDOUBLE_MSW64(d,v)          \
+do {                                   \
+  ieee754_long_double u;               \
+  u.value = (d);                       \
+  u.words64.high = (v);                \
+  (d) = u.value;                       \
+} while (0)
+
+/* Get the least significant 64 bits of a long double mantissa.  */
+#define GET_LDOUBLE_LSW64(v,d)          \
+do {                                   \
+  ieee754_long_double u;               \
+  u.value = (d);                       \
+  (v) = u.words64.low;                 \
+} while (0)
+
+static const long double
+two114 = 2.0769187434139310514121985316880384E+34L, /* 0x4071000000000000, 0 */
+twom114 = 4.8148248609680896326399448564623183E-35L, /* 0x3F8D000000000000, 0 */
+huge   = 1.0E+4900L,
+tiny   = 1.0E-4900L;
+
+/* Wrapper for systems without strnlen function.  */
+
+#ifndef HAVE_STRNLEN
+#define HAVE_STRNLEN 1
+size_t strnlen (const char *, size_t);
+
+size_t
+strnlen (const char *str, size_t maxlen)
+{
+  const char *found = memchr (str, '\0', maxlen);
+  return found ? (size_t) (found - str) : maxlen;
+}
+#endif
 
 /* Wrappers for systems without the various C99 single precision Bessel
    functions.  */
@@ -361,6 +505,57 @@ frexpf (float x, int *exp)
 }
 #endif
 
+#if !defined(HAVE_FREXPL)
+#define HAVE_FREXPL 1
+long double frexpl (long double x, int *eptr);
+
+/* s_frexpl.c -- long double version of s_frexp.c.
+ * Conversion to IEEE quad long double by Jakub Jelinek, jj@ultra.linux.cz.
+ */
+
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+
+long double
+frexpl (long double x, int *eptr)
+{
+  if (sizeof (long double) == 16)
+    {
+      uint64_t hx, lx, ix;
+
+      GET_LDOUBLE_WORDS64(hx,lx,x);
+      ix = 0x7fffffffffffffffULL&hx;
+      *eptr = 0;
+      if(ix >= 0x7fff000000000000ULL || ((ix|lx) == 0))
+	/* 0,inf,nan */
+	return x + x;
+      if (ix < 0x0001000000000000ULL)
+	{
+	  /* subnormal */
+	  x *= two114;
+	  GET_LDOUBLE_MSW64(hx,x);
+	  ix = hx & 0x7fffffffffffffffULL;
+	  *eptr = -114;
+	}
+      *eptr += (ix>>48) - 16382;
+      hx = (hx & 0x8000ffffffffffffULL) | 0x3ffe000000000000ULL;
+      SET_LDOUBLE_MSW64(x,hx);
+      return x;
+    }
+  else
+    /* Intel 80 bit */
+    abort();
+}
+#endif
+
 #ifndef HAVE_HYPOTF
 #define HAVE_HYPOTF 1
 float hypotf (float x, float y);
@@ -417,6 +612,76 @@ float
 scalbnf (float x, int y)
 {
   return (float) scalbn (x, y);
+}
+#endif
+
+#if !defined(HAVE_SCALBNL)
+#define HAVE_SCALBNL 1
+long double scalbnl (long double x, int n);
+
+/* s_scalbnl.c -- long double version of s_scalbn.c.
+ * Conversion to IEEE quad long double by Jakub Jelinek, jj@ultra.linux.cz.
+ */
+
+/* @(#)s_scalbn.c 5.1 93/09/24 */
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+
+long double
+scalbnl (long double x, int n)
+{
+  if (sizeof (long double) == 16)
+    {
+      int64_t k, hx, lx;
+
+      GET_LDOUBLE_WORDS64(hx,lx,x);
+
+      /* extract exponent */
+      k = (hx >> 48) & 0x7fff;
+      if (k == 0)
+	{
+	  /* 0 or subnormal x */
+	  if ((lx | (hx & 0x7fffffffffffffffULL)) == 0)
+	    return x; /* +-0 */
+	  x *= two114;
+	  GET_LDOUBLE_MSW64(hx,x);
+	  k = ((hx >> 48) & 0x7fff) - 114;
+	}
+      if (k == 0x7fff)
+	/* NaN or Inf */
+	return x+x;
+      if (n < -50000)
+	/*underflow*/
+	return tiny * copysignl (tiny, x);
+      if (n > 50000 || k + n > 0x7ffe)
+	/* overflow  */
+	return huge * copysignl (huge, x);
+      /* Now k and n are bounded we know that k = k+n does not overflow.  */
+      k = k + n;
+      if (k > 0)
+	{
+	  /* normal result */
+	  SET_LDOUBLE_MSW64(x,(hx&0x8000ffffffffffffULL)|(k<<48));
+	  return x;
+	}
+      if (k <= -114)
+	/*underflow*/
+	return tiny * copysignl (tiny, x);
+      k += 114;				/* subnormal result */
+      SET_LDOUBLE_MSW64(x,(hx&0x8000ffffffffffffULL)|(k<<48));
+      return x * twom114;
+    }
+  else
+    /* Intel 80 bit */
+    abort();
 }
 #endif
 
