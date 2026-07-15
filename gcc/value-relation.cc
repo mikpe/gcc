@@ -1710,6 +1710,7 @@ path_oracle::query (basic_block bb, const_bitmap b1, const_bitmap b2)
       || bitmap_intersect_p (m_killed_defs, b2))
     return k;
 
+  // Query the root oracle for relations with path local equivalencies.
   if (k == VREL_VARYING && m_root)
     k = m_root->query (bb, b1, b2);
 
@@ -1733,7 +1734,12 @@ path_oracle::query (basic_block bb, tree ssa1, tree ssa2)
   if (bitmap_bit_p (equiv_1, v2) && bitmap_bit_p (equiv_2, v1))
     return VREL_EQ;
 
-  return query (bb, equiv_1, equiv_2);
+  relation_kind rel = query (bb, equiv_1, equiv_2);
+
+  // If the path relation query fails, check for relations in the root oracle.
+  if (rel == VREL_VARYING && m_root)
+      rel = m_root->query (bb, ssa1, ssa2);
+  return rel;
 }
 
 // Reset any relations registered on this path.  ORACLE is the root
