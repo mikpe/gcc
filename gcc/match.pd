@@ -6037,7 +6037,8 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
  (plus @0 @0)
  (if (SCALAR_FLOAT_TYPE_P (type))
   (mult @0 { build_real (type, dconst2); })
-  (if (INTEGRAL_TYPE_P (type))
+  (if (INTEGRAL_TYPE_P (type)
+       && TYPE_PRECISION (type) > (2 - TYPE_UNSIGNED (type)))
    (mult @0 { build_int_cst (type, 2); }))))
 
 /* 0 - X  ->  -X.  */
