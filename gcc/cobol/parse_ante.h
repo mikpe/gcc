@@ -3724,7 +3724,9 @@ procedure_division_ready( const cbl_loc_t& loc, cbl_field_t *returning, ffi_args
                    if( elem.type == SymField ) {
                      auto f = cbl_field_of(&elem);
                      if( f->has_attr(local_e) ) {
-                       parser_local_add(f);
+                       if( ! f->is_typedef() ) {
+                         parser_local_add(f);
+                       }
                      }
                    }
                  } );
