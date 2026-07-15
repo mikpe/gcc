@@ -148,7 +148,7 @@ riscv_target_attr_parser::parse_arch (const char *str)
 	{
 	  if (token[0] != '+')
 	    {
-	      if (*m_loc)
+	      if (m_loc)
 		error_at (*m_loc, "unexpected arch for %<target()%> "
 			  "attribute: must start with + or rv");
 	      goto fail;
