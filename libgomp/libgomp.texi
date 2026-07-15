@@ -416,14 +416,13 @@ to address of matching mapped list item per 5.1, Sect. 2.21.7.2 @tab N @tab
       allocatables/pointers @tab Y @tab
 @item Optional paired @code{end} directive with @code{dispatch} @tab Y @tab
 @item New @code{memspace} and @code{traits} modifiers for @code{uses_allocators}
-      @tab P @tab Only predefined allocators
+      @tab Y @tab
 @item Deprecation of traits array following the allocator_handle expression in
       @code{uses_allocators} @tab Y @tab
 @item New @code{otherwise} clause as alias for @code{default} on metadirectives
       @tab Y @tab
 @item Deprecation of @code{default} clause on metadirectives @tab Y
-      @tab Both @code{otherwise} and @code{default} are accepted
-      without diagnostics.
+      @tab
 @item Deprecation of delimited form of @code{declare target} @tab Y @tab
 @item Reproducible semantics changed for @code{order(concurrent)} @tab N @tab
 @item @code{allocate} and @code{firstprivate} clauses on @code{scope}
@@ -463,7 +462,7 @@ to address of matching mapped list item per 5.1, Sect. 2.21.7.2 @tab N @tab
 @multitable @columnfractions .60 .10 .25
 @item Features deprecated in versions 5.0, 5.1 and 5.2 were removed
       @tab N/A @tab Backward compatibility
-@item Full support for C23 was added @tab P @tab
+@item Full support for C23 was added @tab Y @tab
 @item Full support for C++23 was added @tab P @tab
 @item Full support for Fortran 2023 was added @tab P @tab
 @item @code{_ALL} suffix to the device-scope environment variables
@@ -543,7 +542,7 @@ to address of matching mapped list item per 5.1, Sect. 2.21.7.2 @tab N @tab
 @item @code{access} allocator trait changes @tab N @tab
 @item New @code{partitioner} value to @code{partition} allocator trait
       @tab N @tab
-@item Semicolon-separated list to @code{uses_allocators} @tab N @tab
+@item Semicolon-separated list to @code{uses_allocators} @tab Y @tab
 @item New @code{need_device_addr} modifier to @code{adjust_args} clause @tab N @tab
 @item @code{interop} clause to @code{dispatch} @tab Y @tab
 @item Scope requirement changes for @code{declare_target} @tab N @tab
@@ -3943,10 +3942,15 @@ They have C linkage and do not throw exceptions.
 * omp_get_default_allocator:: Get the default allocator
 * omp_alloc:: Memory allocation with an allocator
 * omp_aligned_alloc:: Memory allocation with an allocator and alignment
-* omp_free:: Freeing memory allocated with OpenMP routines
 * omp_calloc:: Allocate nullified memory with an allocator
 * omp_aligned_calloc:: Allocate nullified aligned memory with an allocator
 * omp_realloc:: Reallocate memory allocated with OpenMP routines
+* omp_free:: Freeing memory allocated with OpenMP routines
+@c * omp_get_dyn_gprivate_ptr:: <fixme>/TR15
+@c * omp_get_dyn_gprivate_nofb_ptr:: <fixme>/TR15
+@c * omp_get_dyn_gprivate_size:: <fixme>/TR15
+@c * omp_get_dyn_gprivate_memspace:: <fixme>/TR15
+@c * omp_get_gprivate_limit:: <fixme>/TR15
 @end menu
 
 
@@ -4186,51 +4190,6 @@ Memory allocated by @code{omp_aligned_alloc} must be freed using
 
 
 
-@node omp_free
-@subsection @code{omp_free} -- Freeing memory allocated with OpenMP routines
-@table @asis
-@item @emph{Description}:
-The @code{omp_free} routine deallocates memory previously allocated by an
-OpenMP memory-management routine. The @var{ptr} argument must point to such
-memory or be a null pointer; if it is a null pointer, no operation is
-performed.  If specified, the @var{allocator} argument must be either the
-memory allocator that was used for the allocation or @code{omp_null_allocator};
-if it is @code{omp_null_allocator}, the implementation will determine the value
-automatically.
-
-Calling @code{omp_free} invokes undefined behavior if the memory
-was already deallocated or when the used allocator has already been destroyed.
-
-@item @emph{C}:
-@multitable @columnfractions .20 .80
-@item @emph{Prototype}: @tab @code{void omp_free(void *ptr,}
-@item                   @tab @code{  omp_allocator_handle_t allocator)}
-@end multitable
-
-@item @emph{C++}:
-@multitable @columnfractions .20 .80
-@item @emph{Prototype}: @tab @code{void omp_free(void *ptr,}
-@item                   @tab @code{  omp_allocator_handle_t allocator=omp_null_allocator)}
-@end multitable
-
-@item @emph{Fortran}:
-@multitable @columnfractions .20 .80
-@item @emph{Interface}: @tab @code{subroutine omp_free(ptr, allocator) bind(C)}
-@item                   @tab @code{use, intrinsic :: iso_c_binding, only : c_ptr}
-@item                   @tab @code{type (c_ptr), value :: ptr}
-@item                   @tab @code{integer (omp_allocator_handle_kind), value :: allocator}
-@end multitable
-
-@item @emph{See also}:
-@ref{omp_alloc}, @ref{omp_aligned_alloc}, @ref{omp_calloc},
-@ref{omp_aligned_calloc}, @ref{omp_realloc}
-
-@item @emph{Reference}:
-@uref{https://www.openmp.org, OpenMP specification v5.0}, Section 3.7.7
-@end table
-
-
-
 @node omp_calloc
 @subsection @code{omp_calloc} -- Allocate nullified memory with an allocator
 @table @asis
@@ -4405,6 +4364,51 @@ was already deallocated or when the used allocator has already been destroyed.
 
 @item @emph{Reference}:
 @uref{https://www.openmp.org, OpenMP specification v5.0}, Section 3.7.9
+@end table
+
+
+
+@node omp_free
+@subsection @code{omp_free} -- Freeing memory allocated with OpenMP routines
+@table @asis
+@item @emph{Description}:
+The @code{omp_free} routine deallocates memory previously allocated by an
+OpenMP memory-management routine. The @var{ptr} argument must point to such
+memory or be a null pointer; if it is a null pointer, no operation is
+performed.  If specified, the @var{allocator} argument must be either the
+memory allocator that was used for the allocation or @code{omp_null_allocator};
+if it is @code{omp_null_allocator}, the implementation will determine the value
+automatically.
+
+Calling @code{omp_free} invokes undefined behavior if the memory
+was already deallocated or when the used allocator has already been destroyed.
+
+@item @emph{C}:
+@multitable @columnfractions .20 .80
+@item @emph{Prototype}: @tab @code{void omp_free(void *ptr,}
+@item                   @tab @code{  omp_allocator_handle_t allocator)}
+@end multitable
+
+@item @emph{C++}:
+@multitable @columnfractions .20 .80
+@item @emph{Prototype}: @tab @code{void omp_free(void *ptr,}
+@item                   @tab @code{  omp_allocator_handle_t allocator=omp_null_allocator)}
+@end multitable
+
+@item @emph{Fortran}:
+@multitable @columnfractions .20 .80
+@item @emph{Interface}: @tab @code{subroutine omp_free(ptr, allocator) bind(C)}
+@item                   @tab @code{use, intrinsic :: iso_c_binding, only : c_ptr}
+@item                   @tab @code{type (c_ptr), value :: ptr}
+@item                   @tab @code{integer (omp_allocator_handle_kind), value :: allocator}
+@end multitable
+
+@item @emph{See also}:
+@ref{omp_alloc}, @ref{omp_aligned_alloc}, @ref{omp_calloc},
+@ref{omp_aligned_calloc}, @ref{omp_realloc}
+
+@item @emph{Reference}:
+@uref{https://www.openmp.org, OpenMP specification v5.0}, Section 3.7.7
 @end table
 
 
@@ -7888,7 +7892,7 @@ The implementation remark:
 @item OpenMP code that has a @code{requires} directive with @code{self_maps} or
       @code{unified_shared_memory} runs on nvptx devices if and only if
       all of those support the @code{pageableMemoryAccess} property;@footnote{
-      @uref{https://docs.nvidia.com/cuda/cuda-programming-guide/}}
+      @uref{https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/unified-memory.html}}
       otherwise, all nvptx device are removed from the list of available
       devices (``host fallback'').
 @item The default per-warp stack size is 128 kiB; see also @code{-msoft-stack}

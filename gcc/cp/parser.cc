@@ -44183,7 +44183,10 @@ parse_next:
 	    if (traits_var != NULL_TREE)
 	      dup_mod_tok = mod_tok;
 	    else
-	      traits_var = t;
+	      {
+		traits_var = t;
+		mark_exp_read (traits_var);
+	      }
 	  }
 	else
 	  {
@@ -44268,6 +44271,7 @@ parse_next:
 	  legacy_traits = arg;
 	  if (legacy_traits == error_mark_node)
 	    goto end;
+	  mark_exp_read (legacy_traits);
 	  gcc_rich_location richloc (make_location (tok->location,
 						    tok->location, close_loc));
 	  if (nl == list)

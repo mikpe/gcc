@@ -19640,11 +19640,14 @@ c_parser_omp_clause_allocate (c_parser *parser, tree list)
 	  location_t expr_loc = c_parser_peek_token (parser)->location;
 	  c_expr expr = c_parser_expr_no_commas (parser, NULL);
 	  expr = convert_lvalue_to_rvalue (expr_loc, expr, false, true);
-	  allocator = expr.value;
-	  allocator = c_fully_fold (allocator, false, NULL);
-	  orig_type = expr.original_type
-		      ? expr.original_type : TREE_TYPE (allocator);
-	  orig_type = TYPE_MAIN_VARIANT (orig_type);
+	  if (expr.value != error_mark_node)
+	    {
+	      allocator = expr.value;
+	      allocator = c_fully_fold (allocator, false, NULL);
+	      orig_type = expr.original_type
+			  ? expr.original_type : TREE_TYPE (allocator);
+	      orig_type = TYPE_MAIN_VARIANT (orig_type);
+	    }
 	}
       if (allocator
 	  && (!INTEGRAL_TYPE_P (TREE_TYPE (allocator))
@@ -19790,6 +19793,7 @@ parse_next:
 	    {
 	      traits_var = expr.value;
 	      traits_var = c_fully_fold (traits_var, false, NULL);
+	      mark_exp_read (traits_var);
 	    }
 	  else
 	    {
@@ -19828,6 +19832,7 @@ parse_next:
 		{
 		  traits_var = expr.value;
 		  traits_var = c_fully_fold (traits_var, false, NULL);
+		  mark_exp_read (traits_var);
 		}
 	      else
 		{
@@ -19879,6 +19884,7 @@ parse_next:
 	  legacy_traits = c_fully_fold (expr.value, false, NULL);
 	  if (legacy_traits == error_mark_node)
 	    goto end;
+	  mark_exp_read (legacy_traits);
 
 	  gcc_rich_location richloc (make_location (alloc_loc, alloc_loc, close_loc));
 	  if (nl == list)
