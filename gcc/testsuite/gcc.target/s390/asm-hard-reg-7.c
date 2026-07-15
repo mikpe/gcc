@@ -13,22 +13,22 @@ test (void)
   long double y;
 
   /* Outputs */
-  __asm__ __volatile__ ("" : "=r" (f0), "=r" (f0f2));
-  __asm__ __volatile__ ("" : "=r" (f0f2), "={f0}" (y));  /* { dg-error "multiple outputs to hard register: %f0" } */
-  __asm__ __volatile__ ("" : "={f0}" (x), "=r" (f0f2));  /* { dg-error "multiple outputs to hard register: %f0" } */
+  __asm__ __volatile__ ("" : "=f" (f0), "=f" (f0f2));
+  __asm__ __volatile__ ("" : "=f" (f0f2), "={f0}" (y));  /* { dg-error "multiple outputs to hard register: %f0" } */
+  __asm__ __volatile__ ("" : "={f0}" (x), "=f" (f0f2));  /* { dg-error "multiple outputs to hard register: %f0" } */
 
-  __asm__ __volatile__ ("" : "=r" (f2), "=r" (f0f2));
+  __asm__ __volatile__ ("" : "=f" (f2), "=f" (f0f2));
   __asm__ __volatile__ ("" : "={f2}" (x), "={f0}" (y));  /* { dg-error "multiple outputs to hard register: %f2" } */
-  __asm__ __volatile__ ("" : "=r" (f2), "={f0}" (y));  /* { dg-error "multiple outputs to hard register: %f2" } */
-  __asm__ __volatile__ ("" : "={f2}" (x), "=r" (f0f2));  /* { dg-error "multiple outputs to hard register: %f2" } */
+  __asm__ __volatile__ ("" : "=f" (f2), "={f0}" (y));  /* { dg-error "multiple outputs to hard register: %f2" } */
+  __asm__ __volatile__ ("" : "={f2}" (x), "=f" (f0f2));  /* { dg-error "multiple outputs to hard register: %f2" } */
 
   /* Inputs */
-  __asm__ __volatile__ ("" :: "r" (f0), "r" (f0f2));
-  __asm__ __volatile__ ("" :: "r" (f0f2), "{f0}" (y));  /* { dg-error "multiple inputs to hard register: %f0" } */
-  __asm__ __volatile__ ("" :: "{f0}" (x), "r" (f0f2));  /* { dg-error "multiple inputs to hard register: %f0" } */
+  __asm__ __volatile__ ("" :: "f" (f0), "f" (f0f2));
+  __asm__ __volatile__ ("" :: "f" (f0f2), "{f0}" (y));  /* { dg-error "multiple inputs to hard register: %f0" } */
+  __asm__ __volatile__ ("" :: "{f0}" (x), "f" (f0f2));  /* { dg-error "multiple inputs to hard register: %f0" } */
 
-  __asm__ __volatile__ ("" :: "r" (f2), "r" (f0f2));
+  __asm__ __volatile__ ("" :: "f" (f2), "f" (f0f2));
   __asm__ __volatile__ ("" :: "{f2}" (x), "{f0}" (y));  /* { dg-error "multiple inputs to hard register: %f2" } */
-  __asm__ __volatile__ ("" :: "r" (f2), "{f0}" (y));  /* { dg-error "multiple inputs to hard register: %f2" } */
-  __asm__ __volatile__ ("" :: "{f2}" (x), "r" (f0f2));  /* { dg-error "multiple inputs to hard register: %f2" } */
+  __asm__ __volatile__ ("" :: "f" (f2), "{f0}" (y));  /* { dg-error "multiple inputs to hard register: %f2" } */
+  __asm__ __volatile__ ("" :: "{f2}" (x), "f" (f0f2));  /* { dg-error "multiple inputs to hard register: %f2" } */
 }
