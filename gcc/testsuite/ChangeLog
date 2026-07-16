@@ -1,3 +1,39 @@
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126257
+	* gcc.dg/torture/bitint-101.c: New test.
+
+2026-07-15  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-07-09  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* gcc.target/powerpc/aes-builtin-1.c: Add future_compile_ok and lp64
+	testsuite directive.
+	* gcc.target/powerpc/aes-builtin-2.c: Add future_compile_ok and lp64
+	testsuite directive.
+	* gcc.target/powerpc/aes-builtin-3.c: Add future_compile_ok and lp64
+	testsuite directive.
+
+2026-07-15  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-07-07  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* gcc.target/powerpc/future-vucmpr-altivec.c: New test.
+	* gcc.target/powerpc/future-vucmpr-vsx.c: Likewise.
+	* gcc.target/powerpc/future-vupk.c: Likewise.
+
+2026-07-15  Manjunath Matti  <mmatti@linux.ibm.com>
+
+	Backported from master:
+	2026-06-25  Manjunath Matti  <mmatti@linux.ibm.com>
+
+	* gcc.target/powerpc/ecc-builtin-1.c: New test for ECC builtins.
+
 2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	Backported from master:

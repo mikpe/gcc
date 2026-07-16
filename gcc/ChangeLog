@@ -1,3 +1,138 @@
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126257
+	* match.pd (x+x -> x*2): Only optimize if 2 is representable in the
+	type.
+
+2026-07-15  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	Backported from master:
+	2026-07-09  Avinash Jayakar  <avinashd@linux.ibm.com>
+
+	* config/rs6000/rs6000-builtins.def: Move AES builtins to future-vsx
+	stanza.
+	* doc/extend.texi: Add subheading for AES builtins.
+
+2026-07-15  Kishan Parmar  <kishan@linux.ibm.com>
+
+	Backported from master:
+	2026-07-07  Kishan Parmar  <kishan@linux.ibm.com>
+
+	* config/rs6000/altivec.md (UNSPEC_VUCMPRHN): New unspec entry.
+	(UNSPEC_VUCMPRLN): Likewise.
+	(UNSPEC_VUCMPRHB): Likewise.
+	(UNSPEC_VUCMPRLB): Likewise.
+	(UNSPEC_VUCMPRHH): Likewise.
+	(UNSPEC_VUCMPRLH): Likewise.
+	(UNSPEC_VUPKHSNTOB): Likewise.
+	(UNSPEC_VUPKLSNTOB): Likewise.
+	(UNSPEC_VUPKINT4TOBF16): Likewise.
+	(UNSPEC_VUPKINT8TOBF16): Likewise.
+	(UNSPEC_VUPKINT4TOFP32): Likewise.
+	(UNSPEC_VUPKINT8TOFP32): Likewise.
+	(vu_hl): New attribute.
+	(vu_lh): Likewise.
+	(VUPKNTOB): New int iterator.
+	(altivec_vupkhsntob): New define_insn.
+	(altivec_vupklsntob): Likewise.
+	(altivec_vupkint4tobf16): Likewise.
+	(altivec_vupkint8tobf16): Likewise.
+	(altivec_vupkint4tofp32): Likewise.
+	(altivec_vupkint8tofp32): Likewise.
+	(vucmpr_splat): New attribute.
+	(vucmpr_pcv): Likewise.
+	(vucmpr_uim): Likewise.
+	(VUCMPR_N): New int iterator.
+	(VUCMPR_B): Likewise.
+	(VUCMPR_H): Likewise.
+	(altivec_vucmpr<vu_hl>n): New define_expand.
+	(altivec_vucmpr<vu_hl>n_direct): New define_insn for vucmpr<vu_hl>n.
+	(altivec_vucmpr<vu_hl>b): New define_expand.
+	(altivec_vucmpr<vu_hl>b_direct): New define_insn for vucmpr<vu_hl>b.
+	(altivec_vucmpr<vu_hl>h): New define_expand.
+	(altivec_vucmpr<vu_hl>h_direct): New define_insn for vucmpr<vu_hl>h.
+	* config/rs6000/rs6000-builtins.def: Add vector uncompress and unpack
+	builtins under [future].
+	* config/rs6000/rs6000-overload.def: Add vec_uncompress* and vec_unpack*
+	interfaces.
+
+2026-07-15  Manjunath Matti  <mmatti@linux.ibm.com>
+
+	Backported from master:
+	2026-06-25  Manjunath Matti  <mmatti@linux.ibm.com>
+
+	* config/rs6000/predicates.md (const_0_to_6_operand): New predicate.
+	* config/rs6000/rs6000-builtins.def (__builtin_vsx_xxmulmul): Add new
+	builtin definitions under [future] stanza.
+	(__builtin_vsx_xxmulmulhiadd): Likewise.
+	(__builtin_vsx_xxmulmulloadd): Likewise.
+	(__builtin_vsx_xxssumudm): Likewise.
+	(__builtin_vsx_xxssumudmc): Likewise.
+	(__builtin_vsx_xxssumudmcext): Likewise.
+	(__builtin_vsx_xsaddadduqm): Likewise.
+	(__builtin_vsx_xsaddaddsuqm): Likewise.
+	(__builtin_vsx_xsaddsubuqm): Likewise.
+	(__builtin_vsx_xsaddsubsuqm): Likewise.
+	(__builtin_vsx_xsmerge2t1uqm): Likewise.
+	(__builtin_vsx_xsmerge2t2uqm): Likewise.
+	(__builtin_vsx_xsmerge2t3uqm): Likewise.
+	(__builtin_vsx_xsmerge3t1uqm): Likewise.
+	(__builtin_vsx_xsrebase2t1uqm): Likewise.
+	(__builtin_vsx_xsrebase2t2uqm): Likewise.
+	(__builtin_vsx_xsrebase2t3uqm): Likewise.
+	(__builtin_vsx_xsrebase2t4uqm): Likewise.
+	(__builtin_vsx_xsrebase3t1uqm): Likewise.
+	(__builtin_vsx_xsrebase3t2uqm): Likewise.
+	(__builtin_vsx_xsrebase3t3uqm): Likewise.
+	* config/rs6000/vsx.md (UNSPEC_XXMULMUL): Add UNSPEC entry.
+	(UNSPEC_XXMULMULHIADD): Likewise.
+	(UNSPEC_XXMULMULLOADD): Likewise.
+	(UNSPEC_XXSSUMUDM): Likewise.
+	(UNSPEC_XXSSUMUDMC): Likewise.
+	(UNSPEC_XXSSUMUDMCEXT): Likewise.
+	(UNSPEC_XSADDADDUQM): Likewise.
+	(UNSPEC_XSADDADDSUQM): Likewise.
+	(UNSPEC_XSADDSUBUQM): Likewise.
+	(UNSPEC_XSADDSUBSUQM): Likewise.
+	(UNSPEC_XSMERGE2T1UQM): Likewise.
+	(UNSPEC_XSMERGE2T2UQM): Likewise.
+	(UNSPEC_XSMERGE2T3UQM): Likewise.
+	(UNSPEC_XSMERGE3T1UQM): Likewise.
+	(UNSPEC_XSREBASE2T1UQM): Likewise.
+	(UNSPEC_XSREBASE2T2UQM): Likewise.
+	(UNSPEC_XSREBASE2T3UQM): Likewise.
+	(UNSPEC_XSREBASE2T4UQM): Likewise.
+	(UNSPEC_XSREBASE3T1UQM): Likewise.
+	(UNSPEC_XSREBASE3T2UQM): Likewise.
+	(UNSPEC_XSREBASE3T3UQM): Likewise.
+	(vsx_xxmulmul): New define_insn.
+	(vsx_xxmulmulhiadd): Likewise.
+	(vsx_xxmulmulloadd): Likewise.
+	(vsx_xxssumudm): Likewise.
+	(vsx_xxssumudmc): Likewise.
+	(vsx_xxssumudmcext): Likewise.
+	(vsx_xsaddadduqm): Likewise.
+	(vsx_xsaddaddsuqm): Likewise.
+	(vsx_xsaddsubuqm): Likewise.
+	(vsx_xsaddsubsuqm): Likewise.
+	(vsx_xsmerge2t1uqm): Likewise.
+	(vsx_xsmerge2t2uqm): Likewise.
+	(vsx_xsmerge2t3uqm): Likewise.
+	(vsx_xsmerge3t1uqm): Likewise.
+	(vsx_xsrebase2t1uqm): Likewise.
+	(vsx_xsrebase2t2uqm): Likewise.
+	(vsx_xsrebase2t3uqm): Likewise.
+	(vsx_xsrebase2t4uqm): Likewise.
+	(vsx_xsrebase3t1uqm): Likewise.
+	(vsx_xsrebase3t2uqm): Likewise.
+	(vsx_xsrebase3t3uqm): Likewise.
+	* doc/extend.texi (PowerPC AltiVec/VSX Built-in Functions): Add
+	documentation for ECC cryptography builtins available on
+	future ISA.
+
 2026-07-14  Dhruv Chawla  <dhruvc@nvidia.com>
 
 	Backported from master:
