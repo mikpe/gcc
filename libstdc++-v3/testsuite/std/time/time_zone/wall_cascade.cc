@@ -76,11 +76,11 @@ test_negative()
   // running save.
   //
   // Two-line zone whose second line begins at 1945 Sep 16 01:00 UT,
-  // at the cascaded firing time (Sep 16 01:00 UT), but after
+  // before the cascaded firing time (Sep 16 02:00 UT), but after
   // non-cascaded firing time (Sep 16 00:00 UT) of the September rule.
   // The seeding must pick the April rule (save=-2, CEST) at info.begin.
   std::ofstream("tzdata.zi") << R"(# version test_negative_cascade
-R Fr 1945 o - Apr 2  2 -2 M
+R Fr 1945 o - Apr 2  2 -3 M
 R Fr 1945 o - Sep 16 0 0 -
 Z Test/Negative 0  -  X     1945 Sep 16 1u
              1  Fr CE%sT
@@ -96,15 +96,24 @@ Z Test/Negative 0  -  X     1945 Sep 16 1u
   // one second after.
   auto info = tz->get_info(sys_seconds{
       sys_days(1945y/September/16) + 1h + 1s});
-  VERIFY( info.offset == -1h );
-  VERIFY( info.save == -2h );
+  VERIFY( info.offset == -2h );
+  VERIFY( info.save == -3h );
   VERIFY( info.abbrev == "CEMT" );
 
   // The boundary instant.
   auto at_boundary
     = tz->get_info(sys_seconds{sys_days(1945y/September/16) + 1h});
-  VERIFY( at_boundary.offset == -1h );
-  VERIFY( at_boundary.save == -2h );
+  VERIFY( at_boundary.offset == -2h );
+  VERIFY( at_boundary.save == -3h );
+
+  // Test the firing of Sep 16 rule
+  auto at_sep_rule = tz->get_info(sys_seconds{
+    sys_days(1945y/September/16) + 2h});
+  // The transition_window < 1d condition triggers, and
+  // transition is ignored.
+  // VERIFY( at_sep_rule.offset == 1h );
+  // VERIFY( at_sep_rule.save == 0h );
+  // VERIFY( at_sep_rule.abbrev == "CET" );
 }
 
 void
@@ -222,6 +231,36 @@ Z Test/EarielYear 11:39:4 - LMT 1868 N 2
   VERIFY( at_boundary.abbrev == "EYMT" );
 }
 
+void
+test_at_boundary()
+{
+  std::ofstream("tzdata.zi") << R"(# version test_at_boundary
+R p 1947 1966 - Ap Su>=1 2s 1 S
+R p 1947 1965 - O Su>=1 2s 0 -
+R p 1976 o - S lastSu 1 0 -
+R p 1977 o - Mar lastSu 0s 1 S
+R p 1977 o - S lastSu 0s 0 -
+Z Europe/Lisbon -0:36:45 - LMT 1884
+1 - CET 1976 S 26 1
+0 p WE%sT 1986
+   )";
+
+  const auto& db = reload_tzdb();
+  VERIFY( override_used ); // If this fails then XFAIL for the target.
+  VERIFY( db.version == "test_at_boundary" );
+
+  // The change from CET to WE%sT line happens 1976 Sep 26 00:00:00 UT,
+  // should take into consideration 1976 lastSu rule that fires at the
+  // same time (running save is 1h from 1966 Ap rule application),
+  // and start in standard time (WET period).
+  auto* utz = locate_zone("Europe/Lisbon");
+  auto at_boundary
+    = utz->get_info(sys_seconds{sys_days(1976y/September/26) + 0h});
+  VERIFY( at_boundary.offset == 0h );
+  VERIFY( at_boundary.save == 0min );
+  VERIFY( at_boundary.abbrev == "WET" );
+}
+
 int
 main()
 {
@@ -230,4 +269,5 @@ main()
   test_next_year();
   test_prev_year();
   test_earlier_year();
+  test_at_boundary();
 }

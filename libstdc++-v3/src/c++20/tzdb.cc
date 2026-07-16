@@ -1027,7 +1027,7 @@ namespace std::chrono
 	// SAVE and LETTERS values. There may not be a Rule for the period
 	// before the first DST transition, so find the earliest DST->STD
 	// transition and use the LETTERS from that.
-	if (const Rule* active_rule = find_active_rule(rules, info.begin - seconds(1), ri.offset()))
+	if (const Rule* active_rule = find_active_rule(rules, info.begin, ri.offset()))
 	  {
 	    info.offset = ri.offset() + active_rule->save;
 	    info.save = chrono::duration_cast<minutes>(active_rule->save);
