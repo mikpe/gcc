@@ -1,3 +1,36 @@
+2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
+
+	* caf/shmem/shared_memory.c (shared_memory_set_env): Don't
+	quote ENV_PPID.
+	(shared_memory_init) Don't quote ENV_BASE.
+
+2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
+
+	* libgfortran.h (FMT_Z): Define.
+	* caf/shmem/alloc.c (get_memory_by_id_internal): Use FMT_Z.
+	(alloc_free_memory_with_id): Likewise.
+	* caf/shmem/supervisor.c (get_memory_size_from_envvar): Likewise.
+	* caf/shmem/thread_support.c (get_handle): Likewise.
+	(thread_support_init_supervisor): Likewise.
+	* intrinsics/reduce.c (reduce): Likewise.
+
+2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR libfortran/125623
+	* c99_protos.h: (strnlen, frexpl, scalbnl): Declare if HAVE_STRNLEN,
+	HAVE_FREXPL, HAVE_SCALBNL aren't defined, respectively.
+	* intrinsics/c99_functions.c (strnlen, frexpl, scalbnl): Implement.
+	* libgfortran.h: Include string.h if HAVE_STRING_H.
+
+2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
+
+	* caf/shmem/shared_memory.c (SHM_NAME_FMTD, SHM_NAME_FMTS): Define.
+	(shared_memory_init) Use SHM_NAME_FMTD format to generate
+	shm_name.
+	(shared_memory_cleanup): Use SHM_NAME_FMTS to generate shm_name.
+	* caf/shmem/supervisor.c (get_memory_size_from_envvar): Use
+	1 GB on 64-bit Windows and HP-UX.
+
 2026-07-08  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	PR libfortran/126116

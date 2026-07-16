@@ -1,3 +1,10 @@
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* c-lex.cc (c_common_has_attribute): For __clang__
+	namespace don't call canonicalize_attr_name and for
+	_Clang use clang instead.
+
 2026-07-14  Jakub Jelinek  <jakub@redhat.com>
 
 	PR target/124948

@@ -1,3 +1,20 @@
+2026-07-15  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	PR fortran/126058
+	* gfortran.h (enum var_allocated): New enum.
+	(symbol_attribute): Change member allocated to new enum.
+	(gfc_used_in_allocate_expr): Add argument how.
+	* interface.cc (gfc_compare_actual_formal): Mark variables
+	as allocated only when the formal arg is allocatable.
+	* intrinsic.cc (mark_args_as_used): Intrinsics do not allocate
+	their arguments.
+	* resolve.cc (find_unused_vs_set): Move warnings enabled with
+	-Wextra behind those enabled with -Wall. If a variable is
+	maybe allocated as an argument, mark it as such.
+	* symbol.cc (mark_vars_as_used): Always set location.
+	(gfc_used_in_allocate_expr): Add argument how. Use it.
+	(gfc_lvalue_allocated_at): Set sym->attr.allocated to ALLOCATED_ASSIGNMENT.
+
 2026-07-14  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 
 	PR fortran/126234

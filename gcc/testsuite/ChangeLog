@@ -1,3 +1,125 @@
+2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
+
+	* gfortran.dg/coarray/caf.exp: Run test with -pthread option.
+
+2026-07-15  wangjue  <juewang@linux.alibaba.com>
+
+	* gcc.target/riscv/large-frame-indexed-base.c: New test.
+	* gcc.target/riscv/small-frame-indexed-base.c: New test.
+
+2026-07-15  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126110
+	* gcc.dg/pr126110.c: New.
+
+2026-07-15  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	PR fortran/126058
+	* gfortran.dg/warn_undefined_vars_7.f90: New test.
+	* gfortran.dg/warn_unused_but_set_variable_4.f90: New test.
+
+2026-07-15  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	Revert:
+	2026-07-15  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* gcc.target/mips/mxu-compile-no.c: New test.
+	* gcc.target/mips/mxu-compile.c: New test.
+	* gcc.target/mips/mxu-driver-no.c: New test.
+	* gcc.target/mips/mxu-driver.c: New test.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* c-c++-common/gomp/uses_allocators-3.c: New test.
+
+2026-07-15  Michal Jires  <mjires@suse.cz>
+
+	PR lto/125257
+	* gcc.dg/lto/pr125257_0.c: New test.
+
+2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
+
+	* cobol.dg/group2/CBL_CREATE_FILE___CBL_WRITE_FILE___CBL_CLOSE_FILE.cob: Add gcobc.
+	* cobol.dg/group2/CBL_DELETE_FILE.cob: Same.
+	* cobol.dg/group2/CBL_OPEN_FILE___CBL_CLOSE_FILE.cob: Same.
+	* cobol.dg/group2/CBL_OPEN_FILE___CBL_READ_FILE___CBL_CLOSE_FILE.cob: Same.
+	* cobol.dg/group2/CBL_READ_FILE__check_file_size_with_flags___128.cob: Same.
+	* cobol.dg/.gitignore: New test.
+
+2026-07-15  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc.target/i386/pr64731.c (dg-options): Add -mno-stackrealign.
+
+2026-07-15  Stefan Schulze Frielinghaus  <stefansf@gcc.gnu.org>
+
+	* gcc.target/s390/asm-hard-reg-7.c: Utilize constraint f for
+	floating-point registers.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR c/122748
+	* c-c++-common/gomp/uses_allocators-1.c: New test.
+	* c-c++-common/gomp/uses_allocators-2.c: New test.
+
+2026-07-15  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR rtl-optimization/123236
+	* gcc.target/i386/pr123236-1.c: New test case.
+
+2026-07-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126171
+	* gcc.dg/pr126171-1.c: New testcase.
+	* gcc.dg/torture/pr126171-2.c: Likewise.
+
+2026-07-15  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
+
+	* gcc.target/riscv/tlsdesc_clobber.c: New test.
+	* gcc.target/riscv/tlsdesc_clobber_v.c: New test.
+	* gcc.target/riscv/tlsdesc_clobber_v_csr.c: New test.
+
+2026-07-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126231
+	* gcc.target/i386/zext-avx10-1.c: New test.
+	* gcc.target/i386/zext-avx512f-1.c: Likewise.
+	* gcc.target/i386/zext-avx512fp16-1.c: Likewise.
+	* gcc.target/i386/zext-sse-1.c: Likewise.
+	* gcc.target/i386/zext-sse-2.c: Likewise.
+
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126257
+	* gcc.dg/torture/bitint-101.c: New test.
+
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* g++.dg/cpp0x/attr-trivial_abi8.C: Add further tests.
+	* g++.dg/cpp0x/attr-trivial_abi11.C: New test.
+	* g++.dg/ext/attr-no_specializations1.C: Use _Clang:: instead of
+	__clang__.
+	* g++.dg/ext/attr-no_specializations2.C: Likewise.
+	* g++.dg/ext/attr-no_specializations6.C: Likewise.
+	* g++.dg/ext/attr-no_specializations7.C: Likewise.
+	* g++.dg/ext/attr-no_specializations8.C: Likewise.
+	* g++.dg/ext/attr-no_specializations10.C: Add further tests.
+	* g++.dg/ext/attr-no_specializations12.C: New test.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* c-c++-common/gomp/target-device-type-1.c: Remove dg-sorry.
+	* gfortran.dg/gomp/target-device-type-1.f90: Likewise.
+
+2026-07-15  Hu, Lin1  <lin1.hu@intel.com>
+
+	PR middle-end/126203
+	PR middle-end/126221
+	PR middle-end/126232
+	* gcc.target/i386/pr126221-1.c: New test.
+	* gcc.target/i386/pr126221-2.c: Ditto.
+	* gfortran.dg/pr126221.f90: Ditto.
+
 2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
 
 	* c-c++-common/gomp/target-device-type-1.c: Update dg-sorry

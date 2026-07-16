@@ -1,3 +1,24 @@
+2026-07-15  Kito Cheng  <kito.cheng@sifive.com>
+
+	* include/tr1/ell_integral.tcc (__ellint_1): Throw domain_error
+	when phi is not finite.
+	(__ellint_2): Likewise.
+	(__ellint_3): Likewise.
+	* testsuite/special_functions/11_ellint_1/check_inf.cc: New test.
+	* testsuite/special_functions/12_ellint_2/check_inf.cc: New test.
+	* testsuite/special_functions/13_ellint_3/check_inf.cc: New test.
+
+2026-07-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/126111
+	* include/std/format (__format::__write_escape_seq): Remove
+	unnecessary alias declaration.
+	* include/std/spanstream (wspanbuf, wispanstream, wospanstream)
+	(wspanstream): Only declare for _GLIBCXX_USE_WCHAR_T.
+	* include/std/syncstream (wsyncbuf wosyncstream): Likewise.
+	* src/c++23/std.cc.in: Add preprocessor checks for
+	_GLIBCXX_USE_WCHAR_T to names which depend on it.
+
 2026-07-14  François Dumont  <frs.dumont@gmail.com>
 
 	* include/debug/safe_iterator.h

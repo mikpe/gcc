@@ -1,3 +1,8 @@
+2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
+
+	* compat/gnu/lib/CBL_CREATE_FILE.cbl: Do not write to input parameter.
+	* compat/gnu/lib/CBL_OPEN_FILE.cbl: Same.
+
 2026-07-11  Robert Dubner  <rdubner@symas.com>
 
 	* charmaps.cc (helpful_iconv_open): Use snprintf() instead of strncpy().

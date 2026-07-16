@@ -1,3 +1,12 @@
+2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
+
+	* parse_ante.h (procedure_division_ready): Test field with is_typedef().
+
+2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
+
+	* parse.y: Add debug messages during parameter validation.
+	* symbols.h: (cbl_ffi_arg_t::capacity_ok): New function.
+
 2026-07-12  James K. Lowden  <jklowden@cobolworx.com>
 
 	* cbldiag.h (enum cbl_diag_id_t): Add IbmCallFd.

@@ -1,3 +1,11 @@
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR c/122748
+	* c-parser.cc (c_parser_omp_clause_allocate): Avoid ICE
+	when allocator is an error_mark_node.
+	(c_parser_omp_clause_uses_allocators): Mark trait var
+	as read to avoid 'unused but set' warning.
+
 2026-07-08  Martin Uecker  <uecker@tugraz.at>
 
 	* c-tree.h (zero_length_array_type_p,

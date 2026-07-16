@@ -1,3 +1,24 @@
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* testsuite/libgomp.c-c++-common/uses_allocators-10.c: New test.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR c/122748
+	* libgomp.texi (Implementation status): Mark two
+	uses_allocators items and C23 support as 'Y';
+	remove outdated remark regarding a deprecation warning.
+	(Memory Management Routines): Move omp_free after
+	omp_realloc; add commented @menu entries for new
+	TR15 routines.
+	(nvptx): Update @uref to point to a better webpage.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* libgomp.texi (Implementations status): Mark 'device_type'
+	clause on target as implemented.
+	* testsuite/libgomp.c/target-device-type-3.c: New test.
+
 2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
 
 	* error.c (GOMP_error): When passing msglen == (size_t) -2,

@@ -1,3 +1,166 @@
+2026-07-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126231
+	* config/i386/i386.md (*fix_trunc<mode>si_sse_2_zext): New.
+
+2026-07-15  wangjue  <juewang@linux.alibaba.com>
+
+	* config/riscv/riscv.cc (riscv_legitimize_address): Use
+	riscv_add_offset for scaled indexed addresses.
+
+2026-07-15  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126110
+	* gimple-range-cache.cc (ranger_cache::mark_stale): Default defs
+	get a new timestamp to make them stale.
+	* gimple-range-infer.cc (infer_range_manager::add_range): When
+	an inferred range is added, mark the name as updated.
+
+2026-07-15  Jim Lin  <jim@andestech.com>
+
+	* config/riscv/riscv-target-attr.cc
+	(riscv_target_attr_parser::parse_arch): Check m_loc instead of *m_loc
+	before emitting the diagnostic.
+
+2026-07-15  Jim Lin  <jim@andestech.com>
+
+	* config/riscv/zicond.md: Emit any_ge instead of any_gt in the
+	GE/GEU if-then-else splitter.
+
+2026-07-15  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	Revert:
+	2026-06-29  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* config/mips/mips.h (ASM_SPEC): Add placeholders for -mmxu and
+	-mno-mxu.
+	* config/mips/mips.opt: New undocumented target option.
+
+2026-07-15  Nathan Sidwell  <nathan@acm.org>
+
+	* gen-pass-instances.awk: Require only white-space before
+	macro invocations.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* omp-low.cc (lower_private_allocate): When called on 'target'
+	and the allocator is a variable, obtain the device variable.
+	(lower_omp_target): Move processing of OMP_CLAUSE_USES_ALLOCATORS
+	on the device/receiver side in before the loop over clauses to
+	ensure the VALUE_EXPR points to uses_allocators's inited var.
+
+2026-07-15  Richard Biener  <rguenther@suse.de>
+
+	* tree-vectorizer.h (vect_transform_stmt): Return void.
+	* tree-vect-stmts.cc (vect_transform_stmt): Likewise.
+
+2026-07-15  Richard Biener  <rguenther@suse.de>
+
+	* tree-vect-slp.cc (vect_bb_slp_mark_live_stmts): Enhance
+	dumping in the failure case.
+
+2026-07-15  Roger Sayle  <roger@nextmovesoftware.com>
+
+	PR rtl-optimization/123236
+	* simplify-rtx.cc (simplify_context::simplify_truncation): Handle
+	cases where a ZERO_EXTRACT or SIGN_EXTRACT has a different mode
+	to (but at least as wide as) its first operand.
+
+2026-07-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126171
+	* tree-scalar-evolution.cc (scev_dfs::add_to_evolution):
+	Remove code argument.  Remove MINUS_EXPR handling here.
+	(scev_dfs::follow_ssa_edge_binary): Likewise.
+	(scev_dfs::follow_ssa_edge_expr): Handle MINUS_EXPR
+	separately here, promoting the whole operation to unsigned
+	instead of just the addend.
+
+2026-07-15  Andrew Stubbs  <ams@baylibre.com>
+
+	* regrename.cc (scan_rtx_address): Recurse for segment UNSPECs.
+
+2026-07-15  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
+
+	* config/riscv/riscv.md (VXSAT_REGNUM): New constant.
+	(@tlsdesc<mode>): update clobbering.
+
+2026-07-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126231
+	* config/i386/i386.md (*fix_trunc<mode>si_sse_zext): New.
+	* config/i386/sse.md (*avx512fp16_vcvtsh2<sseintconvertsignprefix>si<round_zext_name>):
+	Likewise.
+	(*avx512fp16_vcvtsh2<sseintconvertsignprefix>si_2_zext): Likewise.
+	(*unspec_avx512fp16_fix<vcvtt_uns_suffix>_truncsi2<round_saeonly_zext_name>): Likewise.
+	(*sse_cvtss2si<round_zext_name>): Likewise.
+	(*sse_cvtss2si_2_zext): Likewise.
+	(*unspec_sse_cvttss2si<round_saeonly_zext_name>): Likewise.
+	(*sse_cvttss2si<round_saeonly_zext_name>): Likewise.
+	(*avx512f_vcvtss2usi<round_zext_name>): Likewise.
+	(*unspec_avx512f_vcvttss2usi<round_saeonly_zext_name>): Likewise.
+	(*avx512f_vcvttss2usi<round_saeonly_zext_name>): Likewise.
+	(*avx512f_vcvtsd2usi<round_zext_name>): Likewise.
+	(*unspec_avx512f_vcvttsd2usi<round_saeonly_zext_name>):
+	Likewise.
+	(*avx512f_vcvttsd2usi<round_saeonly_zext_name>): Likewise.
+	(*sse2_cvtsd2si<round_zext_name>): Likewise.
+	(*sse2_cvtsd2si_2_zext): Likewise.
+	(*unspec_sse2_cvttsd2si<round_saeonly_zext_name>): Likewise.
+	(*sse2_cvttsd2si<round_saeonly_zext_name>): Likewise.
+	(*avx10_2_vcvttsd2<sat_cvt_sign_prefix>sissi<round_saeonly_zext_name>):
+	Likewise.
+	(*avx10_2_vcvttss2<sat_cvt_sign_prefix>sissi<round_saeonly_zext_name>):
+	Likewise.
+	* config/i386/subst.md (round_zext_name): Likewise.
+	(round_zext_constraint): Likewise.
+	(round_zext_constraint2): Likewise.
+	(round_zext_nimm_predicate): Likewise.
+	(round_zext_nimm_scalar_predicate): Likewise.
+	(round_zext_op2): Likewise.
+	(round_zext): Likewise.
+	(round_saeonly_zext_name): Likewise.
+	(round_saeonly_zext_constraint): Likewise.
+	(round_saeonly_zext_constraint2): Likewise.
+	(round_saeonly_zext_nimm_scalar_predicate): Likewise.
+	(round_saeonly_zext_op2): Likewise.
+	(round_saeonly_zext): Likewise.
+
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126257
+	* match.pd (x+x -> x*2): Only optimize if 2 is representable in the
+	type.
+
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* doc/extend.texi: Document variant spelling of
+	standard attributes and that alternate namespace
+	spelling for clang namespace is _Clang rather
+	than __clang__.  For no_specializations use
+	_Clang:: rather than __clang__::.
+
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	* omp-expand.cc (expand_omp_target): For 'device_type(host)',
+	invoke with device(omp_initial_device)'.
+	* omp-low.cc (create_omp_child_function): Take host_only
+	argument to prevent generating offload code.
+	(scan_omp_parallel, scan_omp_task, scan_omp_target, scan_omp_teams,
+	lower_omp_target): Update call.
+	* omp-offload.cc (omp_discover_declare_target_tgt_fn_r,
+	omp_discover_declare_target_fn_r): Do not add implicit 'declare
+	target' to target regions with 'device_type(host)'.
+
+2026-07-15  Hu, Lin1  <lin1.hu@intel.com>
+
+	PR middle-end/126203
+	PR middle-end/126221
+	PR middle-end/126232
+	* optabs.cc (emit_cmp_and_jump_insns): Take the masked_op mode
+	from TREE_TYPE (masked_op).
+
 2026-07-14  Tobias Burnus  <tburnus@baylibre.com>
 
 	* gimplify.cc (gimplify_omp_workshare): Handle 'device_type(nohost)'

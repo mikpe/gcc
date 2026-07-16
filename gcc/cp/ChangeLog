@@ -1,3 +1,19 @@
+2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR c/122748
+	* parser.cc (cp_parser_omp_clause_uses_allocators): Mark
+	trait var as read to avoid 'unused but set' warning.
+
+2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* parser.cc (cp_parser_std_attribute): Add
+	canonicalize_attr_ns_name lambda and use it instead of
+	canonicalize_attr_name for namespaces.  Emit a warning
+	on __clang__::.
+	(cp_parser_std_attribute_spec): Emit a warning on
+	using __clang__:.
+
 2026-07-14  Jakub Jelinek  <jakub@redhat.com>
 
 	* decl.cc (grokfndecl): If raises is NULL_TREE for C++11
