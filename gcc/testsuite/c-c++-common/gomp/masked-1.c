@@ -26,5 +26,6 @@ foo (int x, int *a)
 }
 
 /* { dg-final { scan-tree-dump "GOMP_has_masked_thread_num" "omplower" } } */
+/* { dg-final { scan-tree-dump-not "GOMP_has_masked_thread_num_with_end" "omplower" } } */
 /* { dg-final { scan-tree-dump-not "GOMP_masked_end" "omplower" } } */
 /* { dg-final { scan-tree-dump-not "omp_get_thread_num" "omplower" } } */

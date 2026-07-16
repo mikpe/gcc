@@ -485,6 +485,7 @@ GOMP_6.0.1 {
 GOMP_6.0.2 {
   global:
 	GOMP_has_masked_thread_num;
+	GOMP_has_masked_thread_num_with_end;
 	GOMP_masked_end;
 	GOMP_loop_static_worksharing;
 	GOMP_loop_static_worksharing_start;

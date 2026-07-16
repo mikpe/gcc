@@ -280,6 +280,14 @@ GOMP_has_masked_thread_num (int tid)
   return tid == gomp_thread ()->ts.team_id;
 }
 
+/* OMPT variant enabled by -fopenmp-ompt.  */
+
+bool
+GOMP_has_masked_thread_num_with_end (int tid)
+{
+  return tid == gomp_thread ()->ts.team_id;
+}
+
 /* Stub for OMPT callback enabled by -fopenmp-ompt.  */
 
 void

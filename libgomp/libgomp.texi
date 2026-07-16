@@ -8070,7 +8070,9 @@ if (GOMP_has_masked_thread_num(thread_num))
 
 @code{GOMP_has_masked_thread_num} encapsulates the following check, so that OMPT
 can distinguish the compiler-generated code from user-level thread-number
-queries:
+queries; with @option{-fopenmp-ompt}, a paired call to
+@code{GOMP_has_masked_thread_num_with_end} and @code{GOMP_masked_end} is
+generated instead.
 
 @smallexample
 omp_get_thread_num() == @var{thread_num}

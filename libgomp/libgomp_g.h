@@ -307,6 +307,7 @@ extern unsigned GOMP_parallel_reductions (void (*) (void *), void *, unsigned,
 extern bool GOMP_cancel (int, bool);
 extern bool GOMP_cancellation_point (int);
 extern bool GOMP_has_masked_thread_num (int);
+extern bool GOMP_has_masked_thread_num_with_end (int);
 extern void GOMP_masked_end (void);
 
 /* task.c */
