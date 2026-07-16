@@ -73,9 +73,6 @@ along with GCC; see the file COPYING3.  If not see
 
    Target-specific code must provide the %(netbsd_entry_point) spec.  */
 
-#define NETBSD_LINK_LD_ELF_SO_SPEC \
-  "%{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}"
-
 #define NETBSD_LINK_SPEC_ELF \
   "%{assert*} %{R*} %{rpath*} \
    %{shared:-shared} \
@@ -92,7 +89,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Provide the standard list of subtarget extra specs for NetBSD targets.  */
 #define NETBSD_SUBTARGET_EXTRA_SPECS \
-  { "netbsd_link_ld_elf_so",    NETBSD_LINK_LD_ELF_SO_SPEC }, \
   { "netbsd_cpp_spec",          NETBSD_CPP_SPEC }, \
   { "netbsd_link_spec",         NETBSD_LINK_SPEC_ELF }, \
   { "netbsd_entry_point",       NETBSD_ENTRY_POINT }, \
