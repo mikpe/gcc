@@ -7028,8 +7028,6 @@ build_bitint_stmt_ssa_conflicts (gimple *stmt, live_track *live,
       case IFN_SUB_OVERFLOW:
       case IFN_UBSAN_CHECK_ADD:
       case IFN_UBSAN_CHECK_SUB:
-      case IFN_MUL_OVERFLOW:
-      case IFN_UBSAN_CHECK_MUL:
 	if (bitint_big_endian)
 	  {
 	    lhs = gimple_call_lhs (stmt);
@@ -7037,6 +7035,8 @@ build_bitint_stmt_ssa_conflicts (gimple *stmt, live_track *live,
 	      muldiv_p = true;
 	  }
 	break;
+      case IFN_MUL_OVERFLOW:
+      case IFN_UBSAN_CHECK_MUL:
       case IFN_BSWAP:
       case IFN_BITREVERSE:
 	lhs = gimple_call_lhs (stmt);
