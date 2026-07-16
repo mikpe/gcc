@@ -177,8 +177,24 @@ mh_identical(const cbl_refer_t &destref,
       &&  destref.field->codeset.encoding == sourceref.field->codeset.encoding
       )
     {
+    // These next tests were added because of the DEBUG- registers, which are
+    // global external, and most of which have a parent.  It turns out that
+    // get_location gets flummoxed by that, so we divert it here to the library
+    if(   sourceref.field->parent
+       && sourceref.field->data_decl_node
+       && DECL_EXTERNAL(sourceref.field->data_decl_node) )
+      {
+      return false;
+      }
+    if(   destref.field->parent
+       && destref.field->data_decl_node
+       && DECL_EXTERNAL(destref.field->data_decl_node) )
+      {
+      return false;
+      }
+
     // The source and destination are identical in type and the
-    // Source doesn't have a depending_on clause
+    // source doesn't have a depending_on clause
     SHOW_PARSE1
       {
       SHOW_PARSE_INDENT
@@ -1684,7 +1700,7 @@ mh_binary_to_packed(const cbl_refer_t &destref,
       }
 
     // We are now ready to convert the binary to the packed byte string.
-    
+
     int ndigits;
     if( !(destref.field->attr & packed_no_sign_e) )
       {

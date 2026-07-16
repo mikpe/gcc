@@ -2479,7 +2479,7 @@ symbol_table_init(void) {
       {5,5,4,0, NULL},     2, "DEBUG-SUB-3", cp1252 },
     { FldAlphanumeric, register_e | filler_e,
       {1,1,0,0, " "},      2, "FILLER", cp1252 },
-    { FldAlphanumeric, signable_e | register_e,
+    { FldAlphanumeric, register_e,
       {76,76,0,0, NULL},   2, "DEBUG-CONTENTS", cp1252 },
   };
 
