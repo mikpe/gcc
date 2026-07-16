@@ -3838,9 +3838,9 @@ invert_mod2n (unsigned HOST_WIDE_INT x, int n)
 {
   gcc_assert ((x & 1) == 1);
 
-  /* The algorithm notes that the choice Y = Z satisfies X*Y == 1 mod 2^3,
-     since X is odd.  Then each iteration doubles the number of bits of
-     significance in Y.  */
+  /* The algorithm notes that the choice Y = X satisfies X*Y == 1 mod 2^3,
+     since X is odd.  Then each Newton-Raphson iteration doubles the number
+     of bits of significance in Y (Hensel's lemma).  */
 
   const unsigned HOST_WIDE_INT mask
     = (n == HOST_BITS_PER_WIDE_INT
