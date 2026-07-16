@@ -379,6 +379,14 @@ users:
   - Maintainer: i386 port
   - WriteAfter
   account: uros
+- sn: Blackmore
+  cn: Craig Blackmore
+  email:
+  - craig.blackmore@embecosm.com
+  - cblackmore@gcc.gnu.org
+  roles:
+  - WriteAfter
+  account: cblackmore
 - sn: Blake
   cn: Eric Blake
   email:
