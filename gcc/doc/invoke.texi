@@ -24324,7 +24324,7 @@ startup code @code{crt@var{mcu}.o}, a device header @code{avr/io*.h},
 a device library @code{lib@var{mcu}.a} and a
 @uref{https://gcc.gnu.org/wiki/avr-gcc#spec-files,,device-specs} file
 @code{specs-@var{mcu}}. Only the latter is provided by the compiler
-according the supported @code{@var{mcu}}s below.  The rest is supported
+according to the supported @code{@var{mcu}}s below.  The rest is supported
 by @w{@uref{https://github.com/avrdudes/avr-libc/,,AVR-LibC}}, or by means of
 @uref{https://gcc.gnu.org/wiki/avr-gcc#atpack,,@code{atpack}} files
 from the hardware manufacturer.
