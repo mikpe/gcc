@@ -6,11 +6,6 @@
    default-device-var ICV - and it shall not create any device code for
    neither the target region nor the called functions.  */
 
-// NOTE: With offloading,
-//   UNRESOLVED:
-// is expected for the "optimized" tests as those dumps are only enabled
-// for the no-host side.
-
 
 // Due to 'device_type(nohost)', the outlined region shall not be marked
 // as 'target entrypoint' - nor should 'ggg' become implicitly
@@ -28,9 +23,9 @@
 
 // On the device side, expect only hhh:
 
-/* { dg-final { scan-tree-dump "hhh" "optimized" { target offload_device } } } */
-/* { dg-final { scan-tree-dump-not "ggg" "optimized" { target offload_device } } } */
-/* { dg-final { scan-tree-dump-not "_omp_fn" "optimized" { target offload_device } } } */
+/* { dg-final { scan-offload-tree-dump "hhh" "optimized" } } */
+/* { dg-final { scan-offload-tree-dump-not "ggg" "optimized" } } */
+/* { dg-final { scan-offload-tree-dump-not "_omp_fn" "optimized" } } */
 
 
 #include <omp.h>
