@@ -612,38 +612,32 @@ masking_vectors (conds_ctx& ctx, array_slice<basic_block> blocks,
     }
 }
 
-/* Emit LHS = RHS on edges.  This is just a short hand that automates the
-   building of the assign and immediately puts it on the edge, which becomes
-   noisy.  */
-tree
-emit_assign (edge e, tree lhs, tree rhs)
+/* Emit LHS = RHS onto SEQ.  This is just a short hand that automates the
+   building of the assign, which becomes noisy.  */
+static tree
+emit_assign (gimple_seq *seq, tree lhs, tree rhs)
 {
   gassign *w = gimple_build_assign (lhs, rhs);
-  gsi_insert_on_edge (e, w);
+  gimple_seq_add_stmt (seq, w);
   return lhs;
 }
 
-/* Emit lhs = RHS on edges.  The lhs is created.  */
-tree
-emit_assign (edge e, tree rhs)
+/* Emit lhs = RHS onto SEQ.  The lhs is created.  */
+static tree
+emit_assign (gimple_seq *seq, tree rhs)
 {
-  return emit_assign (e, make_ssa_name (gcov_type_node), rhs);
+  return emit_assign (seq, make_ssa_name (gcov_type_node), rhs);
 }
 
-/* Emit/fold OP1 <OP> [OP2] on edge E.
+/* Emit/fold OP1 <OP> [OP2] onto SEQ.
    Return folded constant or SSA name.  */
 static tree
-emit_bitwise_op (edge e, tree op1, tree_code op, tree op2 = NULL_TREE)
+emit_bitwise_op (gimple_seq *seq, tree op1, tree_code op,
+		 tree op2 = NULL_TREE)
 {
-  gimple_seq seq = NULL;
-  tree rhs = op2 == NULL_TREE
-    ? gimple_build (&seq, op, gcov_type_node, op1)
-    : gimple_build (&seq, op, gcov_type_node, op1, op2);
-
-  if (seq)
-    gsi_insert_seq_on_edge (e, seq);
-
-  return rhs;
+  return op2 == NULL_TREE
+    ? gimple_build (seq, op, gcov_type_node, op1)
+    : gimple_build (seq, op, gcov_type_node, op1, op2);
 }
 
 /* Visitor for make_top_index.  */
@@ -1108,15 +1102,16 @@ instrument_decisions (array_slice<basic_block> expr, size_t condno,
 	{
 	  counters next = prev;
 	  next.e = e;
+	  gimple_seq seq = NULL;
 
 	  if (bitmap_bit_p (core, e->src->index) && (e->flags & EDGE_CONDITION))
 	    {
 	      const int k = condition_index (e->flags);
-	      next[k] = emit_bitwise_op (e, prev[k], BIT_IOR_EXPR, rhs);
+	      next[k] = emit_bitwise_op (&seq, prev[k], BIT_IOR_EXPR, rhs);
 	      if (masks[2 * xi + k])
 		{
 		  tree m = build_int_cst (gcov_type_node, masks[2 * xi + k]);
-		  next[2] = emit_bitwise_op (e, prev[2], BIT_IOR_EXPR, m);
+		  next[2] = emit_bitwise_op (&seq, prev[2], BIT_IOR_EXPR, m);
 		}
 	      increment = true;
 	    }
@@ -1129,6 +1124,8 @@ instrument_decisions (array_slice<basic_block> expr, size_t condno,
 	      next[1] = poison;
 	      next[2] = poison;
 	    }
+	  if (seq)
+	    gsi_insert_seq_on_edge (e, seq);
 	  table.get_or_insert (e->dest).safe_push (next);
 	}
     }
@@ -1171,12 +1168,13 @@ instrument_decisions (array_slice<basic_block> expr, size_t condno,
 	  counters *prevp = find_counters (*cands, e);
 	  gcc_assert (prevp);
 	  counters prev = *prevp;
+	  gimple_seq seq = NULL;
 
 	  /* _true &= ~mask, _false &= ~mask  */
 	  counters next;
-	  next[2] = emit_bitwise_op (e, prev[2], BIT_NOT_EXPR);
-	  next[0] = emit_bitwise_op (e, prev[0], BIT_AND_EXPR, next[2]);
-	  next[1] = emit_bitwise_op (e, prev[1], BIT_AND_EXPR, next[2]);
+	  next[2] = emit_bitwise_op (&seq, prev[2], BIT_NOT_EXPR);
+	  next[0] = emit_bitwise_op (&seq, prev[0], BIT_AND_EXPR, next[2]);
+	  next[1] = emit_bitwise_op (&seq, prev[1], BIT_AND_EXPR, next[2]);
 
 	  /* _global_true |= _true, _global_false |= _false  */
 	  for (size_t k = 0; k != 2; ++k)
@@ -1191,15 +1189,17 @@ instrument_decisions (array_slice<basic_block> expr, size_t condno,
 		  gcall *flush = gimple_build_call (atomic_ior, 3,
 						    build_addr (ref),
 						    next[k], relaxed);
-		  gsi_insert_on_edge (e, flush);
+		  gimple_seq_add_stmt (&seq, flush);
 		}
 	      else
 		{
-		  tree get = emit_assign (e, ref);
-		  tree put = emit_bitwise_op (e, next[k], BIT_IOR_EXPR, get);
-		  emit_assign (e, unshare_expr (ref), put);
+		  tree get = emit_assign (&seq, ref);
+		  tree put = emit_bitwise_op (&seq, next[k], BIT_IOR_EXPR, get);
+		  emit_assign (&seq, unshare_expr (ref), put);
 		}
 	    }
+	  if (seq)
+	    gsi_insert_seq_on_edge (e, seq);
 	}
     }
 
