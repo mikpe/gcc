@@ -8103,14 +8103,16 @@ riscv_va_start (tree valist, rtx nextarg)
   std_expand_builtin_va_start (valist, nextarg);
 }
 
-/* Make ADDR suitable for use as a call or sibcall target.  */
+/* Make ADDR a valid call target.  */
 
 rtx
-riscv_legitimize_call_address (rtx addr)
+riscv_legitimize_call_address (rtx addr, bool sibcall_p)
 {
   if (!call_insn_operand (addr, VOIDmode))
     {
-      rtx reg = RISCV_CALL_ADDRESS_TEMP (Pmode);
+      rtx reg = sibcall_p
+		? gen_reg_rtx (Pmode)
+		: RISCV_CALL_ADDRESS_TEMP (Pmode);
       riscv_emit_move (reg, addr);
 
       if (is_zicfilp_p ())

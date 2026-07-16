@@ -4153,7 +4153,7 @@
 	      (use (match_operand 2 ""))])]
   ""
 {
-  rtx target = riscv_legitimize_call_address (XEXP (operands[0], 0));
+  rtx target = riscv_legitimize_call_address (XEXP (operands[0], 0), true);
   emit_call_insn (gen_sibcall_internal (target, operands[1]));
   DONE;
 })
@@ -4175,7 +4175,7 @@
 	      (use (match_operand 3 ""))])]
   ""
 {
-  rtx target = riscv_legitimize_call_address (XEXP (operands[1], 0));
+  rtx target = riscv_legitimize_call_address (XEXP (operands[1], 0), true);
   emit_call_insn (gen_sibcall_value_internal (operands[0], target,
 					      operands[2]));
   DONE;
@@ -4199,7 +4199,7 @@
   ""
 {
   rtx addr = XEXP (operands[0], 0);
-  rtx target = riscv_legitimize_call_address (addr);
+  rtx target = riscv_legitimize_call_address (addr, false);
   if (riscv_call_needs_lpad_p (addr))
     emit_call_insn (gen_call_internal_cfi (target, operands[1]));
   else
@@ -4257,7 +4257,7 @@
   ""
 {
   rtx addr = XEXP (operands[1], 0);
-  rtx target = riscv_legitimize_call_address (addr);
+  rtx target = riscv_legitimize_call_address (addr, false);
   if (riscv_call_needs_lpad_p (addr))
     emit_call_insn (gen_call_value_internal_cfi (operands[0], target,
 						 operands[2]));
