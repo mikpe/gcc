@@ -3282,6 +3282,7 @@ copy_firstprivate_data (char *tgt, size_t mapnum, void **hostaddrs,
 							   tgt + tgt_size,
 							   hostaddrs[i]);
 	hostaddrs[i] = (void *) allocator;
+	tgt_size += gomp_omp_allocator_data_size;
       }
 }
 

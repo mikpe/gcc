@@ -9,13 +9,27 @@ program main
   integer(omp_allocator_handle_kind) :: my_alloc, my, my2, my3, my4
   type(omp_alloctrait), parameter :: trait(*) = [omp_alloctrait(omp_atk_alignment, 128)]
   type(omp_alloctrait), parameter :: t(*) = [omp_alloctrait:: ]
-  type(omp_alloctrait), parameter :: t2(*) = [omp_alloctrait:: ]
+  type(omp_alloctrait), parameter :: t2(*) = [omp_alloctrait:: omp_alloctrait(omp_atk_alignment, 1024)]
 
-  ! FIXME - improve check that that ';' is handled
+  my = -1; my2 = -2; my3 = -3; my4 = -4
   !$omp target uses_allocators(traits(t), memspace(omp_high_bw_mem_space) : my; omp_default_mem_alloc, omp_null_allocator; my2; traits(t2) : my3; memspace(omp_large_cap_mem_space) : my4)
   block
+    integer, pointer :: ip3(:)
+    type(c_ptr) :: c1, c2, c3, c4
+    c1 = omp_alloc (c_sizeof(x) * 1, my)
+    c2 = omp_alloc (c_sizeof(x) * 2, my2)
+    c3 = omp_alloc (c_sizeof(x) * 3, my3)
+    c4 = omp_alloc (c_sizeof(x) * 4, my4)
+    call c_f_pointer(c3, ip3, shape=[3])
+    if (mod (TRANSFER (loc(ip3), iptr), 1024) /= 0) &
+        stop 1
+    call omp_free (c1, omp_null_allocator)
+    call omp_free (c2, omp_null_allocator)
+    call omp_free (c3, omp_null_allocator)
+    call omp_free (c4, omp_null_allocator)
   end block
 
+  x = 1; xbuf = 0
   !$omp target uses_allocators(omp_low_lat_mem_alloc) map(tofrom: x, xbuf) defaultmap(none)
     !$omp parallel allocate(allocator(omp_low_lat_mem_alloc), align(128): x, xbuf) if(.false.) firstprivate(x, xbuf)
       if (mod (TRANSFER (loc(x), iptr), 128) /= 0) &
@@ -55,4 +69,6 @@ end
 
 ! { dg-final { scan-tree-dump-times "#pragma omp target .*uses_allocators\\(memspace\\(\\), traits\\(trait\\) : my_alloc\\)" 1 "gimple" } }
 ! { dg-final { scan-tree-dump-times "#pragma omp target .*uses_allocators\\(memspace\\(\\), traits\\(\\) : my_alloc\\)" 1 "gimple" } }
-! { dg-final { scan-tree-dump-times "#pragma omp target .*uses_allocators\\(memspace\\(1\\), traits\\(\\) : my4\\) uses_allocators\\(memspace\\(\\), traits\\(t2\\) : my3\\) uses_allocators\\(memspace\\(\\), traits\\(\\) : my2\\) uses_allocators\\(memspace\\(3\\), traits\\(t\\) : my\\)" 1 "original" { xfail *-*-* }  } }
+
+! { dg-final { scan-tree-dump-times "#pragma omp target uses_allocators\\(memspace\\(3\\), traits\\(t\\) : my\\) uses_allocators\\(memspace\\(\\), traits\\(\\) : 0B\\) uses_allocators\\(memspace\\(\\), traits\\(\\) : my2\\) uses_allocators\\(memspace\\(\\), traits\\(t2\\) : my3\\) uses_allocators\\(memspace\\(1\\), traits\\(\\) : my4\\)" 1 "original" } }
+! { dg-final { scan-tree-dump-times "#pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(3\\), traits\\(t\\) : my\\) uses_allocators\\(memspace\\(\\), traits\\(\\) : my2\\) uses_allocators\\(memspace\\(\\), traits\\(t2\\) : my3\\) uses_allocators\\(memspace\\(1\\), traits\\(\\) : my4\\)" 1 "gimple" } }

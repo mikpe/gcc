@@ -10,7 +10,7 @@ integer(omp_allocator_handle_kind) :: var
 !$omp target uses_allocators(memspace(omp_default_mem_space), traits(mem2) : var) defaultmap(none)
 block;
 type(c_ptr) ::c
-c = omp_alloc(omp_default_mem_space, 20_8)
+c = omp_alloc(omp_default_mem_space, 20_c_size_t)
 end block
 !$omp target uses_allocators(omp_default_mem_alloc, var(mem2))  ! { dg-warning "The specification of arguments to 'uses_allocators' at \\(1\\) where each item is of the form 'allocator\\(traits\\)' is deprecated since OpenMP 5.2; instead use 'uses_allocators\\(traits\\(mem2\\): var\\)' \\\[-Wdeprecated-openmp\\\]" }
 block; end block

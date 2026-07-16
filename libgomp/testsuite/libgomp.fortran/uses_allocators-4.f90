@@ -48,12 +48,12 @@ end program main
 ! { dg-final { scan-tree-dump "pragma omp target" "original" } }
 ! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : bar\\) uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : foo\\)" "original" } }
 ! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : bar\\)" "original" } }
-! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(omp_low_lat_mem_space\\), traits\\(\\) : bar\\)" "original" } }
-! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(omp_high_bw_mem_space\\), traits\\(traits_array\\) : bar\\)" "original" } }
+! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(4\\), traits\\(\\) : bar\\)" "original" } }
+! { dg-final { scan-tree-dump "pragma omp target uses_allocators\\(memspace\\(3\\), traits\\(traits_array\\) : bar\\)" "original" } }
 
 ! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) allocate\\(allocator\\(bar\\):arr\\) uses_allocators\\(memspace\\(\\), traits\\(\\) : bar\\)" "gimple" } }
 ! { dg-final { scan-tree-dump "pragma omp target" "gimple" } }
 ! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : bar\\) uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : foo\\)" "gimple" } }
 ! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(\\), traits\\(traits_array\\) : bar\\)" "gimple" } }
-! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(omp_low_lat_mem_space\\), traits\\(\\) : bar\\)" "gimple" } }
-! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(omp_high_bw_mem_space\\), traits\\(traits_array\\) : bar\\)" "gimple" } }
+! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(4\\), traits\\(\\) : bar\\)" "gimple" } }
+! { dg-final { scan-tree-dump "pragma omp target num_teams\\(-2\\) thread_limit\\(0\\) uses_allocators\\(memspace\\(3\\), traits\\(traits_array\\) : bar\\)" "gimple" } }

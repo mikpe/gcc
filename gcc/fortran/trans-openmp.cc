@@ -5494,9 +5494,13 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 	      OMP_CLAUSE_USES_ALLOCATORS_ALLOCATOR(node) = t;
 	      if (n->u.memspace_sym)
 		{
+		  gcc_checking_assert (n->u.memspace_sym->attr.flavor
+				       == FL_PARAMETER
+				       && !n->u.memspace_sym->attr.dimension);
 		  n->u.memspace_sym->attr.referenced = true;
-		  OMP_CLAUSE_USES_ALLOCATORS_MEMSPACE (node)
-		    = gfc_get_symbol_decl (n->u.memspace_sym);
+		  gfc_init_se (&se, NULL);
+		  gfc_conv_expr (&se, n->u.memspace_sym->value);
+		  OMP_CLAUSE_USES_ALLOCATORS_MEMSPACE (node) = se.expr;
 		}
 	      if (n->u2.traits_sym)
 		{

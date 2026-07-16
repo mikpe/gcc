@@ -14051,21 +14051,9 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 		ntraits = integer_zero_node;
 		traits_var = null_pointer_node;
 	      }
-	    else if (DECL_INITIAL (traits))
-	      {
-		location_t loc = OMP_CLAUSE_LOCATION (c);
-		ntraits = array_type_nelts_top (TREE_TYPE (traits));
-		tree t = DECL_INITIAL (traits);
-		t = get_initialized_tmp_var (t, &ilist, NULL);
-		traits_var = build_fold_addr_expr_loc (loc, t);
-	      }
 	    else
 	      {
-		/* This happens for VLAs, which probably aren't useful
-		   because they can't be const initialized in the same
-		   scope....  is there something else?  */
 		location_t loc = OMP_CLAUSE_LOCATION (c);
-		gcc_assert (TREE_CODE (TREE_TYPE (traits)) == ARRAY_TYPE);
 		ntraits = array_type_nelts_top (TREE_TYPE (traits));
 		traits_var = build_fold_addr_expr_loc (loc, traits);
 	      }
