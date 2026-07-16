@@ -3420,22 +3420,31 @@ operator_logical_and::fold_range (irange &r, tree type,
 bool
 operator_logical_and::op1_range (irange &r, tree type,
 				 const irange &lhs,
-				 const irange &op2 ATTRIBUTE_UNUSED,
+				 const irange &op2,
 				 relation_trio) const
 {
-   switch (get_bool_state (r, lhs, type))
-     {
-     case BRS_TRUE:
-       // A true result means both sides of the AND must be true.
-       r = range_true (type);
-       break;
-     default:
-       // Any other result means only one side has to be false, the
-       // other side can be anything.  So we cannot be sure of any
-       // result here.
-       r = range_true_and_false (type);
-       break;
-     }
+  switch (get_bool_state (r, lhs, type))
+    {
+    case BRS_TRUE:
+      // A TRUE result means both sides of the AND must be true.
+      r = range_true (type);
+      return true;
+
+    case BRS_FALSE:
+      // A FALSE result when op2 is TRUE, must have op1 FALSE.
+      if (!op2.contains_p (wi::zero (TYPE_PRECISION (op2.type ()))))
+	{
+	  r = range_false (type);
+	  return true;
+	}
+      break;
+
+    default:
+      break;
+    }
+
+  // Any other result means we cannot be sure of any result.
+  r = range_true_and_false (type);
   return true;
 }
 
@@ -3950,22 +3959,31 @@ operator_logical_or::fold_range (irange &r, tree type ATTRIBUTE_UNUSED,
 bool
 operator_logical_or::op1_range (irange &r, tree type,
 				const irange &lhs,
-				const irange &op2 ATTRIBUTE_UNUSED,
+				const irange &op2,
 				relation_trio) const
 {
-   switch (get_bool_state (r, lhs, type))
-     {
-     case BRS_FALSE:
-       // A false result means both sides of the OR must be false.
-       r = range_false (type);
-       break;
-     default:
-       // Any other result means only one side has to be true, the
-       // other side can be anything. so we can't be sure of any result
-       // here.
-       r = range_true_and_false (type);
-       break;
+  switch (get_bool_state (r, lhs, type))
+    {
+    case BRS_FALSE:
+      // A false result means both sides of the OR must be false.
+      r = range_false (type);
+      return true;
+
+    case BRS_TRUE:
+      // A TRUE result when op2 is FALSE must have op1 TRUE.
+      if (op2.zero_p ())
+	{
+	  r = range_true (type);
+	  return true;
+	}
+      break;
+
+    default:
+      break;
     }
+
+  // Any other result means we cannot be sure of any result.
+  r = range_true_and_false (type);
   return true;
 }
 
