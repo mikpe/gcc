@@ -43,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-nested.h"
 #include "gimplify.h"
 #include "gimple-iterator.h"
+#include "gimple-fold.h"
 #include "gimplify-me.h"
 #include "tree-cfg.h"
 #include "tree-into-ssa.h"
@@ -629,14 +630,20 @@ emit_assign (edge e, tree rhs)
   return emit_assign (e, make_ssa_name (gcov_type_node), rhs);
 }
 
-/* Emit LHS = OP1 <OP> OP2 on edges.  */
-tree
+/* Emit/fold OP1 <OP> [OP2] on edge E.
+   Return folded constant or SSA name.  */
+static tree
 emit_bitwise_op (edge e, tree op1, tree_code op, tree op2 = NULL_TREE)
 {
-  tree lhs = make_ssa_name (gcov_type_node);
-  gassign *w = gimple_build_assign (lhs, op, op1, op2);
-  gsi_insert_on_edge (e, w);
-  return lhs;
+  gimple_seq seq = NULL;
+  tree rhs = op2 == NULL_TREE
+    ? gimple_build (&seq, op, gcov_type_node, op1)
+    : gimple_build (&seq, op, gcov_type_node, op1, op2);
+
+  if (seq)
+    gsi_insert_seq_on_edge (e, seq);
+
+  return rhs;
 }
 
 /* Visitor for make_top_index.  */
@@ -1174,6 +1181,8 @@ instrument_decisions (array_slice<basic_block> expr, size_t condno,
 	  /* _global_true |= _true, _global_false |= _false  */
 	  for (size_t k = 0; k != 2; ++k)
 	    {
+	      if (integer_zerop (next[k]))
+		continue;
 	      tree ref = tree_coverage_counter_ref (GCOV_COUNTER_CONDS,
 						    2 * condno + k);
 	      if (atomic)
