@@ -1880,13 +1880,13 @@ USE({SPC}FOR)?		{ return USE; }
 				    yylval.string = xstrdup(yytext);
 				    return NAME; }
 
-  (IS{SPC})?POSITIVE/[[:space:]]  { yylval.number =  IS; return POSITIVE; }
-  (IS{SPC})?NEGATIVE/[[:space:]]  { yylval.number =  IS; return NEGATIVE; }
-  (IS{SPC})?ZERO/[[:space:]]      { yylval.number =  IS; return ZERO; }
+  (IS{SPC})?POSITIVE/[)[:space:]]  { yylval.number =  IS; return POSITIVE; }
+  (IS{SPC})?NEGATIVE/[)[:space:]]  { yylval.number =  IS; return NEGATIVE; }
+  (IS{SPC})?ZERO/[)[:space:]]      { yylval.number =  IS; return ZERO; }
 
-  {ISNT}{SPC}POSITIVE/[[:space:]] { yylval.number = NOT; return POSITIVE; }
-  {ISNT}{SPC}NEGATIVE/[[:space:]] { yylval.number = NOT; return NEGATIVE; }
-  {ISNT}{SPC}ZERO/[[:space:]]     { yylval.number = NOT; return ZERO; }
+  {ISNT}{SPC}POSITIVE/[)[:space:]] { yylval.number = NOT; return POSITIVE; }
+  {ISNT}{SPC}NEGATIVE/[)[:space:]] { yylval.number = NOT; return NEGATIVE; }
+  {ISNT}{SPC}ZERO/[)[:space:]]     { yylval.number = NOT; return ZERO; }
 
   {ISNT}{SPC}/OMITTED { return NOT; }
 

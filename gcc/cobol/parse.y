@@ -6749,7 +6749,7 @@ simple_cond:    kind_of_name
                   $$ = new_reference(new_temporary(FldConditional));
                   ast_relop(@$, $$->field, lhs, ne_op, rhs);
                 }
-        |       expr posneg[op] {
+        |       expr /* IS */ posneg[op] {
                   $$ = new_reference(new_temporary(FldConditional));
                   relop_t op = static_cast<relop_t>($op);
                   cbl_field_t *zero = constant_of(constant_index(ZERO));
@@ -9121,6 +9121,18 @@ file_record:    NAME
                 {
                   $$ = cbl_field_of(symbol_at($filename->default_record));
                 }
+        |       device_name[dev]
+                {
+                  auto dev = symbol_special($dev.id);
+                  error_msg(@dev, "invalid device %qs: FD name required", dev->name);
+                  YYERROR;
+                  auto e = symbol_file(PROGRAM, dev->name);
+                  if( ! e ) {
+                    error_msg(@dev, "no FD selected for device %qs", dev->name);
+                    YYERROR;
+                  } 
+                  $$ = cbl_field_of(symbol_at(cbl_file_of(e)->default_record)); 
+                }
                 ;
 advance_when:   BEFORE { $$ = BEFORE; }
         |       AFTER  { $$ = AFTER; }
@@ -10106,6 +10118,18 @@ filename:       NAME
                     error_msg(@NAME, "invalid file name");
                     YYERROR;
                   }
+                  $$ = cbl_file_of(e);
+                }
+        |       device_name[dev]
+                {
+                  auto dev = symbol_special($dev.id);
+                  error_msg(@dev, "invalid device %qs: FD name required", dev->name);
+                  YYERROR;
+                  auto e = symbol_file(PROGRAM, dev->name);
+                  if( ! e ) {
+                    error_msg(@dev, "no FD selected for device '%s'", dev->name);
+                    YYERROR;
+                  } 
                   $$ = cbl_file_of(e);
                 }
                 ;
