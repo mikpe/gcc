@@ -5201,6 +5201,12 @@ riscv_noce_conversion_profitable_p (rtx_insn *seq,
 	      riscv_if_info.original_cost += COSTS_N_INSNS (1);
 	      riscv_if_info.max_seq_cost += COSTS_N_INSNS (1);
 	    }
+	  else if (REG_P (src) && REG_P (dest))
+	    {
+	      /* Trivial copies likely just get propagated away.  */
+	      riscv_if_info.original_cost += COSTS_N_INSNS (1);
+	      riscv_if_info.max_seq_cost += COSTS_N_INSNS (1);
+	    }
 	  else
 	    last_dest = NULL_RTX;
 
