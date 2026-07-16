@@ -791,7 +791,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// Primary class template, tuple
   template<typename... _Elements>
-    class tuple : public _Tuple_impl<0, _Elements...>
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3990. Program-defined specializations of std::tuple and std::variant
+    // can't be properly supported
+    class _GLIBCXX_NO_SPECIALIZATIONS tuple
+    : public _Tuple_impl<0, _Elements...>
     {
       using _Inherited = _Tuple_impl<0, _Elements...>;
 
@@ -1942,6 +1946,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     tuple(allocator_arg_t, _Alloc, tuple<_UTypes...>) -> tuple<_UTypes...>;
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-specialization"
   // Explicit specialization, zero-element tuple.
   template<>
     class tuple<>
@@ -2416,6 +2422,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { _Inherited::_M_swap(__in); }
     };
 #endif // concepts && conditional_explicit
+#pragma GCC diagnostic pop
 
   /// class tuple_size
   template<typename... _Elements>

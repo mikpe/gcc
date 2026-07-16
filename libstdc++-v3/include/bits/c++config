@@ -927,6 +927,12 @@ namespace __gnu_cxx
 # define _GLIBCXX_USE_BUILTIN_TRAIT(BT) 0
 #endif
 
+#if __has_cpp_attribute(_Clang::__no_specializations__)
+# define _GLIBCXX_NO_SPECIALIZATIONS [[_Clang::__no_specializations__]]
+#else
+# define _GLIBCXX_NO_SPECIALIZATIONS
+#endif
+
 // Whether deducing this is usable either officially, if in C++23 mode, or
 // as an extension (Clang doesn't support the latter).
 #if __cpp_explicit_this_parameter \

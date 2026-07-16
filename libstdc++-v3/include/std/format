@@ -286,7 +286,9 @@ namespace __format
 #endif
 
   template<typename _CharT>
-    class basic_format_parse_context
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3975. Specializations of basic_format_context should not be permitted
+    class _GLIBCXX_NO_SPECIALIZATIONS basic_format_parse_context
     {
     public:
       using char_type = _CharT;
@@ -5014,7 +5016,9 @@ namespace __format
    * @since C++20
    */
   template<typename _Out, typename _CharT>
-    class basic_format_context
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3975. Specializations of basic_format_context should not be permitted
+    class _GLIBCXX_NO_SPECIALIZATIONS basic_format_context
     {
       static_assert( output_iterator<_Out, const _CharT&> );
 

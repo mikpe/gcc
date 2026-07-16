@@ -1267,7 +1267,9 @@ namespace std _GLIBCXX_VISIBILITY(default)
   /// @since C++26
 
   template<typename _Tp, typename _Up>
-    struct type_order
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 4305. Missing user requirements on type_order template
+    struct _GLIBCXX_NO_SPECIALIZATIONS type_order
     {
       static constexpr strong_ordering value = __builtin_type_order(_Tp, _Up);
       using value_type = strong_ordering;

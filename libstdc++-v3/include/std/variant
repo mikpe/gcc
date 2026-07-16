@@ -1450,7 +1450,10 @@ namespace __detail::__variant
   };
 
   template<typename... _Types>
-    class variant
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3990. Program-defined specializations of std::tuple and std::variant
+    // can't be properly supported
+    class _GLIBCXX_NO_SPECIALIZATIONS variant
     : private __detail::__variant::_Variant_base<_Types...>,
       private _Enable_copy_move<
 	__detail::__variant::_Traits<_Types...>::_S_copy_ctor,

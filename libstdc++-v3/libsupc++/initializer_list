@@ -47,7 +47,9 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
   /// initializer_list
   template<class _E>
-    class initializer_list
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 2129. User specializations of std::initializer_list
+    class _GLIBCXX_NO_SPECIALIZATIONS initializer_list
     {
     public:
       typedef _E 		value_type;
