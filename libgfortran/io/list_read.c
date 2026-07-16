@@ -1539,6 +1539,17 @@ parse_real (st_parameter_dt *dtp, void *buffer, int length)
 
   seen_dp = (c == '.') ? 1 : 0;
 
+  if (c == '0')
+    {
+      int c2 = next_char (dtp);
+      if (c2 == 'x' || c2 == 'X')
+	{
+	  push_char (dtp, c2);
+	  goto hex_real;
+	}
+      unget_char (dtp, c2);
+    }
+
   for (;;)
     {
       if ((c = next_char (dtp)) == EOF)
@@ -1641,6 +1652,30 @@ parse_real (st_parameter_dt *dtp, void *buffer, int length)
 
 	default:
 	  goto done;
+	}
+    }
+
+  /* Hexadecimal format so collect the remaining characters.
+     The convert_real will validate it.  */
+ hex_real:
+  for (;;)
+    {
+      if ((c = next_char (dtp)) == EOF)
+	goto bad;
+      switch (c)
+	{
+	case '!':
+	  if (!dtp->u.p.namelist_mode)
+	    goto bad;
+	  /* Fall through.  */
+
+	CASE_SEPARATORS:
+	case ')':
+	  goto done;
+
+	default:
+	  push_char (dtp, c);
+	  break;
 	}
     }
 
@@ -1878,6 +1913,17 @@ next:
   switch (c)
     {
     CASE_DIGITS:
+      if (c == '0')
+	{
+	  int c2 = next_char (dtp);
+	  if (c2 == 'x' || c2 == 'X')
+	    {
+	      push_char (dtp, c);
+	      push_char (dtp, c2);
+	      goto hex_real;
+	    }
+	  unget_char (dtp, c2);
+	}
       push_char (dtp, c);
       break;
 
@@ -2018,6 +2064,17 @@ next:
 
   push_char (dtp, c);
 
+  if (c == '0')
+    {
+      int c2 = next_char (dtp);
+      if (c2 == 'x' || c2 == 'X')
+	{
+	  push_char (dtp, c2);
+	  goto hex_real;
+	}
+      unget_char (dtp, c2);
+    }
+
  real_loop:
   for (;;)
     {
@@ -2114,6 +2171,34 @@ next:
 
 	default:
 	  goto bad_real;
+	}
+    }
+
+  /* Hexadecimal-significand form: [sign] 0X hex-significand P
+     decimal-exp (F2023 13.7.2.3.2 para 7), also accepted on list-directed
+     input per the same rules as Fw.d editing.  The '0X'/'0x' prefix has
+     already been pushed; collect the remaining characters (hex digits,
+     radix point, P/p exponent letter, exponent sign) verbatim up to the
+     next separator and let convert_real/strtod validate and parse the
+     whole thing, just as read_ex does for formatted EX input.  */
+ hex_real:
+  for (;;)
+    {
+      c = next_char (dtp);
+      switch (c)
+	{
+	case '!':
+	  if (!dtp->u.p.namelist_mode)
+	    goto bad_real;
+	  /* Fall through.  */
+
+	CASE_SEPARATORS:
+	case EOF:
+	  goto done;
+
+	default:
+	  push_char (dtp, c);
+	  break;
 	}
     }
 
