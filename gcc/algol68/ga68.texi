@@ -3240,7 +3240,7 @@ Create a file with name @code{pathname}.  The argument @code{mode} is
 a @code{@B{bits}} value containing a bit pattern that determines the
 permissions on the created file.  The bit pattern has the form
 @code{8rUGO}, where @code{U} reflects the permissions of the user who
-owns the file, @code{U} reflects the permissions of the users
+owns the file, @code{G} reflects the permissions of the users
 pertaining to the file's group, and @code{O} reflects the permissions
 of all other users.  The permission bits are 1 for execute, 2 for
 write and 4 for read.  If the file is successfully created then this
