@@ -251,7 +251,7 @@ protected:
   relation_chain *set_one_relation (basic_block bb, relation_kind k, tree op1,
 				    tree op2);
   void register_transitives (basic_block, const class value_relation &);
-
+  relation_kind recomputed_relation (basic_block, edge, tree, tree) const;
 };
 
 // A path_oracle implements relations in a list.  The only sense of ordering

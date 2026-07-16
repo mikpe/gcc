@@ -1227,7 +1227,8 @@ dom_oracle::set_one_relation (basic_block bb, relation_kind k, tree op1,
       // Check for an existing relation further up the DOM chain.
       // By including dominating relations, The first one found in any search
       // will be the aggregate of all the previous ones.
-      curr = find_relation_dom (bb, v1, v2);
+      curr = find_relation_dom (get_immediate_dominator (CDI_DOMINATORS, bb),
+				v1, v2);
       if (curr != VREL_VARYING)
 	k = relation_intersect (curr, k);
 
@@ -1437,25 +1438,162 @@ dom_oracle::find_relation_block (int bb, unsigned v1, unsigned v2,
   return VREL_VARYING;
 }
 
+// See if a relation can be found between SSA1 and SSA2 in basic block BB based
+// on values as they exist in basic block ORIG.   This will only occur
+// if SSA1 and SSA2 occur in the same statement together.
+
+relation_kind
+dom_oracle::recomputed_relation (basic_block orig_bb, edge e, tree ssa1,
+				 tree ssa2) const
+{
+  if (ssa1 == ssa2)
+    return VREL_EQ;
+  gori_map *gori_ssa = get_range_query (cfun)->gori_ssa ();
+  if (!gori_ssa)
+    return VREL_VARYING;
+
+  // If SSA1 and SSA2 are not BOTH exported from the block, theres no relation.
+  basic_block bb = e->src;
+  if (!gori_ssa->is_export_p (ssa1, bb) || !gori_ssa->is_export_p (ssa2, bb))
+    return VREL_VARYING;
+
+  // Verify the edge is a range generating edge.
+  gimple_outgoing_range &gori = get_range_query (cfun)->gori ();
+  int_range_max edge_range;
+  gimple *stmt = gori.edge_range_p (edge_range, e);
+  if (!stmt)
+    return VREL_VARYING;
+
+  // Scan back thru the dependency chain recalculating values as if they are
+  // in ORIG_BB, and see if we can find a statement with both op1 and op2
+  // which generates a relation.
+
+  value_range lhs_range (edge_range);
+
+  while (stmt)
+    {
+      bool ret;
+      gimple_range_op_handler handler (stmt);
+      if (!handler)
+	return VREL_VARYING;
+
+      tree op1 = handler.operand1 ();
+      tree op2 = handler.operand2 ();
+      value_range op1_range (TREE_TYPE (op1));
+      value_range op2_range;
+
+      // Check if this is the statment we are looking for!
+      bool match = (op1 == ssa1 && op2 == ssa2);
+      bool match_rev = (op2 == ssa1 && op1 == ssa2);
+      if (match || match_rev)
+	{
+	  gcc_checking_assert (op2);
+	  op2_range.set_range_class (TREE_TYPE (op2));
+	  // Pick up the ranges at ORIG_BB, and see if a relation is generated.
+	  get_range_query (cfun)->range_on_entry (op1_range, orig_bb, op1);
+	  get_range_query (cfun)->range_on_entry (op2_range, orig_bb, op2);
+	  relation_kind relation = handler.op1_op2_relation (lhs_range,
+							      op1_range,
+							      op2_range);
+	  // If the operands are reversed, swap the relation.
+	  if (match_rev)
+	    relation = relation_swap (relation);
+	  return relation;
+	}
+
+      // Now determine if one of the operands has both SSA1 and SSA2 in
+      // the dependency chain.  Thats the path we want to follow.
+      bool op1_dep = gimple_range_ssa_p (op1)
+		     && gori_ssa->in_chain_p (ssa1, op1)
+		     && gori_ssa->in_chain_p (ssa2, op1);
+      bool op2_dep = gimple_range_ssa_p (op2)
+		     && gori_ssa->in_chain_p (ssa1, op2)
+		     && gori_ssa->in_chain_p (ssa2, op2);
+      // If there are no dependencies with both names, or both sides have
+      // both names, simply bail.
+      if (op1_dep == op2_dep)
+	return VREL_VARYING;
+
+      if (op1_dep)
+	{
+	  // If operand 1 is the chain we are interested in, calcualte its
+	  // range based on LHS_RANGE.
+	  if (!op2)
+	    ret = handler.calc_op1 (op1_range, lhs_range);
+	  else
+	    {
+	      // Pick up the range of op2 as it occurs in the original block.
+	      // and calculate a range for op1.
+	      op2_range.set_range_class (TREE_TYPE (op2));
+	      get_range_query (cfun)->range_on_entry (op2_range, orig_bb, op2);
+	      ret = handler.calc_op1 (op1_range, lhs_range, op2_range);
+	    }
+	  // If we failed to calculate a range for op1, bail.
+	  if (!ret)
+	    return VREL_VARYING;
+
+	  // op1_range will now become the LHS_RANGE for the def statement.
+	  lhs_range = op1_range;
+	  stmt = SSA_NAME_DEF_STMT (op1);
+	}
+      else if (op2_dep)
+	{
+	  // Pick up the range of op1 as it occurs in the original block.
+	  // and calcalute a range for op2.
+	  op2_range.set_range_class (TREE_TYPE (op2));
+	  get_range_query (cfun)->range_on_entry (op1_range, orig_bb, op1);
+	  ret = handler.calc_op2 (op2_range, lhs_range, op1_range);
+	  // If we failed to calculate a range for op1, bail.
+	  if (!ret)
+	    return VREL_VARYING;
+
+	  // op2_range will now become the LHS_RANGE for the def statement.
+	  lhs_range = op2_range;
+	  stmt = SSA_NAME_DEF_STMT (op2);
+	}
+      else
+	gcc_unreachable ();
+
+      // Bail if this ssa-name is defined outside this block.
+      if (!stmt || gimple_bb (stmt) != e->src)
+	return VREL_VARYING;
+    }
+  return VREL_VARYING;
+}
+
 // Find a relation between SSA version V1 and V2 in the dominator tree
 // starting with block BB
 
 relation_kind
-dom_oracle::find_relation_dom (basic_block bb, unsigned v1, unsigned v2) const
+dom_oracle::find_relation_dom (basic_block start_bb, unsigned v1, unsigned v2) const
 {
   relation_kind r;
   // IF either name does not occur in a relation anywhere, there isn't one.
   if (!bitmap_bit_p (m_relation_set, v1) || !bitmap_bit_p (m_relation_set, v2))
     return VREL_VARYING;
-
-  for ( ; bb; bb = get_immediate_dominator (CDI_DOMINATORS, bb))
+  edge outgoing_edge = NULL;
+  tree ssa1 = ssa_name (v1);
+  tree ssa2 = ssa_name (v2);
+  for (basic_block bb = start_bb;
+       bb;
+       bb = get_immediate_dominator (CDI_DOMINATORS, bb))
     {
       r = find_relation_block (bb->index, v1, v2);
+      // Now check if recomputed values on the outgoing edge might create
+      // a relation.
+      if (r == VREL_VARYING && outgoing_edge)
+	{
+	  gcc_checking_assert (outgoing_edge->src == bb);
+	  r = recomputed_relation (start_bb, outgoing_edge, ssa1, ssa2);
+	}
       if (r != VREL_VARYING)
 	return r;
+
+      // If the dominator is not the only predecessor to this block, there is
+      // unlikely to be a viable relation available.
+      outgoing_edge = single_pred_p (bb) ? single_pred_edge (bb) : NULL;
     }
   return VREL_VARYING;
-
 }
 
 // Query if there is a relation between SSA1 and SS2 in block BB or a
