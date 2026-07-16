@@ -6817,15 +6817,20 @@ build_bitint_stmt_ssa_conflicts (gimple *stmt, live_track *live,
 	    }
 	}
     }
-  else if (bitint_big_endian
-	   && is_gimple_call (stmt)
-	   && gimple_call_internal_p (stmt))
+  else if (is_gimple_call (stmt) && gimple_call_internal_p (stmt))
     switch (gimple_call_internal_fn (stmt))
       {
       case IFN_ADD_OVERFLOW:
       case IFN_SUB_OVERFLOW:
       case IFN_UBSAN_CHECK_ADD:
       case IFN_UBSAN_CHECK_SUB:
+	if (bitint_big_endian)
+	  {
+	    lhs = gimple_call_lhs (stmt);
+	    if (lhs)
+	      muldiv_p = true;
+	  }
+	break;
       case IFN_MUL_OVERFLOW:
       case IFN_UBSAN_CHECK_MUL:
 	lhs = gimple_call_lhs (stmt);
