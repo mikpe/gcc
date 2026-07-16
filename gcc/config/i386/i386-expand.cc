@@ -20083,6 +20083,16 @@ ix86_expand_reduc (rtx (*fn) (rtx, rtx, rtx), rtx dest, rtx in)
       return;
     }
 
+  /* SSE3 has haddpd, some targets prefer that over movhlpd plus add.  */
+  if (TARGET_SSE3
+      && TARGET_V2DF_REDUCTION_PREFER_HADDPD
+      && mode == V2DFmode
+      && fn == gen_addv2df3)
+    {
+      emit_insn (gen_sse3_haddv2df3 (dest, in, in));
+      return;
+    }
+
   for (i = GET_MODE_BITSIZE (mode);
        i > GET_MODE_UNIT_BITSIZE (mode);
        i >>= 1)
