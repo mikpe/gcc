@@ -50,7 +50,7 @@
 
 	PR libstdc++/82749
 	* doc/xml/manual/using.xml
-	(_GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS): Add entry.
+	(_GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS): Add entry.
 	(_GLIBCXX_USE_RESULT_TYPE_FOR_PIECEWISE_DENSITIES): Add entry.
 	* doc/html/manual/using_macros.html: Regenerate.
 	* include/bits/random.h
@@ -66,7 +66,7 @@
 	as element type.
 	(piecewise_constant_distribution::param_type::densities)
 	(piecewise_linear_distribution::param_type::densities)
-	[!_GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS]: Change return type
+	[!_GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS]: Change return type
 	to vector<result_type>, mark with "__rt" ABI tag, and adjust
 	implementation.
 	(piecewise_constant_distribution::param_type::intervals)
@@ -75,7 +75,7 @@
 	(piecewise_constant_distribution::densities)
 	(piecewise_linear_distribution::densities): Delegate to param_type
 	method, additional change return type and  mark as always_inline
-	if _GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS is not defined.
+	if _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS is not defined.
 	(piecewise_constant_distribution::intervals)
 	(piecewise_linear_distribution::intervals): Delegate to param_type
 	method and use result_type alias in return type.
@@ -92,7 +92,7 @@
 	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors_exact.cc:
 	Likewise.
 	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/accessors_fallback.cc:
-	Run accessors.cc with _GLIBCXX_USE_OLD_PICEWISE_DISTRIBUTIONS.
+	Run accessors.cc with _GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS.
 	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors_fallback.cc:
 	Likewise.
 
