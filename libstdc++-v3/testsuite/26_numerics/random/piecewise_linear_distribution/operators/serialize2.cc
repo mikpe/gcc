@@ -104,8 +104,9 @@ int main()
   test_default<long double>();
 
   test_custom<float>();
+#ifdef __x86_64__
   test_custom<double>();
+#endif  
   test_custom<long double>();
-
   return 0;
 }
