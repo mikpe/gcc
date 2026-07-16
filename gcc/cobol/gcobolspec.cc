@@ -334,29 +334,56 @@ lang_specific_driver (struct cl_decoded_option **in_decoded_options,
 
       case OPT__help:
         /*
-         * $ man ./gcobol.1 | ./help.gen
+         * Although initially generated with 
+         * $ man ./gcobol.1 | col -bx | ./help.gen
+         * ... the below text was edited for brevity and clarity. 
          */
         puts( "Options specific to gcobol: " );
         puts(
-        "  -main   option uses the first PROGRAM of filename as the entry point for\n"
-        "          the main() procedure.  \n"
-        "  -no_main    \n"
-        "          means that there is no -main, and the main() entry point is\n"
-        "          provided by some other compilation or .o file\n"
-        "  -findicator-column\n"
-        "          describes the location of the Indicator Area in a COBOL file with\n"
-        "          standard 80-column lines.  \n"
-        "  -ffixed-form\n"
-        "          Use strict Reference Format in reading the COBOL input: 72-char‐\n"
-        "          acter lines, with a 6-character sequence area, and an indicator\n"
-        "          column.  \n"
-        "  -ffree-form\n"
-        "          Force the COBOL input to be interpreted as free format.  \n"
-        "  -fmax-errors nerror\n"
-        "          nerror represents the number of error messages produced.  \n"
-        "  -fflex-debug, -fyacc-debug\n"
-        "          produce messages useful for compiler development.  \n" );
-
+             "  -main filename           "
+             "Generate a main() for filename.\n"
+             "  -main=filename           "
+             "Insert main() into filename.o\n"
+             "  -main=filename:program-id\n"
+             "                           Insert main() for program-id.\n"
+             "  -nomain                  "
+             "No main() generated.\n"
+             "  -B prefix                "
+             "Search prefix for the system copybooks;\n"
+             "  -D name[=expr]           "
+             "Define a CDF name.\n"
+             "  -fdefaultbyte=value      "
+             "Use value [0-255], for WORKING-STORAGE.\n"
+             "  -fsyntax-only            "
+             "Invoke only the parser.\n"
+             "  -copyext ext             "
+             "Use copybook extention ext.\n"
+             "  -ffixed-form             "
+             "Compile using Reference Format.\n"
+             "  -ffree-form              "
+             "Compile using logical free-form format.\n"
+             "  -fcobol-exceptions exception\n"
+             "                           Enable exception condition.\n"
+             "  -fmax-errors=N           "
+             "Terminate compilation after N errors.\n"
+             "  -fstatic-call            "
+             "Link CALL references at load time.\n"
+             "  -fexec-charset=encoding  "
+             "Use encoding for alphanumeric\n"
+             "  -fexec-national-charset=encoding\n"
+             "                           Use enc for National data items.\n"
+             "  -ftrunc                  "
+             "Truncate BINARY on MOVE.\n"
+             "  -dialect dialect-name    "
+             "Emulate dialect-name compiler.\n"
+             "  -include filename        "
+             "Include filename input in compilation.\n"
+             "  -preprocess filter       "
+             "Execute filter on input before compiling.\n"
+             "\n"
+             "  For warning options see gcobol(1).\n"
+             "  Supported standard gcc options follow.\n"
+             );
 
         /* Let gcc.cc handle this, as it has a really
            cool facility for handling --help and --verbose --help.  */
