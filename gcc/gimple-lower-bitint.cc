@@ -5982,6 +5982,18 @@ build_bitint_stmt_ssa_conflicts (gimple *stmt, live_track *live,
 	    }
 	}
     }
+  else if (is_gimple_call (stmt) && gimple_call_internal_p (stmt))
+    switch (gimple_call_internal_fn (stmt))
+      {
+      case IFN_MUL_OVERFLOW:
+      case IFN_UBSAN_CHECK_MUL:
+	lhs = gimple_call_lhs (stmt);
+	if (lhs)
+	  muldiv_p = true;
+	break;
+      default:
+	break;
+      }
 
   ssa_op_iter iter;
   tree var;
