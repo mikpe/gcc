@@ -117,18 +117,16 @@ static gimple_seq
 gen_log2 (tree op, location_t loc, tree *result, tree type)
 {
   gimple_seq stmts = NULL;
-  gimple_stmt_iterator gsi = gsi_last (stmts);
 
   tree orig_type = TREE_TYPE (op);
   tree tmp1;
   if (type != orig_type)
-    tmp1 = gimple_convert (&gsi, false, GSI_NEW_STMT, loc, type, op);
+    tmp1 = gimple_convert (&stmts, loc, type, op);
   else
     tmp1 = op;
   /* Build FFS (op) - 1.  */
-  tree tmp2 = gimple_build (&gsi, false, GSI_NEW_STMT, loc, IFN_FFS, orig_type,
-			    tmp1);
-  tree tmp3 = gimple_build (&gsi, false, GSI_NEW_STMT, loc, MINUS_EXPR,
+  tree tmp2 = gimple_build (&stmts, loc, IFN_FFS, orig_type, tmp1);
+  tree tmp3 = gimple_build (&stmts, loc, MINUS_EXPR,
 			    orig_type, tmp2, build_one_cst (orig_type));
   *result = tmp3;
   return stmts;
@@ -143,7 +141,6 @@ static gimple_seq
 gen_pow2p (tree op, location_t loc, tree *result)
 {
   gimple_seq stmts = NULL;
-  gimple_stmt_iterator gsi = gsi_last (stmts);
 
   tree type = TREE_TYPE (op);
   tree utype = unsigned_type_for (type);
@@ -153,13 +150,11 @@ gen_pow2p (tree op, location_t loc, tree *result)
   if (types_compatible_p (type, utype))
     tmp1 = op;
   else
-    tmp1 = gimple_convert (&gsi, false, GSI_NEW_STMT, loc, utype, op);
-  tree tmp2 = gimple_build (&gsi, false, GSI_NEW_STMT, loc, MINUS_EXPR, utype,
+    tmp1 = gimple_convert (&stmts, loc, utype, op);
+  tree tmp2 = gimple_build (&stmts, loc, MINUS_EXPR, utype,
 			    tmp1, build_one_cst (utype));
-  tree tmp3 = gimple_build (&gsi, false, GSI_NEW_STMT, loc, BIT_XOR_EXPR,
-			    utype, tmp1, tmp2);
-  *result = gimple_build (&gsi, false, GSI_NEW_STMT, loc, GT_EXPR,
-			  boolean_type_node, tmp3, tmp2);
+  tree tmp3 = gimple_build (&stmts, loc, BIT_XOR_EXPR, utype, tmp1, tmp2);
+  *result = gimple_build (&stmts, loc, GT_EXPR, boolean_type_node, tmp3, tmp2);
 
   return stmts;
 }
