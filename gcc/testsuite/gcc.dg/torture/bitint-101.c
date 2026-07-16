@@ -1,5 +1,5 @@
 /* PR tree-optimization/126257 */
-/* { dg-do run } */
+/* { dg-do run { target bitint } } */
 
 _BitInt(2) a;
 long long b, c, d;
