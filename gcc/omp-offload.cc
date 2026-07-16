@@ -273,9 +273,9 @@ omp_discover_declare_target_tgt_fn_r (tree *tp, int *walk_subtrees, void *data)
     {
       tree c = omp_find_clause (OMP_CLAUSES (*tp), OMP_CLAUSE_DEVICE);
       tree c2 = omp_find_clause (OMP_CLAUSES (*tp), OMP_CLAUSE_DEVICE_TYPE);
-      if ((!c || !OMP_CLAUSE_DEVICE_ANCESTOR (c))
-	  && (!c2 || (OMP_CLAUSE_DEVICE_TYPE_KIND (c2)
-		      != OMP_CLAUSE_DEVICE_TYPE_HOST)))
+      if ((c && OMP_CLAUSE_DEVICE_ANCESTOR (c))
+	   || (c2 && (OMP_CLAUSE_DEVICE_TYPE_KIND (c2)
+		      == OMP_CLAUSE_DEVICE_TYPE_HOST)))
 	*walk_subtrees = 0;
     }
   return NULL_TREE;
