@@ -4840,6 +4840,17 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
    (cmp (bit_ior (convert:utype @0) (convert:utype @1))
         { build_zero_cst (utype); } ))))
 
+/* Optimize MIN (a, b) >= 0 to a >= 0 if b is non-negative.
+   Optimize MIN (a, b) < 0 to a < 0 if b is non-negative.
+   Optimize (a | b) >= 0 to a >= 0 if b is non-negative.
+   Optimize (a | b) < 0 to a < 0 if b is non-negative.  */
+(for op (min bit_ior)
+  (for cmp (ge lt)
+    (simplify
+      (cmp (op:c @0 @1) integer_zerop@2)
+      (if (tree_expr_nonnegative_p (@1))
+        (cmp @0 @2)))))
+
 /* Undo fancy ways of writing max/min or other ?: expressions, like
    a - ((a - b) & -(a < b))  and  a - (a - b) * (a < b) into (a < b) ? b : a.
    People normally use ?: and that is what we actually try to optimize.  */
