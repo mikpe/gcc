@@ -689,6 +689,8 @@ plugin_resourcesdir = $(libsubdir)/plugin
 plugin_includedir = $(plugin_resourcesdir)/include
 # Directory in which plugin specific executables are installed
 plugin_bindir = $(libexecsubdir)/plugin
+# Directory where files for installed testing are installed
+testsuitedir = $(libsubdir)/testsuite
 # Used to produce a relative $(gcc_tooldir) in gcc.o
 ifeq ($(enable_as_accelerator),yes)
 unlibsubdir = ../../../../..
@@ -2288,7 +2290,8 @@ start.encap: native xgcc$(exeext) cpp$(exeext) specs \
 rest.encap: lang.rest.encap
 # This is what is made with the host's compiler
 # whether making a cross compiler or not.
-native: config.status auto-host.h build-@POSUB@ $(LANGUAGES) \
+native: config.status auto-host.h testsuite/et-static.exp build-@POSUB@ \
+	$(LANGUAGES) \
 	$(EXTRA_PROGRAMS) $(COLLECT2) lto-wrapper$(exeext) \
 	gcc-ar$(exeext) gcc-nm$(exeext) gcc-ranlib$(exeext)
 
@@ -4063,6 +4066,7 @@ clean: mostlyclean lang.clean
 	-rm -f libgcc_s*
 	-rm -f libunwind*
 	-rm -f config.h tconfig.h bconfig.h tm_p.h tm.h
+	-rm -f etlist
 	-rm -f options.cc options.h optionlist
 	-rm -f cs-*
 	-rm -f doc/*.dvi
@@ -4082,6 +4086,7 @@ distclean: clean lang.distclean
 	-rm -f TAGS */TAGS
 	-rm -f *.asm
 	-rm -f site.exp site.bak testsuite/site.exp testsuite/site.bak
+	-rm -f testsuite/et-static.exp
 	-rm -f testsuite/*.log testsuite/*.sum
 	-cd testsuite && rm -f x *.x *.x? *.exe *.rpo *.o *.s *.S *.cc
 	-cd testsuite && rm -f *.out *.gcov *$(coverageexts)
@@ -4109,7 +4114,7 @@ maintainer-clean:
 # broken is small.
 install: install-common $(INSTALL_HEADERS) \
     install-cpp install-man install-info install-@POSUB@ \
-    install-driver install-lto-wrapper install-gcc-ar
+    install-driver install-lto-wrapper install-gcc-ar install-testsuite
 
 ifeq ($(enable_plugin),yes)
 install: install-plugin
@@ -4580,6 +4585,12 @@ install-gcc-ar: installdirs gcc-ar$(exeext) gcc-nm$(exeext) gcc-ranlib$(exeext)
 	  done; \
 	fi
 
+# Install files needed for installed testing.
+install-testsuite: testsuite/et-static.exp auto-host.h installdirs
+	$(mkinstalldirs) $(DESTDIR)$(testsuitedir)
+	$(INSTALL_DATA) testsuite/et-static.exp $(DESTDIR)$(testsuitedir)/et-static.exp
+	$(INSTALL_DATA) auto-host.h $(DESTDIR)$(testsuitedir)/auto-host.h
+
 # Cancel installation by deleting the installed files.
 uninstall: lang.uninstall
 	-rm -rf $(DESTDIR)$(libsubdir)
@@ -4606,7 +4617,7 @@ uninstall: lang.uninstall
 
 target_subdir = @target_subdir@
 
-site.exp: ./config.status Makefile
+site.exp: ./config.status Makefile testsuite/et-static.exp
 	@echo "Making a new config file..."
 	-@rm -f ./site.tmp
 	@$(STAMP) site.exp
@@ -4688,6 +4699,12 @@ site.exp: ./config.status Makefile
 	@cat site.bak | sed \
 		-e '1,/^## All variables above are.*##/ d' >> site.exp
 	-@rm -f ./site.tmp
+
+testsuite/et-static.exp: $(srcdir)/et-gather.awk $(srcdir)/gen-et-static.awk \
+	$(srcdir)/testsuite/lib/et-static.def Makefile auto-host.h
+	$(AWK) -f $(srcdir)/et-gather.awk  $(srcdir)/testsuite/lib/et-static.def > etlist
+	-test -d $(TESTSUITEDIR) || mkdir $(TESTSUITEDIR)
+	$(AWK) -f $(srcdir)/gen-et-static.awk -v etlist=etlist auto-host.h > $@
 
 CHECK_TARGETS = @check_languages@
 

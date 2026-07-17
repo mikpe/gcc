@@ -19,6 +19,31 @@
 
 # This file defines procs for determining features supported by the target.
 
+# Try to load effective-target procs from the generated et-static.exp in
+# gcc/testsuite.
+
+global tool_root_dir
+global et_static
+
+if { ![info exists et_static] } {
+    global GCC_UNDER_TEST
+
+    if [info exists GCC_UNDER_TEST] {
+	set compiler $GCC_UNDER_TEST
+    } else {
+	set compiler [find_gcc]
+    }
+
+    set output [remote_exec host "$compiler -print-file-name=testsuite/et-static.exp"]
+    set et_static [string trim [lindex $output 1]]
+}
+
+if { ![file exists $et_static] } {
+    error "Couldn't find $et_static."
+}
+
+load_file $et_static
+
 # Try to compile the code given by CONTENTS into an output file of
 # type TYPE, where TYPE is as for target_compile.  Return a list
 # whose first element contains the compiler messages and whose

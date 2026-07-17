@@ -15,14 +15,21 @@
 # --testsuite, --srcdir will be ignored; otherwise, `/gcc/testsuite'
 # will be appended to the srcdir.
 
+# target-supports.exp depends on et-static.exp generated from auto-host.h.
+# It is usually taken from the installed compiler, but can be specified
+# using --with-et-static.  To support testing with a source tree newer than
+# the installed compiler, it can also be generated from an auto-host.h
+# specified with --with-auto-host-h.  If the actual auto-host.h is missing,
+# /dev/null can be used to generate a fallback et-static.exp.
+
 # You may specify where the binaries to be tested should be picked up
 # from.  If you specify --prefix=/some/dir, gcc, g++ and gfortran will be
 # looked for at /some/dir/bin.  Each one may be overridden by
 # specifying --with-gcc=/pathname/to/gcc, --with-g++=/pathname/to/g++
 # and --with-gfortran=/pathname/to/gfortran.  If you specify --without-gcc,
-# --without-g++ or --without-gfortran, the test for the specified program
-# will be skipped.  By default, gcc, g++ and gfortran will be searched in
-# the PATH.
+# --without-g++ --without-gfortran, or --without-objc the test for the
+# specified program  will be skipped.  By default, gcc, g++ and gfortran
+# will be searched in the PATH.
 
 # An additional argument may specify --tmpdir=/some/dir; by default,
 # temporaries will be stored in the current directory, where the log
@@ -46,6 +53,8 @@ libiconv=-liconv
 while true; do
   case "$1" in
   --with-testsuite=*) testsuite=`echo "$1" | sed 's/[^=]*=//'`; shift;;
+  --with-auto-host-h=*) auto_host_h=`echo "$1" | sed 's/[^=]*=//'`; shift;;
+  --with-et-static=*) et_static=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --srcdir=*) srcdir=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --target=*) target=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --prefix=*) prefix=`echo "$1" | sed 's/[^=]*=//'`; shift;;
@@ -53,6 +62,7 @@ while true; do
   --with-gcc=*) GCC_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --with-g++=*) GXX_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --with-gfortran=*) GFORTRAN_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
+  --with-objc=*) OBJC_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --with-alt-cc=*) ALT_CC_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --with-alt-cxx=*) ALT_CXX_UNDER_TEST=`echo "$1" | sed 's/[^=]*=//'`; shift;;
   --with-compat-options=*) COMPAT_OPTIONS=`echo "$1" | sed 's/[^=]*=//'`; shift;;
@@ -77,6 +87,8 @@ Supported arguments:
 --help                        prints this page
 
 --with-testsuite=/some/dir/gcc/testsuite   specify the testsuite directory
+--with-auto-host-h=/some/dir/auto-host.h   specify auto-host.h
+--with-et-static=/some/dir/et-static.exp   specify et-static.exp
 --srcdir=/some/dir            same as --with-testsuite=/some/dir/gcc/testsuite
                               [deduced from shell-script pathname]
 
@@ -88,6 +100,7 @@ Supported arguments:
 --with-gcc=/some/dir/bin/gcc  use specified gcc program [gcc]
 --with-g++=/some/dir/bin/g++  use specified g++ program [g++]
 --with-gfortran=/some/dir/bin/gfortran  use specified gfortran program [gfortran]
+--with-objc=/some/dir/bin/gcc use specified gcc program [gcc]
 --with-alt-cc=/some/compiler  use specified alternative compiler in compat tests
 --with-alt-cxx=/some/compiler use specified alternative compiler in compat tests
 --with-compat-options=opts    use specified COMPAT_OPTIONS in compat tests
@@ -124,6 +137,20 @@ if test x"${testsuite+set}" != x"set" && test x"${srcdir+set}" != x"set"; then
   srcdir=$top_srcdir
 fi
 
+# Prefer et-static.exp explicitly specified.  Alternatively, generate one
+# from the specified auto-host.h.
+if test x"${et_static+set}" != x"set" && test x"${auto_host_h+set}" = x"set"; then
+   gcc_srcdir=${srcdir}/gcc
+   awk -f ${gcc_srcdir}/et-gather.awk \
+       ${gcc_srcdir}/testsuite/lib/et-static.def > etlist
+   awk -f ${gcc_srcdir}/gen-et-static.awk -v etlist=etlist \
+       ${auto_host_h} > et-static.exp
+  et_static=et-static.exp
+fi
+
+# If neither option has been given, the testsuite will use the et-static.exp
+# from the installed compiler.
+
 cat >site.exp <<EOF
 set rootme "."
 set tmpdir "${tmpdir-`${PWDCMD-pwd}`}"
@@ -131,19 +158,32 @@ set srcdir "${testsuite-${srcdir}/gcc/testsuite}"
 set libiconv "$libiconv"
 set CFLAGS ""
 set CXXFLAGS ""
+EOF
+test x"${GCC_UNDER_TEST}" = x"no" || cat >>site.exp <<EOF
 set GCC_UNDER_TEST "${GCC_UNDER_TEST-${prefix}${prefix+/bin/}\
 ${target+$target-}gcc}"
+EOF
+test x"${GXX_UNDER_TEST}" = x"no" || cat >>site.exp <<EOF
 set GXX_UNDER_TEST "${GXX_UNDER_TEST-${prefix}${prefix+/bin/}\
 ${target+$target-}g++}"
+EOF
+test x"${GFORTRAN_UNDER_TEST}" = x"no" || cat >>site.exp <<EOF
 set GFORTRAN_UNDER_TEST "${GFORTRAN_UNDER_TEST-${prefix}${prefix+/bin/}\
 ${target+$target-}gfortran}"
+EOF
+test x"${OBJCC_UNDER_TEST}" = x"no" || cat >>site.exp <<EOF
 set OBJC_UNDER_TEST "${OBJC_UNDER_TEST-${prefix}${prefix+/bin/}\
 ${target+$target-}gcc}"
+EOF
+cat >>site.exp <<EOF
 set HOSTCC "${HOSTCC-cc}"
 set HOSTCXX "${HOSTCXX-c++}"
 set HOSTCFLAGS ""
 set HOSTCXXFLAGS ""
 EOF
+if test x${et_static+set} = xset; then
+  echo "set et_static \"${et_static}\"" >> site.exp
+fi
 if test x${target} != x; then
   target_canonical=`$top_srcdir/config.sub $target`
   echo "set target_triplet $target_canonical" >> site.exp

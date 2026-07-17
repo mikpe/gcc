@@ -1498,7 +1498,9 @@ are expected to fail some tests.
 
 Effective-target keywords are defined in @file{lib/target-supports.exp} in
 the GCC testsuite, with the exception of those that are documented as
-being local to a particular test directory.
+being local to a particular test directory.  Effective-target keywords
+matching @file{auto-host.h} macros can be generated from definitions
+in @file{lib/et-static.def}.
 
 The @samp{effective target} takes into account all of the compiler options
 with which the test will be compiled, including the multilib options.
@@ -3110,6 +3112,9 @@ Target uses GNU @command{ld}.
 @item keeps_null_pointer_checks
 Target keeps null pointer checks, either due to the use of
 @option{-fno-delete-null-pointer-checks} or hardwired into the target.
+
+@item ld_at_file
+Target supports GNU style response files.
 
 @item llvm_binutils
 Target is using an LLVM assembler and/or linker, instead of GNU Binutils.

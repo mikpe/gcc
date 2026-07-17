@@ -50,9 +50,9 @@ if !$skip_lto {
     set ltop [check_linker_plugin_available]
 }
 
-# Check for GNU ld.  Some files like .ld1_args depend on this.  This
-# should really be testing whether the linker supports GNU style response files.
-set gld [check_effective_target_gld]
+# Check if the linker supports GNU style response files.  Some files like
+# .ld1_args depend on this.
+set ld_at_file [check_effective_target_ld_at_file]
 # Darwin's linker is not silent about missing -L values.
 set ld64 [istarget *-*-darwin*]
 
@@ -180,7 +180,7 @@ proc outest { test sources opts dirs outputs } {
 	foreach og $olist {
 	    if { [string index $og 0] == "!" } {
 		global gspd ltop
-		global gld ld64
+		global ld_at_file ld64
 		set cond [expr $og]
 		continue
 	    }
@@ -363,14 +363,14 @@ outest "$b-21 exe savetmp named2" $mult "-o $b.exe -save-temps" {} {{--1.i --1.s
 
 # Additional files are created when an @file is used
 if !$skip_atsave {
-outest "$b-22 exe savetmp namedb-2" $sing "@$devnull -o $b.exe -save-temps" {} {{--0.i --0.s --0.o .args.0 !!$gld .ld1_args !0 .exe}}
-outest "$b-23 exe savetmp named2-2" $mult "@$devnull -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o .args.0 !!$gld .ld1_args !0 .exe}}
-outest "$b-24 exe savetmp named2-3" $mult "@$devnull -I dummy -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 !!$gld .ld1_args !0 .exe}}
+outest "$b-22 exe savetmp namedb-2" $sing "@$devnull -o $b.exe -save-temps" {} {{--0.i --0.s --0.o .args.0 !!$ld_at_file .ld1_args !0 .exe}}
+outest "$b-23 exe savetmp named2-2" $mult "@$devnull -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o .args.0 !!$ld_at_file .ld1_args !0 .exe}}
+outest "$b-24 exe savetmp named2-3" $mult "@$devnull -I dummy -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 !!$ld_at_file .ld1_args !0 .exe}}
   if $ld64 {
     # Darwin's linker warns about missing args to -L.
-    outest "$b-25 exe savetmp named2-4" $mult "@$devnull -I dummy -L dummy -o $b.exe -save-temps -Wl,-w" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 !!0 .args.3 !!$gld .ld1_args !0 .exe}}
+    outest "$b-25 exe savetmp named2-4" $mult "@$devnull -I dummy -L dummy -o $b.exe -save-temps -Wl,-w" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 !!0 .args.3 !!$ld_at_file .ld1_args !0 .exe}}
   } else {
-    outest "$b-25 exe savetmp named2-4" $mult "@$devnull -I dummy -L dummy -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 .args.3 !!$gld .ld1_args !0 .exe}}
+    outest "$b-25 exe savetmp named2-4" $mult "@$devnull -I dummy -L dummy -o $b.exe -save-temps" {} {{--1.i --1.s --1.o --2.i --2.s --2.o -args.0 -args.1 .args.2 .args.3 !!$ld_at_file .ld1_args !0 .exe}}
   }
 }
 
