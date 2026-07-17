@@ -1,3 +1,123 @@
+2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* builtin-types.def (BT_FN_VOID_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG): New.
+	* omp-builtins.def (BUILT_IN_GOMP_LOOP_STATIC_WORKSHARING_DISPATCH): Use
+	BT_FN_VOID_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG.
+	(BUILT_IN_GOMP_DISTRIBUTE_STATIC_WORKSHARING_DISPATCH): Likewise.
+	* omp-expand.cc (expand_omp_for_static_nochunk): Pass niter, start,
+	incr, chunk size, and istart to the dispatch call.
+	(expand_omp_for_static_chunk): Likewise.
+
+2026-07-16  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/125986
+	* value-relation.cc (path_oracle::query): Query root oracle for
+	relations.
+
+2026-07-16  Jin Ma  <jinma@linux.alibaba.com>
+
+	* config/riscv/riscv-protos.h
+	(riscv_legitimize_call_address): Add a sibcall parameter.
+	* config/riscv/riscv.cc
+	(riscv_legitimize_call_address): Use a pseudo for sibcalls.
+	* config/riscv/riscv.md (sibcall): Pass true for sibcalls.
+	(sibcall_value): Likewise.
+	(call): Pass false for ordinary calls.
+	(call_value): Likewise.
+
+2026-07-16  Jin Ma  <jinma@linux.alibaba.com>
+
+	* config/riscv/riscv.cc (riscv_regno_to_class): Map t1 to
+	JALR_REGS.
+	* config/riscv/riscv.h (RISCV_PROLOGUE_TEMP_REGNUM): Document
+	the SIBCALL_REGS restriction.
+	(REG_CLASS_CONTENTS): Remove t1 from SIBCALL_REGS.
+
+2026-07-16  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* tree-profile.cc (emit_assign): Append to a gimple_seq instead
+	of inserting on an edge.  Make the functions static.
+	(emit_bitwise_op): Likewise.
+	(instrument_decisions): Build up a local gimple_seq per edge and
+	insert it once instead of inserting each statement individually.
+
+2026-07-16  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* tree-profile.cc (emit_bitwise_op): Build/fold the operation with
+	gimple_build() instead of gimple_build_assign(), and return the
+	folded result as-is instead of always materializing a new SSA
+	name.
+	(instrument_decisions): Do not emit bitwise-or operations with a
+	zero constant operand.
+
+2026-07-16  Pan Li  <pan2.li@intel.com>
+
+	* config/riscv/vector.md: Leverage Wvr constraint.
+
+2026-07-16  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	* config/riscv/riscv.cc (riscv_noce_conversion_profitable_p): Ignore
+	reg->reg copies too.
+
+2026-07-16  Richard Biener  <rguenther@suse.de>
+
+	* tree-switch-conversion.cc (gen_log2): Use gimple_seq
+	overload of gimple_build.
+	(gen_pow2p): Likewise.
+
+2026-07-16  Tobias Burnus  <tburnus@baylibre.com>
+
+	* omp-offload.cc (omp_discover_declare_target_tgt_fn_r): Fix
+	the condition for anchestor + nohost handling.
+
+2026-07-16  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* expmed.cc (invert_mod2n): Fix typo in comment and add references.
+
+2026-07-16  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR fortran/126279
+	* omp-low.cc (lower_omp_target): Avoid creating a second static const
+	variable for the trait array used by uses_allocators.
+
+2026-07-16  Georg-Johann Lay  <avr@gjlay.de>
+
+	* doc/invoke.texi (AVR Options): Fix a typo.
+
+2026-07-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/netbsd-elf.h (NETBSD_LINK_LD_ELF_SO_SPEC): Remove.
+	(NETBSD_SUBTARGET_EXTRA_SPECS): Remove netbsd_link_ld_elf_so.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126262
+	* gimple-lower-bitint.cc (build_bitint_stmt_ssa_conflicts): Treat
+	IFN_MUL_OVERFLOW and IFN_UBSAN_CHECK_MUL like IFN_BSWAP, regardless
+	of bitint_big_endian.
+
+2026-07-16  Peter Bergner  <bergner@linux.ibm.com>
+	    Kishan Parmar  <kishan@linux.ibm.com>
+
+	* config/rs6000/rs6000-builtin.cc (rs6000_invalid_builtin): Add
+	ENB_DM diagnostic.
+	(rs6000_builtin_is_supported): Handle ENB_DM.
+	* config/rs6000/rs6000-gen-builtins.cc: Update comments for new
+	Dense Math builtin attributes.
+	(bif_stanza): Add BSTZ_DM.
+	(stanza_map): Add "dm" stanza.
+	(enable_string): Add ENB_DM.
+	(basetype): Add BT_DMR.
+	(attrinfo): Add isdm, isdmint and isdmr fields.
+	(type_map): Add dmr1024 and ptr_dmr1024 type mappings.
+	(match_type): Recognize dmr1024 type.
+	(parse_bif_attrs): Parse dm, dmint and dmr attributes.
+	(complete_vector_type): Handle BT_DMR.
+	(write_decls): Emit ENB_DM and Dense Math builtin attribute bits
+	and predicates.
+	(write_bif_static_init): Initialize Dense Math builtin attributes
+	and associate dmint builtins with their internal variants.
+
 2026-07-15  H.J. Lu  <hjl.tools@gmail.com>
 
 	PR target/126231

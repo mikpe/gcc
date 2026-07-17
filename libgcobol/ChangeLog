@@ -1,3 +1,9 @@
+2026-07-16  Robert Dubner  <rdubner@symas.com>
+
+	PR cobol/126277
+	* constants.cc (struct cblc_field_t): Adjust initialization of
+	DEBUG-ITEM fields.
+
 2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
 
 	* compat/gnu/lib/CBL_CREATE_FILE.cbl: Do not write to input parameter.

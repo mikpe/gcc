@@ -1,3 +1,133 @@
+2026-07-16  Arsen Arsenović  <aarsenovic@baylibre.com>
+
+	Revert:
+	2026-07-16  Arsen Arsenović  <aarsenovic@baylibre.com>
+
+	* testsuite/lib/libstdc++.exp (libstdc++_init): Use
+	gcc-set-multilib-library-path to calculate LD_LIBRARY_PATH for
+	installed G++ compilers.
+
+2026-07-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+	    Álvaro Begué  <alvaro.begue@gmail.com>
+
+	PR libstdc++/116110
+	* src/c++20/tzdb.cc (ZoneInfo::calc_save, ZoneInfo::State): Define.
+	(ZoneInfo::m_expanded): Replaced with m_state.
+	(ZoneInfo::m_pos): Reduce the bit with to 14.
+	(ZoneInfo::m_state): Expands m_expanded with four state enum.
+	(ZoneInfo::ZoneInfo, ZoneInfo::expanded, ZoneInfo::set_abbrev):
+	Replace m_expanded usage with m_state and State::Expanded.
+	(Transitions, find_surrounding_transitions): Extracted from
+	find_active_rule.
+	(find_active_rule): Define overload for local_seconds. Implement
+	both in terms of find_surrounding_transitions.
+	(time_zone::_M_get_sys_info): Use ZoneInfo::calc_save to adjust
+	until() on surrounding zones, and shift the current zone iterator
+	(i) accordingly.
+	(operator>>(istream&, ZoneInfo&)): Set m_state for UntilPending
+	for UNTIL time using wall time, and SaveKnown for lines without
+	end date. For clarity, set m_save to 0 if daylight is not used.
+	* testsuite/std/time/time_zone/116110.cc (test_apia): Use correct
+	value of the the total offset.
+	testsuite/std/time/time_zone/pr116110_named.cc: New test.
+	* testsuite/std/time/time_zone/pr116110_named.cc: New file.
+
+2026-07-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/serialize2.cc:
+	Enable test_customd<double> for __x86_64__.
+
+2026-07-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	PR libstdc++/124853
+	* src/c++20/tzdb.cc (time_zone::_M_get_sys_info): Find
+	rules firing exactly at transition time.
+	* testsuite/std/time/time_zone/wall_cascade.cc: Add test
+	for Europe/Lisbon, and corrected test_negative.
+
+2026-07-16  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* doc/html/manual/using_macros.html: Regenrate.
+	* doc/xml/manual/using.xml
+	(_GLIBCXX_USE_OLD_PIECEWISE_DISTRIBUTIONS): Mention LWG4052.
+	* include/bits/random.h
+	(piecewise_constant_distribution::_CalcType)
+	(piecewise_linear_distribution::_CalcType): Define.
+	(piecewise_constant_distribution::__generate_one)
+	(piecewise_linear_distribution::__generate_one): Declare.
+	(piecewise_constant_distribution::_M_initialize2)
+	(piecewise_linear_distribution::__M_initialize2): Adjust
+	densities parameter to _CalcType.
+	* include/bits/random.tcc (std::__normalize): Perform
+	computation in the type of factor parameter.
+	(piecewise_constant_distribution::_M_configure)
+	(piecewise_linear_distribution::_M_configure): Use _CalcType.
+	(piecewise_constant_distribution::param_type::param_type)
+	(piecewise_constant_distribution::param_type::param_type):
+	Cast the inputs to the _CalcType. Use _RealType as input
+	weight functor.
+	(piecewise_constant_distribution::__generate_one)
+	(piecewise_linear_distribution::__generate_one): Extract
+	from operator() and use _CalcType.
+	(piecewise_constant_distribution::operator())
+	(piecewise_constant_distribution::__generate_impl).
+	(piecewise_linear_distribution::operator()): Use __generate_one.
+	(piecewise_linear_distribution::__generate_impl): Optimize
+	_M_cp.empty() case and user __generate_one otherwise.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/accessors.cc:
+	(test_precision_depended): Expand test to cover all constructors,
+	and inputs different from distribution result type.
+	(test_engine_calls): New tests.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/accessors.cc:
+	Likewise.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/serialize2.cc:
+	Update values to accommodate the change in precision for float.
+	Remove trailing whitespaces.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/serialize2.cc:
+	Likewise, and enable float/double test for i686.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/cons/input_type.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_constant_distribution/cons/input_type_fallback_neg.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/cons/input_type.cc:
+	New test.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/cons/input_type_fallback_neg.cc:
+	New test.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/120635
+	* include/bits/indirect.h (std::indirect, std::polymorphic): Add
+	_GLIBCXX_NO_SPECIALIZATIONS.
+	* testsuite/std/memory/indirect/specialization.cc: New test.
+	* testsuite/std/memory/polymorphic/specialization.cc: New test.
+
+2026-07-16  Arsen Arsenović  <aarsenovic@baylibre.com>
+
+	* testsuite/lib/libstdc++.exp (libstdc++_init): Use
+	gcc-set-multilib-library-path to calculate LD_LIBRARY_PATH for
+	installed G++ compilers.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/119561
+	PR c++/120635
+	* include/bits/c++config (_GLIBCXX_NO_SPECIALIZATIONS): Define.
+	* include/std/variant (std::variant): Use it to resolve LWG3990.
+	* include/std/format (std::basic_format_parse_context,
+	std::basic_format_context): Use it to resolve LWG3975.
+	* libsupc++/compare (std::type_order): Use it to resolve LWG4305.
+	* libsupc++/initializer_list (std::initializer_list): Use it to
+	resolve LWG2129.
+	* include/std/tuple (std::tuple): Use it to resolve LWG3990.
+	Temporarily ignore -Winvalid-specialization around specializations
+	of tuple.
+	* testsuite/18_support/comparisons/type_order/lwg4305.cc: New test.
+	* testsuite/18_support/initializer_list/lwg2129.cc: New test.
+	* testsuite/std/format/lwg3975.cc: New test.
+	* testsuite/20_util/tuple/lwg3990.cc: New test.
+	* testsuite/20_util/variant/lwg3990.cc: New test.
+
 2026-07-15  Kito Cheng  <kito.cheng@sifive.com>
 
 	* include/tr1/ell_integral.tcc (__ellint_1): Throw domain_error

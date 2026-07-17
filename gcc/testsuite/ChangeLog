@@ -1,3 +1,92 @@
+2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* c-c++-common/gomp/for-static-3.c: Update scan pattern to match new
+	arguments.
+
+2026-07-16  Craig Blackmore  <craig.blackmore@embecosm.com>
+
+	* gcc.dg/asm-hard-reg-4.c: Fix typo in target selector.
+
+2026-07-16  Jin Ma  <jinma@linux.alibaba.com>
+
+	* gcc.target/riscv/sibcall-materialize-pseudo.c: New test.
+
+2026-07-16  Jin Ma  <jinma@linux.alibaba.com>
+
+	* g++.target/riscv/pr97682.C: Accept registers in SIBCALL_REGS.
+	* gcc.target/riscv/rvv/base/sibcall-scalable-frame-indirect.c:
+	New test.
+	* gcc.target/riscv/rvv/base/sibcall-scalable-frame-weak.c: New test.
+
+2026-07-16  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* gcc.dg/gcov-atomic-or-zero.c: New test.
+	* gcc.misc-tests/gcov-35.c: Likewise.
+	* gcc.misc-tests/gcov-36.c: Likewise.
+
+2026-07-16  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/base/pr112431-1.c: Remove xfail.
+	* gcc.target/riscv/rvv/base/pr112431-2.c: Ditto.
+	* gcc.target/riscv/rvv/base/pr112431-3.c: Ditto.
+	* gcc.target/riscv/rvv/base/pr112431-39.c: Ditto.
+	* gcc.target/riscv/rvv/base/pr112431-40.c: Ditto.
+	* gcc.target/riscv/rvv/base/pr112431-41.c: Ditto.
+
+2026-07-16  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i16-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i16-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i16-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i16-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i16-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i32-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i32-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i32-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i32-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvtu-i8-mf8.c: New test.
+
+2026-07-16  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i16-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i16-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i16-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i16-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i16-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i32-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i32-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i32-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i32-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vwcvt-i8-mf8.c: New test.
+
+2026-07-16  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* gcc.target/aarch64/neon/aarch64-neon.exp: Remove section
+	re-runing the tests as big-endian.
+
+2026-07-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc.dg/vect/tsvc/tsvc.h (init): Don't use memalign on NetBSD.
+
+2026-07-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc.dg/torture/bitint-101.c: Require bitint.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126262
+	* gcc.dg/torture/bitint-102.c: New test.
+
 2026-07-15  John David Anglin  <danglin@gcc.gnu.org>
 
 	* gfortran.dg/coarray/caf.exp: Run test with -pthread option.

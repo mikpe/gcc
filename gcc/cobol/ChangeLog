@@ -1,3 +1,21 @@
+2026-07-16  Robert Dubner  <rdubner@symas.com>
+
+	PR cobol/126277
+	* move.cc (mh_identical): Handle externals that have parents.
+	(mh_binary_to_packed): Eliminate trailing whitespace.
+	* symbols.cc (symbol_table_init): Correct attributes of DEBUG-CONTENTS.
+
+2026-07-16  James K. Lowden  <jklowden@cobolworx.com>
+
+	* gcobolspec.cc (lang_specific_driver): New text for OPT__help.
+
+2026-07-16  James K. Lowden  <jklowden@cobolworx.com>
+
+	* parse.y: New diagnostic messages regarding invalid device
+	name use.
+	* scan.l: Add right paren as lexical terminator for simple
+	condition.
+
 2026-07-15  James K. Lowden  <jklowden@cobolworx.com>
 
 	* parse_ante.h (procedure_division_ready): Test field with is_typedef().

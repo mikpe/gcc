@@ -1,3 +1,46 @@
+2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* config/gcn/teams.c (GOMP_distribute_static_worksharing_dispatch): Add
+	niter, start, incr, chunk_size, and istart parameters (unused).
+	* config/nvptx/teams.c (GOMP_distribute_static_worksharing_dispatch):
+	Likewise.
+	* libgomp_g.h (GOMP_loop_static_worksharing_dispatch): Update prototype.
+	(GOMP_distribute_static_worksharing_dispatch): Likewise.
+	* loop.c (GOMP_loop_static_worksharing_dispatch): Add niter, start,
+	incr, chunk_size, and istart parameters (unused).
+	* teams.c (GOMP_distribute_static_worksharing_dispatch): Likewise.
+	* testsuite/libgomp.c-c++-common/for-static-3.c: Update scan pattern
+	to match new arguments.
+
+2026-07-16  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR fortran/126279
+	* target.c (copy_firstprivate_data): After storing  users_allocators'
+	allocator, shift the offset by its storage size to avoid overriding.
+	* testsuite/libgomp.fortran/uses_allocators-1.f90: Use kind c_size_t
+	instead of kind 8 for 32bit compatibility.
+	* testsuite/libgomp.fortran/uses_allocators-4.f90: Update expected
+	tree dump.
+	* testsuite/libgomp.fortran/uses_allocators-7.f90: Extend testcase now
+	that user-defined allocators are supported by uses_allocators.
+
+2026-07-16  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	* testsuite/libgomp.c/target-device-type-3.c: Repair offload tree
+	dump scanning.
+
+2026-07-16  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	PR libgomp/125877
+	* config/linux/numa.c (gomp_get_numa_distance): Move 'lineptr'
+	initialization earlier, robustify 'getline' call, avoid double
+	'free'.
+
+2026-07-16  Thomas Schwinge  <tschwinge@baylibre.com>
+
+	* testsuite/libgomp.c/target-device-type-1.c (f): Map 'x'.
+	* testsuite/libgomp.c/target-device-type-2.c (f): Likewise.
+
 2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
 
 	* testsuite/libgomp.c-c++-common/uses_allocators-10.c: New test.

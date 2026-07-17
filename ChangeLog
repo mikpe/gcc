@@ -1,3 +1,8 @@
+2026-07-16  Craig Blackmore  <craig.blackmore@embecosm.com>
+
+	* MAINTAINERS (Write After Approval): Regenerate.
+	* MAINTAINERS.yml: Add myself.
+
 2026-07-13  Eikansh Gupta  <eikansh.gupta@oss.qualcomm.com>
 
 	* MAINTAINERS.yml: Add myself.

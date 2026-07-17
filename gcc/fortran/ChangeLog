@@ -1,3 +1,13 @@
+2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* types.def (BT_FN_VOID_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG): New.
+
+2026-07-16  Tobias Burnus  <tburnus@baylibre.com>
+
+	PR fortran/126279
+	* trans-openmp.cc (gfc_trans_omp_clauses): Convert memspace constant
+	to an integer not to an external variable.
+
 2026-07-15  Thomas Koenig  <tkoenig@gcc.gnu.org>
 
 	PR fortran/126058
