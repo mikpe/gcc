@@ -853,13 +853,17 @@ namespace std::chrono
 
       auto to_local = [&](const Transitions::Entry& tran, const Rule* before)
       {
-	local_seconds ls(tran.when.time_since_epoch() + std_offset);
-	if (!before || !tran.rule)
+	local_seconds ls(tran.when.time_since_epoch());
+	if (!tran.rule)
+	  // 'when' is either min() or max(), and applying std_offset overflows.
 	  return ls;
-	if (tran.rule->when.indicator == at_time::Wall)
-	  // 'when' was converted from local time without considering
-	  // running 'save' in first place
+
+	ls += std_offset;
+	if (!before || tran.rule->when.indicator == at_time::Wall)
+	  // no active rule or 'when' was converted from local time without
+	  // considering running 'save' in first place
 	  return ls;
+
 	return ls + before->save;
       };
 
