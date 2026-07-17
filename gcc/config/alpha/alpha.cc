@@ -1242,8 +1242,8 @@ split_small_symbolic_operand (rtx x)
 }
 
 /* Indicate that INSN cannot be duplicated.  This is true for any insn
-   that we've marked with gpdisp relocs, since those have to stay in
-   1-1 correspondence with one another.
+   that we've marked with a relocation sequence number, since those have
+   to stay in 1-1 correspondence with one another.
 
    Technically we could copy them if we could set up a mapping from one
    sequence number to another, across the set of insns to be duplicated.
@@ -1253,12 +1253,21 @@ split_small_symbolic_operand (rtx x)
    Also cannot allow jsr insns to be duplicated.  If they throw exceptions,
    then they'll be in a different block from their ldgp.  Which could lead
    the bb reorder code to think that it would be ok to copy just the block
-   containing the call and branch to the block containing the ldgp.  */
+   containing the call and branch to the block containing the ldgp.
+
+   Note this must not be gated on reload_completed.  While the gpdisp pairs
+   are only created after reload, alpha_legitimize_address emits
+   movdi_er_tlsgd and movdi_er_tlsldm together with their paired
+   call_value_osf_tlsgd/tlsldm at expand time, and those already carry the
+   sequence number that ties each pair together.  Returning false before
+   reload lets the pre-RA duplicators reach them: unrolling a loop whose
+   body holds such a pair copies the sequence number along with it, and the
+   assembler then rejects the result with "duplicate !tlsgd!N".  */
 
 static bool
 alpha_cannot_copy_insn_p (rtx_insn *insn)
 {
-  if (!reload_completed || !TARGET_EXPLICIT_RELOCS)
+  if (!TARGET_EXPLICIT_RELOCS)
     return false;
   if (recog_memoized (insn) >= 0)
     return get_attr_cannot_copy (insn);
