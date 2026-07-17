@@ -1,3 +1,26 @@
+2026-07-16  Michal Jires  <mjires@suse.cz>
+
+	Backported from master:
+	2026-07-15  Michal Jires  <mjires@suse.cz>
+
+	PR lto/125257
+	* gcc.dg/lto/pr125257_0.c: New test.
+
+2026-07-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Backported from master:
+	2026-07-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc.dg/torture/bitint-101.c: Require bitint.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126262
+	* gcc.dg/torture/bitint-102.c: New test.
+
 2026-07-15  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
