@@ -3,7 +3,7 @@
 int i;
 
 __attribute__ ((noipa,noclone,noinline))
-char foo(char val)
+signed char foo(signed char val)
 {
   i++;
   if (i > 1)
