@@ -3,7 +3,7 @@
 /* { dg-options "-mcpu=xt-c9501fdvt" { target { rv64 } } } */
 /* XuanTie C950 => rv64imafdcv_zic64b_zicbom_zicbop_zicboz_ziccamoa_ziccif
                _zicclsm_ziccrse_zicfilp_zicfiss_zicntr_zicond_zicsr_zifencei
-	       _zihintntl_zihintpause_zihpm_zimop_za64rs_zabha_zacas_zama16b
+	       _zihintntl_zihintpause_zihpm_zimop_za64rs_zabha_zacas
 	       _zawrs_zfa_zfbfmin_zfh_zfhmin_zca_zcb_zcd_zcmop_zba_zbb_zbc_zbs
 	       _zkr_zkt_zmmul_zvbb_zvbc_zvfbfmin_zvfbfwma_zvfh_zvfhmin_zvkb
 	       _zvkg_zvkn_zvknc_zvkned_zvkng_zvknha_zvknhb_zvksc_zvksed_zvksg
@@ -45,7 +45,7 @@
       && defined(__riscv_za64rs)	\
       && defined(__riscv_zabha)		\
       && defined(__riscv_zacas)		\
-      && defined(__riscv_zama16b)	\
+      && !defined(__riscv_zama16b)	\
       && defined(__riscv_zawrs)		\
       && defined(__riscv_zfa)		\
       && defined(__riscv_zfbfmin)	\

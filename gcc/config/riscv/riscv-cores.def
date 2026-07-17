@@ -166,7 +166,7 @@ RISCV_CORE("xt-c920v2",       "rv64imafdcv_zicbom_zicbop_zicboz_zicntr_zicond_"
 			       "xt-c920v2")
 
 RISCV_CORE("xt-c9501fdvt",    "rva23s64_zfbfmin_zfh_zicfilp_zicfiss_zkr_zmmul_"
-			      "zbc_zca_zcd_zabha_zacas_zama16b_zvbc_zvfbfmin_"
+			      "zbc_zca_zcd_zabha_zacas_zvbc_zvfbfmin_"
 			      "zvfbfwma_zvfh_zvkb_zvkg_zvkn_zvknc_zvkned_"
 			      "zvkng_zvknha_zvknhb_zvksc_zvksed_zvksg_zvksh_"
 			      "zvl256b_smaia_smcntrpmf_smcsrind_smepmp_smmpm_"
