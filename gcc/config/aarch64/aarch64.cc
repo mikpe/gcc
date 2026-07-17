@@ -20822,6 +20822,10 @@ aarch64_handle_attr_isa_flags (char *str)
 
   if (parse_res == AARCH_PARSE_OK)
     {
+      if (!TARGET_TME && (isa_flags & AARCH64_FL_TME))
+	warning (OPT_Wdeprecated,
+		 "the architecture extension %<+tme%> is deprecated");
+
       aarch64_set_asm_isa_flags (isa_flags);
       return true;
     }
@@ -21082,10 +21086,6 @@ aarch64_process_target_attr (tree args)
   while (token)
     {
       num_attrs++;
-
-      if (strcmp (token, "+tme") == 0 && !TARGET_TME)
-	warning (OPT_Wdeprecated,
-		 "the architecture extension %<+tme%> is deprecated");
 
       if (!aarch64_process_one_target_attr (token))
 	{
