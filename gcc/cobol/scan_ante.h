@@ -462,7 +462,7 @@ update_location( const cbl_loc_t *ploc = nullptr ) {
 
   ydflloc = yylloc = loc;
 
-  dbgmsg("  SC: %s location (%d,%d) to (%d,%d)",
+  dbgmsg("  SC: <%s> (%d,%d) to (%d,%d)",
          start_condition_is(),
          yylloc.first_line, yylloc.first_column,
          yylloc.last_line,  yylloc.last_column);

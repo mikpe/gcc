@@ -280,7 +280,7 @@ enum
 #define ebcdic_minus           ((uint8_t)(0x60))
 #define ebcdic_newline         ((uint8_t)(0x25))
 
-extern unsigned char __gg__data_space[1]       ;
+extern unsigned char __gg__data_spaces[1]      ;
 extern unsigned char __gg__data_low_values[1]  ;
 extern unsigned char __gg__data_zeros[1]       ;
 extern unsigned char __gg__data_high_values[1] ;

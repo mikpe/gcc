@@ -1843,11 +1843,14 @@ struct cbl_locale_t {
   }
 };
 
+/*
+ * If SELECT name ASSIGN TO DEVICE is used, the index of the special name is
+ * assigned to cbl_file_t::device.  The device itself never changes. 
+ */
 struct cbl_special_name_t {
   int token;
   enum special_name_t id;
   cbl_name_t name;
-  size_t filename;
   char os_filename[16]; // short because always in /dev
 };
 
@@ -2122,7 +2125,7 @@ struct cbl_file_t {
   // "The RECORD DELIMITER clause is syntax checked, but has no effect
   //  on the execution of the program."
   enum cbl_file_access_t access;
-  size_t filename;      //
+  size_t filename, device;
   size_t default_record;
   size_t nkey;          // 1st key is primary & unique
   cbl_file_key_t *keys; // indexes into symbol table for key field(s)
@@ -2156,7 +2159,7 @@ struct cbl_file_t {
     , optional(false)
     , varying_size{ false, 0, 0 }
     , access(file_access_seq_e)
-    , filename(0)
+    , filename(0), device(0)
     , default_record(0)
     , nkey(0)
     , keys(nullptr)
@@ -2169,6 +2172,7 @@ struct cbl_file_t {
   }
   
   bool varies() const { return varying_size.min != varying_size.max; }
+  void assign( special_name_t device ) { this->device = special_index(device); }
   bool validate() const;
   void deforward();
   cbl_file_key_t * keys_update( cbl_file_key_t * keys ) {
@@ -2188,9 +2192,11 @@ struct cbl_file_t {
     return org == file_indexed_e && access == file_access_seq_e;
   }
   void consider_for_default( const cbl_field_t *record );
+  const char * filename_of() const;
  protected:
   bool validate_forward( size_t isym ) const;
   bool validate_key( const cbl_file_key_t& key ) const;
+  static size_t special_index( special_name_t device );
 };
 
 static inline bool
@@ -2856,7 +2862,6 @@ cbl_namelist_t teed_up_names();
 
 size_t end_of_group( size_t igroup );
 
-symbol_elem_t * symbol_typedef( size_t program, std::list<const char *> names );
 symbol_elem_t * symbol_typedef( size_t program, const char name[] );
 symbol_elem_t * symbol_field( size_t program, size_t parent, const char name[] );
 cbl_label_t *   symbol_label( size_t program, cbl_label_type_t type,
@@ -2872,6 +2877,8 @@ symbol_elem_t * symbol_literalA( size_t program, const char name[] );
 
 cbl_special_name_t * symbol_special( special_name_t id );
 symbol_elem_t * symbol_special( size_t program, const char name[] );
+size_t symbol_special_index( special_name_t device );
+
 symbol_elem_t * symbol_locale( size_t program, const char name[] );
 symbol_elem_t * symbol_alphabet( size_t program, const char name[] );
 

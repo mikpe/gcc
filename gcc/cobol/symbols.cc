@@ -97,7 +97,7 @@ static struct symbol_table_t {
     size_t file_status, linage_counter,
            exception_condition, very_true, very_false;
     registers_t() {
-      file_status = linage_counter = 
+      file_status = linage_counter =
         exception_condition = very_true = very_false = 0;
     }
   } registers;
@@ -308,8 +308,6 @@ class group_size_t {
   size_t capacity() const { return size; }
 };
 
-#define constq (constant_e | quoted_e)
-
 static symbol_elem_t
 elementize( const cbl_field_t& field ) {
   symbol_elem_t sym (SymField);
@@ -442,15 +440,15 @@ static bool label_cmp( const cbl_label_t& key,
   case LblParagraph:
     switch( elem.type ) {
     case LblNone:
-      // dbgmsg("%s:%d: para %s: key parent %zu, LblNone elem parent %zu", __func__, __LINE__, 
+      // dbgmsg("%s:%d: para %s: key parent %zu, LblNone elem parent %zu", __func__, __LINE__,
       //        key.name, key.parent, elem.parent);
       // Undefined label element with matching parent or no parent.
-      if( key.parent == elem.parent || elem.parent == 0 ) { 
+      if( key.parent == elem.parent || elem.parent == 0 ) {
         return key.line == 0 || elem.line == 0 || key.line == elem.line;
       }
       break;
     case LblParagraph:
-      // dbgmsg("%s:%d: para %s: key parent %zu, elem parent %zu", __func__, __LINE__, 
+      // dbgmsg("%s:%d: para %s: key parent %zu, elem parent %zu", __func__, __LINE__,
       //        key.name, key.parent, elem.parent);
       if( key.parent == 0 || key.parent == elem.parent ) { // explicit or implicit
         return key.line == 0 || elem.line == 0 || key.line == elem.line;
@@ -546,8 +544,16 @@ symbol_elem_cmp( const void *K, const void *E )
     if( (cbl_file_of(k)->attr & global_e) == global_e &&
         (cbl_file_of(e)->attr & global_e) != global_e ) {
       return 1;
+    } else {
+      if( 0 == strcasecmp(k->elem.file.name, e->elem.file.name) ) return 0;
+      // User may refer to a Device name (e.g. SYSIN) aliased to the FD name via SELECT.
+      auto file = cbl_file_of(e);
+      if( file->device != 0 ) {
+        auto dev = cbl_special_name_of(symbol_at(file->device));
+        return strcasecmp(k->elem.file.name, dev->name);
+      }
+      return 1;
     }
-    return strcasecmp(k->elem.file.name, e->elem.file.name);
     break;
   }
   assert(k->type == SymField);
@@ -648,7 +654,7 @@ symbols_dump( size_t first, bool header );
 enum protoreq_t {
   proto_required_e,
   proto_allowed_e,
-  proto_disallowed_e, 
+  proto_disallowed_e,
 };
 
 static struct symbol_elem_t *
@@ -844,7 +850,7 @@ cbl_field_t::clear_attr( cbl_field_attr_t attr ) {
 }
 
 // Test various ways a Numeric Edited picture can describe a signed value.
-uint64_t 
+uint64_t
 cbl_field_t::set_signable() {
   gcc_assert(type == FldNumericEdited);
   gcc_assert(data.picture);
@@ -1144,8 +1150,8 @@ symbols_dump( size_t first, bool header ) {
         auto p = prototype_args(L.name);
         unsigned long narg = p.second? p.first.size() : 0;
         char *base = s;
-        s = xasprintf("%s (%s%zu args)",  base, 
-                      L.prototype? "prototype, " : "", 
+        s = xasprintf("%s (%s%zu args)",  base,
+                      L.prototype? "prototype, " : "",
                       narg);
         free(base);
       }
@@ -1536,7 +1542,7 @@ cbl_field_t::attr_str( const std::vector<cbl_field_attr_t>& attrs ) const
   const char *sep = "";
   char *out = NULL;
   uint64_t mask = cbl_field_attr_t(-1);
-  
+
   for( auto attr_l : attrs ) {
     char *part = out;
     if( has_attr(attr_l) && (attr_l & mask) == attr_l) {
@@ -1641,7 +1647,7 @@ field_str( const cbl_field_t *field ) {
   if( field->attr & local_e )   storage_type = 'w'; // because 'l' hard to read
 
   static const std::vector<cbl_field_attr_t> attrs {
-    strongdef_e, typedef_e, 
+    strongdef_e, typedef_e,
     figconst_1_e, figconst_2_e, figconst_4_e, rjust_e, ljust_e,
     zeros_e, signable_e, constant_e, function_e, quoted_e, filler_e,
     intermediate_e, embiggened_e, all_alpha_e, all_x_e,
@@ -1649,7 +1655,7 @@ field_str( const cbl_field_t *field ) {
     /* global_e, external_e, */ blank_zero_e, /* linkage_e, local_e, */ leading_e,
     separate_e, envar_e, encoded_e, bool_encoded_e, hex_encoded_e,
     depends_on_e, /* initialized_e, */ has_value_e, ieeedec_e, big_endian_e,
-    same_as_e, record_key_e, 
+    same_as_e, record_key_e,
   };
 
   pend += snprintf(pend, string + sizeof(string) - pend,
@@ -1992,7 +1998,7 @@ symbols_update( size_t first, bool parsed_ok ) {
     }
 
     // This test is a little too broad, but avoids a special attribute bit for
-    // things like the XML registers.  The tests are only internal checks anyway. 
+    // things like the XML registers.  The tests are only internal checks anyway.
     if( ! (is_numeric(field) ||
            field->has_attr(register_e) ||
            field->has_attr(global_e)) ) {
@@ -2337,6 +2343,33 @@ add_token( symbol_elem_t sym ) {
 
 const std::list<cbl_field_t> cdf_literalize();
 
+static
+cbl_field_attr_t endian_bit()
+  {
+  cbl_field_attr_t retval;
+  if( cobol_target_big_endian() ) // cppcheck-suppress knownConditionTrueFalse
+    {
+    retval = big_endian_e;
+    }
+  else
+    {
+    volatile int always_one = 1;
+    /* This tortured construction prevents cppcheck from pointing out that
+       endian_bit() always returns zero on a little-endian machine, which is
+       redundant in a "register_e | endian_bit()" expression. */
+    if( always_one )
+      {
+      retval = none_e;
+      }
+    else
+      {
+      gcc_unreachable();
+      retval = big_endian_e;
+      }
+    }
+  return retval;
+  }
+
 /*
  * When adding special registers, be sure to create the actual cblc_field_t
  * in libgcobol/constants.cc.
@@ -2358,25 +2391,27 @@ symbol_table_init(void) {
 
   // These should match the definitions in libgcobol/constants.cc
   static cbl_field_t constants[] = {
-    { FldAlphanumeric, SPACE_VALUE_E | constq | register_e,
-      {1,1,0,0, " \0\xFF"}, 0, "SPACE", cp1252 },
-    { FldAlphanumeric, SPACE_VALUE_E | constq | register_e,
+    { FldAlphanumeric, quoted_e | constant_e | register_e | space_value_e,
       {1,1,0,0, " \0\xFF"}, 0, "SPACES", cp1252 },
-    { FldAlphanumeric, LOW_VALUE_E | constq | register_e,
+    { FldAlphanumeric, quoted_e | constant_e | register_e | low_value_e,
       {1,1,0,0, "L\0\xFF"}, 0, "LOW_VALUES", cp1252 },
-    { FldAlphanumeric, ZERO_VALUE_E | constq | register_e,
+    { FldAlphanumeric, quoted_e | constant_e | register_e | zero_value_e,
       {1,1,0,0, "0"}, 0, "ZEROS", cp1252 }, // Don't change "ZEROS"; there are
                                             // things that depend on it.
-    { FldAlphanumeric, HIGH_VALUE_E | constq | register_e,
+    { FldAlphanumeric, quoted_e | constant_e | register_e | high_value_e,
       {1,1,0,0, "H\0\xFF"}, 0, "HIGH_VALUES", cp1252 },
     // IBM standard: QUOTE is a double-quote unless APOST compiler option
-    { FldAlphanumeric, QUOTE_VALUE_E | constq | register_e ,
+    { FldAlphanumeric, quoted_e | constant_e | register_e | quote_value_e ,
       {1,1,0,0, "\"\0\xFF"}, 0, "QUOTES", cp1252 },
-    { FldPointer, constq | register_e ,
+    { FldPointer, constant_e | register_e | null_value_e ,
       {8,8,0,0, zeroes_for_null_pointer}, 0, "NULLS", cp1252 },
     // 01  ARGI is the current index into the argv array
-    { FldNumericBin5, signable_e | register_e,
-      {16, 16, MAX_FIXED_POINT_DIGITS, 0, NULL}, 0, "_ARGI", cp1252 },
+    { FldNumericBin5, signable_e | register_e | endian_bit(),
+      {4, 4, 0, 0, NULL}, 0, "_ARGI", cp1252 },
+    { FldNumericBin5, constant_e | register_e | endian_bit(),
+      {4, 4, 0, 0, NULL}, 0, "_literally_zero", cp1252 },
+    { FldNumericBin5, constant_e | register_e | endian_bit(),
+      {4, 4, 0, 0, NULL}, 0, "_literally_one", cp1252 },
 
     // These last two don't require actual storage; they get BOOL var_decl_node
     // in parser_symbol_add()
@@ -2396,41 +2431,41 @@ symbol_table_init(void) {
   }
 
   static symbol_elem_t environs[] = {
-    { symbol_elem_t{ 0, cbl_special_name_t{0, CONSOLE_e, "CONSOLE", 0, "/dev/stdout"}} }, // stdout in DISPLAY; stdin in ACCEPT
+    { symbol_elem_t{ 0, cbl_special_name_t{0, CONSOLE_e, "CONSOLE", "/dev/stdout"}} }, // stdout in DISPLAY; stdin in ACCEPT
 
-    { symbol_elem_t{ 0, cbl_special_name_t{0, STDIN_e, "STDIN", 0, "/dev/stdin"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSIN_e, "SYSIN", 0, "/dev/stdin"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSIPT_e, "SYSIPT", 0, "/dev/stdin"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, STDIN_e, "STDIN", "/dev/stdin"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSIN_e, "SYSIN", "/dev/stdin"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSIPT_e, "SYSIPT", "/dev/stdin"}} },
 
-    { symbol_elem_t{ 0, cbl_special_name_t{0, STDOUT_e, "STDOUT", 0, "/dev/stdout"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSOUT_e, "SYSOUT", 0, "/dev/stdout"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSLIST_e, "SYSLIST", 0, "/dev/stdout"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSLST_e, "SYSLST", 0, "/dev/stdout"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, STDOUT_e, "STDOUT", "/dev/stdout"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSOUT_e, "SYSOUT", "/dev/stdout"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSLIST_e, "SYSLIST", "/dev/stdout"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSLST_e, "SYSLST", "/dev/stdout"}} },
 
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSPUNCH_e, "SYSPUNCH", 0, "/dev/stderr"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSPCH_e, "SYSPCH", 0, "/dev/stderr"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, STDERR_e, "STDERR", 0, "/dev/stderr"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSERR_e, "SYSERR", 0, "/dev/stderr"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSPUNCH_e, "SYSPUNCH", "/dev/stderr"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSPCH_e, "SYSPCH", "/dev/stderr"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, STDERR_e, "STDERR", "/dev/stderr"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, SYSERR_e, "SYSERR", "/dev/stderr"}} },
 
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C01_e, "C01", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C02_e, "C02", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C03_e, "C03", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C04_e, "C04", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C05_e, "C05", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C06_e, "C06", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C07_e, "C07", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C08_e, "C08", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C09_e, "C09", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C10_e, "C10", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C11_e, "C11", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, C12_e, "C12", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, CSP_e, "CSP", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, S01_e, "S01", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, S02_e, "S02", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, S03_e, "S03", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, S04_e, "S04", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, S05_e, "S05", 0, "/dev/null"}} },
-    { symbol_elem_t{ 0, cbl_special_name_t{0, AFP_5A_e, "AFP-5A", 0, "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C01_e, "C01", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C02_e, "C02", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C03_e, "C03", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C04_e, "C04", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C05_e, "C05", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C06_e, "C06", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C07_e, "C07", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C08_e, "C08", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C09_e, "C09", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C10_e, "C10", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C11_e, "C11", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, C12_e, "C12", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, CSP_e, "CSP", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, S01_e, "S01", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, S02_e, "S02", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, S03_e, "S03", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, S04_e, "S04", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, S05_e, "S05", "/dev/null"}} },
+    { symbol_elem_t{ 0, cbl_special_name_t{0, AFP_5A_e, "AFP-5A", "/dev/null"}} },
   };
 
   struct symbol_elem_t *p = table.elems + table.nelem;
@@ -2501,13 +2536,20 @@ symbol_table_init(void) {
 
   // special registers
   static cbl_field_t special_registers[] = {
-    { FldNumericDisplay, register_e, {2,2,2,0, NULL}, 0, "_FILE_STATUS", cp1252 },
-    { FldNumericBin5,    register_e, {2,2,4,0, NULL}, 0, "UPSI-0", cp1252 },
-    { FldNumericBin5,    global_e, {2,2,4,0, NULL}, 0, "LINAGE-COUNTER", cp1252 },
-    { FldLiteralA,        register_e, {0,0,0,0, "/dev/stdin"}, 0, "_dev_stdin", cp1252 },
-    { FldLiteralA, constq|register_e, {0,0,0,0, "/dev/stdout"}, 0, "_dev_stdout", cp1252 },
-    { FldLiteralA, constq|register_e, {0,0,0,0, "/dev/stderr"}, 0, "_dev_stderr", cp1252 },
-    { FldLiteralA, constq|register_e, {0,0,0,0, "/dev/null"},   0, "_dev_null", cp1252 },
+    { FldNumericDisplay, register_e,
+                          {2,2,2,0, NULL}, 0, "_FILE_STATUS", cp1252 },
+    { FldNumericBin5,    register_e | endian_bit(),
+                          {2,2,4,0, NULL}, 0, "UPSI-0", cp1252 },
+    { FldNumericBin5,    global_e | endian_bit(),
+                          {2,2,4,0, NULL}, 0, "LINAGE-COUNTER", cp1252 },
+    { FldLiteralA, constant_e|quoted_e|register_e,
+                          {0,0,0,0, "/dev/stdin"}, 0, "_dev_stdin", cp1252 },
+    { FldLiteralA, constant_e|quoted_e|register_e,
+                          {0,0,0,0, "/dev/stdout"}, 0, "_dev_stdout", cp1252 },
+    { FldLiteralA, constant_e|quoted_e|register_e,
+                          {0,0,0,0, "/dev/stderr"}, 0, "_dev_stderr", cp1252 },
+    { FldLiteralA, constant_e|quoted_e|register_e,
+                          {0,0,0,0, "/dev/null"},   0, "_dev_null", cp1252 },
   };
 
   assert(table.nelem + COUNT_OF(special_registers) < table.capacity);
@@ -2519,7 +2561,7 @@ symbol_table_init(void) {
   table.nelem = p - table.elems;
   assert(table.nelem < table.capacity);
 
-  // Add any CDF values defined on the command line. 
+  // Add any CDF values defined on the command line.
   // After symbols are ready, the CDF adds them directly.
   const std::list<cbl_field_t> cdf_values = cdf_literalize();
   auto icdf = table.nelem;
@@ -2540,7 +2582,7 @@ symbol_table_init(void) {
       f.set_initial(cbl_loc_t());
     }
   }
-  
+
   for( auto e = symbols.elems; e < symbols.elems + symbols.nelem; e++ ) {
     if( e->type == SymField ) {
       update_symbol_map2(e);
@@ -2602,6 +2644,8 @@ symbol_registers_add() {
   const static cbl_field_t::codeset_t cp1252(CP1252_e);
   const static auto based_any = cbl_field_attr_t(global_e | based_e | any_length_e);
   const static auto glosig    = cbl_field_attr_t(global_e | signable_e);
+  const static auto native    = glosig | endian_bit();
+
   // The data.initial of these fields is used verbatim by parser_symbol_add.
   const static char zero[4] = {0};
         static char spc[160] = " ";
@@ -2609,7 +2653,7 @@ symbol_registers_add() {
   if( spc[1] != 0x20 ) {
     std::fill( spc, spc + sizeof(spc), 0x20 );
   }
-    
+
   /* In the following table, the FldNumericBin5 initial values are strings with
      NUL characters in them.  That's because this table bypasses the encode_numeric
      function and the values are passed directly to parser_symbol_add(), which
@@ -2617,24 +2661,24 @@ symbol_registers_add() {
      memory representation of the run-time variable.  */
 
   static const cbl_field_t ibm_registers[] = {
-#if COBOL_JSON_READY    
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "JSON-CODE", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "JSON-STATUS", cp1252 },
+#if COBOL_JSON_READY
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "JSON-CODE", cp1252 },
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "JSON-STATUS", cp1252 },
 #endif
-    { FldNumericBin5,  glosig,    {2,2,4,0, zero    }, 0, "RETURN-CODE", cp1252 },
+    { FldNumericBin5,  native,    {2,2,4,0, zero    }, 0, "RETURN-CODE", cp1252 },
     { FldAlphanumeric, glosig,    {160,160,0,0, spc }, 0, "SORT-CONTROL", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "SORT-CORE-SIZE", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "SORT-FILE-SIZE", cp1252 },
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "SORT-CORE-SIZE", cp1252 },
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "SORT-FILE-SIZE", cp1252 },
     { FldAlphanumeric, global_e,  {8,8,0,0, spc     }, 0, "SORT-MESSAGE", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "SORT-MODE-SIZE", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,5,0, zero    }, 0, "SORT-RETURN", cp1252 },
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "SORT-MODE-SIZE", cp1252 },
+    { FldNumericBin5,  native,    {4,4,5,0, zero    }, 0, "SORT-RETURN", cp1252 },
     // 01  TALLY GLOBAL PICTURE 9(5) USAGE BINARY VALUE ZERO.
     { FldNumericBin5,  global_e,  {4,4,5,0, zero    }, 0, "_TALLY", cp1252 },
     { FldAlphanumeric, global_e,  {16,16,0,0, spc   }, 0, "WHEN-COMPILED", cp1252 },
     // xml registers
-    { FldNumericBin5,  glosig,    {4,4,9,0, zero    }, 0, "XML-CODE", cp1252 },
+    { FldNumericBin5,  native,    {4,4,9,0, zero    }, 0, "XML-CODE", cp1252 },
     { FldAlphanumeric, global_e,  {30,30,0,0, spc   }, 0, "XML-EVENT", cp1252 },
-    { FldNumericBin5,  glosig,    {4,4,9,0, zero    }, 0, "XML-INFORMATION", cp1252 },
+    { FldNumericBin5,  native,    {4,4,9,0, zero    }, 0, "XML-INFORMATION", cp1252 },
     { FldAlphanumeric, based_any, {1,1,0,0, nullptr }, 0, "XML-NAMESPACE", cp1252 },
     { FldAlphanumeric, based_any, {1,1,0,0, nullptr }, 0, "XML-NNAMESPACE", cp1252 },
     { FldAlphanumeric, based_any, {1,1,0,0, nullptr }, 0, "XML-NAMESPACE-PREFIX", cp1252 },
@@ -2657,7 +2701,7 @@ symbol_registers_add() {
 
 const cbl_label_t *
 cbl_perform_tgt_t::recurses( const cbl_label_t *para __attribute__ ((unused)),
-                             const cbl_label_t *sect __attribute__ ((unused)) ) const 
+                             const cbl_label_t *sect __attribute__ ((unused)) ) const
 {
   // Mon Jul  6 11:14:12 2026
   // Decided not to enforce until we enforce EC-FLOW-IMP-RECURSION or
@@ -3007,7 +3051,7 @@ symbol_literalA( size_t program, const char name[] )
   cbl_field_t field = {};
   field.type = FldLiteralA;
   field.data.initial = name;
-  field.attr = constq;
+  field.attr = constant_e | quoted_e;
 
   struct symbol_elem_t key { program, field };
 
@@ -3519,7 +3563,7 @@ cbl_alphabet_t::reencode( const cbl_loc_t& loc )  {
        UTF-32/LE/BE.  What collation means in those environments is unknown to
        me at this time.  So, for now I am simply assuming that whatever we are
        doing here fits into a single byte.
-       
+
        So, for SBC or little-endian character sets, we just pick up the value
        at pos[0].  For big-endian character sets, we find the low-order byte.
        */
@@ -3620,7 +3664,7 @@ symbol_temporary_alphanumerics() {
   symbol_temporaries_t output;
   std::copy_if( program_temporaries.begin(),
                 program_temporaries.end(),
-                std::back_inserter(output), 
+                std::back_inserter(output),
                 []( auto f ) {
                   switch(f->type) {
                   case FldAlphaEdited:
@@ -3758,7 +3802,7 @@ new_literal_add( const char initial[], uint32_t len,
     field->attr |= attr;
 
     char *orig = static_cast<char *>(xmalloc(len+4));
-    
+
     auto p = initial? std::copy(initial, initial + len, orig) : orig;
     std::fill(p, p+4, 0);
     field->data.original(orig);
@@ -4070,6 +4114,9 @@ new_temporary_clone( const cbl_field_t *orig) {
   if( field->type == FldNumericBin5 ) {
     field->type = orig->type;
     field->codeset = orig->codeset;
+    field->attr &= ~big_endian_e;
+    field->attr |= endian_bit();
+
   }
   field->attr = intermediate_e;
 
@@ -4196,12 +4243,12 @@ iconv_cd( cbl_encoding_t tgt ) {
   iconv_key_t key(tgt, src);
   auto p = cds.find(key);
   iconv_t cd;
-    
+
   if( p == cds.end() ) {
     const char *fromcode = __gg__encoding_iconv_name(src);
-    const char *tocode   = __gg__encoding_iconv_name(tgt);    
+    const char *tocode   = __gg__encoding_iconv_name(tgt);
     gcc_assert(fromcode && tocode);
-    
+
     if( (cd = helpful_iconv_open(tocode, fromcode)) == iconv_t(-1) ) {
       return cd;
     }
@@ -4234,7 +4281,7 @@ cbl_field_t::encode( size_t srclen, cbl_loc_t loc ) {
     }
 
   extern cbl_loc_t yylloc;
-  
+
   const char *bad_boy = data.original();
   if( 0 == loc.first_line )
     loc = level == 0 ? cbl_loc_t(yylloc) : symbol_field_location(field_index(this));
@@ -4255,13 +4302,13 @@ cbl_field_t::encode( size_t srclen, cbl_loc_t loc ) {
               const_cast<char*>(data.initial));
     return nullptr; // may return "truncated success" with error.
   }
-  
+
   auto figconst = cbl_figconst_of(data.original());
   if( normal_value_e != figconst ) {
-    blank_initial( char_capacity(), figconst ); 
+    blank_initial( char_capacity(), figconst );
     return nullptr;
   }
-  
+
   for( auto src = codeset.default_encodings.current_source_encoding();
        src;
        src = codeset.default_encodings.next_source_encoding() ) {
@@ -4279,9 +4326,9 @@ cbl_field_t::encode( size_t srclen, cbl_loc_t loc ) {
                 xstrerror(errno));
       continue;
     }
-    
+
     /*
-     * If conversion succeeds, return NULL.  
+     * If conversion succeeds, return NULL.
      * If it fails, try the next potential encoding.
      */
     size_t inbytesleft = srclen, outbytesleft = data.capacity();
@@ -4299,7 +4346,7 @@ cbl_field_t::encode( size_t srclen, cbl_loc_t loc ) {
           // Tolerate trailing zeros for P-values
           if( data.rdigits < 0 ) {
             if( inbytesleft <= size_t(data.rdigits * -1) ) {
-             bool all_zeros = std::all_of(reinterpret_cast<const char*>(inbuf), 
+             bool all_zeros = std::all_of(reinterpret_cast<const char*>(inbuf),
                                           data.original() + srclen,
                                           [](char ch) {
                                             return '0' == ch;
@@ -4308,13 +4355,13 @@ cbl_field_t::encode( size_t srclen, cbl_loc_t loc ) {
             }
           }
         }
-        error_msg( loc, 
+        error_msg( loc,
                    "VALUE %qs is too long to initialize %qs, discarded %qs",
                    data.original(), name, inbuf);
         return nullptr; // success-ish
       }
       dbgmsg("'%c' of '%s'[%lu] could not be converted from %s to %s: %s",
-             *inbuf, data.original(), inbuf - data.original(), 
+             *inbuf, data.original(), inbuf - data.original(),
              cbl_encoding_str(
                    codeset.default_encodings.current_source_encoding()->type),
              cbl_encoding_str(codeset.encoding),
@@ -4370,7 +4417,7 @@ cbl_field_t::set_capacity(size_t nchar) {
         } else {
           data.capacity( capacity_cast(nchar) * codeset.stride() );
         }
-          
+
       } else {
         cbl_internal_error("%s: %s %s has invalid encoding",
                            __func__, cbl_field_type_str(type), name);
@@ -4408,7 +4455,7 @@ cbl_label_t::str() const {
   char *buf;
   switch(type) {
   case LblParagraph:
-    buf = xasprintf("%-12s %s OF #%ld %s, line %d", type_str() + 3, name, parent, 
+    buf = xasprintf("%-12s %s OF #%ld %s, line %d", type_str() + 3, name, parent,
                     parent? cbl_label_of(symbol_at(parent))->name : "", line);
     break;
   case LblProgram:
@@ -5432,6 +5479,28 @@ cbl_file_t::keys_str() const {
     names += p + 1 < keys + nkey ? "," : "]";
   }
   return xasprintf("%s", names.c_str());
+}
+
+size_t
+cbl_file_t::special_index( special_name_t id ) {
+  cbl_special_name_t special = { 0, id };
+  struct symbol_elem_t key { 0, special }, *e;
+
+  e = static_cast<struct symbol_elem_t *>(lfind( &key, symbols.elems,
+                                                 &symbols.nelem, sizeof(key),
+                                                 symbol_elem_cmp ) );
+  assert(e);
+  return symbol_index(e);
+}
+
+const char *
+cbl_file_t::filename_of() const {
+  if( filename != 0 ) { return cbl_field_of(symbol_at(filename))->name; }
+  if( device != 0 ) {
+    auto dev = cbl_special_name_of(symbol_at(device));
+    if( dev->os_filename[0] != '\0' ) return dev->os_filename; 
+  }
+  return nullptr;
 }
 
 /*

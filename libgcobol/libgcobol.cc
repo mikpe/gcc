@@ -6250,7 +6250,7 @@ alpha_to_alpha_move_from_location(cblc_field_t *field,
       }
     else
       {
-      // Destination is right-justified, so we
+      // Destination is left-justified, so we
       // discard the trailing source characters:
       memmove(to,
               from,
@@ -11466,7 +11466,7 @@ __gg__codeset_figurative_constants()
   {
   // This routine gets called after the codeset has been changed
 
-  // __gg__data_space and __gg__data_zeros don't change because they are
+  // __gg__data_spaces and __gg__data_zeros don't change because they are
   // permanently encoded as iconv_CP1252_e.  These other three can be changed
   // as either compiler options or ALPHABET clauses.
   *__gg__data_low_values  = __gg__low_value_character;
@@ -11489,7 +11489,7 @@ __gg__get_figconst_data(const cblc_field_t *field)
       retval = __gg__data_zeros;
       break;
     case space_value_e  :
-      retval = __gg__data_space;
+      retval = __gg__data_spaces;
       break;
     case quote_value_e  :
       retval = __gg__data_quotes;

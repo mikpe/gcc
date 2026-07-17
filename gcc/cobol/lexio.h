@@ -168,9 +168,9 @@ struct filespan_t : public bytespan_t {
     if( nul != eol ) {
       if( std::any_of( nul, eodata,
                        []( char ch ) { return ch != '\0'; } ) ) {
-        int icol2 = nul - cur;
+        int icol = nul - cur;
         fprintf(stderr, "%s:%d:%d: error: NUL character detected in input\n%*s\n",
-                cobol_filename(), int(iline + 1), ++icol2,
+                cobol_filename(), int(iline + 1), ++icol,
                 int(eol - cur), cur);
         parse_error_inc();
         std::replace(nul, eol, '\0', SPACE);

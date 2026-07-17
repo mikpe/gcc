@@ -322,14 +322,14 @@ PROCEDURE{SPC}DIVISION	{ yy_push_state(procedure_div);
   (IS{SPC})?">="        { return GE;  }
   (IS{SPC})?">"         { return '>'; }
 
-  {LESS_THAN} 		{ return '<'; }
+  {LESS_THAN}/[[:space:]] 		{ return '<'; }
   {LESS_THAN}{SPC}{OR_EQUAL}/[[:space:]]	{ return LE; }
   (IS{SPC})?EQUALS?({SPC}TO)?/[[:space:]] {
 		  static char eq[] = "EQUAL";
 		  ydflval.string = yylval.string = eq;
 		  return EQ; }
   {GREATER_THAN}{SPC}{OR_EQUAL}/[[:space:]]	{ return GE; }
-  {GREATER_THAN}				{ return '>'; }
+  {GREATER_THAN}/[[:space:]]			{ return '>'; }
 
   {ISNT}{OSPC}">="        { verify_ws(yytext[yyleng - 3]); return '<'; }
   {ISNT}{OSPC}">"         { verify_ws(yytext[yyleng - 2]); return LE;  }
@@ -337,11 +337,11 @@ PROCEDURE{SPC}DIVISION	{ yy_push_state(procedure_div);
   {ISNT}{OSPC}"<"         { verify_ws(yytext[yyleng - 2]); return GE;  }
   {ISNT}{OSPC}"<="        { verify_ws(yytext[yyleng - 3]); return '>'; }
 
-  {ISNT}{SPC}GREATER{SPC}(THAN)?{SPC}{OR_EQUAL}/[[:space:]] { return '<'; }
-  {ISNT}{SPC}GREATER{SPC}(THAN)?	{ return LE; }
-  {ISNT}{SPC}EQUALS?{SPC}(TO)?		{ return NE; }
-  {ISNT}{SPC}LESS{SPC}(THAN)?		{ return GE; }
-  {ISNT}{SPC}LESS{SPC}(THAN)?{SPC}{OR_EQUAL}/[[:space:]] { return '>'; }
+  {ISNT}{SPC}GREATER({SPC}THAN)?{SPC}{OR_EQUAL}/[[:space:]] { return '<'; }
+  {ISNT}{SPC}GREATER({SPC}THAN)?/[[:space:]]	{ return LE; }
+  {ISNT}{SPC}EQUALS?({SPC}TO)?/[[:space:]]	{ return NE; }
+  {ISNT}{SPC}LESS({SPC}THAN)?/[[:space:]]	{ return GE; }
+  {ISNT}{SPC}LESS({SPC}THAN)?{SPC}{OR_EQUAL}/[[:space:]] { return '>'; }
 
   [*]{2}	{ return POW; }
 
@@ -791,7 +791,7 @@ GROUP		{ return GROUP; }
 GOBACK		{ return GOBACK; }
 BEAT-FEET	{ return GOBACK; }
 
-GO({SPC}TO)?	{ return GOTO; }
+GO({SPC}TO)?/[[:space:]]	{ return GOTO; }
 
 GLOBAL		{ return GLOBAL; }
 GIVING		{ return GIVING; }
@@ -1115,11 +1115,11 @@ USE({SPC}FOR)?		{ return USE; }
   NULLS?		{ return NULLS; }
 
   OF		           { return OF; }
-  VALUE({SPC}IS)?   { return VALUE; }
-  VALUES({SPC}ARE)? { return VALUE; }
+  VALUE({SPC}IS)?/[[:space:]]   { return VALUE; }
+  VALUES({SPC}ARE)?/[[:space:]] { return VALUE; }
   THRU|THROUGH             { return THRU; }
 
-  VALUES?({SPC}(IS|ARE))?{SPC}NULLS? {    return NULLPTR; }
+  VALUES?({SPC}(IS|ARE))?{SPC}NULLS? { return NULLPTR; }
   VALUES?({SPC}(IS|ARE))?/{SPC}[+-]?{dfc} {
                           yy_push_state(numeric_state); return VALUE; }
 
@@ -1688,7 +1688,7 @@ USE({SPC}FOR)?		{ return USE; }
   SORT		{ return SORT; }
   SORT-MERGE	{ return SORT_MERGE; }
   SOURCE	{ return SOURCE; }
-  SPACE		{ return SPACE; }
+  SPACE		{ return SPACES; }
   SPACES	{ return SPACES; }
   SPECIAL-NAMES	{ return SPECIAL_NAMES; }
   STANDARD	{ return STANDARD; }
@@ -2279,6 +2279,11 @@ USE({SPC}FOR)?		{ return USE; }
 		  yylval.string = name;
 		  pop_return NAME;
 	 	}
+  {PREFIX}?['']                { yylval.literal.set_prefix(yytext, yyleng-1);
+			  BEGIN(quoted1); }
+  {PREFIX}?[""]                { yylval.literal.set_prefix(yytext, yyleng-1);
+			  BEGIN(quoted2); }
+
 }
 
 		/*

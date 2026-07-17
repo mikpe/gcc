@@ -789,7 +789,7 @@ class locale_tgt_t {
 %type   <field>         data_descr data_descr1 write_what file_record
 %type   <field>         name88
 %type   <refer>         advancing  advance_by
-%type   <refer>         alphaval alpha_val numeref scalar scalar88
+%type   <refer>         alphaval alpha_val numeref scalar scalar88 scalar_any
 %type   <refer>         tableref tableish
 %type   <refer>         varg varg1 varg1a start_after start_pos
 %type   <refer>         expr expr_term compute_expr free_tgt by_value_arg
@@ -2367,15 +2367,19 @@ assign_clause:  ASSIGN to selected_name[selected]  {
                   $$.file = new cbl_file_t(protofile);
                   $$.file->filename = field_index($selected->field);
                 }
-        |       ASSIGN to device_name USING name {
+        |       ASSIGN to device_name[dev] USING name {
                   $$.clause = assign_clause_e;
-		  cbl_unimplemented("ASSIGN TO DEVICE");
-		  YYERROR;
+                  $$.file = new cbl_file_t(protofile);
+                  $$.file->assign($dev.id);
+                  $$.file->filename = field_index($name);
                 }
-        |       ASSIGN to device_name {
+        |       ASSIGN to device_name[dev] {
                   $$.clause = assign_clause_e;
-		  cbl_unimplemented("ASSIGN TO DEVICE");
-		  YYERROR;
+                  $$.file = new cbl_file_t(protofile);
+                  $$.file->assign($dev.id);
+                  if( $$.file->org == file_disorganized_e ) {
+                    $$.file->org = file_sequential_e;
+                  } 
                 }
         |       ASSIGN USING name {
                   $$.clause = assign_clause_e;
@@ -3046,26 +3050,6 @@ dev_mnemonic:	device_name is NAME
                 {
                   cbl_special_name_t special = { $1.token, $1.id };
                   if( !namcpy(@NAME, special.name, $NAME) ) YYERROR;
-
-                  const char *filename;
-
-                  switch( special.id ) {
-                  case STDIN_e: case SYSIN_e: case SYSIPT_e:
-                    filename = "/dev/stdin";
-                    break;
-                  case STDOUT_e: case SYSOUT_e:
-                  case SYSLIST_e: case SYSLST_e: case CONSOLE_e:
-                    filename ="/dev/stdout";
-                    break;
-                  case STDERR_e: case SYSPUNCH_e: case SYSPCH_e: case SYSERR_e:
-                    filename ="/dev/stderr";
-                    break;
-                  default:
-                    filename ="/dev/null";
-                    break;
-                  }
-
-                  special.filename = symbol_index(symbol_literalA(0, filename));
 
                   symbol_special_add(PROGRAM, &special);
                 }
@@ -7352,7 +7336,17 @@ true_false:     TRUE_kw  { $$ = TRUE_kw; }
         |       FALSE_kw { $$ = FALSE_kw; }
                 ;
 
-scalar:         tableref {
+scalar:         scalar_any {
+                  if( was_fd_name($1->field) ) {
+                    if( dialect_ok(@1, IbmCallFd, "CALL USING FD unimplemented") ) {
+                      // No other COBOL compiler interprets the FD as a buffer.  This feature
+                      // requires further development.
+                      warn_msg(@1, "CALL USING FD passes file buffer, not handle");
+                    }
+                  }
+                }
+                ;
+scalar_any:     tableref {
 		  // Check for missing subscript; others already checked.
                   if( $1->nsubscript() == 0 && 0 < dimensions($1->field) ) {
                     subscript_dimension_error(@1, 0, $$);
@@ -8879,33 +8873,29 @@ read_file:      READ read_body {
                 }
                 ;
 
-read_body:      NAME read_next read_into read_key
+read_body:      filename[file] read_next read_into read_key
                 {
                   statement_begin(@$, READ);
-                  struct symbol_elem_t *e = symbol_file(PROGRAM, $NAME);
-                  if( !e ) {
-                    error_msg(@1, "invalid file name '%s'", $NAME);
-                    YYERROR;
-                  }
 
-                  $$ = cbl_file_of(e);
+                  $$ = $file;
 
                   struct cbl_field_t *record = symbol_file_record($$);
                   if( !record ) {
-                    error_msg(@1, "syntax error? invalid file record name");
+                    error_msg(@file, "syntax error? invalid file record name");
                     YYERROR;
                   }
+
                   if( $read_key->field && is_sequential($$) ) {
-                    error_msg(@1, "SEQUENTIAL file %s has no KEY", $$->name);
+                    error_msg(@file, "SEQUENTIAL file %s has no KEY", $$->name);
                     YYERROR;
                   }
                   if( $$->org == file_line_sequential_e && $read_next == -2 ) {
-                    error_msg(@1, "LINE SEQUENTIAL file %s cannot READ PREVIOUS",
+                    error_msg(@file, "LINE SEQUENTIAL file %s cannot READ PREVIOUS",
                              $$->name);
                     YYERROR;
                   }
                   if( $read_key->field && $read_next < 0 ) {
-                    error_msg(@1, "cannot read NEXT with KEY %qs", $$->name);
+                    error_msg(@file, "cannot read NEXT with KEY %qs", $$->name);
                     YYERROR;
                   }
 
@@ -10123,8 +10113,6 @@ filename:       NAME
         |       device_name[dev]
                 {
                   auto dev = symbol_special($dev.id);
-                  error_msg(@dev, "invalid device %qs: FD name required", dev->name);
-                  YYERROR;
                   auto e = symbol_file(PROGRAM, dev->name);
                   if( ! e ) {
                     error_msg(@dev, "no FD selected for device '%s'", dev->name);
@@ -10752,8 +10740,8 @@ ffi_by_val:     by_value_arg
                 }
                 ;
 
-scalar_arg:     scalar
-        |       scalar AS FIXED LENGTH %prec NAME
+scalar_arg:     scalar_any
+        |       scalar_any AS FIXED LENGTH %prec NAME
                 ;
 
 call_excepts:   call_excepts[a] call_except[b] statements %prec CALL
@@ -13102,12 +13090,13 @@ verify_figconst( enum cbl_figconst_t figconst , size_t pos ) {
 static size_t
 constant_index( int token ) {
   switch(token) {
+  // These tokens refer to constants at fixed positions in the symbol table.
   case SPACES      : return 0;
-  case LOW_VALUES  : return verify_figconst(low_value_e, 2);
-  case ZERO        : return verify_figconst(zero_value_e, 3);
-  case HIGH_VALUES : return verify_figconst(high_value_e, 4);
-  case QUOTES      : return 5;
-  case NULLS       : return 6;
+  case LOW_VALUES  : return verify_figconst(low_value_e, 1);
+  case ZERO        : return verify_figconst(zero_value_e, 2);
+  case HIGH_VALUES : return verify_figconst(high_value_e, 3);
+  case QUOTES      : return 4;
+  case NULLS       : return 5;
   }
   cbl_errx( "%s:%d: no such constant %d", __func__, __LINE__, token);
   return (size_t)-1;
@@ -14630,16 +14619,6 @@ void parser_add_declaratives( size_t n, cbl_declarative_t *declaratives) {
 
 cbl_field_t *
 new_literal( const cbl_loc_t loc, const literal_t& lit, enum cbl_field_attr_t attr ) {
-  bool zstring = lit.prefix[0] == 'Z';
-  if( !zstring && lit.data[lit.len] != '\0' ) {
-    dbgmsg("%s:%d: line %d, no NUL terminator '%-*.*s'{"
-          HOST_SIZE_T_PRINT_UNSIGNED "/" HOST_SIZE_T_PRINT_UNSIGNED "}",
-          __func__, __LINE__, yylineno,
-          int(lit.len), int(lit.len),
-          lit.data, (fmt_size_t)strlen(lit.data), (fmt_size_t)lit.len);
-  }
-  assert(zstring || lit.data[lit.len] == '\0');
-
   size_t attrs(attr);
   attrs |= constant_e;
   attrs |= literal_attr(lit.prefix);

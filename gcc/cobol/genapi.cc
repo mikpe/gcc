@@ -9112,6 +9112,30 @@ parser_file_open( struct cbl_file_t *file, int mode_char )
     TRACE1_END
     }
 
+
+//#pragma message "parser_file_open: consult cbl_file_t::filename_of and cbl_file_t::device"
+
+  /*
+   * The filename of a cbl_file_t may be found in three places: 
+   * 1.  As before, in the cbl_field_t indexed by cbl_file_t::filename.
+   * 2.  Now, in the cbl_special_name_t indexed by cbl_file_t::device.
+   * 3.  As ever, in neither, from the environment.  
+   *
+   * If both filename and device are nonzero and not FldForward, the filename
+   * supersedes. The syntax was 
+   *     SELECT fd-name ASSIGN TO device-name USING filename  
+   * That just creates in the parser an alias of device-name to fd-name.  It's
+   * still the same file and does *not* change the device characteristics.
+   *
+   * If filename is FldForward (or 0) and device is nonzero, the OS filename is
+   * taken from cbl_special_name_t::os_filename.  It is tiny, hard-coded name
+   * in /dev.
+   *
+   * Upon implementation please feel free to delete this message. 
+   * --jkl
+   */
+
+
   tree pszFilename = gg_define_char_star();
   cbl_field_t *field_of_name = symbol_field_forward(file->filename);
   if( field_of_name->type == FldForward )

@@ -2896,13 +2896,6 @@ field_find( cbl_loc_t loc, const std::list<const char *>& names ) {
     }
   }
   symbol_elem_t *e = symbol_find(names);
-  if( e && SymField == e->type && was_fd_name(cbl_field_of(e)) ) {
-    if( dialect_ok(loc, IbmCallFd, "CALL USING FD unimplemented") ) {
-      // No other COBOL compiler interprets the FD as a buffer.  This feature
-      // requires further development.
-      warn_msg(loc, "CALL USING FD passes file buffer, not handle");
-    }
-  }
   return e? cbl_field_of(e) : NULL;
 }
 
@@ -3606,9 +3599,8 @@ data_division_ready() {
   if( (nsymbol = symbols_update(nsymbol, nparse_error == 0)) > 0 ) {
     if( ! mode_syntax_only() ) {
       if( ! literally_one ) {
-        // Use strdup so cbl_field_t::internalize can free them if need be.
-        literally_one = new_constant(xstrdup("1"));
-        literally_zero = new_constant(xstrdup("0"));
+      literally_one  = register_find("_literally_one");
+      literally_zero = register_find("_literally_zero");
       }
     } else {
       nsymbol = again;
