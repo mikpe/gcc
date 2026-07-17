@@ -4847,9 +4847,8 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 (for op (min bit_ior)
   (for cmp (ge lt)
     (simplify
-      (cmp (op:c @0 @1) integer_zerop@2)
-      (if (tree_expr_nonnegative_p (@1))
-        (cmp @0 @2)))))
+      (cmp (op:c @0 tree_expr_nonnegative_p@1) integer_zerop@2)
+        (cmp @0 @2))))
 
 /* Undo fancy ways of writing max/min or other ?: expressions, like
    a - ((a - b) & -(a < b))  and  a - (a - b) * (a < b) into (a < b) ? b : a.
