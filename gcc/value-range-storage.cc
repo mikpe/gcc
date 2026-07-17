@@ -817,6 +817,7 @@ prange_storage::equal_p (const prange &r) const
 
   if (m_pt != r.m_pt)
     return false;
+  // Storage objects are only equal If they point to the same memory.
   if (m_points_to_p != r.m_points_to_p)
     return false;
 

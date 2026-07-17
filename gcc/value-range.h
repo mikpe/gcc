@@ -1519,7 +1519,11 @@ prange::pt_unknown_p () const
 inline bool
 prange::pt_equal_p (const prange &p) const
 {
-  return (m_points_to_p == p.m_points_to_p && m_pt == p.m_pt);
+  // A prange object invokes vrp_operand_equal_p as we want ranges to compare
+  // equal to each other if they refer to the same object, even if the
+  // tree has become unshared.
+  return (m_points_to_p == p.m_points_to_p
+	  && vrp_operand_equal_p (m_pt, p.m_pt));
 }
 
 inline bool
