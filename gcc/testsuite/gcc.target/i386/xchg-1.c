@@ -6,4 +6,4 @@ unsigned short good(unsigned short a)
        return (a >> 8 | a << 8);
 }
 
-/* { dg-final { scan-assembler "rol" } } */
+/* { dg-final { scan-assembler "\[ \t\]xchg" } } */

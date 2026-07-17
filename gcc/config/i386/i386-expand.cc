@@ -28420,8 +28420,11 @@ ix86_expand_gfni_bitreverse (rtx dest, rtx src)
       return;
     }
   if (mode == HImode)
-    target = lowpart_subreg (mode, target, SImode);
-  if (mode == SImode)
+    {
+      target = lowpart_subreg (mode, target, SImode);
+      emit_insn (gen_bswaphi2 (dest, target));
+    }
+  else if (mode == SImode)
     emit_insn (gen_bswapsi2 (dest, target));
   else
     emit_insn (gen_rtx_SET (dest, gen_rtx_BSWAP (mode, target)));
