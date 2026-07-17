@@ -100,10 +100,14 @@ int main()
   test_default<double>();
   test_default<long double>();
 
-#ifdef __x86_64__
+#if __FLT_EVAL_METHOD__ >= 0
+# if __FLT_EVAL_METHOD__ == 0
   test_custom<float>();
-#endif
+# endif
+# if __FLT_EVAL_METHOD__ != 2
   test_custom<double>();
+# endif
   test_custom<long double>();
+#endif
   return 0;
 }
