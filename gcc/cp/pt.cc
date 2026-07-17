@@ -28802,6 +28802,10 @@ maybe_instantiate_noexcept (tree fn, tsubst_flags_t complain)
   if (orig_fn)
     TREE_TYPE (orig_fn) = TREE_TYPE (fn);
 
+  /* [basic.stc.dynamic.deallocation]/3 - A deallocation function shall not
+     have a potentially throwing exception specification.  */
+  maybe_diagnose_deallocation_noexcept_false (fn);
+
   return true;
 }
 

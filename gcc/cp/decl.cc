@@ -9430,6 +9430,25 @@ omp_declare_variant_finalize (tree decl, tree attr)
     }
 }
 
+/* [basic.stc.dynamic.deallocation]/3 - A deallocation function shall not
+   have a potentially throwing exception specification.  */
+
+void
+maybe_diagnose_deallocation_noexcept_false (tree decl)
+{
+  if (cxx_dialect >= cxx29
+      && DECL_NAME (decl)
+      && IDENTIFIER_NEWDEL_OP_P (DECL_NAME (decl))
+      && !IDENTIFIER_NEW_OP_P (DECL_NAME (decl)))
+    {
+      tree spec = TYPE_RAISES_EXCEPTIONS (TREE_TYPE (decl));
+      if (spec && spec == noexcept_false_spec)
+	error_at (DECL_SOURCE_LOCATION (decl),
+		  "deallocation function %qD declared possibly throwing",
+		  decl);
+    }
+}
+
 static void cp_maybe_mangle_decomp (tree, cp_decomp *);
 
 /* Finish processing of a declaration;
@@ -12620,6 +12639,10 @@ grokfndecl (tree ctype,
 	    }
 	}
     }
+
+  /* [basic.stc.dynamic.deallocation]/3 - A deallocation function shall not
+     have a potentially throwing exception specification.  */
+  maybe_diagnose_deallocation_noexcept_false (decl);
 
   /* Caller will do the rest of this.  */
   if (check < 0)

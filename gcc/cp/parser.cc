@@ -30135,6 +30135,10 @@ cp_parser_class_specifier (cp_parser* parser)
 
 	  /* Remove any template parameters from the symbol table.  */
 	  maybe_end_member_template_processing ();
+
+	  /* [basic.stc.dynamic.deallocation]/3 - A deallocation function
+	     shall not have a potentially throwing exception specification.  */
+	  maybe_diagnose_deallocation_noexcept_false (decl);
 	}
       vec_safe_truncate (unparsed_noexcepts, 0);
 
