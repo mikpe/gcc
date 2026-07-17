@@ -1,3 +1,24 @@
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/126057
+	* decl.cc (cp_finish_decomp): Set assembler name to
+	<decomp> during error recovery whenever TREE_STATIC
+	rather than just DECL_NAMESPACE_SCOPE_P.
+	* pt.cc (tsubst_stmt): If tsubst_decomp_names fails,
+	set assembler name to <decomp>.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-06-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125674
+	* pt.cc (tsubst_decl): Diagnose bit-field widths
+	with invalid type.
+
 2026-07-10  Alexandre Oliva  <oliva@adacore.com>
 
 	Backported from master:

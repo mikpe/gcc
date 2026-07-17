@@ -1,3 +1,62 @@
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126262
+	* gimple-lower-bitint.cc (build_bitint_stmt_ssa_conflicts): Treat
+	IFN_MUL_OVERFLOW and IFN_UBSAN_CHECK_MUL like IFN_BSWAP, regardless
+	of bitint_big_endian.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/126257
+	* match.pd (x+x -> x*2): Only optimize if 2 is representable in the
+	type.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/126084
+	* gimple-lower-bitint.cc: Include "attribs.h" and "asan.h".
+	(gimple_lower_bitint): Use asan_expand_poison_ifn to lower
+	.ASAN_POISON calls with large/huge _BitInt lhs.
+	* asan.cc (report_error_func): Set *nargs and use _n builtin
+	even if size is not a power of two or larger than 16.
+	(asan_expand_poison_ifn): Handle nargs == 2.
+
+2026-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-07-14  Jakub Jelinek  <jakub@redhat.com>
+		    H.J. Lu  <hjl.tools@gmail.com>
+
+	PR tree-optimization/120201
+	* cfgexpand.cc (expand_used_vars): Set data.asan_alignb to
+	maximum of itself and crtl->stack_alignment_needed
+	/ BITS_PER_UNIT.
+
+2026-07-16  Jeevitha  <jeevitha@linux.ibm.com>
+
+	Backported from master:
+	2026-06-22  Jeevitha Palanisamy  <jeevitha@linux.ibm.com>
+
+	PR target/106895
+	* config/rs6000/rs6000.h (enum rs6000_builtin_type_index): Add
+	RS6000_BTI_INTPTI and RS6000_BTI_UINTPTI.
+	(intPTI_type_internal_node, uintPTI_type_internal_node): New
+	PTImode type macros.
+	* config/rs6000/rs6000-builtin.cc (rs6000_init_builtins): Register
+	signed and unsigned PTImode internal builtin types.
+	* config/rs6000/sync.md (trunctipti2): New splitter.
+	(extendptiti2): Likewise.
+	(zero_extendptiti2): Likewise.
+
 2026-07-14  Torbjörn SVENSSON  <torbjorn.svensson@foss.st.com>
 
 	Backported from master:
