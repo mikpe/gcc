@@ -5602,13 +5602,9 @@ expand_omp_for_static_nochunk (struct omp_region *region,
 	default:
 	  gcc_unreachable ();
 	}
-      tree n_ull = fold_convert (long_long_unsigned_type_node, n);
-      tree n1_ull = fold_convert (long_long_unsigned_type_node, n1);
-      tree step_ull = fold_convert (long_long_unsigned_type_node, step);
-      tree chunk_size_ull = build_int_cst (long_long_unsigned_type_node, 0);
-      tree v_ull = fold_convert (long_long_unsigned_type_node, fd->loop.v);
-      tree call = build_call_expr (decl, 5, n_ull, n1_ull, step_ull,
-				   chunk_size_ull, v_ull);
+      tree s0_ull = fold_convert (long_long_unsigned_type_node, s0);
+      tree q_ull = fold_convert (long_long_unsigned_type_node, q);
+      tree call = build_call_expr (decl, 2, s0_ull, q_ull);
       force_gimple_operand_gsi (&gsi, call, true, NULL_TREE, true,
 				GSI_SAME_STMT);
     }
@@ -6448,14 +6444,10 @@ expand_omp_for_static_chunk (struct omp_region *region,
 	default:
 	  gcc_unreachable ();
 	}
-      tree n_ull = fold_convert (long_long_unsigned_type_node, n);
-      tree n1_ull = fold_convert (long_long_unsigned_type_node, n1);
-      tree step_ull = fold_convert (long_long_unsigned_type_node, step);
-      tree chunk_size_ull
-	= fold_convert (long_long_unsigned_type_node, chunk_size);
-      tree v_ull = fold_convert (long_long_unsigned_type_node, fd->loop.v);
-      tree call = build_call_expr (decl, 5, n_ull, n1_ull, step_ull,
-				   chunk_size_ull, v_ull);
+      tree s0_ull = fold_convert (long_long_unsigned_type_node, s0);
+      tree iterations = fold_build2 (MINUS_EXPR, itype, e0, s0);
+      iterations = fold_convert (long_long_unsigned_type_node, iterations);
+      tree call = build_call_expr (decl, 2, s0_ull, iterations);
       force_gimple_operand_gsi (&gsi, call, true, NULL_TREE, true,
 				GSI_SAME_STMT);
     }

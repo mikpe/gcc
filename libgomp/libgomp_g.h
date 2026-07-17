@@ -147,9 +147,6 @@ extern bool GOMP_loop_end_cancel (void);
 extern _Complex int GOMP_loop_static_worksharing (unsigned long long);
 extern _Complex int GOMP_loop_static_worksharing_start (unsigned long long);
 extern void GOMP_loop_static_worksharing_dispatch (unsigned long long,
-						   unsigned long long,
-						   unsigned long long,
-						   unsigned long long,
 						   unsigned long long);
 extern void GOMP_loop_static_worksharing_end (void);
 
@@ -396,9 +393,6 @@ extern void GOMP_teams_reg (void (*) (void *), void *, unsigned, unsigned,
 extern _Complex int GOMP_distribute_static_worksharing (unsigned long long);
 extern _Complex int GOMP_distribute_static_worksharing_start (unsigned long long);
 extern void GOMP_distribute_static_worksharing_dispatch (unsigned long long,
-							 unsigned long long,
-							 unsigned long long,
-							 unsigned long long,
 							 unsigned long long);
 extern void GOMP_distribute_static_worksharing_end (void);
 
