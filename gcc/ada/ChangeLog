@@ -1,3 +1,9 @@
+2026-07-17  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sem_attr.adb (Resolve_Attribute) <Attribute_Reduce>: Perform the
+	full resolution of the reducer even if it is not overloaded, but do
+	not resolve the prefix if it is an aggregate
+
 2026-07-10  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* exp_disp.adb (Expand_Dispatching_Call): Reenable the suppression
