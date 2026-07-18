@@ -12545,6 +12545,27 @@ and,
         && @0 == @3)
     (bit_xor (rrotate @0 @4) @2)))
 
+
+/* (T0)(1 << x) & (T1)(1 << x) -> (T)(1 << x),
+ *  but keep the shift in the wider type to avoid introducing
+ *  undefined behaviour.  */
+(simplify
+ (bit_and:c
+  (convert? (lshift@2 integer_onep@1 @0))
+  (convert? (lshift@3 integer_onep@4 @0)))
+ (with
+  {
+    tree ltype0 = TREE_TYPE (@2);
+    tree ltype1 = TREE_TYPE (@3);
+  }
+  (if (INTEGRAL_TYPE_P (type)
+       && INTEGRAL_TYPE_P (ltype0)
+       && INTEGRAL_TYPE_P (ltype1)
+       && element_precision (type) <= element_precision (ltype0)
+       && element_precision (ltype0) <= element_precision (ltype1))
+       (convert:type
+	  (lshift:ltype1 { @4; } @0)))))
+
 /* Optimize extraction from a uniform vector to a representative element as
    long as the requested element is within range.  */
 (simplify (IFN_VEC_EXTRACT (vec_duplicate @0) INTEGER_CST@1)
