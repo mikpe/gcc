@@ -1,3 +1,10 @@
+2026-07-17  Tomasz Kamiński  <tkaminsk@redhat.com>
+
+	* testsuite/26_numerics/random/piecewise_constant_distribution/operators/serialize2.cc:
+	Guard test_custom invocations with __FLT_EVAL_METHOD__ macros.
+	* testsuite/26_numerics/random/piecewise_linear_distribution/operators/serialize2.cc:
+	Likewise.
+
 2026-07-16  Arsen Arsenović  <aarsenovic@baylibre.com>
 
 	Revert:

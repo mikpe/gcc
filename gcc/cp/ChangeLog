@@ -1,3 +1,14 @@
+2026-07-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125833
+	* cp-tree.h: Implement C++29 P3424R2 - Deallocation Functions with
+	Throwing Exception Specification Are Ill-formed.
+	(maybe_diagnose_deallocation_noexcept_false): Declare.
+	* decl.cc (maybe_diagnose_deallocation_noexcept_false): New function.
+	(grokfndecl): Call it.
+	* pt.cc (maybe_instantiate_noexcept): Likewise.
+	* parser.cc (cp_parser_class_specifier): Likewise.
+
 2026-07-15  Tobias Burnus  <tburnus@baylibre.com>
 
 	PR c/122748

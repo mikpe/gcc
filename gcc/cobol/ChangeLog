@@ -1,3 +1,60 @@
+2026-07-17  James K. Lowden  <jklowden@cobolworx.com>
+
+	PR cobol/122466
+	* copybook.h: Include sys/types.h
+	* parse.y: Cast size for printf %lu parameter.
+	* util.cc (cobol_filename): Same.
+
+2026-07-17  James K. Lowden  <jklowden@cobolworx.com>
+
+	PR cobol/122916
+	* gcobol.1: Remove blank line and escape characters in width arguments.
+
+2026-07-17  Robert Dubner  <rdubner@symas.com>
+
+	* genapi.cc (parser_file_open): New filename-as-device feature
+	awaiting implementation.
+	* lexio.h (struct filespan_t): Variable name change.
+	* parse.y: Filename-as-device.
+	* parse_ante.h (field_find): Likewise.
+	(data_division_ready): _literally_zero and _literally_one global
+	constants.
+	* scan.l: Require separate space after '<', '>' and '=' comparison
+	operators.
+	* scan_ante.h (update_location): Change debug message text.
+	* symbols.cc (constq): Eliminate #define in favor of explicit
+	(constant_e | quoted_e).
+	(label_cmp): Formatting: eliminate trailing space.
+	(symbol_elem_cmp): Filename-as-device.
+	(enum protoreq_t): Formatting: eliminate trailing space.
+	(cbl_field_t::clear_attr): Likewise.
+	(symbols_dump): Likewise.
+	(cbl_field_t::attr_str): Likewise.
+	(field_str): Likewise.
+	(symbols_update): Use _literally_zero and _literally_one.
+	(endian_bit): Compact access to cobol_target_big_endian().
+	(symbol_table_init): Normalize initialization of "special
+	registers".
+	(symbol_registers_add): Likewise.
+	(cbl_perform_tgt_t::recurses): Formatting: eliminate trailing space.
+	(symbol_literalA): Replace constq.
+	(cbl_alphabet_t::reencode): Eliminate trailing space.
+	(symbol_temporary_alphanumerics): Likewise.
+	(new_literal_add): Likewise.
+	(new_temporary_clone): Ensure FldLiteralBin5 has the endian attribute of
+	the target architecture.
+	(iconv_cd): Formatting: eliminate trailing space.
+	(cbl_field_t::encode): Likewise.
+	(cbl_field_t::set_capacity): Formatting: eliminate trailing space.
+	(cbl_label_t::str): Likewise.
+	(cbl_file_t::special_index): New function supporting
+	filename-as-device.
+	(cbl_file_t::filename_of): Likewise.
+	* symbols.h (struct cbl_special_name_t): Support filename as device.
+	(struct cbl_file_t): Likewise.
+	(symbol_typedef): Likewise.
+	(symbol_special_index): Likewise.
+
 2026-07-16  Robert Dubner  <rdubner@symas.com>
 
 	PR cobol/126277

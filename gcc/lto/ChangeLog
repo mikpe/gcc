@@ -1,3 +1,23 @@
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR lto/65536
+	* lang.opt: Add -fltrans-linemap-file.
+	* lto-common.cc (lto_read_in_decl_state): Read the linemap ID from
+	function sections.
+	(linemap_section_id): New function.
+	(create_subid_section_table): Note how many linemap sections were
+	found in each input section.
+	(loc_map_decl_data): New GC root.
+	(lto_file_read): Make ORDER into a static variable so it counts
+	continuously across all files and sub-files provided on the command
+	line.
+	(lto_file_finalize): Handle reading the new LTRANS linemap file.
+	(read_cgraph_and_symbols): Likewise. Also stop freeing
+	ALL_FILE_DECL_DATA at the end; the ordered list of files is now
+	useful later on for lto_copy_linemaps().
+	* lto.cc (stream_out_linemaps): New function.
+	(lto_wpa_write_files): Stream out the linemaps for LTRANS to use.
+
 2026-07-15  Michal Jires  <mjires@suse.cz>
 
 	PR lto/125257

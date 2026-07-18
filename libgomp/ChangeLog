@@ -1,3 +1,15 @@
+2026-07-17  Tobias Burnus  <tburnus@baylibre.com>
+
+	* libgomp.texi (OpenMP 5.1 Impl Status): Mark device_type on vars
+	in declare target as 'P'.
+
+2026-07-17  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* libgomp.map: Add GOMP_has_masked_thread_num_with_end.
+	* libgomp.texi: Document it.
+	* libgomp_g.h (GOMP_has_masked_thread_num_with_end): Declare.
+	* parallel.c (GOMP_has_masked_thread_num_with_end): New function.
+
 2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
 
 	* config/gcn/teams.c (GOMP_distribute_static_worksharing_dispatch): Add

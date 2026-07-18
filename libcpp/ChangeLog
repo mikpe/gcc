@@ -1,3 +1,12 @@
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* include/line-map.h (linemap_next_start_location): New function.
+	(linemap_add_raw_map): Declare new function.
+	* line-map.cc (linemap_add): Minor refactor to make use of
+	linemap_next_start_location().
+	(linemap_add_raw_map): New function.
+	(linemap_lookup): Update the comment for clarity.
+
 2026-06-30  Jakub Jelinek  <jakub@redhat.com>
 
 	PR c++/125837

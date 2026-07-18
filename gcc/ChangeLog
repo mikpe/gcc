@@ -1,3 +1,196 @@
+2026-07-17  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* doc/sourcebuild.texi: Document aarch64_mbig_endian.
+
+2026-07-17  Kael Andrew Alonzo Franco  <kaelfandrew@gmail.com>
+
+	PR tree-optimization/126087
+	* match.pd: Move tree_expr_nonnegative_p (@1) to tree_expr_nonnegative_p@1.
+
+2026-07-17  Tobias Burnus  <tburnus@baylibre.com>
+
+	* doc/invoke.texi (-fopenmp-ompt, -fopenmp-ompt-detailed): Improve
+	wording.
+
+2026-07-17  Richard Earnshaw  <rearnsha@arm.com>
+
+	* config/aarch64/aarch64.cc (aarch64_override_options): Warn if
+	+tme is used as an architecture feature
+	(aarch64_process_target_attr): Similarly, but only if TME
+	was previously disabled.
+	* doc/invoke.texi (aarch64): Remove mentions of +tme.
+
+2026-07-17  Matt Turner  <mattst88@gmail.com>
+
+	* config/alpha/alpha.cc (alpha_cannot_copy_insn_p): Do not return
+	false before reload_completed.  Update comment.
+
+2026-07-17  Wang Yaduo  <wangyaduo@linux.alibaba.com>
+
+	* config/riscv/riscv-cores.def (RISCV_CORE): Remove zama16b from
+	xt-c9501fdvt.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR middle-end/80922
+	PR middle-end/106823
+	PR lto/107936
+	* lto-streamer-in.cc (lto_create_loc_map): Process diagnostic
+	pragmas from the linemap sections.
+	* lto-streamer-out.cc (location_output::produce_linemap_section):
+	Stream diagnostic pragmas into the linemap section.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR lto/65536
+	* doc/lto.texi: Document the new LTO_section_linemap and the new
+	option -fltrans-linemap-file.
+	* lto-opts.cc (lto_write_options): Handle the new option.
+	* opts.cc (gen_command_line_string): Likewise.
+	* lto-section-in.cc (lto_section_name[]): Add new name for
+	LTO_section_linemap.
+	* lto-streamer-in.cc (get_location_from_idx): New function.
+	(lto_location_cache::cmp_loc): Remove.
+	(bp_unpack_delta): New function.
+	(create_loc_map): New function.
+	(get_loc_map): New function.
+	(lto_location_cache::override_loc_map): New function.
+	(lto_location_cache::apply_location_cache): Pervasive changes to
+	implement new location streaming format.
+	(lto_location_cache::input_location_and_block): Likewise.
+	(lto_location_cache::input_location): Rename argument LOC -> DEST
+	for clarity.
+	(lto_read_body_or_constructor): Handle LINEMAP_ID in the decl state.
+	(lto_data_in_create): Add NEED_LOCATION_CACHE argument. Rename local
+	variable DATA_IN to D to avoid clash with the type name.
+	* lto-streamer-out.cc (clear_line_info): Update for change to class
+	output_block.
+	(compute_map_hash): New function.
+	(class location_output): New class.
+	(location_output::record_location): New function.
+	(bp_pack_delta): New function.
+	(location_output::produce_linemap_section): New function.
+	(lto_output_location_1): Pervasive changes to implement new location
+	streaming format.
+	(copy_function_or_variable): Set the LINEMAP_ID in the decl state.
+	(copy_linemap_section): New function.
+	(copy_linemap_sections): New function.
+	(lto_copy_linemaps): New function.
+	(lto_register_linemap_for_output): New function.
+	(lto_output_decl_state_refs): Output the LINEMAP_ID for function
+	decls.
+	(lto_out_decl_state_written_size): Adapt for new LINEMAP_ID output.
+	(produce_asm_for_decls): Output the linemap section when needed.
+	* lto-streamer.cc (lto_get_section_name): Handle linemap sections,
+	which need an order suffix.
+	* lto-streamer.h (enum lto_section_type): Fix typo in the
+	comment. Add LTO_section_linemap.
+	(struct lto_loc_map): New struct.
+	(class lto_location_cache): Pervasive changes to implement new
+	location streaming format.
+	(struct lto_in_decl_state): Add LINEMAP_ID member.
+	(struct lto_out_decl_state): Likewise.
+	(struct lto_file_decl_data): Add LOC_MAP_DECL_DATA, LOC_MAPS,
+	and NUM_LINEMAP_SECTIONS members.
+	(lto_linemap_output_id): New function.
+	(struct output_block): Adjust members for new streaming format.
+	(data_in::data_in): New function.
+	(lto_data_in_create): Adjust prototype for new NEED_LOCATION_CACHE
+	argument.
+	(lto_register_linemap_for_output): Declare.
+	(lto_copy_linemaps): Declare.
+	* lto-wrapper.cc (run_gcc): Pass new argument -fltrans-linemap-file.
+	* timevar.def (TV_IPA_LTO_LINEMAP_IN): New timevar.
+	(TV_IPA_LTO_LINEMAP_OUT): New timevar.
+	(TV_IPA_LTO_LINEMAP_COPY): New timevar.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* doc/sourcebuild.texi: Document ar-link and incr-link options to
+	dg-lto-do directive.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* doc/sourcebuild.texi: Document dg-lto-additional-options
+	directive.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* diagnostic.h (diagnostic_classify_diagnostic): Adapt for removal
+	of return value in option_classifier::classify_diagnostic.
+	* diagnostics/context.h: Likewise.
+	* diagnostics/kinds.h (enum kind): Add trailing element to indicate
+	the total number of kinds.
+	* diagnostics/option-classifier.cc
+	(option_classifier::classify_diagnostic): Remove the return value,
+	which was not correct and which was not used anyway.
+	* diagnostics/option-classifier.h (class option_classifier): Adjust
+	prototype for classify_diagnostic.  Make the name of nested strruct
+	classification_change_t publicly accessible.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* input.cc (test_accessing_ordinary_linemaps): Test new
+	line_map_add_raw_map() functionality.
+
+2026-07-17  Neal Patalay  <nealpatalay0@gmail.com>
+
+	PR tree-optimization/126087
+	* match.pd: Simplify MIN and BIT_IOR compared to 0 when
+	one operand is non-negative.
+
+2026-07-17  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126283
+	* config/i386/i386.md (bswaphi2): Add flags reg clobber.
+	(*bswaphi2_movbe): Add flags reg clobber.  Add ROLW alternative
+	and update instruction attributes.  Add preferred_for_size and
+	preferred_for_speed attributes.
+	(*bswaphi2): Ditto.
+	(*bswaphisi2_lowpart): Ditto.
+	(XCHGB -> ROLW peephole2 patterns): Remove.
+	(ROLW reg,8 -> BSWAP splitter): Update for added flags reg clobber.
+	Always split.
+	* config/i386/i386-expand.cc (ix86_expand_gfni_bitreverse):
+	Update for bswaphi2 change.
+
+2026-07-17  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* omp-builtins.def (BUILT_IN_GOMP_HAS_MASKED_THREAD_NUM_WITH_END):
+	New builtin.
+	* omp-low.cc (lower_omp_master): Use it when -fopenmp-ompt.
+
+2026-07-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* et-gather.awk, gen-et-static.awk: New scripts.
+	* Makefile.in (testsuitedir): New.
+	(native): Depend on testsuite/et-static.exp.
+	(clean): Remove etlist.
+	(distclean): Remove et-static.exp.
+	(install-testsuite): New target.
+	(install): Depend on it.
+	(site.exp): Depend on testsuite/et-static.exp.
+	(testsuite/et-static.exp): New target.
+	* doc/sourcebuild.texi (Effective-Target Keywords): Document
+	et-static.def.
+	(Effective-Target Keywords, Other attributes): Document
+	ld_at_file.
+
+2026-07-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126275
+	* config/i386/i386-expand.cc (ix86_expand_set_or_cpymem): Don't
+	use misaligned prologue if count <= epilogue size.
+
+2026-07-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126028
+	* tree-vect-slp.cc (vect_slp_check_for_roots): Do not
+	force the BB reduction root to have an even number of lanes.
+	(vect_build_slp_instance): For failed discovery of a BB
+	reduction attempt to re-try discovery on the matching or
+	non-matching part.
+
 2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
 
 	* builtin-types.def (BT_FN_VOID_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG_ULONGLONG): New.

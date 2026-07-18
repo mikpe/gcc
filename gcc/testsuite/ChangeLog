@@ -1,3 +1,178 @@
+2026-07-17  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* gcc.target/aarch64/and-be.c: Require big-endian support.
+	* gcc.target/aarch64/fmov-1-be.c: Likewise.
+	* gcc.target/aarch64/fmov-2-be.c: Likewise.
+	* gcc.target/aarch64/fmov-3-be.c: Likewise.
+	* gcc.target/aarch64/fmov-4-be.c: Likewise.
+	* gcc.target/aarch64/fmov-5-be.c: Likewise.
+	* gcc.target/aarch64/ins_bitfield_2.c: Likewise.
+	* gcc.target/aarch64/ins_bitfield_4.c: Likewise.
+	* gcc.target/aarch64/ins_bitfield_6.c: Likewise.
+	* gcc.target/aarch64/pr124078-1.c: Likewise.
+	* gcc.target/aarch64/pr62308.c: Likewise.
+	* gcc.target/aarch64/pr87305.c: Likewise.
+	* gcc.target/aarch64/sve/acle/general/dupq_2.c: Likewise.
+	* gcc.target/aarch64/sve/acle/general/dupq_4.c: Likewise.
+	* gcc.target/aarch64/sve/acle/general/dupq_6.c: Likewise.
+	* gcc.target/aarch64/sve/acle/general/dupq_lane_9.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_bf16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_f16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_f32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_f64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_mf8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_s16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_s32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_s64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_s8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_u16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_u32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_u64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_5_be_u8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_bf16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_f16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_f32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_f64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_mf8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_s16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_s32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_s64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_s8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_u16.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_u32.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_u64.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/args_6_be_u8.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_1_be_nowrap.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_1_be_wrap.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_2_be_nowrap.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_2_be_wrap.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_4_be.c: Likewise.
+	* gcc.target/aarch64/sve/pcs/saves_5_be.c: Likewise.
+	* gcc.target/aarch64/sve/pr88847.c: Likewise.
+	* gcc.target/aarch64/sve/revb_2.c: Likewise.
+	* gcc.target/aarch64/sve/revh_2.c: Likewise.
+	* gcc.target/aarch64/sve/revhw_2.c: Likewise.
+	* gcc.target/aarch64/sve/revw_2.c: Likewise.
+	* gcc.target/aarch64/sve/struct_move_1.c: Likewise.
+	* gcc.target/aarch64/sve/struct_move_2.c: Likewise.
+	* gcc.target/aarch64/sve/struct_move_3.c: Likewise.
+	* gcc.target/aarch64/sve/vec_init_4.c: Likewise.
+	* lib/target-supports.exp: Provide aarch64_mbig_endian.
+
+2026-07-17  Richard Earnshaw  <rearnsha@arm.com>
+
+	* gcc.target/aarch64/pragma_cpp_predefs_2.c: Drop tests for TME.
+	* gcc.target/aarch64/acle/tme.c: Removed.
+	* gcc.target/aarch64/acle/tme_guard-1.c: Removed.
+	* gcc.target/aarch64/acle/tme_guard-2.c: Removed.
+	* gcc.target/aarch64/acle/tme_guard-3.c: Removed.
+	* gcc.target/aarch64/acle/tme_guard-4.c: Removed.
+
+2026-07-17  Matt Turner  <mattst88@gmail.com>
+
+	* gcc.target/alpha/tlsgd-dup-1.c: New test.
+
+2026-07-17  Robert Dubner  <rdubner@symas.com>
+
+	* cobol.dg/group2/INITIALIZE_with_-defaultbyte__ASCII_.cob: Use
+	"VALUE '-'" instead of "VALUE'-'".
+	* cobol.dg/group2/INITIALIZE_with_-defaultbyte__EBCDIC_.cob:
+	Likewise.
+	* cobol.dg/group2/PR59_RT3586_-_Code_format_heuristic_fails.cob: Removed.
+	* cobol.dg/group2/RT3609_Unexpected_PROCESS.cob: Removed.
+	* cobol.dg/group2/DEBUG-ITEM_using_mh_identical.cob: New test.
+	* cobol.dg/group2/DEBUG-ITEM_using_mh_identical.out: New test.
+
+2026-07-17  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	* gcc.dg/torture/pr126136.c: Make chars explicitly signed.
+
+2026-07-17  Wang Yaduo  <wangyaduo@linux.alibaba.com>
+
+	* gcc.target/riscv/mcpu-xt-c9501fdvt.c: Expect __riscv_zama16b
+	to be undefined.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR middle-end/80922
+	PR middle-end/106823
+	PR lto/107936
+	* gcc.dg/lto/pr106823_0.c: New test.
+	* gcc.dg/lto/pr107936_0.c: New test.
+	* gcc.dg/lto/pr107936_1.c: New test.
+	* gcc.dg/lto/pr80922-1_0.c: New test.
+	* gcc.dg/lto/pr80922-1_1.c: New test.
+	* gcc.dg/lto/pr80922-2_0.c: New test.
+	* gcc.dg/lto/pr80922-2_1.c: New test.
+	* gcc.dg/lto/pr80922-2_2.c: New test.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR lto/65536
+	* gcc.misc-tests/outputs.exp: Adjust LTO -save-temps tests to expect
+	the new linemap file.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* gcc.dg/lto/README: Update to document ar-link and incr-link.
+	* lib/lto.exp: Support incr-link directive throughout.
+
+2026-07-17  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* gcc.dg/lto/README: Document dg-lto-additional-options directive.
+	* lib/lto.exp (lto-get-options-main): Implement
+	dg-lto-additional-options directive.
+	(lto-execute-1): Likewise.
+
+2026-07-17  Neal Patalay  <nealpatalay0@gmail.com>
+
+	PR tree-optimization/126087
+	* gcc.dg/tree-ssa/pr126087.c: New test.
+
+2026-07-17  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/126283
+	* gcc.target/i386/xchg-1.c: Scan for XCHG instead of ROL.
+	* gcc.target/i386/pr126283.c: New test.
+
+2026-07-17  Naveen  <naveen.siddegowda@oss.qualcomm.com>
+
+	PR tree-optimization/81549
+	* gcc.dg/tree-ssa/pr81549.c: New test.
+	* gcc.dg/tree-ssa/pr81549-2.c: New test.
+
+2026-07-17  Paul-Antoine Arras  <parras@baylibre.com>
+
+	* c-c++-common/gomp/masked-1.c: Check new builtin is not emitted.
+	* c-c++-common/gomp/masked-3.c: Check new builtin is emitted with
+	-fopenmp-ompt.
+
+2026-07-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/125833
+	* g++.dg/cpp0x/dealloc2.C: Expect extra diagnostics in C++29.
+	* g++.dg/cpp29/dealloc1.C: New test.
+
+2026-07-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* lib/et-static.def: New file.
+	* lib/target-supports.exp: Load et-static.exp.
+	* gcc.misc-tests/outputs.exp: Use ld_at_file effective target
+	instead of gld.
+	Update comment.
+
+2026-07-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR target/126275
+	* gcc.target/i386/pr126275.c: New.
+
+2026-07-17  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/126028
+	* gcc.dg/vect/bb-slp-reduc-2.c: New testcase.
+	* gcc.dg/vect/bb-slp-reduc-3.c: Likewise.
+	* gcc.dg/vect/pr106081.c: Disable BB vectorization.
+
 2026-07-16  Paul-Antoine Arras  <parras@baylibre.com>
 
 	* c-c++-common/gomp/for-static-3.c: Update scan pattern to match new

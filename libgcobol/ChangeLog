@@ -1,3 +1,17 @@
+2026-07-17  Robert Dubner  <rdubner@symas.com>
+
+	* charmaps.h (ebcdic_newline): Use just SPACES instead of both
+	SPACE and SPACES.
+	* constants.cc (INTEGER_CONSTANT1): Eliminate.
+	(struct cblc_field_t): Eliminate __gg__data_space.
+	(INTEGER_CONSTANT2): Eliminate.
+	(endian): Adjust the initialization of __ggsr__spaces and the
+	various DEBUG-ITEM components.
+	* libgcobol.cc (alpha_to_alpha_move_from_location): Correct a comment.
+	(__gg__codeset_figurative_constants): Normalize using SPACES when SPACE is
+	specified.
+	(__gg__get_figconst_data): Likewise.
+
 2026-07-16  Robert Dubner  <rdubner@symas.com>
 
 	PR cobol/126277

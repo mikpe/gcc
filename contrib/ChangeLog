@@ -1,3 +1,15 @@
+2026-07-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* test_installed (--with-auto-host-h): New option.
+	(--with-et-static): Likewise.
+	(--with-objc): Likewise.
+	Generate et-static.def if --with-auto-host-h is specified.
+	(GCC_UNDER_TEST): Only emit to site.def if enabled.
+	(GXX_UNDER_TEST): Likewise.
+	(GFORTRAN_UNDER_TEST): Likewise.
+	(OBJC_UNDER_TEST): Likewise.
+	(et_static): Emit to site.exp if specified.
+
 2026-07-16  Jonathan Wakely  <jwakely@redhat.com>
 
 	PR libstdc++/125956
