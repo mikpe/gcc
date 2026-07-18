@@ -1058,8 +1058,20 @@ show_attr (symbol_attribute *attr, const char * module)
       gfc_internal_error ("Wrong value for value_set");
     }
 
-  if (attr->allocated)
-    fputs (" ALLOCATED", dumpfile);
+  switch (attr->allocated)
+    {
+    case ALLOCATED_ARG:
+      fputs (" ALLOCATED(ARG)", dumpfile);
+      break;
+    case ALLOCATED_ALLOCATE_STMT:
+      fputs(" ALLOCATED(ALLOCATE-STMT)", dumpfile);
+      break;
+    case ALLOCATED_ASSIGNMENT:
+      fputs (" ALLOCATED(ASSIGNMENT)", dumpfile);
+      break;
+    default:
+      break;
+    }
 
   switch (attr->value_used)
     {
