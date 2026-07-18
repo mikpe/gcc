@@ -147,7 +147,17 @@ setup_can_eliminate (class lra_elim_table *ep, bool value)
   ep->can_eliminate = ep->prev_can_eliminate = value;
   if (! value
       && ep->from == FRAME_POINTER_REGNUM && ep->to == STACK_POINTER_REGNUM)
-    frame_pointer_needed = 1;
+    {
+      frame_pointer_needed = 1;
+      /* ira_setup_eliminable_regset marks the hard frame pointer live when
+	 it decides a frame pointer is needed.  When we make that decision
+	 here instead, we have to do the same, otherwise a target whose
+	 prologue keys the register save off df_regs_ever_live_p would
+	 clobber the caller's hard frame pointer without saving it.  */
+      int fp_reg_count = hard_regno_nregs (HARD_FRAME_POINTER_REGNUM, Pmode);
+      for (int i = 0; i < fp_reg_count; i++)
+	df_set_regs_ever_live (HARD_FRAME_POINTER_REGNUM + i, true);
+    }
   if (!frame_pointer_needed)
     REGNO_POINTER_ALIGN (HARD_FRAME_POINTER_REGNUM) = 0;
 }
