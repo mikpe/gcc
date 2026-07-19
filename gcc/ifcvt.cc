@@ -781,6 +781,7 @@ static bool noce_try_ifelse_collapse (struct noce_if_info *);
 static bool noce_try_store_flag (struct noce_if_info *);
 static bool noce_try_addcc (struct noce_if_info *);
 static bool noce_try_store_flag_constants (struct noce_if_info *);
+static bool noce_try_shifted_store_flag (struct noce_if_info *);
 static bool noce_try_store_flag_mask (struct noce_if_info *);
 static rtx noce_emit_cmove (struct noce_if_info *, rtx, enum rtx_code, rtx,
 			    rtx, rtx, rtx, rtx = NULL, rtx = NULL);
@@ -1556,6 +1557,145 @@ noce_try_inverse_constants (struct noce_if_info *if_info)
 
   end_sequence ();
   return false;
+}
+
+/*  Check if OP is supported by conditional zero based if conversion,
+    returning TRUE if satisfied otherwise FALSE.
+
+    OP is the operation to check.  */
+
+static bool
+noce_cond_zero_binary_op_supported (rtx op)
+{
+  enum rtx_code opcode = GET_CODE (op);
+
+  if (opcode == PLUS || opcode == MINUS || opcode == IOR || opcode == XOR
+      || opcode == ASHIFT || opcode == ASHIFTRT || opcode == LSHIFTRT
+      || opcode == ROTATE || opcode == ROTATERT || opcode == AND)
+    return true;
+
+  return false;
+}
+
+/* Convert "if (test) x = a; else x = a OP c  " where c is 2^n.
+
+   We can shift the output of a set flag insn left to generate 2^n
+   cheaply, then apply OP unconditionally.  This works even if the
+   target does not have a conditional zero idiom.  On targets such
+   as RISC-V this sequence may also encode better.
+
+   This is based on noce_try_store_flag_constants.  */
+
+static bool
+noce_try_shifted_store_flag (struct noce_if_info *if_info)
+{
+  rtx target;
+  rtx_insn *seq;
+  machine_mode mode = GET_MODE (if_info->x);
+  rtx common = NULL_RTX;
+  rtx_code code = UNKNOWN;
+
+  if (STORE_FLAG_VALUE != 1)
+    return false;
+
+  if (!noce_simple_bbs (if_info))
+    return false;
+
+  rtx a = if_info->a;
+  rtx b = if_info->b;
+
+  /* Most binary operators are allowed, essentially the same set
+     as the condzero arithmetic paths, with the exception of AND
+     which could be handled if we were inclined.  */
+  int shiftval;
+  bool reversed = false;
+  if (noce_cond_zero_binary_op_supported (a)
+      && GET_CODE (a) != AND
+      && GET_CODE (b) == REG
+      && rtx_equal_p (XEXP (a, 0), b)
+      && CONST_INT_P (XEXP (a, 1))
+      && pow2p_hwi (INTVAL (XEXP (a, 1)))
+      && noce_reversed_cond_code (if_info) != UNKNOWN)
+    {
+      code = GET_CODE (a);
+      common = XEXP (a, 0);
+      shiftval = exact_log2 (INTVAL (XEXP (a, 1)));
+
+      /* When the condition is true, we branch around A and thus we want
+	 the condition reversed from what you might expect.  */
+      reversed = true;
+    }
+  else if (noce_cond_zero_binary_op_supported (b)
+	   && GET_CODE (b) != AND
+	   && GET_CODE (a) == REG
+	   && rtx_equal_p (XEXP (b, 0), a)
+	   && CONST_INT_P (XEXP (b, 1))
+	   && pow2p_hwi (INTVAL (XEXP (b, 1))))
+    {
+      code = GET_CODE (b);
+      common = XEXP (b, 0);
+      shiftval = exact_log2 (INTVAL (XEXP (b, 1)));
+    }
+
+
+  /* If CODE hasn't been reset, then the basic expression form was wrong and
+     we can not optimize.  */
+  if (code == UNKNOWN)
+    return false;
+
+  start_sequence ();
+
+  /* If X and COMMON are the same, then we're going to need a temporary.  */
+  if (common && rtx_equal_p (common, if_info->x))
+    {
+      common = gen_reg_rtx (mode);
+      noce_emit_move_insn (common, if_info->x);
+    }
+
+  target = noce_emit_store_flag (if_info, if_info->x, reversed, 1);
+  if (!target)
+    {
+      end_sequence ();
+      return false;
+    }
+
+  /* Right now TARGET has the value 1/0.  A left shift will produce the
+     target value.  Unnecessary if the shift value is zero.  */
+  if (shiftval != 0)
+    target = expand_simple_binop (mode, ASHIFT, target,
+				  GEN_INT (shiftval),
+				  NULL_RTX, 0, OPTAB_WIDEN);
+
+  if (!target)
+    {
+      end_sequence ();
+      return false;
+    }
+
+  /* Now we just need to apply the code to COMMON and TARGET.  */
+  target = expand_simple_binop (mode, code,
+				common, target,
+				NULL_RTX, 0, OPTAB_WIDEN);
+
+  if (!target)
+    {
+      end_sequence ();
+      return false;
+    }
+
+  /* If necessary, store the result into the proper destination.  */
+  if (target != if_info->x)
+    noce_emit_move_insn (if_info->x, target);
+
+  seq = end_ifcvt_sequence (if_info);
+  if (!seq || !targetm.noce_conversion_profitable_p (seq, if_info))
+    return false;
+
+  emit_insn_before_setloc (seq, if_info->jump,
+			   INSN_LOCATION (if_info->insn_a));
+  if_info->transform_name = "noce_try_shifted_store_flag";
+
+  return true;
 }
 
 
@@ -3167,24 +3307,6 @@ noce_try_sign_mask (struct noce_if_info *if_info)
   return true;
 }
 
-/*  Check if OP is supported by conditional zero based if conversion,
-    returning TRUE if satisfied otherwise FALSE.
-
-    OP is the operation to check.  */
-
-static bool
-noce_cond_zero_binary_op_supported (rtx op)
-{
-  enum rtx_code opcode = GET_CODE (op);
-
-  if (opcode == PLUS || opcode == MINUS || opcode == IOR || opcode == XOR
-      || opcode == ASHIFT || opcode == ASHIFTRT || opcode == LSHIFTRT
-      || opcode == ROTATE || opcode == ROTATERT || opcode == AND)
-    return true;
-
-  return false;
-}
-
 /*  Helper function to return REG itself,
     otherwise NULL_RTX for other RTX_CODE.  */
 
@@ -4549,6 +4671,9 @@ noce_process_if_block (struct noce_if_info *if_info)
     goto success;
   if (!targetm.have_conditional_execution ()
       && noce_try_store_flag_constants (if_info))
+    goto success;
+  if (!targetm.have_conditional_execution ()
+      && noce_try_shifted_store_flag (if_info))
     goto success;
   if (noce_try_sign_bit_splat (if_info))
     goto success;
