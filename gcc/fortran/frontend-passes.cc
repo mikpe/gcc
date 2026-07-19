@@ -5306,8 +5306,14 @@ gfc_expr_walker (gfc_expr **e, walk_expr_fn_t exprfn, void *data)
 	      WALK_SUBEXPR (a->expr);
 	    break;
 
-	  case EXPR_STRUCTURE:
 	  case EXPR_ARRAY:
+	    if ((*e)->ts.type == BT_CHARACTER)
+	      WALK_SUBEXPR ((*e)->ts.u.cl->length);
+
+	    gcc_fallthrough ();
+
+	  case EXPR_STRUCTURE:
+
 	    for (c = gfc_constructor_first ((*e)->value.constructor); c;
 		 c = gfc_constructor_next (c))
 	      {
@@ -5480,6 +5486,11 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 	      continue;
 
 	    case EXEC_ALLOCATE:
+	      if (co->ext.alloc.ts.type == BT_CHARACTER)
+		WALK_SUBEXPR (co->ext.alloc.ts.u.cl->length);
+
+	      gcc_fallthrough();
+
 	    case EXEC_DEALLOCATE:
 	      {
 		gfc_alloc *a;

@@ -3407,6 +3407,13 @@ show_code_node (int level, gfc_code *c)
 
     case EXEC_ALLOCATE:
       fputs ("ALLOCATE ", dumpfile);
+
+      if (c->ext.alloc.ts.type != BT_UNKNOWN)
+	{
+	  show_typespec (&c->ext.alloc.ts);
+	  fputs (":: ", dumpfile);
+	}
+
       if (c->expr1)
 	{
 	  fputs (" STAT=", dumpfile);
