@@ -7886,19 +7886,19 @@
    (set_attr "mode" "<VNCONVERT>")])
 
 (define_insn "@pred_extend<mode>"
-  [(set (match_operand:VWEXTF_ZVFHMIN 0 "register_operand"                 "=&vr,  &vr")
+  [(set (match_operand:VWEXTF_ZVFHMIN 0 "register_operand"        "=vr, vr, vd, vd")
 	(if_then_else:VWEXTF_ZVFHMIN
 	  (unspec:<VM>
-	    [(match_operand:<VM> 1 "vector_mask_operand"          "vmWc1,vmWc1")
-	     (match_operand 4 "vector_length_operand"             "  rvl,  rvl")
-	     (match_operand 5 "const_int_operand"                 "    i,    i")
-	     (match_operand 6 "const_int_operand"                 "    i,    i")
-	     (match_operand 7 "const_int_operand"                 "    i,    i")
+	    [(match_operand:<VM> 1 "vector_mask_operand"          "Wc1,Wc1, vm, vm")
+	     (match_operand 4 "vector_length_operand"             "rvl,rvl,rvl,rvl")
+	     (match_operand 5 "const_int_operand"                 "  i,  i,  i,  i")
+	     (match_operand 6 "const_int_operand"                 "  i,  i,  i,  i")
+	     (match_operand 7 "const_int_operand"                 "  i,  i,  i,  i")
 	     (reg:SI VL_REGNUM)
 	     (reg:SI VTYPE_REGNUM)] UNSPEC_VPREDICATE)
 	  (float_extend:VWEXTF_ZVFHMIN
-	     (match_operand:<V_DOUBLE_TRUNC> 3 "register_operand" "   vr,   vr"))
-	  (match_operand:VWEXTF_ZVFHMIN 2 "vector_merge_operand"          "   vu,    0")))]
+	     (match_operand:<V_DOUBLE_TRUNC> 3 "register_operand" "Wvr,Wvr,Wvr,Wvr"))
+	  (match_operand:VWEXTF_ZVFHMIN 2 "vector_merge_operand"  " vu,  0, vu,  0")))]
   "TARGET_VECTOR"
   "vfwcvt.f.f.v\t%0,%3%p1"
   [(set_attr "type" "vfwcvtftof")
