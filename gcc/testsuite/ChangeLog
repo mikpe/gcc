@@ -1,3 +1,59 @@
+2026-07-18  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
+	    Kito Cheng  <kito.cheng@sifive.com>
+
+	* gcc.target/riscv/tlsdesc_clobber_lra.c: New test.
+
+2026-07-18  wangjue  <juewang@linux.alibaba.com>
+
+	* gcc.target/riscv/unroll-explicit-attr-cunroll.c: New test.
+	* gcc.target/riscv/unroll-small-loop-cunroll.c: New test.
+
+2026-07-18  Dusan Stojkovic  <Dusan.Stojkovic@rt-rk.com>
+
+	PR target/123883
+	* gcc.target/riscv/pr123883-a.c: New test.
+	* gcc.target/riscv/pr123883-b.c: New test.
+
+2026-07-18  Matt Turner  <mattst88@gmail.com>
+
+	PR target/117184
+	* gcc.target/alpha/frame-pointer-save-1.c: New test.
+
+2026-07-18  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/126200
+	* gcc.target/loongarch/vector/lsx/pr126200.c: New test.
+
+2026-07-18  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/base/pr112431-13.c: Move to...
+	* gcc.target/riscv/rvv/base/pr112431-13-0.c: ...here.
+	* gcc.target/riscv/rvv/base/pr112431-13-1.c: New test.
+
+2026-07-18  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f16-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f16-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f16-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f16-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f16-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f32-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f32-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f32-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_xu-f32-mf2.c: New test.
+
+2026-07-18  Pan Li  <pan2.li@intel.com>
+
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f16-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f16-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f16-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f16-mf2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f16-mf4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f32-m1.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f32-m2.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f32-m4.c: New test.
+	* gcc.target/riscv/rvv/autovec/group_overlap/vfwcvt_x-f32-mf2.c: New test.
+
 2026-07-17  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* gcc.target/aarch64/and-be.c: Require big-endian support.

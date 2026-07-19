@@ -1,3 +1,40 @@
+2026-07-18  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
+	    Kito Cheng  <kito.cheng@sifive.com>
+
+	* config/riscv/riscv.md (@tlsdesc<mode>): Use individual
+	RVVM1QI clobbers instead of four RVVM8QI.
+
+2026-07-18  wangjue  <juewang@linux.alibaba.com>
+
+	* config/riscv/riscv.cc (riscv_override_options_after_change): New
+	function.
+	(riscv_option_override): Call it.
+	(TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE): Define.
+
+2026-07-18  Dusan Stojkovic  <Dusan.Stojkovic@rt-rk.com>
+
+	PR target/123883
+	* match.pd ((1<<N) & (1<<N) with different types): New
+	pattern.
+
+2026-07-18  Matt Turner  <mattst88@gmail.com>
+
+	PR target/117184
+	* lra-eliminations.cc (setup_can_eliminate): Mark the hard frame
+	pointer live when setting frame_pointer_needed.
+
+2026-07-18  Xi Ruoyao  <xry111@xry111.site>
+
+	PR target/126200
+	* config/loongarch/predicates.md
+	(par_const_vector_shf_set_operand): Define as special predicate.
+	* config/loongarch/lsx.md (lsx_vshuf4i_<lsxfmt_f>): Pass VIMODE
+	to the predicate of selector.
+
+2026-07-18  Pan Li  <pan2.li@intel.com>
+
+	* config/riscv/vector.md: Leverage Wvr constraint.
+
 2026-07-17  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* doc/sourcebuild.texi: Document aarch64_mbig_endian.
