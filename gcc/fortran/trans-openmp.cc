@@ -3561,8 +3561,12 @@ gfc_trans_omp_array_section (stmtblock_t *block, gfc_exec_op op,
 					 ptr, base);
 }
 
+/* Construct a list of omp_iterator objects for the iterators specified
+   in NS.  Initialization statements for the start/end/step expressions
+   are added to OUTER_BLOCK.  BLOCK is the tree block that contains the
+   iterator variable bindings.  */
 static tree
-handle_iterator (gfc_namespace *ns, stmtblock_t *iter_block, tree block)
+handle_iterator (gfc_namespace *ns, stmtblock_t *outer_block, tree block)
 {
   tree list = NULL_TREE;
   for (gfc_symbol *sym = ns->omp_affinity_iterators; sym; sym = sym->tlink)
@@ -3581,20 +3585,20 @@ handle_iterator (gfc_namespace *ns, stmtblock_t *iter_block, tree block)
       c = gfc_constructor_first (sym->value->value.constructor);
       gfc_init_se (&se, NULL);
       gfc_conv_expr (&se, c->expr);
-      gfc_add_block_to_block (iter_block, &se.pre);
-      gfc_add_block_to_block (iter_block, &se.post);
+      gfc_add_block_to_block (outer_block, &se.pre);
+      gfc_add_block_to_block (outer_block, &se.post);
       OMP_ITERATOR_BEGIN (last) = fold_convert (type,
 						gfc_evaluate_now (se.expr,
-								  iter_block));
+								  outer_block));
       /* end */
       c = gfc_constructor_next (c);
       gfc_init_se (&se, NULL);
       gfc_conv_expr (&se, c->expr);
-      gfc_add_block_to_block (iter_block, &se.pre);
-      gfc_add_block_to_block (iter_block, &se.post);
+      gfc_add_block_to_block (outer_block, &se.pre);
+      gfc_add_block_to_block (outer_block, &se.post);
       OMP_ITERATOR_END (last) = fold_convert (type,
 					      gfc_evaluate_now (se.expr,
-								iter_block));
+								outer_block));
       /* step */
       c = gfc_constructor_next (c);
       tree step;
@@ -3602,12 +3606,12 @@ handle_iterator (gfc_namespace *ns, stmtblock_t *iter_block, tree block)
 	{
 	  gfc_init_se (&se, NULL);
 	  gfc_conv_expr (&se, c->expr);
-	  gfc_add_block_to_block (iter_block, &se.pre);
-	  gfc_add_block_to_block (iter_block, &se.post);
+	  gfc_add_block_to_block (outer_block, &se.pre);
+	  gfc_add_block_to_block (outer_block, &se.post);
 	  gfc_conv_expr (&se, c->expr);
 	  step = fold_convert (type,
 			       gfc_evaluate_now (se.expr,
-						 iter_block));
+						 outer_block));
 	}
       else
 	step = build_int_cst (type, 1);
@@ -3618,6 +3622,58 @@ handle_iterator (gfc_namespace *ns, stmtblock_t *iter_block, tree block)
       list = last;
     }
   return list;
+}
+
+/* Start an iterator group for the iterators in NS.  OUTER_BLOCK is the
+   statement block to hold side-effects from evaluating the iterator
+   start/end/step expressions, and ITER_BLOCK is set to a newly initialized
+   block for the scope of the iterators.  TREE_BLOCK is set to a new
+   tree BLOCK node to hold the iterator variables.  Returns the list of
+   omp_iterator objects, as per handle_iterator above.  */
+static tree
+start_iterator_group (gfc_namespace *ns, stmtblock_t *outer_block,
+		      stmtblock_t *iter_block, tree &tree_block)
+{
+  gfc_init_block (iter_block);
+  tree_block = make_node (BLOCK);
+  TREE_USED (tree_block) = 1;
+  BLOCK_VARS (tree_block) = NULL_TREE;
+  return handle_iterator (ns, outer_block, tree_block);
+}
+
+/* Finish an iterator group.  LIST identifies the namelist type for the
+   clause.  ITER_BLOCK is the statement block within the scope of the
+   iterators, and TREE_BLOCK is the block for the iterator variables.
+   ITERATOR is the list of omp_iterator objects as previously returned by
+   start_iterator_group.  OMP_CLAUSES is the list of clauses the iterators
+   apply to, ending at PREV_CLAUSES.  */
+static void
+finish_iterator_group (int list, stmtblock_t *iter_block, tree tree_block,
+		       tree iterator, tree omp_clauses, tree prev_clauses)
+{
+  gcc_assert (iterator);
+  BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (iter_block);
+  OMP_ITERATOR_BLOCK (iterator) = tree_block;
+  for (tree c = omp_clauses; c != prev_clauses; c = OMP_CLAUSE_CHAIN (c))
+    switch (list)
+      {
+      case OMP_LIST_AFFINITY:
+      case OMP_LIST_DEPEND:
+	OMP_CLAUSE_DECL (c) = build_tree_list (iterator, OMP_CLAUSE_DECL (c));
+	break;
+      case OMP_LIST_MAP:
+	if (OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_POINTER
+	    && OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_REFERENCE)
+	  OMP_CLAUSE_ITERATORS (c) = iterator;
+	break;
+      case OMP_LIST_TO:
+      case OMP_LIST_FROM:
+      case OMP_LIST_CACHE:
+	OMP_CLAUSE_ITERATORS (c) = iterator;
+	break;
+      default:
+	gcc_unreachable ();
+      }
 }
 
 /* To alleviate quadratic behaviour in checking each entry of a
@@ -4204,24 +4260,15 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 	    {
 	      if (iterator && prev->u2.ns != n->u2.ns)
 		{
-		  BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-		  OMP_ITERATOR_BLOCK (iterator) = tree_block;
-		  for (tree c = omp_clauses; c != prev_clauses;
-		       c = OMP_CLAUSE_CHAIN (c))
-		    OMP_CLAUSE_DECL (c) = build_tree_list (iterator,
-							   OMP_CLAUSE_DECL (c));
+		  finish_iterator_group (list, &iter_block, tree_block,
+					 iterator, omp_clauses, prev_clauses);
 		  prev_clauses = omp_clauses;
 		  iterator = NULL_TREE;
 		}
 	      if (n->u2.ns && (!prev || prev->u2.ns != n->u2.ns))
-		{
-		  gfc_init_block (&iter_block);
-		  tree_block = make_node (BLOCK);
-		  TREE_USED (tree_block) = 1;
-		  BLOCK_VARS (tree_block) = NULL_TREE;
-		  iterator = handle_iterator (n->u2.ns, block,
-					      tree_block);
-		}
+
+		iterator = start_iterator_group (n->u2.ns, block, &iter_block,
+						 tree_block);
 	      if (!iterator)
 		gfc_init_block (&iter_block);
 	      prev = n;
@@ -4364,14 +4411,8 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 	      omp_clauses = gfc_trans_add_clause (node, omp_clauses);
 	    }
 	  if (iterator)
-	    {
-	      BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-	      OMP_ITERATOR_BLOCK (iterator) = tree_block;
-	      for (tree c = omp_clauses; c != prev_clauses;
-		   c = OMP_CLAUSE_CHAIN (c))
-		OMP_CLAUSE_DECL (c) = build_tree_list (iterator,
-						       OMP_CLAUSE_DECL (c));
-	    }
+	    finish_iterator_group (list, &iter_block, tree_block,
+				   iterator, omp_clauses, prev_clauses);
 	  break;
 	case OMP_LIST_MAP:
 	  iterator = NULL_TREE;
@@ -4421,26 +4462,16 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 
 	      if (iterator && prev->u2.ns != n->u2.ns)
 		{
-		  /* Finish previous iterator group.  */
-		  BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-		  OMP_ITERATOR_BLOCK (iterator) = tree_block;
-		  for (tree c = omp_clauses; c != prev_clauses;
-		       c = OMP_CLAUSE_CHAIN (c))
-		    if (OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_POINTER
-			&& OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_REFERENCE)
-		      OMP_CLAUSE_ITERATORS (c) = iterator;
+		  finish_iterator_group (list, &iter_block, tree_block,
+					 iterator, omp_clauses, prev_clauses);
 		  prev_clauses = omp_clauses;
 		  iterator = NULL_TREE;
 		}
 	      if (n->u2.ns && (!prev || prev->u2.ns != n->u2.ns))
 		{
-		  /* Start a new iterator group.  */
-		  gfc_init_block (&iter_block);
-		  tree_block = make_node (BLOCK);
-		  TREE_USED (tree_block) = 1;
-		  BLOCK_VARS (tree_block) = NULL_TREE;
+		  iterator = start_iterator_group (n->u2.ns, block,
+						   &iter_block, tree_block);
 		  prev_clauses = omp_clauses;
-		  iterator = handle_iterator (n->u2.ns, block, tree_block);
 		}
 	      if (!iterator)
 		gfc_init_block (&iter_block);
@@ -5322,16 +5353,8 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 		omp_clauses = gfc_trans_add_clause (node5, omp_clauses);
 	    }
 	  if (iterator)
-	    {
-	      /* Finish last iterator group.  */
-	      BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-	      OMP_ITERATOR_BLOCK (iterator) = tree_block;
-	      for (tree c = omp_clauses; c != prev_clauses;
-		   c = OMP_CLAUSE_CHAIN (c))
-		if (OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_POINTER
-		    && OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_REFERENCE)
-		  OMP_CLAUSE_ITERATORS (c) = iterator;
-	    }
+	    finish_iterator_group (list, &iter_block, tree_block,
+				   iterator, omp_clauses, prev_clauses);
 	  break;
 	case OMP_LIST_TO:
 	case OMP_LIST_FROM:
@@ -5347,24 +5370,17 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 
 	      if (iterator && prev->u2.ns != n->u2.ns)
 		{
-		  /* Finish previous iterator group.  */
-		  BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-		  OMP_ITERATOR_BLOCK (iterator) = tree_block;
-		  for (tree c = omp_clauses; c != prev_clauses;
-		       c = OMP_CLAUSE_CHAIN (c))
-		    OMP_CLAUSE_ITERATORS (c) = iterator;
+		  finish_iterator_group (list, &iter_block, tree_block,
+					 iterator, omp_clauses, prev_clauses);
 		  prev_clauses = omp_clauses;
 		  iterator = NULL_TREE;
 		}
 	      if (n->u2.ns && (!prev || prev->u2.ns != n->u2.ns))
 		{
 		  /* Start a new iterator group.  */
-		  gfc_init_block (&iter_block);
-		  tree_block = make_node (BLOCK);
-		  TREE_USED (tree_block) = 1;
-		  BLOCK_VARS (tree_block) = NULL_TREE;
+		  iterator = start_iterator_group (n->u2.ns, block,
+						   &iter_block, tree_block);
 		  prev_clauses = omp_clauses;
-		  iterator = handle_iterator (n->u2.ns, block, tree_block);
 		}
 	      if (!iterator)
 		gfc_init_block (&iter_block);
@@ -5466,14 +5482,8 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 	      omp_clauses = gfc_trans_add_clause (node, omp_clauses);
 	    }
 	  if (iterator)
-	    {
-	      /* Finish last iterator group.  */
-	      BLOCK_SUBBLOCKS (tree_block) = gfc_finish_block (&iter_block);
-	      OMP_ITERATOR_BLOCK (iterator) = tree_block;
-	      for (tree c = omp_clauses; c != prev_clauses;
-		   c = OMP_CLAUSE_CHAIN (c))
-		OMP_CLAUSE_ITERATORS (c) = iterator;
-	    }
+	    finish_iterator_group (list, &iter_block, tree_block,
+				   iterator, omp_clauses, prev_clauses);
 	  break;
 	case OMP_LIST_USES_ALLOCATORS:
 	  for (; n != NULL; n = n->next)
