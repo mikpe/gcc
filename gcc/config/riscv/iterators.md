@@ -207,6 +207,9 @@
 ;; This code iterator allows signed and unsigned widening multiplications
 ;; to use the same template.
 (define_code_iterator any_extend [sign_extend zero_extend])
+
+(define_code_iterator cond_extend [sign_extend (zero_extend "!TARGET_ZALASR")])
+
 (define_code_attr extend_name [
   (sign_extend "extend") (zero_extend "zero_extend")
 ])

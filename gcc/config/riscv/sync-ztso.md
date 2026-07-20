@@ -43,7 +43,7 @@
 (define_insn "atomic_load_ztso<mode>"
   [(set (match_operand:ANYI 0 "register_operand" "=r")
 	(unspec_volatile:ANYI
-	    [(match_operand:ANYI 1 "memory_operand" "A")
+	    [(match_operand:ANYI 1 "memory_operand" "m")
 	     (match_operand:SI 2 "const_int_operand")]  ;; model
 	 UNSPECV_ATOMIC_LOAD))]
   "TARGET_ZTSO"
@@ -64,12 +64,35 @@
 	(symbol_ref "(is_mm_seq_cst (memmodel_from_int (INTVAL (operands[2]))) ? 8
 		      : 4)"))])
 
+(define_insn "atomic_load_ztso<X:mode><SUBX:mode><code>"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(any_extend:X
+	    (unspec_volatile:SUBX
+		[(match_operand:SUBX 1 "memory_operand" "m")
+		(match_operand:SUBX 2 "const_int_operand")]
+	    UNSPECV_ATOMIC_LOAD)))]
+  "TARGET_ZTSO"
+  {
+    enum memmodel model = (enum memmodel) INTVAL (operands[2]);
+    model = memmodel_base (model);
+
+    if (model == MEMMODEL_SEQ_CST)
+      return "fence\trw,rw\;"
+             "<SUBX:load><u>\t%0,%1";
+    else
+      return "<SUBX:load><u>\t%0,%1";
+  }
+  [(set_attr "type" "multi")
+   (set (attr "length")
+        (symbol_ref "(is_mm_seq_cst (memmodel_from_int (INTVAL (operands[2]))) ? 8
+                      : 4)"))])
+
 
 (define_insn "atomic_store_ztso<mode>"
-  [(set (match_operand:ANYI 0 "memory_operand" "=A")
+  [(set (match_operand:ANYI 0 "memory_operand" "=m,A")
 	(unspec_volatile:ANYI
-	    [(match_operand:ANYI 1 "reg_or_0_operand" "rJ")
-	     (match_operand:SI 2 "const_int_operand")]  ;; model
+	    [(match_operand:ANYI 1 "reg_or_0_operand" "rJ,rJ")
+	     (match_operand:SI 2 "const_int_operand" "B4,B3")]  ;; model
 	 UNSPECV_ATOMIC_STORE))]
   "TARGET_ZTSO"
   {

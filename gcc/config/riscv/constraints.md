@@ -145,6 +145,32 @@
   (and (match_code "mem")
        (match_test "GET_CODE(XEXP(op,0)) == REG")))
 
+(define_constraint "B1"
+  "Memory models that can match with A for load."
+  (and (match_code "const_int")
+       (and (match_test "ival == MEMMODEL_ACQUIRE")
+	    (match_test "TARGET_ZALASR"))))
+
+(define_constraint "B2"
+  "Memory models that can match with m for load."
+  (and (match_code "const_int")
+       (ior (match_test "ival != MEMMODEL_ACQUIRE")
+	    (match_test "!TARGET_ZALASR"))))
+
+(define_constraint "B3"
+  "Memory models that can match with A for store."
+  (and (match_code "const_int")
+       (and (ior (match_test "ival == MEMMODEL_RELEASE")
+		 (match_test "ival == MEMMODEL_SEQ_CST"))
+            (match_test "TARGET_ZALASR"))))
+
+(define_constraint "B4"
+  "Memory models that can match with m for store."
+  (and (match_code "const_int")
+       (ior (and (match_test "ival != MEMMODEL_RELEASE")
+                 (match_test "ival != MEMMODEL_SEQ_CST"))
+            (match_test "!TARGET_ZALASR"))))
+
 (define_constraint "S"
   "A constraint that matches an absolute symbolic address."
   (match_operand 0 "absolute_symbolic_operand"))
