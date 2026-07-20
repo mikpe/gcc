@@ -357,6 +357,8 @@ extern void GOMP_single_copy_end (void *);
 /* scope.c */
 
 extern void GOMP_scope_start (uintptr_t *);
+extern void GOMP_scope_start_with_end (uintptr_t *);
+extern void GOMP_scope_end (void);
 
 /* target.c */
 

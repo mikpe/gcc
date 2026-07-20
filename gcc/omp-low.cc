@@ -9035,8 +9035,16 @@ lower_omp_scope (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 				 gimple_omp_scope_clauses (scope_stmt),
 				 &bind_body, &tred_dlist);
       rclauses = c;
-      tree fndecl = builtin_decl_explicit (BUILT_IN_GOMP_SCOPE_START);
+      tree fndecl = builtin_decl_explicit (
+	flag_openmp_ompt ? BUILT_IN_GOMP_SCOPE_START_WITH_END
+			 : BUILT_IN_GOMP_SCOPE_START);
       gimple *stmt = gimple_build_call (fndecl, 1, temp);
+      gimple_seq_add_stmt (&bind_body, stmt);
+    }
+  else if (flag_openmp_ompt)
+    {
+      tree fndecl = builtin_decl_explicit (BUILT_IN_GOMP_SCOPE_START_WITH_END);
+      gimple *stmt = gimple_build_call (fndecl, 1, null_pointer_node);
       gimple_seq_add_stmt (&bind_body, stmt);
     }
 
@@ -9067,6 +9075,13 @@ lower_omp_scope (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   gimple_seq_add_seq (&bind_body, dlist);
 
   bind_body = maybe_catch_exception (bind_body);
+
+  if (flag_openmp_ompt)
+    {
+      tree fndecl = builtin_decl_explicit (BUILT_IN_GOMP_SCOPE_END);
+      gcall *g = gimple_build_call (fndecl, 0);
+      gimple_seq_add_stmt (&bind_body_tail, g);
+    }
 
   bool nowait = omp_find_clause (gimple_omp_scope_clauses (scope_stmt),
 				 OMP_CLAUSE_NOWAIT) != NULL_TREE;

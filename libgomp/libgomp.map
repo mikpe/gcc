@@ -501,6 +501,8 @@ GOMP_6.0.2 {
 	GOMP_reduction_end;
 	GOMP_single_start_with_end;
 	GOMP_single_end;
+	GOMP_scope_start_with_end;
+	GOMP_scope_end;
 } GOMP_6.0.1;
 
 OACC_2.0 {

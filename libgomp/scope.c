@@ -60,3 +60,35 @@ GOMP_scope_start (uintptr_t *reductions)
 					      first_reductions);
     }
 }
+
+/* OMPT variant enabled by -fopenmp-ompt. Called at the beginning of every scope
+   construct even without reduction.  */
+
+void
+GOMP_scope_start_with_end (uintptr_t *reductions)
+{
+  if (!reductions)
+    return;
+
+  struct gomp_thread *thr = gomp_thread ();
+
+  gomp_workshare_taskgroup_start ();
+  if (gomp_work_share_start (0))
+    {
+      GOMP_taskgroup_reduction_register (reductions);
+      thr->task->taskgroup->workshare = true;
+      thr->ts.work_share->task_reductions = reductions;
+      gomp_work_share_init_done ();
+    }
+  else
+    {
+      uintptr_t *first_reductions = thr->ts.work_share->task_reductions;
+      gomp_workshare_task_reduction_register (reductions, first_reductions);
+    }
+}
+
+/* Stub for OMPT callback enabled by -fopenmp-ompt.  */
+
+void
+GOMP_scope_end (void)
+{}
