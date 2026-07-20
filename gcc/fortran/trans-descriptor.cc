@@ -397,6 +397,9 @@ gfc_conv_descriptor_type_set (tree desc, int value)
 }
 
 
+/* Return a reference to the array of dimension descriptors of the array
+   descriptor DESC.  */
+
 tree
 gfc_get_descriptor_dimension (tree desc)
 {
@@ -407,8 +410,11 @@ gfc_get_descriptor_dimension (tree desc)
 }
 
 
-tree
-gfc_conv_descriptor_dimension (tree desc, tree dim)
+/* Return a reference to the dimension descriptor for the (zero-based) dimension
+   DIM of the array descriptor DESC.  */
+
+static tree
+conv_descriptor_dimension (tree desc, tree dim)
 {
   tree tmp;
 
@@ -432,7 +438,7 @@ gfc_conv_descriptor_token (tree desc)
 static tree
 gfc_conv_descriptor_subfield (tree desc, tree dim, unsigned field_idx)
 {
-  tree tmp = gfc_conv_descriptor_dimension (desc, dim);
+  tree tmp = conv_descriptor_dimension (desc, dim);
   tree field = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (tmp)), field_idx);
   gcc_assert (field != NULL_TREE);
 
