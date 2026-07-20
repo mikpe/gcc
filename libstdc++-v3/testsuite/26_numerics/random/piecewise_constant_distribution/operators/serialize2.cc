@@ -3,6 +3,7 @@
 // { dg-require-cstdint "" }
 
 #include <random>
+#include <cfloat>
 #include <sstream>
 #include <testsuite_hooks.h>
 
@@ -100,11 +101,11 @@ int main()
   test_default<double>();
   test_default<long double>();
 
-#if __FLT_EVAL_METHOD__ >= 0
-# if __FLT_EVAL_METHOD__ == 0
+#if FLT_EVAL_METHOD >= 0
+# if FLT_EVAL_METHOD == 0
   test_custom<float>();
 # endif
-# if __FLT_EVAL_METHOD__ != 2
+# if FLT_EVAL_METHOD != 2
   test_custom<double>();
 # endif
   test_custom<long double>();
