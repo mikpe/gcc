@@ -6071,9 +6071,7 @@ gfc_array_init_size (tree descriptor, int rank, int corank, tree * poffset,
     {
       tmp = gfc_conv_descriptor_dtype (descriptor);
       gfc_add_modify (pblock, tmp, gfc_get_dtype (type));
-      tmp = gfc_conv_descriptor_elem_len (descriptor);
-      gfc_add_modify (pblock, tmp,
-		      fold_convert (TREE_TYPE (tmp), expr3_elem_size));
+      gfc_conv_descriptor_elem_len_set (pblock, descriptor, expr3_elem_size);
     }
   else
     {
@@ -11815,7 +11813,7 @@ gfc_alloc_allocatable_for_assignment (gfc_loopinfo *loop,
     {
       /* Unfortunately, the lhs vptr is set too early in many cases.
 	 Play it safe by using the descriptor element length.  */
-      tmp = gfc_conv_descriptor_elem_len (desc);
+      tmp = gfc_conv_descriptor_elem_len_get (desc);
       elemsize1 = fold_convert (gfc_array_index_type, tmp);
     }
   else

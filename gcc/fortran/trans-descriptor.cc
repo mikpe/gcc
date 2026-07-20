@@ -187,10 +187,11 @@ gfc_conv_descriptor_version (tree desc)
 }
 
 
-/* Return the element length from the descriptor dtype field.  */
+/* Return a reference to the element length field of the array descriptor
+   DESC.  */
 
-tree
-gfc_conv_descriptor_elem_len (tree desc)
+static tree
+conv_descriptor_elem_len (tree desc)
 {
   tree tmp;
   tree dtype;
@@ -202,6 +203,26 @@ gfc_conv_descriptor_elem_len (tree desc)
 	      && TREE_TYPE (tmp) == size_type_node);
   return fold_build3_loc (input_location, COMPONENT_REF, TREE_TYPE (tmp),
 			  dtype, tmp, NULL_TREE);
+}
+
+/* Return the element length value of the array descriptor DESC.  */
+
+tree
+gfc_conv_descriptor_elem_len_get (tree desc)
+{
+  return conv_descriptor_elem_len (desc);
+}
+
+/* Add code to BLOCK assigning VALUE to the element length field of the array
+   descriptor DESC.  */
+
+void
+gfc_conv_descriptor_elem_len_set (stmtblock_t *block, tree desc, tree value)
+{
+  location_t loc = input_location;
+  tree t = conv_descriptor_elem_len (desc);
+  gfc_add_modify_loc (loc, block, t,
+		      fold_convert_loc (loc, TREE_TYPE (t), value));
 }
 
 
