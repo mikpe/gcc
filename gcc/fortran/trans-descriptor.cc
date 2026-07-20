@@ -88,6 +88,15 @@ gfc_get_descriptor_field (tree desc, unsigned field_idx)
 			  desc, field, NULL_TREE);
 }
 
+
+/* Return a reference to the data field of the array descriptor DESC.  */
+
+static tree
+conv_descriptor_data (tree desc)
+{
+  return gfc_get_descriptor_field (desc, DATA_FIELD);
+}
+
 /* This provides READ-ONLY access to the data field.  The field itself
    doesn't have the proper type.  */
 
@@ -98,8 +107,8 @@ gfc_conv_descriptor_data_get (tree desc)
   if (TREE_CODE (type) == REFERENCE_TYPE)
     gcc_unreachable ();
 
-  tree field = gfc_get_descriptor_field (desc, DATA_FIELD);
-  return fold_convert (GFC_TYPE_ARRAY_DATAPTR_TYPE (type), field);
+  tree data = conv_descriptor_data (desc);
+  return fold_convert (GFC_TYPE_ARRAY_DATAPTR_TYPE (type), data);
 }
 
 /* This provides WRITE access to the data field.  */
@@ -107,8 +116,8 @@ gfc_conv_descriptor_data_get (tree desc)
 void
 gfc_conv_descriptor_data_set (stmtblock_t *block, tree desc, tree value)
 {
-  tree field = gfc_get_descriptor_field (desc, DATA_FIELD);
-  gfc_add_modify (block, field, fold_convert (TREE_TYPE (field), value));
+  tree data = conv_descriptor_data (desc);
+  gfc_add_modify (block, data, fold_convert (TREE_TYPE (data), value));
 }
 
 
