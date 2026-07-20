@@ -424,6 +424,9 @@ conv_descriptor_dimension (tree desc, tree dim)
 }
 
 
+/* Return a reference to the coarray token field of the array descriptor
+   DESC.  */
+
 tree
 gfc_conv_descriptor_token (tree desc)
 {
@@ -434,6 +437,19 @@ gfc_conv_descriptor_token (tree desc)
 	      || TREE_TYPE (field) == pvoid_type_node);
   return field;
 }
+
+/* Add code to BLOCK assigning VALUE to the coarray token field of the array
+   descriptor DESC.  */
+
+void
+gfc_conv_descriptor_token_set (stmtblock_t *block, tree desc, tree value)
+{
+  location_t loc = input_location;
+  tree t = gfc_conv_descriptor_token (desc);
+  gfc_add_modify_loc (loc, block, t,
+		      fold_convert_loc (loc, TREE_TYPE (t), value));
+}
+
 
 static tree
 gfc_conv_descriptor_subfield (tree desc, tree dim, unsigned field_idx)
