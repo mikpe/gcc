@@ -141,13 +141,36 @@ gfc_conv_descriptor_offset_set (stmtblock_t *block, tree desc, tree value)
 }
 
 
-tree
-gfc_conv_descriptor_dtype (tree desc)
+/* Return a reference to the dtype field of the array descriptor DESC.  */
+
+static tree
+conv_descriptor_dtype (tree desc)
 {
   tree field = gfc_get_descriptor_field (desc, DTYPE_FIELD);
   gcc_assert (TREE_TYPE (field) == get_dtype_type_node ());
   return field;
 }
+
+/* Return the dtype value of the array descriptor DESC.  */
+
+tree
+gfc_conv_descriptor_dtype_get (tree desc)
+{
+  return conv_descriptor_dtype (desc);
+}
+
+/* Add code to BLOCK assigning VALUE to the dtype field of the array descriptor
+   DESC.  */
+
+void
+gfc_conv_descriptor_dtype_set (stmtblock_t *block, tree desc, tree value)
+{
+  location_t loc = input_location;
+  tree t = conv_descriptor_dtype (desc);
+  gfc_add_modify_loc (loc, block, t,
+		      fold_convert_loc (loc, TREE_TYPE (t), value));
+}
+
 
 static tree
 gfc_conv_descriptor_span (tree desc)
@@ -179,7 +202,7 @@ conv_descriptor_rank (tree desc)
   tree tmp;
   tree dtype;
 
-  dtype = gfc_conv_descriptor_dtype (desc);
+  dtype = conv_descriptor_dtype (desc);
   tmp = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (dtype)), GFC_DTYPE_RANK);
   gcc_assert (tmp != NULL_TREE
 	      && TREE_TYPE (tmp) == gfc_array_dim_rank_type);
@@ -226,7 +249,7 @@ conv_descriptor_version (tree desc)
   tree tmp;
   tree dtype;
 
-  dtype = gfc_conv_descriptor_dtype (desc);
+  dtype = conv_descriptor_dtype (desc);
   tmp = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (dtype)), GFC_DTYPE_VERSION);
   gcc_assert (tmp != NULL_TREE
 	      && TREE_TYPE (tmp) == integer_type_node);
@@ -264,7 +287,7 @@ conv_descriptor_elem_len (tree desc)
   tree tmp;
   tree dtype;
 
-  dtype = gfc_conv_descriptor_dtype (desc);
+  dtype = conv_descriptor_dtype (desc);
   tmp = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (dtype)),
 			   GFC_DTYPE_ELEM_LEN);
   gcc_assert (tmp != NULL_TREE
@@ -300,7 +323,7 @@ gfc_conv_descriptor_attribute (tree desc)
   tree tmp;
   tree dtype;
 
-  dtype = gfc_conv_descriptor_dtype (desc);
+  dtype = conv_descriptor_dtype (desc);
   tmp = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (dtype)),
 			   GFC_DTYPE_ATTRIBUTE);
   gcc_assert (tmp!= NULL_TREE
@@ -319,7 +342,7 @@ conv_descriptor_type (tree desc)
   tree tmp;
   tree dtype;
 
-  dtype = gfc_conv_descriptor_dtype (desc);
+  dtype = conv_descriptor_dtype (desc);
   tmp = gfc_advance_chain (TYPE_FIELDS (TREE_TYPE (dtype)), GFC_DTYPE_TYPE);
   gcc_assert (tmp!= NULL_TREE
 	      && TREE_TYPE (tmp) == signed_char_type_node);
