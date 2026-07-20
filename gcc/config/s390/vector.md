@@ -524,7 +524,7 @@
 (define_mode_iterator VEC_SET_NONFLOAT
   [V1QI V2QI V4QI V8QI V16QI V1HI V2HI V4HI V8HI V1SI V2SI V4SI V1DI V2DI V2HF V4HF V8HF V2SF V4SF])
 ; Iterator for single element float vectors
-(define_mode_iterator VEC_SET_SINGLEFLOAT [V1HF V1SF V1DF (V1TF "TARGET_VXE")])
+(define_mode_iterator VEC_SET_SINGLEFLOAT [V1HF V1SF V1DF])
 
 ; FIXME: Support also vector mode operands for 1
 ; FIXME: A target memory operand seems to be useful otherwise we end
