@@ -1898,10 +1898,24 @@ show_omp_clauses (gfc_omp_clauses *omp_clauses)
       show_expr (omp_clauses->final_expr);
       fputc (')', dumpfile);
     }
-  if (omp_clauses->num_threads)
+  if (omp_clauses->num_threads_list)
     {
       fputs (" NUM_THREADS(", dumpfile);
-      show_expr (omp_clauses->num_threads);
+      if (omp_clauses->num_threads_strict)
+	fputs ("STRICT", dumpfile);
+      if (omp_clauses->num_threads_strict && omp_clauses->num_threads_dims)
+	fputc (',', dumpfile);
+      if (omp_clauses->num_threads_dims)
+	fputs ("DIMS()", dumpfile);
+      if (omp_clauses->num_threads_strict || omp_clauses->num_threads_dims)
+	fputc (':', dumpfile);
+      gfc_expr_list *nt;
+      for (nt = omp_clauses->num_threads_list; nt; nt = nt->next)
+	{
+	  show_expr (nt->expr);
+	  if (nt->next)
+	    fputs (", ", dumpfile);
+	}
       fputc (')', dumpfile);
     }
   if (omp_clauses->async)
@@ -2199,15 +2213,29 @@ show_omp_clauses (gfc_omp_clauses *omp_clauses)
 	}
       fprintf (dumpfile, " BIND(%s)", type);
     }
-  if (omp_clauses->num_teams_upper)
+  if (omp_clauses->num_teams_list)
     {
       fputs (" NUM_TEAMS(", dumpfile);
-      if (omp_clauses->num_teams_lower)
+      if (omp_clauses->num_teams_dims)
 	{
-	  show_expr (omp_clauses->num_teams_lower);
-	  fputc (':', dumpfile);
+	  fputs ("DIMS():", dumpfile);
+	  gfc_expr_list *nt;
+	  for (nt = omp_clauses->num_teams_list; nt; nt = nt->next)
+	   {
+	     show_expr (nt->expr);
+	     if (nt->next)
+	       fputs (", ", dumpfile);
+	   }
 	}
-      show_expr (omp_clauses->num_teams_upper);
+      else
+	{
+	  show_expr (omp_clauses->num_teams_list->expr);
+	  if (omp_clauses->num_teams_list->next)
+	    {
+	      fputc (':', dumpfile);
+	      show_expr (omp_clauses->num_teams_list->next->expr);
+	    }
+	}
       fputc (')', dumpfile);
     }
   if (omp_clauses->device)
@@ -2218,10 +2246,24 @@ show_omp_clauses (gfc_omp_clauses *omp_clauses)
       show_expr (omp_clauses->device);
       fputc (')', dumpfile);
     }
-  if (omp_clauses->thread_limit)
+  if (omp_clauses->thread_limit_list)
     {
       fputs (" THREAD_LIMIT(", dumpfile);
-      show_expr (omp_clauses->thread_limit);
+      if (omp_clauses->thread_limit_strict)
+	fputs ("STRICT", dumpfile);
+      if (omp_clauses->thread_limit_strict && omp_clauses->thread_limit_dims)
+	fputc (',', dumpfile);
+      if (omp_clauses->thread_limit_dims)
+	fputs ("DIMS()", dumpfile);
+      if (omp_clauses->thread_limit_strict || omp_clauses->thread_limit_dims)
+	fputc (':', dumpfile);
+      gfc_expr_list *nt;
+      for (nt = omp_clauses->thread_limit_list; nt; nt = nt->next)
+	{
+	  show_expr (nt->expr);
+	  if (nt->next)
+	    fputs (", ", dumpfile);
+	}
       fputc (')', dumpfile);
     }
   if (omp_clauses->dist_sched_kind != OMP_SCHED_NONE)

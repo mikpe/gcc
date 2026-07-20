@@ -188,15 +188,11 @@ gfc_free_omp_clauses (gfc_omp_clauses *c)
     gfc_free_expr (c->if_exprs[i]);
   gfc_free_expr (c->self_expr);
   gfc_free_expr (c->final_expr);
-  gfc_free_expr (c->num_threads);
   gfc_free_expr (c->chunk_size);
   gfc_free_expr (c->safelen_expr);
   gfc_free_expr (c->simdlen_expr);
-  gfc_free_expr (c->num_teams_lower);
-  gfc_free_expr (c->num_teams_upper);
   gfc_free_expr (c->device);
   gfc_free_expr (c->dyn_groupprivate);
-  gfc_free_expr (c->thread_limit);
   gfc_free_expr (c->dist_chunk_size);
   gfc_free_expr (c->grainsize);
   gfc_free_expr (c->hint);
@@ -216,6 +212,9 @@ gfc_free_omp_clauses (gfc_omp_clauses *c)
   for (enum gfc_omp_list_type t = OMP_LIST_FIRST; t < OMP_LIST_NUM;
        t = gfc_omp_list_type (t + 1))
     gfc_free_omp_namelist (c->lists[t], t);
+  gfc_free_expr_list (c->num_teams_list);
+  gfc_free_expr_list (c->thread_limit_list);
+  gfc_free_expr_list (c->num_threads_list);
   gfc_free_expr_list (c->wait_list);
   gfc_free_expr_list (c->tile_list);
   gfc_free_expr_list (c->sizes_list);
@@ -846,8 +845,7 @@ match_omp_oacc_expr_list (const char *str, gfc_expr_list **list,
 
   old_loc = gfc_current_locus;
 
-  m = gfc_match (str);
-  if (m != MATCH_YES)
+  if (str && (m = gfc_match (str)) != MATCH_YES)
     return m;
 
   for (;;)
@@ -4105,30 +4103,161 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 	      continue;
 	    }
 	  if ((mask & OMP_CLAUSE_NUM_TEAMS)
-	      && (m = gfc_match_dupl_check (!c->num_teams_upper, "num_teams",
-					    true)) != MATCH_NO)
+	      && (m = gfc_match_dupl_check (!c->num_teams_list,
+					    "num_teams", true)) != MATCH_NO)
 	    {
 	      if (m == MATCH_ERROR)
 		goto error;
-	      if (gfc_match ("%e ", &c->num_teams_upper) != MATCH_YES)
-		goto error;
-	      if (gfc_peek_ascii_char () == ':')
+	      gfc_expr *expr;
+	      if (gfc_match ("dims ( %e ) : ", &expr) == MATCH_YES
+		  && match_omp_oacc_expr_list (NULL, &c->num_teams_list,
+					       false, true) == MATCH_YES)
 		{
-		  c->num_teams_lower = c->num_teams_upper;
-		  c->num_teams_upper = NULL;
-		  if (gfc_match (": %e ", &c->num_teams_upper) != MATCH_YES)
+		  int num = 0;
+		  gfc_expr_list *el;
+		  for (el = c->num_teams_list; el; el = el->next)
+		    ++num;
+		  if (!gfc_resolve_expr (expr)
+		      || expr->ts.type != BT_INTEGER
+		      || expr->rank != 0
+		      || expr->expr_type != EXPR_CONSTANT
+		      || mpz_sgn (expr->value.integer) <= 0)
+		    {
+		      gfc_error ("DIMS must be a constant positive integer "
+				 "at %L", &expr->where);
+		      goto error;
+		    }
+		  if (mpz_cmp_si (expr->value.integer, num) != 0)
+		    {
+		      gfc_error ("The number of arguments (%d) must be the same"
+				 " as specified for DIMS at %L", num,
+				 &expr->where);
+		      goto error;
+		    }
+		  c->num_teams_dims = true;
+		}
+	      else if (gfc_match ("%e ", &expr) == MATCH_YES)
+		{
+		  c->num_teams_list = gfc_get_expr_list();
+		  c->num_teams_list->expr = expr;
+		  if (gfc_peek_ascii_char () == ':')
+		    {
+		      expr = NULL;
+		      if (gfc_match (": %e ", &expr) != MATCH_YES)
+			goto error;
+		      c->num_teams_list->next = gfc_get_expr_list();
+		      c->num_teams_list->next->expr = expr;
+		    }
+		  if (gfc_match (") ") != MATCH_YES)
 		    goto error;
 		}
-	      if (gfc_match (") ") != MATCH_YES)
-		goto error;
+	      else
+		{
+		  gfc_error ("Expected either %<[lower-expr : ] upper-expr%> or "
+			     "%<dims(N): expr-list%> at %C");
+		  goto error;
+		}
 	      continue;
 	    }
 	  if ((mask & OMP_CLAUSE_NUM_THREADS)
-	      && (m = gfc_match_dupl_check (!c->num_threads, "num_threads", true,
-					    &c->num_threads)) != MATCH_NO)
+	      && (m = gfc_match_dupl_check (!c->num_threads_list,
+					    "num_threads", true, NULL))
+		  != MATCH_NO)
 	    {
+	      int nstrict = 0, nrelaxed = 0, ndims = 0;
+	      bool fail = false;
+	      gfc_expr *dims = NULL;
+	      locus old_loc = gfc_current_locus;
+
 	      if (m == MATCH_ERROR)
 		goto error;
+	      while (true)
+		{
+		  if (gfc_match ("strict ") == MATCH_YES)
+		    nstrict++;
+		  else if (gfc_match ("relaxed ") == MATCH_YES)
+		    nrelaxed++;
+		  else if (gfc_match ("dims ") == MATCH_YES)
+		    {
+		      ndims++;
+		      if (dims)
+			gfc_free_expr (dims);
+		      if (gfc_match ("( %e ) ", &dims) != MATCH_YES)
+			break;
+		    }
+		  else
+		    {
+		      fail = true;
+		      break;
+		    }
+		  if (gfc_match (", ") == MATCH_YES)
+		    continue;
+		  break;
+		}
+	      if (gfc_match (" : ") == MATCH_YES)
+		{
+		  if (nstrict + nrelaxed + ndims == 0 || fail)
+		    {
+		      gfc_error ("Expected STRICT, RELAXED or DIMS modifier at "
+				 "%C");
+		      goto error;
+		    }
+		  else if (nstrict + nrelaxed > 1)
+		    {
+		      gfc_error ("Only one STRICT or RELAXED modifier permitted"
+				 " at %L", &old_loc);
+		      goto error;
+		    }
+		  if (ndims > 1)
+		    {
+		      gfc_error ("Duplicated DIMS expression at %L",
+				 &dims->where);
+		      goto error;
+		    }
+		  if (nstrict || (dims && !nrelaxed))
+		    c->num_threads_strict = true;
+		}
+	      else
+		{
+		  gfc_free_expr (dims);
+		  dims = NULL;
+		  gfc_current_locus = old_loc;
+		}
+
+	      m = match_omp_oacc_expr_list (NULL, &c->num_threads_list, false,
+					    true);
+	      if (m != MATCH_YES)
+		{
+		  gfc_error ("Expected a list of integer expressions followed "
+			     "by a %<)%> and optionally preceded by the STRICT,"
+			     " RELAXED, or DIMS as modifiers and a colon at %C");
+		  goto error;
+		}
+	      if (dims)
+		{
+		  int num = 0;
+		  gfc_expr_list *el;
+		  for (el = c->num_threads_list; el; el = el->next)
+		    ++num;
+		  if (!gfc_resolve_expr (dims)
+		      || dims->ts.type != BT_INTEGER
+		      || dims->rank != 0
+		      || dims->expr_type != EXPR_CONSTANT
+		      || mpz_sgn (dims->value.integer) <= 0)
+		    {
+		      gfc_error ("DIMS must be a constant positive integer "
+				 "at %L", &dims->where);
+		      goto error;
+		    }
+		  if (mpz_cmp_si (dims->value.integer, num) != 0)
+		    {
+		      gfc_error ("The number of arguments (%d) must be the same"
+				 " as specified for DIMS at %L", num,
+				 &dims->where);
+		      goto error;
+		    }
+		  c->num_threads_dims = true;
+		}
 	      continue;
 	    }
 	  if ((mask & OMP_CLAUSE_NUM_WORKERS)
@@ -4520,12 +4649,110 @@ gfc_match_omp_clauses (gfc_omp_clauses **cp, const omp_mask mask,
 						 allow_derived) == MATCH_YES)
 	    continue;
 	  if ((mask & OMP_CLAUSE_THREAD_LIMIT)
-	      && (m = gfc_match_dupl_check (!c->thread_limit, "thread_limit",
-					    true, &c->thread_limit))
-		 != MATCH_NO)
+	      && (m = gfc_match_dupl_check (!c->thread_limit_list, "thread_limit",
+					    true, NULL)) != MATCH_NO)
 	    {
+	      int nstrict = 0, nrelaxed = 0, ndims = 0;
+	      bool fail = false;
+	      gfc_expr *dims = NULL;
+	      locus old_loc = gfc_current_locus;
+
 	      if (m == MATCH_ERROR)
 		goto error;
+	      while (true)
+		{
+		  if (gfc_match ("strict ") == MATCH_YES)
+		    nstrict++;
+		  else if (gfc_match ("relaxed ") == MATCH_YES)
+		    nrelaxed++;
+		  else if (gfc_match ("dims ") == MATCH_YES)
+		    {
+		      ndims++;
+		      if (dims)
+			gfc_free_expr (dims);
+		      if (gfc_match ("( %e ) ", &dims) != MATCH_YES)
+			break;
+		    }
+		  else
+		    {
+		      fail = true;
+		      break;
+		    }
+		  if (gfc_match (", ") == MATCH_YES)
+		    continue;
+		  break;
+		}
+	      if (gfc_match (" : ") == MATCH_YES)
+		{
+		  if (nstrict + nrelaxed + ndims == 0 || fail)
+		    {
+		      gfc_error ("Expected STRICT, RELAXED or DIMS modifier at "
+				 "%C");
+		      goto error;
+		    }
+		  else if (nstrict + nrelaxed > 1)
+		    {
+		      gfc_error ("Only one STRICT or RELAXED modifier permitted"
+				 " at %L", &old_loc);
+		      goto error;
+		    }
+		  if (ndims > 1)
+		    {
+		      gfc_error ("Duplicated DIMS expression at %L",
+				 &dims->where);
+		      goto error;
+		    }
+		}
+	      else
+		{
+		  gfc_free_expr (dims);
+		  dims = NULL;
+		  gfc_current_locus = old_loc;
+		}
+
+	      m = match_omp_oacc_expr_list (NULL, &c->thread_limit_list,
+					    false, true);
+	      if (m != MATCH_YES)
+		{
+		  gfc_error ("Expected a list of integer expressions followed "
+			     "by a %<)%> and optionally preceded by the STRICT,"
+			     " RELAXED, or DIMS as modifiers and a colon at %C");
+		  goto error;
+		}
+	      c->thread_limit_strict = (nstrict != 0) || (dims && !nrelaxed);
+
+	      if (!dims && c->thread_limit_list->next)
+		{
+		  gfc_error ("Without the DIM modifier, only a single integer "
+			     "expression may be specified at %L",
+			     &c->thread_limit_list->next->expr->where);
+		  goto error;
+		}
+	      else if (dims)
+		{
+		  int num = 0;
+		  gfc_expr_list *el;
+		  for (el = c->thread_limit_list; el; el = el->next)
+		    ++num;
+		  if (!gfc_resolve_expr (dims)
+		      || dims->ts.type != BT_INTEGER
+		      || dims->rank != 0
+		      || dims->expr_type != EXPR_CONSTANT
+		      || mpz_sgn (dims->value.integer) <= 0)
+		    {
+		      gfc_error ("DIMS must be a constant positive integer "
+				 "at %L", &dims->where);
+		      goto error;
+		    }
+		  if (mpz_cmp_si (dims->value.integer, num) != 0)
+		    {
+		      gfc_error ("The number of arguments (%d) must be the same"
+				 " as specified for DIMS at %L", num,
+				 &dims->where);
+		      goto error;
+		    }
+		  c->thread_limit_dims = true;
+		}
 	      continue;
 	    }
 	  if ((mask & OMP_CLAUSE_THREADS)
@@ -10296,8 +10523,10 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 	  &expr->where);
       if_without_mod = true;
     }
-  if (omp_clauses->num_threads)
-    resolve_positive_int_expr (omp_clauses->num_threads, "NUM_THREADS");
+
+  for (el = omp_clauses->num_threads_list; el; el = el->next)
+    resolve_positive_int_expr (el->expr, "NUM_THREADS");
+
   if (omp_clauses->dyn_groupprivate)
     resolve_nonnegative_int_expr (omp_clauses->dyn_groupprivate,
 				  "DYN_GROUPPRIVATE");
@@ -11100,18 +11329,18 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
     resolve_positive_int_expr (omp_clauses->safelen_expr, "SAFELEN");
   if (omp_clauses->simdlen_expr)
     resolve_positive_int_expr (omp_clauses->simdlen_expr, "SIMDLEN");
-  if (omp_clauses->num_teams_lower)
-    resolve_positive_int_expr (omp_clauses->num_teams_lower, "NUM_TEAMS");
-  if (omp_clauses->num_teams_upper)
-    resolve_positive_int_expr (omp_clauses->num_teams_upper, "NUM_TEAMS");
-  if (omp_clauses->num_teams_lower
-      && omp_clauses->num_teams_lower->expr_type == EXPR_CONSTANT
-      && omp_clauses->num_teams_upper->expr_type == EXPR_CONSTANT
-      && mpz_cmp (omp_clauses->num_teams_lower->value.integer,
-		  omp_clauses->num_teams_upper->value.integer) > 0)
+  for (el = omp_clauses->num_teams_list; el; el = el->next)
+    resolve_positive_int_expr (el->expr, "NUM_TEAMS");
+  if (omp_clauses->num_teams_list
+      && omp_clauses->num_teams_list->next
+      && !omp_clauses->num_teams_dims
+      && omp_clauses->num_teams_list->expr->expr_type == EXPR_CONSTANT
+      && omp_clauses->num_teams_list->next->expr->expr_type == EXPR_CONSTANT
+      && mpz_cmp (omp_clauses->num_teams_list->expr->value.integer,
+		  omp_clauses->num_teams_list->next->expr->value.integer) > 0)
     gfc_warning (OPT_Wopenmp, "NUM_TEAMS lower bound at %L larger than upper "
-		 "bound at %L", &omp_clauses->num_teams_lower->where,
-		 &omp_clauses->num_teams_upper->where);
+		 "bound at %L", &omp_clauses->num_teams_list->expr->where,
+		 &omp_clauses->num_teams_list->next->expr->where);
   if (omp_clauses->device)
     resolve_scalar_int_expr (omp_clauses->device, "DEVICE");
   if (omp_clauses->filter)
@@ -11135,8 +11364,8 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 	gfc_error ("DIST_SCHEDULE clause's chunk_size at %L requires "
 		   "a scalar INTEGER expression", &expr->where);
     }
-  if (omp_clauses->thread_limit)
-    resolve_positive_int_expr (omp_clauses->thread_limit, "THREAD_LIMIT");
+  for (el = omp_clauses->thread_limit_list; el; el = el->next)
+    resolve_positive_int_expr (el->expr, "THREAD_LIMIT");
   if (omp_clauses->grainsize)
     resolve_positive_int_expr (omp_clauses->grainsize, "GRAINSIZE");
   if (omp_clauses->num_tasks)

@@ -5709,14 +5709,10 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 		  for (idx = 0; idx < OMP_IF_LAST; idx++)
 		    WALK_SUBEXPR (co->ext.omp_clauses->if_exprs[idx]);
 		  WALK_SUBEXPR (co->ext.omp_clauses->final_expr);
-		  WALK_SUBEXPR (co->ext.omp_clauses->num_threads);
 		  WALK_SUBEXPR (co->ext.omp_clauses->chunk_size);
 		  WALK_SUBEXPR (co->ext.omp_clauses->safelen_expr);
 		  WALK_SUBEXPR (co->ext.omp_clauses->simdlen_expr);
-		  WALK_SUBEXPR (co->ext.omp_clauses->num_teams_lower);
-		  WALK_SUBEXPR (co->ext.omp_clauses->num_teams_upper);
 		  WALK_SUBEXPR (co->ext.omp_clauses->device);
-		  WALK_SUBEXPR (co->ext.omp_clauses->thread_limit);
 		  WALK_SUBEXPR (co->ext.omp_clauses->dist_chunk_size);
 		  WALK_SUBEXPR (co->ext.omp_clauses->grainsize);
 		  WALK_SUBEXPR (co->ext.omp_clauses->hint);
@@ -5726,6 +5722,15 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 		  WALK_SUBEXPR (co->ext.omp_clauses->dyn_groupprivate);
 		  WALK_SUBEXPR (co->ext.omp_clauses->novariants);
 		  WALK_SUBEXPR (co->ext.omp_clauses->nocontext);
+		  gfc_expr_list *el = co->ext.omp_clauses->num_teams_list;
+		  for ( ; el; el = el->next)
+		    WALK_SUBEXPR (el->expr);
+		  el = co->ext.omp_clauses->thread_limit_list;
+		  for ( ; el; el = el->next)
+		    WALK_SUBEXPR (el->expr);
+		  el = co->ext.omp_clauses->num_threads_list;
+		  for ( ; el; el = el->next)
+		    WALK_SUBEXPR (el->expr);
 		  for (idx = 0; idx < ARRAY_SIZE (list_types); idx++)
 		    for (n = co->ext.omp_clauses->lists[list_types[idx]];
 			 n; n = n->next)

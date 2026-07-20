@@ -5660,12 +5660,25 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
       omp_clauses = gfc_trans_add_clause (c, omp_clauses);
     }
 
-  if (clauses->num_threads)
+  if (clauses->num_threads_list)
     {
       tree num_threads;
 
+      if (clauses->num_threads_dims)
+	sorry_at (gfc_get_location (&clauses->num_threads_list->expr->where),
+		  "%<num_threads%> with %<dims%> modifier");
+      else if (clauses->num_threads_strict)
+	sorry_at (gfc_get_location (&clauses->num_threads_list->expr->where),
+		  "%<num_threads%> with %<strict%> modifier");
+      else if (clauses->num_threads_list->next)
+	{
+	  gfc_expr *expr = clauses->num_threads_list->next->expr;
+	  sorry_at (gfc_get_location (&expr->where),
+		    "%<num_threads%> with more than one argument");
+	}
+
       gfc_init_se (&se, NULL);
-      gfc_conv_expr (&se, clauses->num_threads);
+      gfc_conv_expr (&se, clauses->num_threads_list->expr);
       gfc_add_block_to_block (block, &se.pre);
       num_threads = gfc_evaluate_now (se.expr, block);
       gfc_add_block_to_block (block, &se.post);
@@ -5970,24 +5983,31 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
 	}
     }
 
-  if (clauses->num_teams_upper)
+  if (clauses->num_teams_list)
     {
       tree num_teams_lower = NULL_TREE, num_teams_upper;
 
+      if (clauses->num_teams_dims)
+	sorry_at (gfc_get_location (&clauses->num_teams_list->expr->where),
+		    "%<num_teams%> with %<dims%> modifier");
+
+      gfc_expr_list *el = clauses->num_teams_list;
+      if (el->next)
+	{
+	  gfc_init_se (&se, NULL);
+	  gfc_conv_expr (&se, el->expr);
+	  gfc_add_block_to_block (block, &se.pre);
+	  num_teams_lower = gfc_evaluate_now (se.expr, block);
+	  gfc_add_block_to_block (block, &se.post);
+	  el = el->next;
+	}
+
       gfc_init_se (&se, NULL);
-      gfc_conv_expr (&se, clauses->num_teams_upper);
+      gfc_conv_expr (&se, el->expr);
       gfc_add_block_to_block (block, &se.pre);
       num_teams_upper = gfc_evaluate_now (se.expr, block);
       gfc_add_block_to_block (block, &se.post);
 
-      if (clauses->num_teams_lower)
-	{
-	  gfc_init_se (&se, NULL);
-	  gfc_conv_expr (&se, clauses->num_teams_lower);
-	  gfc_add_block_to_block (block, &se.pre);
-	  num_teams_lower = gfc_evaluate_now (se.expr, block);
-	  gfc_add_block_to_block (block, &se.post);
-	}
       c = build_omp_clause (gfc_get_location (&where), OMP_CLAUSE_NUM_TEAMS);
       OMP_CLAUSE_NUM_TEAMS_LOWER_EXPR (c) = num_teams_lower;
       OMP_CLAUSE_NUM_TEAMS_UPPER_EXPR (c) = num_teams_upper;
@@ -6013,12 +6033,18 @@ gfc_trans_omp_clauses (stmtblock_t *block, gfc_omp_clauses *clauses,
       omp_clauses = gfc_trans_add_clause (c, omp_clauses);
     }
 
-  if (clauses->thread_limit)
+  if (clauses->thread_limit_list)
     {
       tree thread_limit;
 
+      if (clauses->thread_limit_dims)
+	sorry_at (gfc_get_location (&clauses->thread_limit_list->expr->where),
+		    "%<thread_limit%> with %<dims%> modifier");
+      else if (clauses->thread_limit_strict)
+	sorry_at (gfc_get_location (&clauses->thread_limit_list->expr->where),
+		    "%<thread_limit%> with %<strict%> modifier");
       gfc_init_se (&se, NULL);
-      gfc_conv_expr (&se, clauses->thread_limit);
+      gfc_conv_expr (&se, clauses->thread_limit_list->expr);
       gfc_add_block_to_block (block, &se.pre);
       thread_limit = gfc_evaluate_now (se.expr, block);
       gfc_add_block_to_block (block, &se.post);
@@ -8471,8 +8497,12 @@ gfc_split_omp_clauses (gfc_code *code,
 	    = code->ext.omp_clauses->lists[OMP_LIST_HAS_DEVICE_ADDR];
 	  clausesa[GFC_OMP_SPLIT_TARGET].device
 	    = code->ext.omp_clauses->device;
-	  clausesa[GFC_OMP_SPLIT_TARGET].thread_limit
-	    = code->ext.omp_clauses->thread_limit;
+	  clausesa[GFC_OMP_SPLIT_TARGET].thread_limit_list
+	    = code->ext.omp_clauses->thread_limit_list;
+	  clausesa[GFC_OMP_SPLIT_TARGET].thread_limit_strict
+	    = code->ext.omp_clauses->thread_limit_strict;
+	  clausesa[GFC_OMP_SPLIT_TARGET].thread_limit_dims
+	    = code->ext.omp_clauses->thread_limit_dims;
 	  clausesa[GFC_OMP_SPLIT_TARGET].lists[OMP_LIST_USES_ALLOCATORS]
 	    = code->ext.omp_clauses->lists[OMP_LIST_USES_ALLOCATORS];
 	  for (int i = 0; i < OMP_DEFAULTMAP_CAT_NUM; i++)
@@ -8491,12 +8521,16 @@ gfc_split_omp_clauses (gfc_code *code,
       if (mask & GFC_OMP_MASK_TEAMS)
 	{
 	  /* First the clauses that are unique to some constructs.  */
-	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_lower
-	    = code->ext.omp_clauses->num_teams_lower;
-	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_upper
-	    = code->ext.omp_clauses->num_teams_upper;
-	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit
-	    = code->ext.omp_clauses->thread_limit;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_list
+	    = code->ext.omp_clauses->num_teams_list;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_dims
+	    = code->ext.omp_clauses->num_teams_dims;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_list
+	    = code->ext.omp_clauses->thread_limit_list;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_strict
+	    = code->ext.omp_clauses->thread_limit_strict;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_dims
+	    = code->ext.omp_clauses->thread_limit_dims;
 	  /* Shared and default clauses are allowed on parallel, teams
 	     and taskloop.  */
 	  clausesa[GFC_OMP_SPLIT_TEAMS].lists[OMP_LIST_SHARED]
@@ -8526,8 +8560,12 @@ gfc_split_omp_clauses (gfc_code *code,
 	  /* First the clauses that are unique to some constructs.  */
 	  clausesa[GFC_OMP_SPLIT_PARALLEL].lists[OMP_LIST_COPYIN]
 	    = code->ext.omp_clauses->lists[OMP_LIST_COPYIN];
-	  clausesa[GFC_OMP_SPLIT_PARALLEL].num_threads
-	    = code->ext.omp_clauses->num_threads;
+	  clausesa[GFC_OMP_SPLIT_PARALLEL].num_threads_list
+	    = code->ext.omp_clauses->num_threads_list;
+	  clausesa[GFC_OMP_SPLIT_PARALLEL].num_threads_strict
+	    = code->ext.omp_clauses->num_threads_strict;
+	  clausesa[GFC_OMP_SPLIT_PARALLEL].num_threads_dims
+	    = code->ext.omp_clauses->num_threads_dims;
 	  clausesa[GFC_OMP_SPLIT_PARALLEL].proc_bind
 	    = code->ext.omp_clauses->proc_bind;
 	  /* Shared and default clauses are allowed on parallel, teams
@@ -9344,8 +9382,8 @@ gfc_trans_omp_target (gfc_code *code)
       break;
     default:
       if (flag_openmp
-	  && (clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_upper
-	      || clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit))
+	  && (clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_list
+	      || clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_list))
 	{
 	  gfc_omp_clauses clausesb;
 	  tree teams_clauses;
@@ -9353,14 +9391,18 @@ gfc_trans_omp_target (gfc_code *code)
 	     thread_limit clauses are evaluated before entering the
 	     target construct.  */
 	  memset (&clausesb, '\0', sizeof (clausesb));
-	  clausesb.num_teams_lower
-	    = clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_lower;
-	  clausesb.num_teams_upper
-	    = clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_upper;
-	  clausesb.thread_limit = clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit;
-	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_lower = NULL;
-	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_upper = NULL;
-	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit = NULL;
+	  clausesb.num_teams_list
+	    = clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_list;
+	  clausesb.num_teams_dims
+	    = clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_dims;
+	  clausesb.thread_limit_list
+	    = clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_list;
+	  clausesb.thread_limit_strict
+	    = clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_strict;
+	  clausesb.thread_limit_dims
+	    = clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_dims;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].num_teams_list = NULL;
+	  clausesa[GFC_OMP_SPLIT_TEAMS].thread_limit_list = NULL;
 	  teams_clauses
 	    = gfc_trans_omp_clauses (&block, &clausesb, code->loc);
 	  pushlevel ();

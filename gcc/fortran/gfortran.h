@@ -1709,14 +1709,13 @@ typedef struct gfc_omp_clauses
   struct gfc_expr *if_exprs[OMP_IF_LAST];
   struct gfc_expr *self_expr;
   struct gfc_expr *final_expr;
-  struct gfc_expr *num_threads;
+  struct gfc_expr_list *num_threads_list;
   struct gfc_expr *chunk_size;
   struct gfc_expr *safelen_expr;
   struct gfc_expr *simdlen_expr;
-  struct gfc_expr *num_teams_lower;
-  struct gfc_expr *num_teams_upper;
+  struct gfc_expr_list *num_teams_list;
   struct gfc_expr *device;
-  struct gfc_expr *thread_limit;
+  struct gfc_expr_list *thread_limit_list;
   struct gfc_expr *grainsize;
   struct gfc_expr *filter;
   struct gfc_expr *hint;
@@ -1747,6 +1746,8 @@ typedef struct gfc_omp_clauses
   unsigned contains_teams_construct:1, target_first_st_is_teams_or_meta:1;
   unsigned contained_in_target_construct:1, indirect:1;
   unsigned full:1, erroneous:1;
+  unsigned thread_limit_strict:1, num_threads_strict:1;
+  unsigned num_teams_dims:1, thread_limit_dims:1, num_threads_dims:1;
   ENUM_BITFIELD (gfc_omp_sched_kind) sched_kind:3;
   ENUM_BITFIELD (gfc_omp_device_type) device_type:2;
   ENUM_BITFIELD (gfc_omp_memorder) memorder:3;
