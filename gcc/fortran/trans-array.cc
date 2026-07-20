@@ -1257,9 +1257,7 @@ gfc_trans_create_temp_array (stmtblock_t * pre, stmtblock_t * post, gfc_ss * ss,
 	  gfc_add_modify (pre, tmp, dtype);
 
 	  /* These transformational functions change the rank.  */
-	  tmp = gfc_conv_descriptor_rank (desc);
-	  gfc_add_modify (pre, tmp,
-			  build_int_cst (TREE_TYPE (tmp), ss->loop->dimen));
+	  gfc_conv_descriptor_rank_set (pre, desc, ss->loop->dimen);
 	  fcn_ss->info->class_container = NULL_TREE;
 	}
 
@@ -5060,7 +5058,7 @@ done:
 			  && (gfc_option.allow_std & GFC_STD_F202Y)))
 		      gcc_assert (se.pre.head == NULL_TREE
 				  && se.post.head == NULL_TREE);
-		    rank = gfc_conv_descriptor_rank (se.expr);
+		    rank = gfc_conv_descriptor_rank_get (se.expr);
 		    tmp = fold_build2_loc (input_location, MINUS_EXPR,
 					   gfc_array_index_type,
 					   fold_convert (gfc_array_index_type,
@@ -8678,7 +8676,7 @@ gfc_tree_array_size (stmtblock_t *block, tree desc, gfc_expr *expr, tree dim)
   gcc_assert (GFC_DESCRIPTOR_TYPE_P (TREE_TYPE (desc)));
   enum gfc_array_kind akind = GFC_TYPE_ARRAY_AKIND (TREE_TYPE (desc));
   if (expr == NULL || expr->rank < 0)
-    rank = gfc_conv_descriptor_rank (desc);
+    rank = gfc_conv_descriptor_rank_get (desc);
   else
     rank = gfc_rank_cst[expr->rank];
 
@@ -8833,7 +8831,7 @@ gfc_resize_assumed_rank_dim_field (gfc_se *se, stmtblock_t *block, tree desc)
 				  gfc_conv_descriptor_offset_get (se->expr));
   gfc_add_modify (block, gfc_conv_descriptor_dtype (desc),
 		  gfc_conv_descriptor_dtype (se->expr));
-  rank = fold_convert (size_type_node, gfc_conv_descriptor_rank (se->expr));
+  rank = fold_convert (size_type_node, gfc_conv_descriptor_rank_get (se->expr));
   dim_field = gfc_get_descriptor_dimension (se->expr);
   dim_size = TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (dim_field)));
   copy_size = fold_build2_loc (input_location, MULT_EXPR,
@@ -9113,8 +9111,7 @@ gfc_conv_array_parameter (gfc_se *se, gfc_expr *expr, bool g77,
 		gfc_conv_descriptor_stride_get (se->expr, gfc_index_zero_node));
 	      gfc_add_modify (&block, gfc_conv_descriptor_dtype (arr),
 			      gfc_conv_descriptor_dtype (se->expr));
-	      gfc_add_modify (&block, gfc_conv_descriptor_rank (arr),
-			      gfc_rank_cst[1]);
+	      gfc_conv_descriptor_rank_set (&block, arr, 1);
 	      gfc_conv_descriptor_span_set (&block, arr,
 					    gfc_conv_descriptor_span_get (arr));
 	      gfc_conv_descriptor_offset_set (&block, arr, gfc_index_zero_node);
@@ -9322,7 +9319,7 @@ gfc_conv_array_parameter (gfc_se *se, gfc_expr *expr, bool g77,
 
 		  gfc_simple_for_loop (&se->pre, idx,
 				       build_int_cst (TREE_TYPE (idx), 0),
-				       gfc_conv_descriptor_rank (old_desc),
+				       gfc_conv_descriptor_rank_get (old_desc),
 				       LT_EXPR,
 				       build_int_cst (TREE_TYPE (idx), 1),
 				       gfc_finish_block (&loop_body));
@@ -9498,7 +9495,7 @@ gfc_full_array_size (stmtblock_t *block, tree decl, int rank)
   tree nelems;
   tree tmp;
   if (rank < 0)
-    idx = gfc_conv_descriptor_rank (decl);
+    idx = gfc_conv_descriptor_rank_get (decl);
   else
     idx = gfc_rank_cst[rank - 1];
   nelems = gfc_conv_descriptor_ubound_get (decl, idx);
@@ -9708,8 +9705,7 @@ duplicate_allocatable_coarray (tree dest, tree dest_tok, tree src, tree type,
   else
     {
       /* Set the rank or uninitialized memory access may be reported.  */
-      tmp = gfc_conv_descriptor_rank (dest);
-      gfc_add_modify (&globalblock, tmp, build_int_cst (TREE_TYPE (tmp), rank));
+      gfc_conv_descriptor_rank_set (&globalblock, dest, rank);
 
       if (rank)
 	nelems = gfc_full_array_size (&globalblock, src, rank);
