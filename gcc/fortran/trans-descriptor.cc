@@ -172,8 +172,11 @@ gfc_conv_descriptor_rank (tree desc)
 }
 
 
-tree
-gfc_conv_descriptor_version (tree desc)
+/* Return a reference to the format version field of the array descriptor
+   DESC.  */
+
+static tree
+conv_descriptor_version (tree desc)
 {
   tree tmp;
   tree dtype;
@@ -184,6 +187,26 @@ gfc_conv_descriptor_version (tree desc)
 	      && TREE_TYPE (tmp) == integer_type_node);
   return fold_build3_loc (input_location, COMPONENT_REF, TREE_TYPE (tmp),
 			  dtype, tmp, NULL_TREE);
+}
+
+/* Return the format version value of the array descriptor DESC.  */
+
+tree
+gfc_conv_descriptor_version_get (tree desc)
+{
+  return conv_descriptor_version (desc);
+}
+
+/* Add code to BLOCK assigning VALUE to the format version field of the array
+   descriptor DESC.  */
+
+void
+gfc_conv_descriptor_version_set (stmtblock_t *block, tree desc, tree value)
+{
+  location_t loc = input_location;
+  tree t = conv_descriptor_version (desc);
+  gfc_add_modify_loc (loc, block, t,
+		      fold_convert_loc (loc, TREE_TYPE (t), value));
 }
 
 
