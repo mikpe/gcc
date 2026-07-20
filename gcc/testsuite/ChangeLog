@@ -1,3 +1,58 @@
+2026-07-19  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	PR tree-optimization/126291
+	* gcc.target/aarch64/pr126291.c: New test.
+
+2026-07-19  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libfortran/93727
+	* gfortran.dg/EXformat_5.F90: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/svrsw60t59b-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/ssqosid-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/ssctr-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/smctr-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/smcdeleg-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/ssccfg-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/ziccamoc-version.c: New test.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* gcc.target/riscv/zi-ext.c: Add ziccid to arch test.
+	* gcc.target/riscv/ziccid-version.c: New test.
+	* gcc.target/riscv/ziccid.c: New test.
+
+2026-07-19  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/125731
+	* gcc.target/riscv/pr125731-1.c: New test.
+	* gcc.target/riscv/rvv/vsetvl/vsetvl-15.c: Drop shift count test.
+
+2026-07-19  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126212
+	* gcc.dg/pr126212.c: New.
+
 2026-07-18  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
 	    Kito Cheng  <kito.cheng@sifive.com>
 

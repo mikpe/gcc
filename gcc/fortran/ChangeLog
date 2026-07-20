@@ -1,3 +1,11 @@
+2026-07-19  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	* dump-parse-tree.cc (show_code_node): Show typespec for
+	ALLOCATE if present.
+	* frontend-passes.cc (gfc_expr_walker): Walk the character
+	typespec length for array expressions.
+	(gfc_code_walker): Walk the typespec for ALLOCATE if present.
+
 2026-07-18  Thomas Koenig  <tkoenig@gcc.gnu.org>
 
 	PR fortran/126058

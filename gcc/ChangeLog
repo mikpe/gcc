@@ -1,3 +1,87 @@
+2026-07-19  Philipp Tomsich  <philipp.tomsich@vrull.eu>
+
+	PR tree-optimization/126291
+	* match.pd ((trunc)abs (extend x) -> abs (x)): Use
+	element_precision. Require target ABS support for the
+	vector case.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (svrsw60t59b): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (ssqosid): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (ssctr): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (smctr): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (smcdeleg): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (ssccfg): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (ziccamoc): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jiawei  <jiawei@iscas.ac.cn>
+
+	* config/riscv/riscv-ext.def (ziccid): Add new extension.
+	* config/riscv/riscv-ext.opt: Ditto.
+	* doc/riscv-ext.texi: Ditto.
+
+2026-07-19  Jeff Law  <jeffrey.law@oss.qualcomm.com>
+
+	PR target/125731
+	* ifcvt.cc (noce_cond_zero_binary_op_supported): Move earlier.
+	(noce_try_shifted_store_flag): New function.
+	(noce_process_if_block): Use it.
+
+2026-07-19  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126222
+	* value-range-storage.cc (prange_storage::equal_p): Comment change.
+	* value-range.h (prange::pt_equal_p): Use vrp_operand_equal_p.
+
+2026-07-19  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126212
+	* value-relation.cc (dom_oracle::set_one_relation): Start with
+	first dominator in the dominator search.
+	(dom_oracle::recomputed_relation): New.
+	(dom_oracle::find_relation_dom): query recomputed_relation.
+	* value-relation.h (dom_oracle::recomputed_relation): New prototype.
+
+2026-07-19  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR tree-optimization/126212
+	* range-op.cc (operator_logical_and::op1_range): Add case for
+	[0, 0] = op1 & [1, 1]
+	(operator_logical_or::op1_range): Add case for [1, 1] = op1 | [0, 0]
+
 2026-07-18  Luke Zhuang  <luke.zhuang@linux.alibaba.com>
 	    Kito Cheng  <kito.cheng@sifive.com>
 
