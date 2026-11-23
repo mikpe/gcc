@@ -1017,7 +1017,7 @@ cdp1802_emit_pushhi (rtx mem_push_rtx, int regno)
 {
   rtx reg = gen_rtx_REG (HImode, regno);
 
-  rtx insn = emit_move_insn (mem_push_rtx, reg);
+  rtx_insn *insn = emit_move_insn (mem_push_rtx, reg);
   RTX_FRAME_RELATED_P (insn) = 1;
 
   rtx dwarf = gen_rtx_SEQUENCE (VOIDmode, rtvec_alloc (2));
